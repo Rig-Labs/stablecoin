@@ -11,7 +11,7 @@ impl FluidProtocol for Contract {
 
     //todo: convert decimal places and math to u64
 
-    const 100_PCT = 1000000000000000000;
+    const PCT = 1000000000000000000;
     const CR = 1350000000000000000;
     const USDF_GAS_COMPENSATION = 200e18; // not sure if e18 works in sway
     const MIN_NET_DEBT = 1000e18; // not sure if e18 works in sway
@@ -26,11 +26,11 @@ impl FluidProtocol for Contract {
     // on the other hand, these functions all rely on the protocol constants defined here.
     // note: all of these function are pure, they do not access storage.
 
-    function get_coll_gas_compensation(entire_coll: u64) -> u64 {
+    fn get_coll_gas_compensation(entire_coll: u64) -> u64 {
         entire_coll / PERCENT_DIVISOR
     }
 
-    function get_entire_system_coll() -> u64 {
+    fn get_entire_system_coll() -> u64 {
         let active_pool = abi(ActivePool, ACTIVE_POOL_CONTRACT_ID);
         let default_pool = abi(DefaultPool, DEFAULT_POOL_CONTRACT_ID);
         let active_coll = active_pool.get_fuel_coll();
@@ -39,7 +39,7 @@ impl FluidProtocol for Contract {
         active_coll + liquidated_coll // sway has safe math by default
     }
 
-    function get_entire_system_debt() -> u64 {
+    fn get_entire_system_debt() -> u64 {
         let active_pool = abi(ActivePool, ACTIVE_POOL_CONTRACT_ID);
         let default_pool = abi(DefaultPool, DEFAULT_POOL_CONTRACT_ID);
         let active_debt = active_pool.get_usdf_debt();
@@ -48,19 +48,19 @@ impl FluidProtocol for Contract {
         active_debt + closed_debt
     }
 
-    function get_TCR(price: u64) -> u64 {
+    fn get_TCR(price: u64) -> u64 {
         let entire_system_coll = get_entire_system_coll();
         let entire_system_debt = get_entire_system_debt();
 
         compute_CR(entire_system_coll, entire_system_debt, price)
     }
 
-    function check_TCR(price: u64) -> bool {
+    fn check_TCR(price: u64) -> bool {
         let TCR = get_TCR(price);
         TCR < CR
     }
 
-    function require_user_accepts_fee(fee: u64, amount: u64, max_fee_percentage: u64){
+    fn require_user_accepts_fee(fee: u64, amount: u64, max_fee_percentage: u64){
         let fee_percentage = (fee * DECIMAL_PRECISION) / amount;
         log("checking if fee exceeded provided maximum..."); // just going to make a log before every assert for now, since assert doesn't have an error message    
         assert(fee_percentage < max_fee_percentage);
