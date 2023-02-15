@@ -6,8 +6,10 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dev-dependencies]
-fuels = { version = "0.36.0", features = ["fuel-core-lib"] }
-tokio = { version = "1.21.0", features = ["rt", "macros"] }
+fuels = { version = "0.32", features = ["fuel-core-lib"] }
+tokio = { version = "1.12", features = ["rt", "macros"] }
+# Not the latest version because of indexer bug o.o 
+# TODO - update when fixed
 
 [[test]]
 harness = true
