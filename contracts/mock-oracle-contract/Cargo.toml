@@ -1,0 +1,15 @@
+[package]
+name = "mock-oracle-contract"
+version = "0.1.0"
+authors = ["hydrogen-labs"]
+edition = "2021"
+license = "Apache-2.0"
+
+[dev-dependencies]
+fuels = { version = "0.36.0", features = ["fuel-core-lib"] }
+tokio = { version = "1.21.0", features = ["rt", "macros"] }
+
+[[test]]
+harness = true
+name = "tests"
+path = "tests/harness.rs"
