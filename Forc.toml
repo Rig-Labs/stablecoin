@@ -1,0 +1,4 @@
+[workspace]
+members = [
+  "./contracts/mock-oracle-contract",
+]
