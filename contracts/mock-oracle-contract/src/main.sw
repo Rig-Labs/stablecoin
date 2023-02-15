@@ -1,25 +1,34 @@
 contract;
 
 storage {
-    counter: u64 = 0,
+    price: u64 = 0,
+    precision: u64 = 6,
 }
 
-abi Counter {
-    #[storage(read, write)]
-    fn increment();
+abi MockOracle {
+    #[storage(write)]
+    fn set_price(price: u64);
 
     #[storage(read)]
-    fn count() -> u64;
+    fn get_price() -> u64;
+
+    #[storage(read)]
+    fn get_precision() -> u64;
 }
 
-impl Counter for Contract {
+impl MockOracle for Contract {
     #[storage(read)]
-    fn count() -> u64 {
-        storage.counter
+    fn get_price() -> u64 {
+        storage.price
     }
 
-    #[storage(read, write)]
-    fn increment() {
-        storage.counter = storage.counter + 1;
+    #[storage(read)]
+    fn get_precision() -> u64 {
+        storage.precision
+    }
+
+    #[storage(write)]
+    fn set_price(_price: u64) {
+        storage.price = _price
     }
 }
