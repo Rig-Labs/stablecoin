@@ -1,6 +1,8 @@
 use crate::utils::setup::setup;
 use fuels::{prelude::ContractId, types::Identity};
 mod success {
+    use fuels::prelude::Address;
+
     use crate::utils::setup::test_helpers::{
         get_asset, get_vesting_schedule, instantiate_vesting_contract,
     };
@@ -38,8 +40,16 @@ mod success {
             .await
             .unwrap();
 
-        assert_eq!(res.value, vesting_schedule[0]);
-        // println("res: {:?}", res.value);
+        assert_eq!(res.value.unwrap(), vesting_schedule[0]);
+
+        let res = vest
+            .methods()
+            .get_vesting_schedule(Identity::Address(Address::from([0u8; 32]).into()))
+            .call()
+            .await
+            .unwrap();
+
+        assert_eq!(res.value, Option::None);
     }
 
     #[tokio::test]
