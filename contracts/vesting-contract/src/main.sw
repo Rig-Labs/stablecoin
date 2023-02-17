@@ -11,8 +11,6 @@ use std::{
     address::Address,
     auth::msg_sender,
     block::timestamp,
-    call_frames::msg_asset_id,
-    context::msg_amount,
     logging::log,
     storage::StorageMap,
     token::transfer,
@@ -61,18 +59,6 @@ impl VestingContract for Contract {
         storage.asset = asset;
     }
 
-    #[storage(read)]
-    fn get_vesting_schedule(address: Identity) -> Option<VestingSchedule> {
-        return storage.vesting_schedules.get(address);
-    }
-
-    #[storage(read)]
-    fn get_redeemable_amount(now: u64, address: Identity) -> u64 {
-        let schedule = storage.vesting_schedules.get(address).unwrap();
-
-        return calculate_redeemable_amount(now, schedule);
-    }
-
     #[storage(read, write)]
     fn claim_vested_tokens(address: Identity) {
         // TODO add re entry guard
@@ -87,6 +73,17 @@ impl VestingContract for Contract {
         schedule.claimed_amount = redeemable_amount;
 
         storage.vesting_schedules.insert(address, Option::Some(schedule));
-        // Update schedule
+    }
+
+    #[storage(read)]
+    fn get_vesting_schedule(address: Identity) -> Option<VestingSchedule> {
+        return storage.vesting_schedules.get(address);
+    }
+
+    #[storage(read)]
+    fn get_redeemable_amount(at_timestamp: u64, address: Identity) -> u64 {
+        let schedule = storage.vesting_schedules.get(address).unwrap();
+
+        return calculate_redeemable_amount(at_timestamp, schedule);
     }
 }
