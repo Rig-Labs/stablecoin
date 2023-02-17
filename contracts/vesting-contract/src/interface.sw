@@ -2,18 +2,15 @@ library interface;
 
 dep data_structures;
 
-use data_structures::VestingSchedule;
+use data_structures::{Asset, VestingSchedule};
 
 abi VestingContract {
-    #[storage(write)]
-    fn set_price(price: u64);
+    #[storage(write, read)]
+    fn constructor(admin: Identity, schedules: Vec<VestingSchedule>, asset: Asset);
 
     #[storage(read)]
-    fn get_price() -> u64;
+    fn get_vesting_schedule(address: Identity) -> VestingSchedule;
 
     #[storage(read)]
-    fn get_precision() -> u64;
-
-    #[storage(read)]
-    fn get_vesting_schedules() -> Vec<VestingSchedule>;
+    fn get_redeemable_amount(now: u64, address: Identity) -> u64;
 }
