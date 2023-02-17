@@ -12,12 +12,12 @@ mod success {
         let (vest, admin, recipient) = setup().await;
 
         let vesting_schedule = [get_vesting_schedule(
-            200,
+            3000,
             1000,
-            9000,
+            1000,
             0,
             0,
-            1000,
+            10000,
             Identity::Address(recipient.address().into()),
             false,
         )];
@@ -39,6 +39,7 @@ mod success {
             .await
             .unwrap();
 
-        println!("{:?}", res);
+        assert_eq!(res.value, vesting_schedule[0]);
+        // println("res: {:?}", res.value);
     }
 }
