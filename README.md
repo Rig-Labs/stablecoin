@@ -10,11 +10,14 @@ directory.
 
 | Name                                               | Description                            | Status |
 | -------------------------------------------------- | -------------------------------------- | ------- |
-| [`mock-oracle`](contracts/mock-oracle-contract)       | Oracle for on-chain data | Completed
-| [`trove-manager`](contracts/trove-manager-contract)       | Manages minting $USDF, liquidations, and user troves | Not Started
-| [`stability-pool`](contracts/stability-pool-contract)       | Manages desposits to liquidate user troves | Not Started
-| [`vesting`](contracts/vesting-contract)       | Manages $FPT vesting schedules | In Progress
-| [`staking`](contracts/staking-contract)       | Manages $FPT staking emissions from fee collection | Not Started
+| [`mock-oracle`](contracts/mock-oracle-contract)       | Oracle for on-chain data | $$\color{green}{Completed}$$ 
+| [`vesting`](contracts/vesting-contract)       | Manages $FPT vesting schedules | $$\color{orange}{In}$$ $$\color{orange}{Progress}$$ 
+| [`protocol-factory`](contracts/protocol-contract)       | Routes risk functions to riskies trove from all trove managers, instatiates everything |$$\color{red}{Not}$$ $$\color{red}{Started}$$ 
+| [`trove-manager`](contracts/trove-manager-contract)       | Manages minting $USDF, liquidations, and user troves in the Linked list format |$$\color{red}{Not}$$ $$\color{red}{Started}$$ 
+| [`stability-pool`](contracts/stability-pool-contract)       | Manages desposits to liquidate user troves | $$\color{red}{Not}$$ $$\color{red}{Started}$$ |
+| [`staking`](contracts/staking-contract)       | Manages $FPT staking emissions from fee collection | $$\color{red}{Not}$$ $$\color{red}{Started}$$ |
+
+<p style='color:red'>This is some red text.</p>
 
 Build + Test Contracts
 -------------------------------
