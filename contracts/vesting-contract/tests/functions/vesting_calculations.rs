@@ -1,9 +1,6 @@
 use crate::utils::setup::setup;
 use fuels::prelude::*;
-use fuels::{
-    prelude::{AssetId, Provider},
-    types::Identity,
-};
+use fuels::{prelude::AssetId, types::Identity};
 
 mod success {
     use fuels::prelude::Address;
@@ -119,13 +116,44 @@ mod success {
 
         assert_eq!(res.value, cliff_amount + (total_amount - cliff_amount) / 2);
 
-        // let assset_identity = Identity::ContractId(asset.id().into());
-        // let provider = admin.get_provider().unwrap();
-        // let balance = provider
-        //     .get_contract_asset_balance(&vest.id(), AssetId::from(asset.id()))
-        //     .await
-        //     .unwrap();
+        println!("Minting asset...to admin: {:?}", admin.address());
 
+        let _res = asset
+            .methods()
+            .mint_and_send_to_address(10000, admin.address().into())
+            .append_variable_outputs(1)
+            .call()
+            .await;
+        // println!("Minting result: {:?}", res);
+
+        let asset_id = AssetId::from(*asset.id().hash());
+
+        let provider = admin.get_provider().unwrap();
+
+        let balance = provider
+            .get_asset_balance(&admin.address(), asset_id)
+            .await
+            .unwrap();
+
+        println!("Admin balance: {:?}", balance);
+
+        let _ = admin
+            .force_transfer_to_contract(&vest.id(), 99, asset_id, TxParameters::default())
+            .await;
+
+        let balance = provider
+            .get_asset_balance(&admin.address(), asset_id)
+            .await
+            .unwrap();
+
+        println!("Admin balance: {:?}", balance);
+
+        let vest_balance = provider
+            .get_contract_asset_balance(&vest.id(), asset_id)
+            .await
+            .unwrap();
+
+        println!("Vest balance: {:?}", vest_balance);
         // TODO Check balances
     }
 }

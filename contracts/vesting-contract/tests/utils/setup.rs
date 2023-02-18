@@ -76,6 +76,7 @@ pub mod test_helpers {
         contract
             .methods()
             .mint_and_send_to_contract(amount, recipient.clone())
+            .append_variable_outputs(4)
             .call()
             .await
     }
@@ -92,7 +93,8 @@ pub mod test_helpers {
             amount,
         };
 
-        let _ = mint_to_vesting(asset_contract, &contract.id().into(), amount).await;
+        let res = mint_to_vesting(asset_contract, &contract.id().into(), amount).await;
+        println!("Minting to vesting contract: {:?}", res);
 
         contract
             .methods()
