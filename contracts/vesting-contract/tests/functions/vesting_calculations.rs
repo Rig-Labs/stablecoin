@@ -1,17 +1,20 @@
 use crate::utils::setup::setup;
-use fuels::{prelude::ContractId, types::Identity};
+use fuels::prelude::*;
+use fuels::{
+    prelude::{AssetId, Provider},
+    types::Identity,
+};
+
 mod success {
     use fuels::prelude::Address;
 
-    use crate::utils::setup::test_helpers::{
-        get_asset, get_vesting_schedule, instantiate_vesting_contract,
-    };
+    use crate::utils::setup::test_helpers::{get_vesting_schedule, instantiate_vesting_contract};
 
     use super::*;
 
     #[tokio::test]
     async fn create_vesting_contract() {
-        let (vest, admin, recipient) = setup().await;
+        let (vest, admin, recipient, asset) = setup().await;
 
         let vesting_schedule = [get_vesting_schedule(
             3000,
@@ -23,13 +26,12 @@ mod success {
             false,
         )];
 
-        let asset = get_asset(ContractId::from([0u8; 32]), 10000);
-
         let _ = instantiate_vesting_contract(
             &vest,
             &Identity::Address(admin.address().into()),
             &vesting_schedule.to_vec(),
             &asset,
+            10000,
         )
         .await;
 
@@ -54,7 +56,7 @@ mod success {
 
     #[tokio::test]
     async fn proper_vesting_emmisions() {
-        let (vest, admin, recipient) = setup().await;
+        let (vest, admin, recipient, asset) = setup().await;
         let cliff_timestamp = 5000;
         let end_timestamp = 10000;
         let total_amount = 10000;
@@ -70,13 +72,12 @@ mod success {
             false,
         )];
 
-        let asset = get_asset(ContractId::from([0u8; 32]), 10000);
-
         let _ = instantiate_vesting_contract(
             &vest,
             &Identity::Address(admin.address().into()),
             &vesting_schedule.to_vec(),
             &asset,
+            10000,
         )
         .await;
 
@@ -117,5 +118,14 @@ mod success {
             .unwrap();
 
         assert_eq!(res.value, cliff_amount + (total_amount - cliff_amount) / 2);
+
+        // let assset_identity = Identity::ContractId(asset.id().into());
+        // let provider = admin.get_provider().unwrap();
+        // let balance = provider
+        //     .get_contract_asset_balance(&vest.id(), AssetId::from(asset.id()))
+        //     .await
+        //     .unwrap();
+
+        // TODO Check balances
     }
 }
