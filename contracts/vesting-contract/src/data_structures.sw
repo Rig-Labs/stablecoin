@@ -1,7 +1,6 @@
 library data_structures;
 
 pub struct VestingSchedule {
-    start_timestamp: u64,
     cliff_timestamp: u64,
     end_timestamp: u64,
     cliff_amount: u64,
