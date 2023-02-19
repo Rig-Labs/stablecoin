@@ -17,8 +17,6 @@ directory.
 | [`stability-pool`](contracts/stability-pool-contract)       | Manages desposits to liquidate user troves | $$\color{red}{Not}$$ $$\color{red}{Started}$$ |
 | [`staking`](contracts/staking-contract)       | Manages $FPT staking emissions from fee collection | $$\color{red}{Not}$$ $$\color{red}{Started}$$ |
 
-<p style='color:red'>This is some red text.</p>
-
 Build + Test Contracts
 -------------------------------
 
