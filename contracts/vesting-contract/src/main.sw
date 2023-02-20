@@ -31,19 +31,12 @@ storage {
     asset: Asset = Asset::new(ContractId::from(ZERO_B256), 0),
 }
 
-// pub fn get_msg_sender_address_or_panic() -> Address {
-//     let sender: Result<Identity, AuthError> = msg_sender();
-//     if let Identity::Address(address) = sender.unwrap() {
-//         address
-//     } else {
-//         revert(0);
-//     }
-// }
-// #[storage(read)]
-// fn validate_admin() {
-//     let sender = get_msg_sender_address_or_panic();
-//     require(storage.admin == sender, "Access denied");
-// }
+#[storage(read)]
+fn validate_admin() {
+    let sender = msg_sender().unwrap();
+    require(storage.admin == sender, "Access denied");
+}
+
 impl VestingContract for Contract {
     #[storage(write, read)]
     fn constructor(
@@ -69,9 +62,11 @@ impl VestingContract for Contract {
 
     #[storage(read, write)]
     fn claim_vested_tokens(address: Identity) {
+        validate_admin();
         // TODO add re entry guard
         let mut schedule = storage.vesting_schedules.get(address).unwrap();
-        let now = timestamp();
+        // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
+        let now = height();
 
         let unclaimed = calculate_redeemable_amount(now, schedule);
         require(unclaimed > 0, "Nothing to redeem");
@@ -82,22 +77,24 @@ impl VestingContract for Contract {
         storage.vesting_schedules.insert(address, Option::Some(schedule));
     }
 
+    #[storage(read, write)]
+    fn revoke_vesting_schedule(address: Identity) {
+        validate_admin();
+        // TODO add re entry guard
+        let schedule = storage.vesting_schedules.get(address).unwrap();
+
+        let unclaimed = schedule.total_amount - schedule.claimed_amount;
+        require(unclaimed > 0, "Nothing to revoke");
+        storage.vesting_schedules.insert(address, Option::None);
+
+        transfer(unclaimed, storage.asset.id, storage.admin);
+    }
+
     #[storage(read)]
     fn get_vesting_schedule(address: Identity) -> Option<VestingSchedule> {
         return storage.vesting_schedules.get(address);
     }
 
-    // #[storage(read)]
-    // fn get_vesting_addresses() -> Vec<Identity> {
-    //     let mut i = 0;
-    //     let mut addresses: Vec<Identity> = Vec::new();
-    //     while i < storage.vesting_addresses.len() {
-    //         let address = storage.vesting_addresses.get(i).unwrap();
-    //         addresses.push(address);
-    //         i += 1;
-    //     }
-    //     return addresses;
-    // }
     #[storage(read)]
     fn get_redeemable_amount(at_timestamp: u64, address: Identity) -> u64 {
         let schedule = storage.vesting_schedules.get(address).unwrap();
@@ -109,4 +106,17 @@ impl VestingContract for Contract {
     fn get_current_time() -> u64 {
         return timestamp();
     }
+
+    // TODO waiting for Fuel to enable Vector outputs 
+    // #[storage(read)]
+    // fn get_vesting_addresses() -> Vec<Identity> {
+    //     let mut i = 0;
+    //     let mut addresses: Vec<Identity> = Vec::new();
+    //     while i < storage.vesting_addresses.len() {
+    //         let address = storage.vesting_addresses.get(i).unwrap();
+    //         addresses.push(address);
+    //         i += 1;
+    //     }
+    //     return addresses;
+    // }
 }
