@@ -72,7 +72,6 @@ impl VestingContract for Contract {
 
     #[storage(read, write)]
     fn claim_vested_tokens(address: Identity) {
-        validate_admin();
         // TODO add re entry guard
         let mut schedule = storage.vesting_schedules.get(address).unwrap();
         // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
