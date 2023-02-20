@@ -1,20 +1,24 @@
 use crate::utils::setup::setup;
-use chrono::{DateTime, Duration, NaiveDateTime, Utc};
+// use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use fuels::prelude::*;
 use fuels::{prelude::AssetId, types::Identity};
 
-async fn produce_block_at_time(provider: &Provider, start_timestamp: u64) {
-    let dt = DateTime::<Utc>::from_utc(
-        NaiveDateTime::from_timestamp_opt((start_timestamp).try_into().unwrap(), 0).unwrap(),
-        Utc,
-    );
+async fn produce_block_at_height(provider: &Provider, target_height: u64) {
+    // let dt = DateTime::<Utc>::from_utc(
+    //     NaiveDateTime::from_timestamp_opt((start_timestamp).try_into().unwrap(), 0).unwrap(),
+    //     Utc,
+    // );
 
-    let time: TimeParameters = TimeParameters {
-        start_time: dt,
-        block_time_interval: Duration::seconds(1),
-    };
+    // let time: TimeParameters = TimeParameters {
+    //     start_time: dt,
+    //     block_time_interval: Duration::seconds(1),
+    // };
 
-    let _res = provider.produce_blocks(1, Some(time)).await;
+    let block_height = provider.latest_block_height().await.unwrap();
+
+    let _res = provider
+        .produce_blocks(target_height - block_height, None)
+        .await;
 }
 
 mod success {
@@ -68,7 +72,7 @@ mod success {
     }
 
     #[tokio::test]
-    async fn proper_vesting_emmisions() {
+    async fn proper_vesting_calculations() {
         let (vest, admin, recipient, asset) = setup().await;
         let cliff_timestamp = 5000;
         let end_timestamp = 10000;
@@ -147,11 +151,11 @@ mod success {
 
     #[tokio::test]
     async fn proper_claiming_vested_tokens() {
-        let start_timestamp: u64 = Utc::now().timestamp().try_into().unwrap();
+        let start_timestamp: u64 = 0;
         // convert seconds to nano seconds;
         let (vest, admin, recipient, asset) = setup().await;
-        let cliff_timestamp = (start_timestamp + 5000) * 1;
-        let end_timestamp = (start_timestamp + 10000) * 1;
+        let cliff_timestamp = (start_timestamp + 100) * 1;
+        let end_timestamp = (cliff_timestamp + 100) * 1;
         let total_amount = 10000;
         let cliff_amount = 3000;
 
@@ -194,27 +198,27 @@ mod success {
 
         assert_eq!(vest_balance, total_amount);
 
-        produce_block_at_time(&provider, start_timestamp).await;
+        produce_block_at_height(&provider, 20).await;
 
-        let chain_info = provider.chain_info().await.unwrap();
-        println!(
-            "Current Simulated time: {:?}",
-            chain_info.latest_block.header.time.unwrap()
-        );
+        // let chain_info = provider.chain_info().await.unwrap();
+        // println!(
+        //     "Current Simulated time: {:?}",
+        //     chain_info.latest_block.header.time.unwrap()
+        // );
 
-        println!(
-            "Current Simulated time_stamp: {:?}",
-            chain_info.latest_block.header.time.unwrap().timestamp()
-        );
+        // println!(
+        //     "Current Simulated time_stamp: {:?}",
+        //     chain_info.latest_block.header.time.unwrap().timestamp()
+        // );
         // Time before cliff, no tokens should be redeemable
 
-        let res = vest.methods().get_current_time().call().await.unwrap();
+        // let res = vest.methods().get_current_time().call().await.unwrap();
 
-        println!(
-            "Timestamp on smart contract: {} timestamp not propogating",
-            res.value
-        );
-        println!("cliff_timestamp: {}", cliff_timestamp);
+        // println!(
+        //     "Timestamp on smart contract: {} timestamp not propogating",
+        //     res.value
+        // );
+        // println!("cliff_timestamp: {}", cliff_timestamp);
 
         let _res = vest
             .methods()
@@ -228,6 +232,154 @@ mod success {
             .await
             .unwrap();
 
-        println!("Reciever balance after claiming: {}", rec_balance);
+        assert_eq!(rec_balance, 0);
+
+        produce_block_at_height(&provider, cliff_timestamp - 1).await;
+        // Block produced then claim vested tokens happens in the next block
+
+        let _res = vest
+            .methods()
+            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(cliff_amount, rec_balance);
+
+        produce_block_at_height(
+            &provider,
+            end_timestamp - 1 - (end_timestamp - cliff_timestamp) / 2,
+        )
+        .await;
+
+        // Block produced then claim vested tokens happens in the next block
+        let _res = vest
+            .methods()
+            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            cliff_amount + (total_amount - cliff_amount) / 2,
+            rec_balance
+        );
+
+        produce_block_at_height(&provider, end_timestamp).await;
+        // Block produced then claim vested tokens happens in the next block
+
+        let _res = vest
+            .methods()
+            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(total_amount, rec_balance);
+    }
+
+    #[tokio::test]
+    async fn proper_revoking_vesting() {
+        let start_timestamp: u64 = 0;
+        // convert seconds to nano seconds;
+        let (vest, admin, recipient, asset) = setup().await;
+        let cliff_timestamp = (start_timestamp + 100) * 1;
+        let end_timestamp = (cliff_timestamp + 100) * 1;
+        let total_amount = 10000;
+        let cliff_amount = 3000;
+
+        let vesting_schedule = [get_vesting_schedule(
+            cliff_amount,
+            cliff_timestamp,
+            end_timestamp,
+            0,
+            total_amount,
+            Identity::Address(recipient.address().into()),
+            false,
+        )];
+
+        let _ = instantiate_vesting_contract(
+            &vest,
+            &admin.address().into(),
+            &vesting_schedule.to_vec(),
+            &asset,
+            10000,
+        )
+        .await;
+
+        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+
+        let asset_id = AssetId::from(*asset.id().hash());
+
+        let provider = admin.get_provider().unwrap();
+
+        produce_block_at_height(&provider, cliff_timestamp - 1).await;
+        // Block produced then claim vested tokens happens in the next block
+
+        let _res = vest
+            .methods()
+            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(cliff_amount, rec_balance);
+
+        produce_block_at_height(
+            &provider,
+            end_timestamp - 1 - (end_timestamp - cliff_timestamp) / 2,
+        )
+        .await;
+
+        // Block produced then claim vested tokens happens in the next block
+        let _res = vest
+            .methods()
+            .revoke_vesting_schedule(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(cliff_amount, rec_balance);
+
+        let admin_balance = provider
+            .get_asset_balance(&admin.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(total_amount - cliff_amount, admin_balance);
+
+        let vesting_schedule = vest
+            .methods()
+            .get_vesting_schedule(Identity::Address(recipient.address().into()))
+            .call()
+            .await
+            .unwrap();
+
+        assert_eq!(vesting_schedule.value, None);
     }
 }

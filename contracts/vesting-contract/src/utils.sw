@@ -10,7 +10,7 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
     }
 
     if current_time >= vesting_schedule.end_timestamp {
-        return vesting_schedule.total_amount;
+        return vesting_schedule.total_amount - vesting_schedule.claimed_amount;
     }
 
     let mut amount_redeemable = vesting_schedule.cliff_amount;
