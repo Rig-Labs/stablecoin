@@ -36,7 +36,7 @@ mod success {
         let vesting_schedule = [get_vesting_schedule(
             3000,
             1000,
-            1000,
+            2000,
             0,
             10000,
             Identity::Address(recipient.address().into()),

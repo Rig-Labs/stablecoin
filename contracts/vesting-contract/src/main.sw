@@ -6,7 +6,7 @@ dep utils;
 
 use data_structures::{Asset, VestingSchedule};
 use interface::VestingContract;
-use utils::{calculate_redeemable_amount};
+use utils::{calculate_redeemable_amount, is_valid_vesting_schedule};
 use std::{
     address::Address,
     auth::msg_sender,
@@ -49,7 +49,7 @@ impl VestingContract for Contract {
 
         while i < schedules.len() {
             let schedule = schedules.get(i).unwrap();
-
+            require(is_valid_vesting_schedule(schedule), "Invalid vesting schedule");
             let existing_schedule = storage.vesting_schedules.get(schedule.recipient);
             require(existing_schedule.is_none(), "Schedule already exists");
 
