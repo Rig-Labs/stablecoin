@@ -21,7 +21,7 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
 
     let fraction_amount_claimable = total_minus_cliff * time_elapsed / total_vesting_duration;
 
-    amount_redeemable += fraction_amount_claimable;
+    amount_redeemable += fraction_amount_claimable - vesting_schedule.claimed_amount;
 
     return amount_redeemable;
 }
