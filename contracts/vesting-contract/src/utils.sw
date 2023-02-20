@@ -25,3 +25,21 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
 
     return amount_redeemable;
 }
+
+pub fn is_valid_vesting_schedule(vesting_schedule: VestingSchedule) -> bool {
+    if vesting_schedule.cliff_timestamp >= vesting_schedule.end_timestamp
+    {
+        return false;
+    }
+
+    if vesting_schedule.cliff_amount > vesting_schedule.total_amount
+    {
+        return false;
+    }
+
+    if vesting_schedule.claimed_amount != 0 {
+        return false;
+    }
+
+    return true;
+}
