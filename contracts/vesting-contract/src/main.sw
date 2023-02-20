@@ -14,6 +14,13 @@ use std::{
         height,
         timestamp,
     },
+    call_frames::{
+        contract_id,
+        msg_asset_id,
+    },
+    context::{
+        msg_amount,
+    },
     logging::log,
     storage::{
         StorageMap,
@@ -45,11 +52,13 @@ impl VestingContract for Contract {
         asset: Asset,
     ) {
         storage.admin = admin;
+        // TODO Check that there are sufficient funds to cover all vesting schedules
         let mut i = 0;
 
         while i < schedules.len() {
             let schedule = schedules.get(i).unwrap();
             require(is_valid_vesting_schedule(schedule), "Invalid vesting schedule");
+
             let existing_schedule = storage.vesting_schedules.get(schedule.recipient);
             require(existing_schedule.is_none(), "Schedule already exists");
 
@@ -57,6 +66,7 @@ impl VestingContract for Contract {
             storage.vesting_addresses.push(schedule.recipient);
             i += 1;
         }
+
         storage.asset = asset;
     }
 
