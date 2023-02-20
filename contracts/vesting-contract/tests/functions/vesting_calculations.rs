@@ -1,14 +1,11 @@
 use crate::utils::setup::setup;
 use fuels::prelude::*;
-use fuels::{
-    prelude::{AssetId, Provider},
-    types::Identity,
-};
+use fuels::{prelude::AssetId, types::Identity};
 
 mod success {
-    use fuels::prelude::Address;
-
-    use crate::utils::setup::test_helpers::{get_vesting_schedule, instantiate_vesting_contract};
+    use crate::utils::setup::test_helpers::{
+        get_vesting_schedule, instantiate_vesting_contract, mint_to_vesting,
+    };
 
     use super::*;
 
@@ -28,7 +25,7 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &Identity::Address(admin.address().into()),
+            &admin.address().into(),
             &vesting_schedule.to_vec(),
             &asset,
             10000,
@@ -46,7 +43,7 @@ mod success {
 
         let res = vest
             .methods()
-            .get_vesting_schedule(Identity::Address(Address::from([0u8; 32]).into()))
+            .get_vesting_schedule(Identity::Address(admin.address().into()))
             .call()
             .await
             .unwrap();
@@ -74,13 +71,25 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &Identity::Address(admin.address().into()),
+            &admin.address().into(),
             &vesting_schedule.to_vec(),
             &asset,
             10000,
         )
         .await;
 
+        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+
+        let asset_id = AssetId::from(*asset.id().hash());
+
+        let provider = admin.get_provider().unwrap();
+
+        let vest_balance = provider
+            .get_contract_asset_balance(&vest.id(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(vest_balance, total_amount);
         // Time before cliff, no tokens should be redeemable
         let res = vest
             .methods()
@@ -118,14 +127,5 @@ mod success {
             .unwrap();
 
         assert_eq!(res.value, cliff_amount + (total_amount - cliff_amount) / 2);
-
-        // let assset_identity = Identity::ContractId(asset.id().into());
-        // let provider = admin.get_provider().unwrap();
-        // let balance = provider
-        //     .get_contract_asset_balance(&vest.id(), AssetId::from(asset.id()))
-        //     .await
-        //     .unwrap();
-
-        // TODO Check balances
     }
 }

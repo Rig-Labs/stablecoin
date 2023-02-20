@@ -11,6 +11,12 @@ abi VestingContract {
     #[storage(read)]
     fn get_vesting_schedule(address: Identity) -> Option<VestingSchedule>;
 
+
+    // TODO Currently interface tests break if using Vec as an output type
+
+    // #[storage(read)]
+    // fn get_vesting_addresses() -> Vec<Identity>;
+
     #[storage(read)]
     fn get_redeemable_amount(now: u64, address: Identity) -> u64;
 

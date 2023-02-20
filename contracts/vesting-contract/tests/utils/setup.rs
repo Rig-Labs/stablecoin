@@ -1,5 +1,4 @@
 use fuels::prelude::*;
-
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
 // Load abi from json
@@ -22,13 +21,18 @@ pub const ASSET_CONTRACT_STORAGE_PATH: &str =
     "./tests/artifacts/out/debug/asset-storage_slots.json";
 
 pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, MyAsset) {
+    let config = Config {
+        manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
+        ..Config::local_node()
+    };
+
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
             Some(2),             /* Single wallet */
             Some(1),             /* Single coin (UTXO) */
             Some(1_000_000_000), /* Amount per coin */
         ),
-        None,
+        Some(config),
         None,
     )
     .await;
@@ -70,19 +74,32 @@ pub mod test_helpers {
 
     pub async fn mint_to_vesting(
         contract: &MyAsset,
-        recipient: &ContractId,
+        vesting_contract: &VestingContract,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, fuels::types::errors::Error> {
-        contract
+        admin: &WalletUnlocked,
+    ) {
+        let asset_id = AssetId::from(*contract.id().hash());
+
+        let _ = contract
             .methods()
-            .mint_and_send_to_contract(amount, recipient.clone())
+            .mint_and_send_to_address(amount, admin.address().into())
+            .append_variable_outputs(1)
             .call()
-            .await
+            .await;
+
+        let _ = admin
+            .force_transfer_to_contract(
+                &vesting_contract.id(),
+                amount,
+                asset_id,
+                TxParameters::default(),
+            )
+            .await;
     }
 
     pub async fn instantiate_vesting_contract(
         contract: &VestingContract,
-        admin: &Identity,
+        admin: &Address,
         vesting_schedule: &Vec<VestingSchedule>,
         asset_contract: &MyAsset,
         amount: u64,
@@ -92,11 +109,13 @@ pub mod test_helpers {
             amount,
         };
 
-        let _ = mint_to_vesting(asset_contract, &contract.id().into(), amount).await;
-
         contract
             .methods()
-            .constructor(admin.clone(), vesting_schedule.clone(), asset.clone())
+            .constructor(
+                Identity::Address(admin.clone()),
+                vesting_schedule.clone(),
+                asset.clone(),
+            )
             .call()
             .await
     }

@@ -12,7 +12,10 @@ use std::{
     auth::msg_sender,
     block::timestamp,
     logging::log,
-    storage::StorageMap,
+    storage::{
+        StorageMap,
+        StorageVec,
+    },
     token::transfer,
 };
 
@@ -21,6 +24,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 storage {
     admin: Identity = Identity::Address(Address::from(ZERO_B256)),
     vesting_schedules: StorageMap<Identity, Option<VestingSchedule>> = StorageMap {},
+    vesting_addresses: StorageVec<Identity> = StorageVec {},
     asset: Asset = Asset::new(ContractId::from(ZERO_B256), 0),
 }
 
@@ -54,6 +58,7 @@ impl VestingContract for Contract {
             require(existing_schedule.is_none(), "Schedule already exists");
 
             storage.vesting_schedules.insert(schedule.recipient, Option::Some(schedule));
+            storage.vesting_addresses.push(schedule.recipient);
             i += 1;
         }
         storage.asset = asset;
@@ -65,12 +70,11 @@ impl VestingContract for Contract {
         let mut schedule = storage.vesting_schedules.get(address).unwrap();
         let now = timestamp();
 
-        let redeemable_amount = calculate_redeemable_amount(now, schedule);
-        let unclaimed = redeemable_amount - schedule.claimed_amount;
+        let unclaimed = calculate_redeemable_amount(now, schedule);
         require(unclaimed > 0, "Nothing to redeem");
 
         transfer(unclaimed, storage.asset.id, address);
-        schedule.claimed_amount = redeemable_amount;
+        schedule.claimed_amount += unclaimed;
 
         storage.vesting_schedules.insert(address, Option::Some(schedule));
     }
@@ -80,6 +84,18 @@ impl VestingContract for Contract {
         return storage.vesting_schedules.get(address);
     }
 
+
+    // #[storage(read)]
+    // fn get_vesting_addresses() -> Vec<Identity> {
+    //     let mut i = 0;
+    //     let mut addresses: Vec<Identity> = Vec::new();
+    //     while i < storage.vesting_addresses.len() {
+    //         let address = storage.vesting_addresses.get(i).unwrap();
+    //         addresses.push(address);
+    //         i += 1;
+    //     }
+    //     return addresses;
+    // }
     #[storage(read)]
     fn get_redeemable_amount(at_timestamp: u64, address: Identity) -> u64 {
         let schedule = storage.vesting_schedules.get(address).unwrap();
