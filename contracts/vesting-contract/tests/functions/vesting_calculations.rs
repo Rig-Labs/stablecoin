@@ -291,6 +291,22 @@ mod success {
             .unwrap();
 
         assert_eq!(total_amount, rec_balance);
+
+        produce_block_at_height(&provider, end_timestamp + 10).await;
+        // Tries to claim after all tokens have been claimed
+        let _res = vest
+            .methods()
+            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .append_variable_outputs(1)
+            .call()
+            .await;
+
+        let rec_balance = provider
+            .get_asset_balance(&recipient.address(), asset_id)
+            .await
+            .unwrap();
+
+        assert_eq!(total_amount, rec_balance);
     }
 
     #[tokio::test]
