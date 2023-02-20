@@ -17,7 +17,6 @@ async fn produce_block_at_time(provider: &Provider, start_timestamp: u64) {
     let _res = provider.produce_blocks(1, Some(time)).await;
 }
 
-
 mod success {
 
     use crate::utils::setup::test_helpers::{
@@ -209,7 +208,6 @@ mod success {
         );
         // Time before cliff, no tokens should be redeemable
 
-
         let res = vest.methods().get_current_time().call().await.unwrap();
 
         println!(
@@ -231,45 +229,5 @@ mod success {
             .unwrap();
 
         println!("Reciever balance after claiming: {}", rec_balance);
-        
-        println!("Minting asset...to admin: {:?}", admin.address());
-
-        let _res = asset
-            .methods()
-            .mint_and_send_to_address(10000, admin.address().into())
-            .append_variable_outputs(1)
-            .call()
-            .await;
-        // println!("Minting result: {:?}", res);
-
-        let asset_id = AssetId::from(*asset.id().hash());
-
-        let provider = admin.get_provider().unwrap();
-
-        let balance = provider
-            .get_asset_balance(&admin.address(), asset_id)
-            .await
-            .unwrap();
-
-        println!("Admin balance: {:?}", balance);
-
-        let _ = admin
-            .force_transfer_to_contract(&vest.id(), 99, asset_id, TxParameters::default())
-            .await;
-
-        let balance = provider
-            .get_asset_balance(&admin.address(), asset_id)
-            .await
-            .unwrap();
-
-        println!("Admin balance: {:?}", balance);
-
-        let vest_balance = provider
-            .get_contract_asset_balance(&vest.id(), asset_id)
-            .await
-            .unwrap();
-
-        println!("Vest balance: {:?}", vest_balance);
-        // TODO Check balances
     }
 }
