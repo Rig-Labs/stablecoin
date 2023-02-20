@@ -8,6 +8,7 @@ license = "Apache-2.0"
 [dev-dependencies]
 fuels = { version = "0.34.0", features = ["fuel-core-lib"] }
 tokio = { version = "1.12", features = ["rt", "macros"] }
+chrono = "0.4.19"
 # Not the latest version because of indexer bug o.o 
 # TODO - update when fixed
 

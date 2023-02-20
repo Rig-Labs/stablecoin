@@ -10,7 +10,10 @@ use utils::{calculate_redeemable_amount};
 use std::{
     address::Address,
     auth::msg_sender,
-    block::timestamp,
+    block::{
+        height,
+        timestamp,
+    },
     logging::log,
     storage::{
         StorageMap,
@@ -84,7 +87,6 @@ impl VestingContract for Contract {
         return storage.vesting_schedules.get(address);
     }
 
-
     // #[storage(read)]
     // fn get_vesting_addresses() -> Vec<Identity> {
     //     let mut i = 0;
@@ -101,5 +103,10 @@ impl VestingContract for Contract {
         let schedule = storage.vesting_schedules.get(address).unwrap();
 
         return calculate_redeemable_amount(at_timestamp, schedule);
+    }
+
+    #[storage(read)]
+    fn get_current_time() -> u64 {
+        return timestamp();
     }
 }
