@@ -1,10 +1,10 @@
 use fuels::{prelude::*, tx::ContractId};
 
 // Load abi from json
-abigen!(
-    MyContract,
-    "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
-);
+abigen!(Contract(
+    name = "MyContract",
+    abi = "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
+));
 
 // get path
 fn get_path(sub_path: String) -> String {

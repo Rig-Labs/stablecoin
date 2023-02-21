@@ -8,7 +8,7 @@ abigen!(
         abi = "contracts/vesting-contract/out/debug/vesting-contract-abi.json"
     ),
     Contract(
-        name = "MyAsset",
+        name = "Token",
         abi = "contracts/vesting-contract/tests/artifacts/out/debug/asset-abi.json"
     )
 );
@@ -20,7 +20,7 @@ pub const ASSET_CONTRACT_BINARY_PATH: &str = "./tests/artifacts/out/debug/asset.
 pub const ASSET_CONTRACT_STORAGE_PATH: &str =
     "./tests/artifacts/out/debug/asset-storage_slots.json";
 
-pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, MyAsset) {
+pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
     let config = Config {
         manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
         ..Config::local_node()
@@ -60,7 +60,7 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, MyAsse
     .await
     .unwrap();
 
-    let asset = MyAsset::new(asset_id.clone(), wallet2.clone());
+    let asset = Token::new(asset_id.clone(), wallet2.clone());
 
     (instance, wallet, wallet2, asset)
 }
@@ -73,7 +73,7 @@ pub mod test_helpers {
     use super::*;
 
     pub async fn mint_to_vesting(
-        contract: &MyAsset,
+        contract: &Token,
         vesting_contract: &VestingContract,
         amount: u64,
         admin: &WalletUnlocked,
@@ -101,9 +101,9 @@ pub mod test_helpers {
         contract: &VestingContract,
         admin: &Address,
         vesting_schedule: &Vec<VestingSchedule>,
-        asset_contract: &MyAsset,
+        asset_contract: &Token,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, fuels::types::errors::Error> {
+    ) -> Result<FuelCallResponse<()>> {
         let asset: Asset = Asset {
             id: asset_contract.id().into(),
             amount,

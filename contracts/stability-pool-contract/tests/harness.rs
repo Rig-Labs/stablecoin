@@ -1,10 +1,10 @@
 use fuels::{prelude::*, tx::ContractId};
 
 // Load abi from json
-abigen!(
-    MyContract,
-    "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
-);
+abigen!(Contract(
+    name = "OracleContract",
+    abi = "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
+));
 
 // get path
 fn get_path(sub_path: String) -> String {
@@ -13,7 +13,7 @@ fn get_path(sub_path: String) -> String {
     path.to_str().unwrap().to_string()
 }
 
-async fn get_contract_instance() -> (MyContract, ContractId) {
+async fn get_contract_instance() -> (OracleContract, ContractId) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -38,7 +38,7 @@ async fn get_contract_instance() -> (MyContract, ContractId) {
     .await
     .unwrap();
 
-    let instance = MyContract::new(id.clone(), wallet);
+    let instance = OracleContract::new(id.clone(), wallet);
 
     (instance, id.into())
 }

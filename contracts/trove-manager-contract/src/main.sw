@@ -1,34 +1,19 @@
 contract;
 
+use libraries::trove_manager_interface::{TroveManager};
+
 storage {
-    price: u64 = 0,
-    precision: u64 = 6,
+    nominal_icr: StorageMap<Identity, u64> = StorageMap {},
 }
 
-abi MockOracle {
-    #[storage(write)]
-    fn set_price(price: u64);
-
+impl TroveManager for Contract {
     #[storage(read)]
-    fn get_price() -> u64;
-
-    #[storage(read)]
-    fn get_precision() -> u64;
-}
-
-impl MockOracle for Contract {
-    #[storage(read)]
-    fn get_price() -> u64 {
-        storage.price
+    fn get_nominal_icr(id: Identity) -> u64 {
+        return storage.nominal_icr.get(id);
     }
 
-    #[storage(read)]
-    fn get_precision() -> u64 {
-        storage.precision
-    }
-
-    #[storage(write)]
-    fn set_price(_price: u64) {
-        storage.price = _price
+    #[storage(read, write)]
+    fn set_nominal_icr(id: Identity, value: u64) {
+        return storage.nominal_icr.insert(id, value);
     }
 }
