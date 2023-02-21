@@ -23,7 +23,6 @@ abi VestingContract {
     #[storage(read)]
     fn get_current_time() -> u64;
     // TODO Remove this when Fuel fixes internal time issue
-
     // TODO Currently interface tests break if using Vec as an output type
     // #[storage(read)]
     // fn get_vesting_addresses() -> Vec<Identity>;
