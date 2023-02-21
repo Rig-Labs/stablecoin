@@ -1,10 +1,10 @@
 use fuels::{prelude::*, tx::ContractId};
 
 // Load abi from json
-abigen!(
-    MyContract,
-    "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
-);
+abigen!(Contract(
+    name = "SortedTroves",
+    abi = "contracts/sorted-troves-contract/out/debug/sorted-troves-contract-abi.json"
+));
 
 // get path
 fn get_path(sub_path: String) -> String {
@@ -13,7 +13,7 @@ fn get_path(sub_path: String) -> String {
     path.to_str().unwrap().to_string()
 }
 
-async fn get_contract_instance() -> (MyContract, ContractId) {
+async fn get_contract_instance() -> (SortedTroves, ContractId) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -28,17 +28,17 @@ async fn get_contract_instance() -> (MyContract, ContractId) {
     let wallet = wallets.pop().unwrap();
 
     let id = Contract::deploy(
-        &get_path("out/debug/mock-oracle-contract.bin".to_string()),
+        &get_path("out/debug/sorted-troves-contract.bin".to_string()),
         &wallet,
         TxParameters::default(),
         StorageConfiguration::with_storage_path(Some(get_path(
-            "out/debug/mock-oracle-contract-storage_slots.json".to_string(),
+            "out/debug/sorted-troves-contract-storage_slots.json".to_string(),
         ))),
     )
     .await
     .unwrap();
 
-    let instance = MyContract::new(id.clone(), wallet);
+    let instance = SortedTroves::new(id.clone(), wallet);
 
     (instance, id.into())
 }
@@ -48,19 +48,19 @@ async fn can_set_proper_price() {
     let (instance, _id) = get_contract_instance().await;
     let new_price: u64 = 100;
     // Increment the counter
-    let _result = instance
-        .methods()
-        .set_price(new_price)
-        .call()
-        .await
-        .unwrap();
+    // let _result = instance
+    //     .methods()
+    //     .set_price(new_price)
+    //     .call()
+    //     .await
+    //     .unwrap();
 
-    // Get the current value of the counter
-    let result = instance.methods().get_price().call().await.unwrap();
+    // // Get the current value of the counter
+    // let result = instance.methods().get_price().call().await.unwrap();
 
-    // Check that the current value of the counter is 1.
-    // Recall that the initial value of the counter was 0.
-    assert_eq!(result.value, new_price);
+    // // Check that the current value of the counter is 1.
+    // // Recall that the initial value of the counter was 0.
+    // assert_eq!(result.value, new_price);
 
     // Now you have an instance of your contract you can use to test each function
 }
