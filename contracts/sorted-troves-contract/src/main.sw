@@ -199,12 +199,12 @@ fn internal_valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity
         return internal_is_empty();
     } else if (prev_id == Identity::Address(Address::from(ZERO_B256)))
     {
-        return storage.head == next_id && icr >= trove_manager_contract.get_nominal_irc(next_id);
+        return storage.head == next_id && icr >= trove_manager_contract.get_nominal_icr(next_id);
     } else if (next_id == Identity::Address(Address::from(ZERO_B256)))
     {
-        return storage.tail == prev_id && icr <= trove_manager_contract.get_nominal_irc(prev_id);
+        return storage.tail == prev_id && icr <= trove_manager_contract.get_nominal_icr(prev_id);
     } else {
-        return storage.nodes.get(prev_id).next_id == next_id && trove_manager_contract.get_nominal_irc(prev_id) >= icr && icr >= trove_manager_contract.get_nominal_irc(next_id);
+        return storage.nodes.get(prev_id).next_id == next_id && trove_manager_contract.get_nominal_icr(prev_id) >= icr && icr >= trove_manager_contract.get_nominal_icr(next_id);
     }
 
     return true;
@@ -236,7 +236,7 @@ fn internal_find_insert_position(
     if (prev_id != Identity::Address(Address::from(ZERO_B256)))
     {
         if (!internal_contains(prev_id)
-            || icr > trove_manager_contract.get_nominal_irc(prev_id))
+            || icr > trove_manager_contract.get_nominal_icr(prev_id))
         {
             prev_id = Identity::Address(Address::from(ZERO_B256))
         }
@@ -245,7 +245,7 @@ fn internal_find_insert_position(
     if (next_id != Identity::Address(Address::from(ZERO_B256)))
     {
         if (!internal_contains(next_id)
-            || icr < trove_manager_contract.get_nominal_irc(prev_id))
+            || icr < trove_manager_contract.get_nominal_icr(prev_id))
         {
             next_id = Identity::Address(Address::from(ZERO_B256))
         }
@@ -271,7 +271,7 @@ fn internal_descend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) 
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
     if (storage.head == start_id
-        && nicr >= trove_manager_contract.get_nominal_irc(start_id))
+        && nicr >= trove_manager_contract.get_nominal_icr(start_id))
     {
         return (Identity::Address(Address::from(ZERO_B256)), start_id);
     }
@@ -292,7 +292,7 @@ fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
     if (storage.tail == start_id
-        && nicr <= trove_manager_contract.get_nominal_irc(start_id))
+        && nicr <= trove_manager_contract.get_nominal_icr(start_id))
     {
         return (start_id, Identity::Address(Address::from(ZERO_B256)));
     }
