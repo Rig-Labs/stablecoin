@@ -103,7 +103,7 @@ pub mod test_helpers {
         vesting_schedule: &Vec<VestingSchedule>,
         asset_contract: &MyAsset,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, fuels::types::errors::Error> {
+    ) -> Result<FuelCallResponse<()>> {
         let asset: Asset = Asset {
             id: asset_contract.id().into(),
             amount,
