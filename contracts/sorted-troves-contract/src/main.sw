@@ -79,7 +79,14 @@ impl SortedTroves for Contract {
         nicr: u64,
         prev_id: Identity,
         next_id: Identity,
-    ) {}
+    ) {
+        require_is_bo_or_tm();
+        require(internal_contains(id), "id must exist");
+        require(nicr > 0, "nicr must be greater than 0");
+
+        internal_remove(id);
+        internal_insert(id, nicr, prev_id, next_id);
+    }
 
     #[storage(read)]
     fn contains(id: Identity) -> bool {
