@@ -68,7 +68,10 @@ impl SortedTroves for Contract {
     }
 
     #[storage(read, write)]
-    fn remove(id: Identity) {}
+    fn remove(id: Identity) {
+        require_is_trove_manager();
+        internal_remove(id);
+    }
 
     #[storage(read, write)]
     fn re_insert(
@@ -359,4 +362,46 @@ fn internal_insert(
 
     storage.nodes.insert(id, new_node);
     storage.size += 1;
+}
+
+#[storage(read, write)]
+fn internal_remove(id: Identity) {
+    require(internal_contains(id), "id does not exist");
+
+    let mut node = storage.nodes.get(id);
+
+    if (storage.size > 1) {
+        if (id == storage.head) {
+            storage.head = node.next_id;
+
+            let mut next_node = storage.nodes.get(node.next_id);
+            next_node.prev_id = Identity::Address(Address::from(ZERO_B256));
+            storage.nodes.insert(node.next_id, next_node);
+        } else if (id == storage.tail) {
+            storage.tail = node.prev_id;
+
+            let mut prev_node = storage.nodes.get(node.prev_id);
+            prev_node.next_id = Identity::Address(Address::from(ZERO_B256));
+            storage.nodes.insert(node.prev_id, prev_node);
+        } else {
+            let mut prev_node = storage.nodes.get(node.prev_id);
+            prev_node.next_id = node.next_id;
+            storage.nodes.insert(node.prev_id, prev_node);
+
+            let mut next_node = storage.nodes.get(node.next_id);
+            next_node.prev_id = node.prev_id;
+            storage.nodes.insert(node.next_id, next_node);
+        }
+    } else {
+        storage.head = Identity::Address(Address::from(ZERO_B256));
+        storage.tail = Identity::Address(Address::from(ZERO_B256));
+    }
+
+    // TODO use storage.nodes.remove(id) when available
+    node.exists = false;
+    node.prev_id = Identity::Address(Address::from(ZERO_B256));
+    node.next_id = Identity::Address(Address::from(ZERO_B256));
+    storage.nodes.insert(id, node);
+
+    storage.size -= 1;
 }
