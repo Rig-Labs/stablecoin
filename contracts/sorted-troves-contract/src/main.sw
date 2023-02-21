@@ -1,6 +1,7 @@
 contract;
 
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::trove_manager_interface::{TroveManager};
 use libraries::data_structures::Node;
 
 use std::{
@@ -17,6 +18,7 @@ use std::{
     context::{
         msg_amount,
     },
+    identity::Identity,
     logging::log,
     storage::{
         StorageMap,
@@ -29,9 +31,9 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 
 storage {
     size: u64 = 0,
-    max_size: u64 = 1000,
-    trove_manager_identity: Identity = Identity::Address(Address::from(ZERO_B256)),
-    borrower_operations_identity: Identity = Identity::Address(Address::from(ZERO_B256)),
+    max_size: u64 = 0,
+    trove_manager_contract_id: ContractId = ContractId::from(ZERO_B256),
+    borrower_operations_identity: ContractId = ContractId::from(ZERO_B256),
     head: Identity = Identity::Address(Address::from(ZERO_B256)),
     tail: Identity = Identity::Address(Address::from(ZERO_B256)),
     nodes: StorageMap<Identity, Node> = StorageMap {},
@@ -41,16 +43,16 @@ impl SortedTroves for Contract {
     #[storage(read, write)]
     fn set_params(
         size: u64,
-        trove_manager_identity: Identity,
-        borrower_operations_identity: Identity,
+        trove_manager_contract_id: ContractId,
+        borrower_operations_contract_id: ContractId,
     ) {
         require(size > 0, "size must be greater than 0");
-        require(trove_manager_identity == Identity::Address(Address::from(ZERO_B256)), "trove_manager_identity must not be set");
-        require(borrower_operations_identity == Identity::Address(Address::from(ZERO_B256)), "borrower_operations_identity must not be set");
+        require(storage.trove_manager_contract_id == ContractId::from(ZERO_B256), "trove_manager_identity must not be set");
+        require(storage.borrower_operations_identity == ContractId::from(ZERO_B256), "borrower_operations_identity must not be set");
 
         storage.max_size = size;
-        storage.trove_manager_identity = trove_manager_identity;
-        storage.borrower_operations_identity = borrower_operations_identity;
+        storage.trove_manager_contract_id = trove_manager_contract_id;
+        storage.borrower_operations_identity = borrower_operations_contract_id;
     }
 
     #[storage(read, write)]
@@ -79,7 +81,7 @@ impl SortedTroves for Contract {
 
     #[storage(read)]
     fn is_empty() -> bool {
-        return storage.size == 0;
+        return internal_is_empty();
     }
 
     #[storage(read)]
@@ -114,7 +116,7 @@ impl SortedTroves for Contract {
 
     #[storage(read)]
     fn valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
-        return true
+        return internal_valid_insert_position(icr, next_id, prev_id);
     }
 
     #[storage(read)]
@@ -127,13 +129,37 @@ impl SortedTroves for Contract {
 }
 
 #[storage(read)]
+fn internal_is_empty() -> bool {
+    return storage.size == 0;
+}
+#[storage(read)]
+fn internal_valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
+    let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+    if (next_id == Identity::Address(Address::from(ZERO_B256))
+        && prev_id == Identity::Address(Address::from(ZERO_B256)))
+    {
+        return internal_is_empty();
+    } else if (prev_id == Identity::Address(Address::from(ZERO_B256)))
+    {
+        return storage.head == next_id && icr >= trove_manager_contract.get_nominal_irc(next_id);
+    } else if (next_id == Identity::Address(Address::from(ZERO_B256)))
+    {
+        return storage.tail == prev_id && icr <= trove_manager_contract.get_nominal_irc(prev_id);
+    } else {
+        return storage.nodes.get(prev_id).next_id == next_id && trove_manager_contract.get_nominal_irc(prev_id) >= icr && icr >= trove_manager_contract.get_nominal_irc(next_id);
+    }
+
+    return true;
+}
+
+#[storage(read)]
 fn require_is_trove_manager() {
     let sender = msg_sender().unwrap();
-    require(storage.trove_manager_identity == sender, "Access denied");
+    require(Identity::ContractId(storage.trove_manager_contract_id) == sender, "Access denied");
 }
 
 #[storage(read)]
 fn require_is_bo_or_tm() {
     let sender = msg_sender().unwrap();
-    require(storage.borrower_operations_identity == sender || storage.trove_manager_identity == sender, "Access denied");
+    require(Identity::ContractId(storage.trove_manager_contract_id) == sender || Identity::ContractId(storage.trove_manager_contract_id) == sender, "Access denied");
 }
