@@ -56,7 +56,15 @@ impl SortedTroves for Contract {
     }
 
     #[storage(read, write)]
-    fn insert(id: Identity, icr: u64, prev_id: Identity, next_id: Identity) {}
+    fn insert(id: Identity, icr: u64, prev_id: Identity, next_id: Identity) {
+        require_is_bo_or_tm();
+
+        let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+        require(!internal_is_full(), "list is full");
+        require(!internal_contains(id), "id already exists");
+        require(Identity::Address(Address::from(ZERO_B256)) != id, "id must not be zero");
+        require(icr > 0, "icr must be greater than 0");
+    }
 
     #[storage(read, write)]
     fn remove(id: Identity) {}
@@ -71,12 +79,12 @@ impl SortedTroves for Contract {
 
     #[storage(read)]
     fn contains(id: Identity) -> bool {
-        return storage.nodes.get(id).exists;
+        return internal_contains(id);
     }
 
     #[storage(read)]
     fn is_full() -> bool {
-        return storage.size == storage.max_size;
+        return internal_is_full();
     }
 
     #[storage(read)]
@@ -86,32 +94,32 @@ impl SortedTroves for Contract {
 
     #[storage(read)]
     fn get_size() -> u64 {
-        return storage.size;
+        return internal_get_size();
     }
 
     #[storage(read)]
     fn get_max_size() -> u64 {
-        return storage.max_size;
+        return internal_get_max_size();
     }
 
     #[storage(read)]
     fn get_first() -> Identity {
-        return storage.head;
+        return internal_get_first();
     }
 
     #[storage(read)]
     fn get_last() -> Identity {
-        return storage.tail;
+        return internal_get_last();
     }
 
     #[storage(read)]
     fn get_next(id: Identity) -> Identity {
-        return storage.nodes.get(id).next_id;
+        return internal_get_next(id);
     }
 
     #[storage(read)]
     fn get_prev(id: Identity) -> Identity {
-        return storage.nodes.get(id).prev_id;
+        return internal_get_prev(id);
     }
 
     #[storage(read)]
@@ -121,20 +129,59 @@ impl SortedTroves for Contract {
 
     #[storage(read)]
     fn find_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> (Identity, Identity) {
-        return (
-            Identity::Address(Address::from(ZERO_B256)),
-            Identity::Address(Address::from(ZERO_B256)),
-        )
+        return internal_find_insert_position(icr, next_id, prev_id);
     }
+}
+
+#[storage(read)]
+fn internal_get_first() -> Identity {
+    return storage.head;
+}
+
+#[storage(read)]
+fn internal_get_last() -> Identity {
+    return storage.tail;
+}
+
+#[storage(read)]
+fn internal_get_next(id: Identity) -> Identity {
+    return storage.nodes.get(id).next_id;
+}
+
+#[storage(read)]
+fn internal_get_prev(id: Identity) -> Identity {
+    return storage.nodes.get(id).prev_id;
+}
+
+#[storage(read)]
+fn internal_get_max_size() -> u64 {
+    return storage.max_size;
+}
+
+#[storage(read)]
+fn internal_get_size() -> u64 {
+    return storage.size;
+}
+
+#[storage(read)]
+fn internal_is_full() -> bool {
+    return storage.size == storage.max_size;
 }
 
 #[storage(read)]
 fn internal_is_empty() -> bool {
     return storage.size == 0;
 }
+
+#[storage(read)]
+fn internal_contains(id: Identity) -> bool {
+    return storage.nodes.get(id).exists;
+}
+
 #[storage(read)]
 fn internal_valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+
     if (next_id == Identity::Address(Address::from(ZERO_B256))
         && prev_id == Identity::Address(Address::from(ZERO_B256)))
     {
@@ -162,4 +209,58 @@ fn require_is_trove_manager() {
 fn require_is_bo_or_tm() {
     let sender = msg_sender().unwrap();
     require(Identity::ContractId(storage.trove_manager_contract_id) == sender || Identity::ContractId(storage.trove_manager_contract_id) == sender, "Access denied");
+}
+
+#[storage(read)]
+fn internal_find_insert_position(
+    icr: u64,
+    next_id: Identity,
+    prev_id: Identity,
+) -> (Identity, Identity) {
+    return (
+        Identity::Address(Address::from(ZERO_B256)),
+        Identity::Address(Address::from(ZERO_B256)),
+    )
+}
+
+#[storage(read)]
+fn internal_descend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
+    let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+
+    if (storage.head == start_id
+        && nicr >= trove_manager_contract.get_nominal_irc(start_id))
+    {
+        return (Identity::Address(Address::from(ZERO_B256)), start_id);
+    }
+
+    let mut prev_id = start_id;
+    let mut next_id = storage.nodes.get(prev_id).next_id;
+
+    while (prev_id != Identity::Address(Address::from(ZERO_B256)) && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+        prev_id = storage.nodes.get(prev_id).next_id;
+        next_id = storage.nodes.get(prev_id).next_id;
+    }
+
+    return (prev_id, next_id);
+}
+
+#[storage(read)]
+fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
+    let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+
+    if (storage.tail == start_id
+        && nicr <= trove_manager_contract.get_nominal_irc(start_id))
+    {
+        return (start_id, Identity::Address(Address::from(ZERO_B256)));
+    }
+
+    let mut next_id = start_id;
+    let mut prev_id = storage.nodes.get(next_id).prev_id;
+
+    while (next_id != Identity::Address(Address::from(ZERO_B256)) && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+        next_id = storage.nodes.get(next_id).prev_id;
+        prev_id = storage.nodes.get(next_id).prev_id;
+    }
+
+    return (prev_id, next_id);
 }
