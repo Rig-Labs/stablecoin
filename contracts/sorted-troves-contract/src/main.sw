@@ -57,14 +57,14 @@ impl SortedTroves for Contract {
 
     #[storage(read, write)]
     fn insert(
-        id: Identity,
-        nicr: u64,
+        _id: Identity,
+        _nicr: u64,
         _prev_id: Identity,
         _next_id: Identity,
     ) {
         require_is_bo_or_tm();
 
-        internal_insert(id, nicr, _prev_id, _next_id);
+        internal_insert(_id, _nicr, _prev_id, _next_id);
     }
 
     #[storage(read, write)]
@@ -315,7 +315,7 @@ fn internal_insert(
     _prev_id: Identity,
     _next_id: Identity,
 ) {
-    let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
+    let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.into());
     require(!internal_is_full(), "list is full");
     require(!internal_contains(id), "id already exists");
     require(Identity::Address(Address::from(ZERO_B256)) != id, "id must not be zero");
