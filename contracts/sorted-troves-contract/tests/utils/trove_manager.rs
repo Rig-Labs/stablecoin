@@ -27,6 +27,18 @@ pub mod trove_manager_abi_calls {
             .await
             .unwrap()
     }
+
+    pub async fn get_nominal_icr(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_nominal_icr(id)
+            .call()
+            .await
+            .unwrap()
+    }
 }
 
 pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveManagerContract {

@@ -345,32 +345,48 @@ fn internal_insert(
     } else if (prev_id == Identity::Address(Address::from(ZERO_B256)))
     {
         new_node.next_id = storage.head;
-        let mut temp_prev_node = storage.nodes.get(storage.head);
-        temp_prev_node.prev_id = id;
-        storage.nodes.insert(storage.head, temp_prev_node);
+
+        edit_node_neighbors(storage.head, Option::Some(id), Option::None);
+
         storage.head = id;
     } else if (next_id == Identity::Address(Address::from(ZERO_B256)))
     {
         new_node.prev_id = storage.tail;
-        let mut temp_next_node = storage.nodes.get(storage.tail);
-        temp_next_node.next_id = id;
-        storage.nodes.insert(storage.tail, temp_next_node);
+
+        edit_node_neighbors(storage.tail, Option::None, Option::Some(id));
+
         storage.tail = id;
     } else {
         new_node.prev_id = prev_id;
         new_node.next_id = next_id;
 
-        let mut temp_prev_node = storage.nodes.get(prev_id);
-        temp_prev_node.next_id = id;
-        storage.nodes.insert(prev_id, temp_prev_node);
+        edit_node_neighbors(prev_id, Option::None, Option::Some(id));
 
-        let mut temp_next_node = storage.nodes.get(next_id);
-        temp_next_node.prev_id = id;
-        storage.nodes.insert(next_id, temp_next_node);
+        edit_node_neighbors(next_id, Option::Some(id), Option::None);
     }
 
     storage.nodes.insert(id, new_node);
     storage.size += 1;
+}
+
+#[storage(read, write)]
+fn edit_node_neighbors(
+    id: Identity,
+    prev_id: Option<Identity>,
+    next_id: Option<Identity>,
+) {
+    // TODO Update when StorageMap supports updating values
+    let mut node = storage.nodes.get(id);
+
+    if (prev_id.is_some()) {
+        node.prev_id = prev_id.unwrap();
+    }
+
+    if (next_id.is_some()) {
+        node.next_id = next_id.unwrap();
+    }
+
+    storage.nodes.insert(id, node);
 }
 
 #[storage(read, write)]
@@ -382,7 +398,6 @@ fn internal_remove(id: Identity) {
     if (storage.size > 1) {
         if (id == storage.head) {
             storage.head = node.next_id;
-
             let mut next_node = storage.nodes.get(node.next_id);
             next_node.prev_id = Identity::Address(Address::from(ZERO_B256));
             storage.nodes.insert(node.next_id, next_node);
