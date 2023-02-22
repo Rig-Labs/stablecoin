@@ -65,3 +65,27 @@ pub async fn setup() -> (
 
     (st_instance, trove_instance, wallet3, wallet4)
 }
+
+pub async fn initialize(
+    sorted_troves: &SortedTroves,
+    trove_manager: &TroveManagerContract,
+    max_size: u64,
+) {
+    let _result = sorted_troves
+        .methods()
+        .set_params(
+            max_size,
+            trove_manager.contract_id().into(),
+            trove_manager.contract_id().into(),
+        )
+        .call()
+        .await
+        .unwrap();
+
+    let _result = trove_manager
+        .methods()
+        .initialize(sorted_troves.contract_id().into())
+        .call()
+        .await
+        .unwrap();
+}
