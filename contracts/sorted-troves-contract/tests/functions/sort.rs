@@ -202,6 +202,9 @@ async fn proper_node_neighbors() {
     )
     .await;
 
+    // Current state
+    // wallet: 100
+
     let _ = assert_neighbors(
         &sorted_troves,
         Identity::Address(wallet.address().into()),
@@ -220,6 +223,9 @@ async fn proper_node_neighbors() {
     )
     .await;
 
+    // Current state
+    // wallet2: 200 -> wallet: 100
+
     let _ = assert_neighbors(
         &sorted_troves,
         Identity::Address(wallet2.address().into()),
@@ -237,6 +243,9 @@ async fn proper_node_neighbors() {
     )
     .await;
 
+    // Current state
+    // trove_manager: 300 -> wallet2: 200 -> wallet: 100
+
     let _ = assert_neighbors(
         &sorted_troves,
         Identity::ContractId(trove_manager.contract_id().into()),
@@ -253,6 +262,9 @@ async fn proper_node_neighbors() {
         Identity::Address([0; 32].into()),
     )
     .await;
+
+    // Current state
+    // trove_manager: 300 -> wallet2: 200 -> sorted_troves: 150 -> wallet: 100
 
     let _ = assert_neighbors(
         &sorted_troves,
