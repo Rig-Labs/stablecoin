@@ -326,7 +326,9 @@ fn internal_insert(
 
     if (!internal_valid_insert_position(nicr, prev_id, next_id))
     {
-        let (next_id, prev_id) = internal_find_insert_position(nicr, prev_id, next_id);
+        let res = internal_find_insert_position(nicr, prev_id, next_id);
+        prev_id = res.0;
+        next_id = res.1;
     }
 
     let mut new_node = Node {

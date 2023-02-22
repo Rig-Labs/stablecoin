@@ -1,6 +1,8 @@
 use fuels::{prelude::TxParameters, types::Identity};
 
+use crate::functions::sort;
 use crate::utils::setup::setup;
+use crate::utils::trove_manager::trove_manager_abi_calls;
 
 #[tokio::test]
 async fn proper_initialization() {
@@ -41,8 +43,8 @@ async fn proper_initialization() {
 }
 
 #[tokio::test]
-async fn proper_insert() {
-    let (sorted_troves, trove_manager, wallet, _wallet2) = setup().await;
+async fn proper_head_and_tails_after_insert() {
+    let (sorted_troves, trove_manager, wallet, wallet2) = setup().await;
     let max_size: u64 = 1000;
     // Increment the counter
     let _result = sorted_troves
@@ -109,19 +111,107 @@ async fn proper_insert() {
         (
             Identity::Address([0; 32].into()),
             Identity::Address([0; 32].into())
-        )
+        ),
+        "Empty list should return 0, 0 placements"
     );
 
-    let result = sorted_troves.methods().get_max_size().call().await.unwrap();
-
-    assert_eq!(result.value, max_size);
+    let _ = trove_manager_abi_calls::set_nominal_icr_and_insert(
+        &trove_manager,
+        &sorted_troves,
+        Identity::Address(wallet.address().into()),
+        100,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
 
     let result_size = sorted_troves.methods().get_size().call().await.unwrap();
-    assert_eq!(result_size.value, 0);
+    assert_eq!(result_size.value, 1);
 
     let first = sorted_troves.methods().get_first().call().await.unwrap();
-    assert_eq!(first.value, Identity::Address([0; 32].into()));
+    assert_eq!(first.value, Identity::Address(wallet.address().into()));
 
     let last = sorted_troves.methods().get_last().call().await.unwrap();
-    assert_eq!(last.value, Identity::Address([0; 32].into()));
+    assert_eq!(last.value, Identity::Address(wallet.address().into()));
+
+    let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
+        &trove_manager,
+        &sorted_troves,
+        Identity::Address(wallet2.address().into()),
+        200,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    assert_eq!(result_size.value, 2);
+
+    let first = sorted_troves.methods().get_first().call().await.unwrap();
+    assert_eq!(
+        first.value,
+        Identity::Address(wallet2.address().into()),
+        "First should be wallet2"
+    );
+
+    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    assert_eq!(
+        last.value,
+        Identity::Address(wallet.address().into()),
+        "Last should be wallet"
+    );
+
+    let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
+        &trove_manager,
+        &sorted_troves,
+        Identity::ContractId(trove_manager.contract_id().into()),
+        300,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    assert_eq!(result_size.value, 3);
+
+    let first = sorted_troves.methods().get_first().call().await.unwrap();
+    assert_eq!(
+        first.value,
+        Identity::ContractId(trove_manager.contract_id().into()),
+        "First should be trove manager"
+    );
+
+    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    assert_eq!(
+        last.value,
+        Identity::Address(wallet.address().into()),
+        "Last should be wallet"
+    );
+
+    let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
+        &trove_manager,
+        &sorted_troves,
+        Identity::ContractId(sorted_troves.contract_id().into()),
+        150,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    assert_eq!(result_size.value, 4);
+
+    let first = sorted_troves.methods().get_first().call().await.unwrap();
+    assert_eq!(
+        first.value,
+        Identity::ContractId(trove_manager.contract_id().into()),
+        "First should be trove manager"
+    );
+
+    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    assert_eq!(
+        last.value,
+        Identity::Address(wallet.address().into()),
+        "Last should be wallet"
+    );
 }

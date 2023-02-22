@@ -1,4 +1,6 @@
 use fuels::prelude::*;
+
+use super::trove_manager::deploy_trove_manager_contract;
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
 // Load abi from json
@@ -59,26 +61,7 @@ pub async fn setup() -> (
 
     let st_instance = SortedTroves::new(id.clone(), wallet);
 
-    let trove_id = Contract::deploy(
-        &get_path("../trove-manager-contract/out/debug/trove-manager-contract.bin".to_string()),
-        &wallet2,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            "../trove-manager-contract/out/debug/trove-manager-contract-storage_slots.json"
-                .to_string(),
-        ))),
-    )
-    .await
-    .unwrap();
-
-    let trove_instance = TroveManagerContract::new(trove_id.clone(), wallet2);
+    let trove_instance = deploy_trove_manager_contract(&wallet2).await;
 
     (st_instance, trove_instance, wallet3, wallet4)
-}
-
-pub mod test_helpers {
-    use fuels::programs::call_response::FuelCallResponse;
-    use fuels::types::Identity;
-
-    use super::*;
 }
