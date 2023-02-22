@@ -20,11 +20,14 @@ fn get_path(sub_path: String) -> String {
     path.push(sub_path);
     path.to_str().unwrap().to_string()
 }
-pub async fn setup() -> (
+pub async fn setup(
+    num_wallets: Option<u64>,
+) -> (
     SortedTroves,
     TroveManagerContract,
     WalletUnlocked,
     WalletUnlocked,
+    Vec<WalletUnlocked>,
 ) {
     // Launch a local network and deploy the contract
     let config = Config {
@@ -34,7 +37,7 @@ pub async fn setup() -> (
 
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
-            Some(4),             /* Single wallet */
+            num_wallets,         /* Single wallet */
             Some(1),             /* Single coin (UTXO) */
             Some(1_000_000_000), /* Amount per coin */
         ),
@@ -63,7 +66,7 @@ pub async fn setup() -> (
 
     let trove_instance = deploy_trove_manager_contract(&wallet2).await;
 
-    (st_instance, trove_instance, wallet3, wallet4)
+    (st_instance, trove_instance, wallet3, wallet4, wallets)
 }
 
 pub async fn initialize(

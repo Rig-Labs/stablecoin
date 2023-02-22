@@ -11,6 +11,10 @@ pub mod sorted_troves_abi_calls {
         sorted_troves.methods().get_first().call().await.unwrap()
     }
 
+    pub async fn get_last(sorted_troves: &SortedTroves) -> FuelCallResponse<Identity> {
+        sorted_troves.methods().get_last().call().await.unwrap()
+    }
+
     pub async fn get_next(
         sorted_troves: &SortedTroves,
         id: Identity,
