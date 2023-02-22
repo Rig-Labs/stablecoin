@@ -1,10 +1,9 @@
-use fuels::signers::fuel_crypto::rand::{self, Rng};
 use fuels::{prelude::TxParameters, types::Identity};
 
 use crate::utils::setup::{initialize, setup};
 use crate::utils::sorted_troves::sorted_troves_abi_calls;
 use crate::utils::sorted_troves::sorted_troves_utils::{
-    assert_ascending_in_order, assert_descending_in_order, assert_neighbors,
+    assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
 };
 use crate::utils::trove_manager::trove_manager_abi_calls;
 
@@ -284,27 +283,36 @@ async fn proper_insertion_of_random_nodes() {
 
     let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
 
-    let mut count = 0;
-    let mut rng = rand::thread_rng();
+    let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
 
-    while count < max_size {
-        let random_number = rng.gen::<u64>() % 10000;
-        let random_address = rng.gen::<[u8; 32]>();
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
 
-        let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
-            &trove_manager,
-            &sorted_troves,
-            Identity::Address(random_address.into()),
-            random_number,
-            Identity::Address([0; 32].into()),
-            Identity::Address([0; 32].into()),
-        )
-        .await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+}
 
-        count += 1;
-    }
+#[tokio::test]
+async fn proper_removal() {
+    let max_size: u64 = 25;
+    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
-    let _ = assert_ascending_in_order(&sorted_troves, &trove_manager);
+    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
 
-    let _ = assert_descending_in_order(&sorted_troves, &trove_manager);
+    let mut nodes = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
+
+    // get random node
+    let rand_node = nodes.pop().unwrap();
+
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
+
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+
+    let rand_node = nodes.pop().unwrap();
+
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
+
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
 }

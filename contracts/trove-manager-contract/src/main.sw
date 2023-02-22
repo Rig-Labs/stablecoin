@@ -39,4 +39,11 @@ impl TroveManager for Contract {
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         sorted_troves_contract.insert(id, value, prev_id, next_id);
     }
+
+    #[storage(read, write)]
+    fn remove(id: Identity) {
+        storage.nominal_icr.insert(id, 0);
+        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+        sorted_troves_contract.remove(id);
+    }
 }

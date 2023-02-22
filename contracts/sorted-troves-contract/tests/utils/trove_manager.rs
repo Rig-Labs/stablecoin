@@ -39,6 +39,23 @@ pub mod trove_manager_abi_calls {
             .await
             .unwrap()
     }
+
+    pub async fn remove(
+        trove_manager: &TroveManagerContract,
+        sorted_troves: &SortedTroves,
+        id: Identity,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .remove(id)
+            .set_contracts(&[sorted_troves])
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
 }
 
 pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveManagerContract {

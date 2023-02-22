@@ -70,6 +70,7 @@ impl SortedTroves for Contract {
     #[storage(read, write)]
     fn remove(id: Identity) {
         require_is_trove_manager();
+
         internal_remove(id);
     }
 
@@ -81,6 +82,7 @@ impl SortedTroves for Contract {
         next_id: Identity,
     ) {
         require_is_bo_or_tm();
+
         require(internal_contains(id), "id must exist");
         require(nicr > 0, "nicr must be greater than 0");
 
@@ -398,23 +400,16 @@ fn internal_remove(id: Identity) {
     if (storage.size > 1) {
         if (id == storage.head) {
             storage.head = node.next_id;
-            let mut next_node = storage.nodes.get(node.next_id);
-            next_node.prev_id = Identity::Address(Address::from(ZERO_B256));
-            storage.nodes.insert(node.next_id, next_node);
+
+            edit_node_neighbors(node.next_id, Option::Some(Identity::Address(Address::from(ZERO_B256))), Option::None);
         } else if (id == storage.tail) {
             storage.tail = node.prev_id;
 
-            let mut prev_node = storage.nodes.get(node.prev_id);
-            prev_node.next_id = Identity::Address(Address::from(ZERO_B256));
-            storage.nodes.insert(node.prev_id, prev_node);
+            edit_node_neighbors(node.prev_id, Option::None, Option::Some(Identity::Address(Address::from(ZERO_B256))));
         } else {
-            let mut prev_node = storage.nodes.get(node.prev_id);
-            prev_node.next_id = node.next_id;
-            storage.nodes.insert(node.prev_id, prev_node);
+            edit_node_neighbors(node.prev_id, Option::None, Option::Some(node.next_id));
 
-            let mut next_node = storage.nodes.get(node.next_id);
-            next_node.prev_id = node.prev_id;
-            storage.nodes.insert(node.next_id, next_node);
+            edit_node_neighbors(node.next_id, Option::Some(node.prev_id), Option::None);
         }
     } else {
         storage.head = Identity::Address(Address::from(ZERO_B256));
