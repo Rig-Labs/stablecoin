@@ -1,6 +1,5 @@
 use fuels::prelude::*;
 use fuels::programs::call_response::FuelCallResponse;
-use fuels::signers::fuel_crypto::rand::{self, Rng};
 use fuels::types::Identity;
 
 use crate::utils::setup::{SortedTroves, TroveManagerContract};
@@ -31,9 +30,6 @@ pub mod trove_manager_abi_calls {
 }
 
 pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveManagerContract {
-    let mut rng = rand::thread_rng();
-    let salt = rng.gen::<[u8; 32]>();
-
     let id = Contract::deploy(
         &get_path("../trove-manager-contract/out/debug/trove-manager-contract.bin".to_string()),
         &wallet,
