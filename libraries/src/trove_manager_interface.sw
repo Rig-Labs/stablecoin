@@ -11,5 +11,8 @@ abi TroveManager {
     fn set_nominal_icr(id: Identity, value: u64);
 
     #[storage(read, write)]
+    fn remove(id: Identity);
+
+    #[storage(read, write)]
     fn set_nominal_icr_and_insert(id: Identity, value: u64, prev_id: Identity, next_id: Identity);
 }

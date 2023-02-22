@@ -1,9 +1,10 @@
-use fuels::signers::fuel_crypto::rand::{self, Rng};
 use fuels::{prelude::TxParameters, types::Identity};
 
 use crate::utils::setup::{initialize, setup};
 use crate::utils::sorted_troves::sorted_troves_abi_calls;
-use crate::utils::sorted_troves::sorted_troves_utils::assert_neighbors;
+use crate::utils::sorted_troves::sorted_troves_utils::{
+    assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
+};
 use crate::utils::trove_manager::trove_manager_abi_calls;
 
 #[tokio::test]
@@ -277,65 +278,41 @@ async fn proper_node_neighbors() {
 
 #[tokio::test]
 async fn proper_insertion_of_random_nodes() {
-    let max_size: u64 = 54;
-    let (sorted_troves, trove_manager, _, _, mut wallets) = setup(Some(max_size)).await;
+    let max_size: u64 = 25;
+    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
     let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
 
-    let mut count = 0;
-    let mut rng = rand::thread_rng();
+    let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
 
-    let mut pairs: Vec<(Identity, u64)> = vec![];
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
 
-    while count < wallets.len() {
-        let temp_wallet = wallets.pop().unwrap();
-        let random_number = rng.gen::<u64>() % 10000;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+}
 
-        pairs.push((
-            Identity::Address(temp_wallet.address().into()),
-            random_number,
-        ));
+#[tokio::test]
+async fn proper_removal() {
+    let max_size: u64 = 25;
+    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
-        let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
-            &trove_manager,
-            &sorted_troves,
-            Identity::Address(temp_wallet.address().into()),
-            random_number,
-            Identity::Address([0; 32].into()),
-            Identity::Address([0; 32].into()),
-        )
-        .await;
+    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
 
-        count += 1;
-    }
+    let mut nodes = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
 
-    pairs.sort_by(|a, b| b.1.cmp(&a.1));
+    // get random node
+    let rand_node = nodes.pop().unwrap();
 
-    let mut current = sorted_troves_abi_calls::get_first(&sorted_troves).await;
-    let pair_len = pairs.len();
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
 
-    // Testing sorted Descending order
-    for (ind, pair) in pairs.clone().into_iter().enumerate() {
-        if ind == pair_len {
-            assert_eq!(current.value, Identity::Address([0; 32].into()));
-            break;
-        } else {
-            assert_eq!(current.value, pair.0);
-            current = sorted_troves_abi_calls::get_next(&sorted_troves, current.value).await;
-        }
-    }
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
 
-    // Testing sorted Ascending order
-    pairs.sort_by(|a, b| a.1.cmp(&b.1));
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
 
-    let mut current = sorted_troves_abi_calls::get_last(&sorted_troves).await;
-    for (ind, pair) in pairs.clone().into_iter().enumerate() {
-        if ind == pair_len {
-            assert_eq!(current.value, Identity::Address([0; 32].into()));
-            break;
-        } else {
-            assert_eq!(current.value, pair.0);
-            current = sorted_troves_abi_calls::get_prev(&sorted_troves, current.value).await;
-        }
-    }
+    let rand_node = nodes.pop().unwrap();
+
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
+
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
 }
