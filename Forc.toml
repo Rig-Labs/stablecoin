@@ -6,4 +6,5 @@ members = [
   "./contracts/vesting-contract",
   "./contracts/vesting-contract/tests/artifacts",
   "./contracts/sorted-troves-contract",
+  "./contracts/borrow-operations-contract",
 ]
