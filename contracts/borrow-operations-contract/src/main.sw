@@ -6,6 +6,8 @@ use data_structures::{LocalVariables_OpenTrove};
 
 use libraries::data_structures::{Status};
 use libraries::trove_manager_interface::{TroveManager};
+use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::{MockOracle};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::fluid_math::*;
 
@@ -37,7 +39,8 @@ storage {
     trove_manager_contract: ContractId = ContractId::from(ZERO_B256),
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf: ContractId = ContractId::from(ZERO_B256),
+    asset_contract: ContractId = ContractId::from(ZERO_B256),
+    usdf_contract: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
 }
 
@@ -49,11 +52,18 @@ impl BorrowOperations for Contract {
         _upper_hint: Identity,
         _lower_hint: Identity,
     ) {
+        require_valid_asset_id();
         require_valid_max_fee_percentage(_max_fee_percentage);
-        // TODO Rqure Trove is not active / exists
-        let mut vars = LocalVariables_OpenTrove::new();
-        vars.net_debt = _usdf_amount;
+        let oracle = abi(MockOracle, storage.oracle_contract.value);
+        let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
 
+        let mut vars = LocalVariables_OpenTrove::new();
+
+        vars.net_debt = _usdf_amount;
+        vars.price = oracle.get_price();
+
+        // TODO Rqure Trove is not active / exists
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
@@ -62,13 +72,20 @@ impl BorrowOperations for Contract {
         // ICR is based on the composite debt, i.e. the requested LUSD amount + LUSD borrowing fee + LUSD gas comp.
         vars.composite_debt = get_composite_debt(vars.net_debt);
         require(vars.composite_debt > 0, "BorrowOperations: composite debt must be greater than 0");
-        let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
 
         let sender = msg_sender().unwrap();
+
+        vars.icr = fm_compute_cr(msg_amount(), vars.composite_debt, vars.price);
+        vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.composite_debt);
+
+        require_at_least_mcr(vars.icr);
 
         trove_manager.set_trove_status(sender, Status::Active);
         trove_manager.increase_trove_coll(sender, msg_amount());
         trove_manager.increase_trove_debt(sender, vars.composite_debt);
+
+        sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
+        vars.array_index = trove_manager.add_trove_owner_to_array(sender);
     }
 
     #[storage(read, write)]
@@ -123,9 +140,18 @@ fn get_composite_debt(_net_debt: u64) -> u64 {
 }
 
 fn require_at_least_min_net_debt(_net_debt: u64) {
-    require(_net_debt > MCR, "BorrowOperations: net debt must be greater than 0");
+    require(_net_debt > MIN_NET_DEBT, "BorrowOperations: net debt must be greater than 0");
+}
+
+fn require_at_least_mcr(_net_debt: u64) {
+    require(_net_debt > MCR, "Minimum collateral ratio not met");
 }
 
 fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
     require(_max_fee_percentage < DECIMAL_PRECISION, "BorrowOperations: max fee percentage must be less than 100");
+}
+
+#[storage(read)]
+fn require_valid_asset_id() {
+    require(msg_asset_id() != storage.asset_contract, "Invalid asset being transfered");
 }
