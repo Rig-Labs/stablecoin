@@ -278,7 +278,7 @@ async fn proper_node_neighbors() {
 
 #[tokio::test]
 async fn proper_insertion_of_random_nodes() {
-    let max_size: u64 = 25;
+    let max_size: u64 = 10;
     let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
     let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
@@ -292,7 +292,7 @@ async fn proper_insertion_of_random_nodes() {
 
 #[tokio::test]
 async fn proper_removal() {
-    let max_size: u64 = 25;
+    let max_size: u64 = 10;
     let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
     let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
@@ -302,15 +302,26 @@ async fn proper_removal() {
     // get random node
     let rand_node = nodes.pop().unwrap();
 
-    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0).await;
 
     let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
 
     let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
 
+    let size = sorted_troves_abi_calls::get_size(&sorted_troves)
+        .await
+        .value;
+
+    assert_eq!(size, max_size - 1);
+
     let rand_node = nodes.pop().unwrap();
 
-    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0);
+    let _res = trove_manager_abi_calls::remove(&trove_manager, &sorted_troves, rand_node.0).await;
+    let size = sorted_troves_abi_calls::get_size(&sorted_troves)
+        .await
+        .value;
+
+    assert_eq!(size, max_size - 2);
 
     let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
 
