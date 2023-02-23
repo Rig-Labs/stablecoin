@@ -9,16 +9,29 @@ abigen!(
     ),
     Contract(
         name = "Token",
-        abi = "contracts/vesting-contract/tests/artifacts/out/debug/asset-abi.json"
+        abi = "contracts/token-contract/out/debug/token-contract-abi.json"
     )
 );
 
 const VESTING_CONTRACT_BINARY_PATH: &str = "out/debug/vesting-contract.bin";
 const VESTING_CONTRACT_STORAGE_PATH: &str = "out/debug/vesting-contract-storage_slots.json";
 
-pub const ASSET_CONTRACT_BINARY_PATH: &str = "./tests/artifacts/out/debug/asset.bin";
+pub const ASSET_CONTRACT_BINARY_PATH: &str = "../token-contract/out/debug/token-contract.bin";
 pub const ASSET_CONTRACT_STORAGE_PATH: &str =
-    "./tests/artifacts/out/debug/asset-storage_slots.json";
+    "../token-contract/out/debug/token-contract-storage_slots.json";
+
+fn get_path(mut sub_path: String) -> String {
+    let mut path = std::env::current_dir().unwrap();
+    // if sub_path starts with ../, we need to go up one level
+    if sub_path.starts_with("../") {
+        path.pop();
+
+        // remove the ../ from the sub_path
+        sub_path = sub_path[3..].to_string();
+    }
+    path.push(sub_path);
+    path.to_str().unwrap().to_string()
+}
 
 pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
     let config = Config {
@@ -52,10 +65,12 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
     let instance = VestingContract::new(id.clone(), wallet.clone());
 
     let asset_id = Contract::deploy(
-        ASSET_CONTRACT_BINARY_PATH,
+        &get_path(ASSET_CONTRACT_BINARY_PATH.to_string()),
         &wallet2,
         TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(ASSET_CONTRACT_STORAGE_PATH.to_string())),
+        StorageConfiguration::with_storage_path(Some(get_path(
+            ASSET_CONTRACT_STORAGE_PATH.to_string(),
+        ))),
     )
     .await
     .unwrap();
@@ -69,6 +84,7 @@ pub mod test_helpers {
     use fuels::programs::call_response::FuelCallResponse;
     use fuels::types::Identity;
 
+    use super::abigen_bindings::token_mod::TokenInitializeConfig;
     use super::abigen_bindings::vesting_contract_mod::{Asset, VestingSchedule};
     use super::*;
 
@@ -79,15 +95,37 @@ pub mod test_helpers {
         admin: &WalletUnlocked,
     ) {
         let asset_id = AssetId::from(*contract.id().hash());
+        let mut name = "Fluid Protocol Test Token".to_string();
+        let mut symbol = "FPTT".to_string();
+
+        name.push_str(" ".repeat(32 - name.len()).as_str());
+        symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
+
+        let config = TokenInitializeConfig {
+            name: fuels::types::SizedAsciiString::<32>::new(name).unwrap(),
+            symbol: fuels::types::SizedAsciiString::<8>::new(symbol).unwrap(),
+            decimals: 6,
+        };
 
         let _ = contract
             .methods()
-            .mint_and_send_to_address(amount, admin.address().into())
+            .initialize(config, amount, Identity::Address(admin.address().into()))
+            .call()
+            .await;
+
+        // println!("res: {:?}", res);
+        let prov = admin.get_provider().unwrap();
+
+        let res = contract
+            .methods()
+            .mint_to_id(amount, Identity::Address(admin.address().into()))
             .append_variable_outputs(1)
             .call()
             .await;
 
-        let _ = admin
+        println!("res: {:?}", res);
+
+        let _res = admin
             .force_transfer_to_contract(
                 &vesting_contract.id(),
                 amount,

@@ -5,6 +5,7 @@ dep sorted_troves_interface;
 dep trove_manager_interface;
 dep borrow_operations_interface;
 dep fluid_math;
+dep token_interface;
 
 use data_structures::{Trove};
 
