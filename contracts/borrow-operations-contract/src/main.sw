@@ -3,9 +3,11 @@ contract;
 dep data_structures;
 
 use data_structures::{LocalVariables_OpenTrove};
+
+use libraries::data_structures::{Status};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
-use libraries::fluid_math::{fm_get_net_debt};
+use libraries::fluid_math::*;
 
 use std::{
     address::Address,
@@ -47,7 +49,7 @@ impl BorrowOperations for Contract {
         _upper_hint: Identity,
         _lower_hint: Identity,
     ) {
-        // TODO Require max_fee_percentage < 100%
+        require_valid_max_fee_percentage(_max_fee_percentage);
         // TODO Rqure Trove is not active / exists
         let mut vars = LocalVariables_OpenTrove::new();
         vars.net_debt = _usdf_amount;
@@ -60,6 +62,13 @@ impl BorrowOperations for Contract {
         // ICR is based on the composite debt, i.e. the requested LUSD amount + LUSD borrowing fee + LUSD gas comp.
         vars.composite_debt = get_composite_debt(vars.net_debt);
         require(vars.composite_debt > 0, "BorrowOperations: composite debt must be greater than 0");
+        let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+
+        let sender = msg_sender().unwrap();
+
+        trove_manager.set_trove_status(sender, Status::Active);
+        trove_manager.increase_trove_coll(sender, msg_amount());
+        trove_manager.increase_trove_debt(sender, vars.composite_debt);
     }
 
     #[storage(read, write)]
@@ -110,11 +119,13 @@ fn internal_trigger_borrowing_fee() -> u64 {
 }
 
 fn get_composite_debt(_net_debt: u64) -> u64 {
-    // TODO
     return fm_get_net_debt(_net_debt);
 }
 
 fn require_at_least_min_net_debt(_net_debt: u64) {
-    // TODO
-    require(_net_debt > 0, "BorrowOperations: net debt must be greater than 0");
+    require(_net_debt > MCR, "BorrowOperations: net debt must be greater than 0");
+}
+
+fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
+    require(_max_fee_percentage < DECIMAL_PRECISION, "BorrowOperations: max fee percentage must be less than 100");
 }

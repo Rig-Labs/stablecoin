@@ -6,6 +6,7 @@ use data_structures::{Trove};
 
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::data_structures::{Status};
 
 use std::{
     address::Address,
@@ -83,4 +84,52 @@ impl TroveManager for Contract {
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         sorted_troves_contract.remove(id);
     }
+
+    #[storage(read, write)]
+    fn set_trove_status(id: Identity, status: Status) {
+        require_caller_is_borrow_operations_contract();
+
+        let mut trove = storage.troves.get(id);
+        trove.status = status;
+        storage.troves.insert(id, trove);
+    }
+
+    #[storage(read, write)]
+    fn increase_trove_coll(id: Identity, coll: u64) {
+        require_caller_is_borrow_operations_contract();
+
+        let mut trove = storage.troves.get(id);
+        trove.coll += coll;
+        storage.troves.insert(id, trove);
+    }
+
+    #[storage(read, write)]
+    fn increase_trove_debt(id: Identity, debt: u64) {
+        require_caller_is_borrow_operations_contract();
+
+        let mut trove = storage.troves.get(id);
+        trove.debt += debt;
+        storage.troves.insert(id, trove);
+    }
+
+    #[storage(read, write)]
+    fn add_trove_owner_to_array(id: Identity) -> u64 {
+        require_caller_is_borrow_operations_contract();
+
+        storage.trove_owners.push(id);
+        let indx = storage.trove_owners.len() - 1;
+
+        let mut trove = storage.troves.get(id);
+        trove.array_index = indx;
+        storage.troves.insert(id, trove);
+
+        return indx;
+    }
+}
+
+#[storage(read)]
+fn require_caller_is_borrow_operations_contract() {
+    let caller = msg_sender().unwrap();
+    let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
+    require(caller == borrow_operations_contract, "Caller is not the Borrow Operations contract");
 }
