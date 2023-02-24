@@ -74,8 +74,15 @@ pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveMana
     TroveManagerContract::new(id, wallet.clone())
 }
 
-fn get_path(sub_path: String) -> String {
+fn get_path(mut sub_path: String) -> String {
     let mut path = std::env::current_dir().unwrap();
+    // if sub_path starts with ../, we need to go up one level
+    if sub_path.starts_with("../") {
+        path.pop();
+
+        // remove the ../ from the sub_path
+        sub_path = sub_path[3..].to_string();
+    }
     path.push(sub_path);
     path.to_str().unwrap().to_string()
 }

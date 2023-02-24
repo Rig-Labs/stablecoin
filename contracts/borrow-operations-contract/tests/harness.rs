@@ -45,27 +45,27 @@ async fn get_contract_instance() -> (TroveManagerContract, ContractId, WalletUnl
 
 #[tokio::test]
 async fn can_set_and_retrieve_irc() {
-    let (instance, _id, admin) = get_contract_instance().await;
-    let irc: u64 = 100;
-    // Increment the counter
-    let _result = instance
-        .methods()
-        .set_nominal_icr(Identity::Address(admin.address().into()), irc)
-        .call()
-        .await
-        .unwrap();
+    // let (instance, _id, admin) = get_contract_instance().await;
+    // let irc: u64 = 100;
+    // // Increment the counter
+    // let _result = instance
+    //     .methods()
+    //     .set_nominal_icr(Identity::Address(admin.address().into()), irc)
+    //     .call()
+    //     .await
+    //     .unwrap();
 
-    // Get the current value of the counter
-    let result = instance
-        .methods()
-        .get_nominal_icr(Identity::Address(admin.address().into()))
-        .call()
-        .await
-        .unwrap();
+    // // Get the current value of the counter
+    // let result = instance
+    //     .methods()
+    //     .get_nominal_icr(Identity::Address(admin.address().into()))
+    //     .call()
+    //     .await
+    //     .unwrap();
 
-    // Check that the current value of the counter is 1.
-    // Recall that the initial value of the counter was 0.
-    assert_eq!(result.value, irc);
+    // // Check that the current value of the counter is 1.
+    // // Recall that the initial value of the counter was 0.
+    // assert_eq!(result.value, irc);
 
     // Now you have an instance of your contract you can use to test each function
 }

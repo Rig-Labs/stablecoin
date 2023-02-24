@@ -6,5 +6,6 @@ members = [
     "./contracts/trove-manager-contract",
     "./contracts/vesting-contract",
     "./contracts/sorted-troves-contract",
-     "./contracts/borrow-operations-contract",
+    "./contracts/borrow-operations-contract",
+    "./contracts/token-contract",
 ]

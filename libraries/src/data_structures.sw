@@ -6,6 +6,14 @@ pub struct Trove {
     st_fuel_deposited: u64,
 }
 
+pub enum Status {
+    NonExistent: (),
+    Active: (),
+    ClosedByOwner: (),
+    ClosedByLiquidation: (),
+    ClosedByRedemption: (),
+}
+
 pub struct Asset {
     /// Identifier of asset
     id: ContractId,
