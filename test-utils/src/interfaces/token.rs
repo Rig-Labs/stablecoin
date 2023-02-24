@@ -4,16 +4,10 @@ use fuels::{
     types::Identity,
 };
 
-abigen!(
-    Contract(
-        name = "Token",
-        abi = "contracts/token-contract/out/debug/token-contract-abi.json"
-    ),
-    Contract(
-        name = "TroveManagerContract",
-        abi = "contracts/trove-manager-contract/out/debug/trove-manager-contract-abi.json"
-    )
-);
+abigen!(Contract(
+    name = "Token",
+    abi = "contracts/token-contract/out/debug/token-contract-abi.json"
+));
 
 pub async fn initialize(
     instance: &Token,

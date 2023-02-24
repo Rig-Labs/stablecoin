@@ -1,6 +1,5 @@
 use super::interfaces::{
-    token::{Token, TroveManagerContract},
-    vesting::VestingContract,
+    token::Token, trove_manager::TroveManagerContract, vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};

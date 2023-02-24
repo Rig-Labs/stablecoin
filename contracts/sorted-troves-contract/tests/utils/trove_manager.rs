@@ -2,7 +2,8 @@ use fuels::prelude::*;
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::types::Identity;
 
-use crate::utils::setup::{SortedTroves, TroveManagerContract};
+use crate::utils::setup::TroveManagerContract;
+use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod trove_manager_abi_calls {
 

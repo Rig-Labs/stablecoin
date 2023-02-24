@@ -1,6 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    interfaces::token::TroveManagerContract, setup::common::deploy_trove_manager_contract,
+    interfaces::trove_manager::TroveManagerContract, setup::common::deploy_trove_manager_contract,
 };
 // Load abi from json
 
