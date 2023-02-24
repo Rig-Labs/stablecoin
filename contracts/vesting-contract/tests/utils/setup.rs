@@ -1,37 +1,18 @@
 use fuels::prelude::*;
+use test_utils::{
+    interface::{abigen_bindings::token_mod::TokenInitializeConfig, Token},
+    setup::common::deploy_token,
+};
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
 // Load abi from json
-abigen!(
-    Contract(
-        name = "VestingContract",
-        abi = "contracts/vesting-contract/out/debug/vesting-contract-abi.json"
-    ),
-    Contract(
-        name = "Token",
-        abi = "contracts/token-contract/out/debug/token-contract-abi.json"
-    )
-);
+abigen!(Contract(
+    name = "VestingContract",
+    abi = "contracts/vesting-contract/out/debug/vesting-contract-abi.json"
+));
 
 const VESTING_CONTRACT_BINARY_PATH: &str = "out/debug/vesting-contract.bin";
 const VESTING_CONTRACT_STORAGE_PATH: &str = "out/debug/vesting-contract-storage_slots.json";
-
-pub const ASSET_CONTRACT_BINARY_PATH: &str = "../token-contract/out/debug/token-contract.bin";
-pub const ASSET_CONTRACT_STORAGE_PATH: &str =
-    "../token-contract/out/debug/token-contract-storage_slots.json";
-
-fn get_path(mut sub_path: String) -> String {
-    let mut path = std::env::current_dir().unwrap();
-    // if sub_path starts with ../, we need to go up one level
-    if sub_path.starts_with("../") {
-        path.pop();
-
-        // remove the ../ from the sub_path
-        sub_path = sub_path[3..].to_string();
-    }
-    path.push(sub_path);
-    path.to_str().unwrap().to_string()
-}
 
 pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
     let config = Config {
@@ -64,18 +45,7 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
 
     let instance = VestingContract::new(id.clone(), wallet.clone());
 
-    let asset_id = Contract::deploy(
-        &get_path(ASSET_CONTRACT_BINARY_PATH.to_string()),
-        &wallet2,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            ASSET_CONTRACT_STORAGE_PATH.to_string(),
-        ))),
-    )
-    .await
-    .unwrap();
-
-    let asset = Token::new(asset_id.clone(), wallet2.clone());
+    let asset = deploy_token(&wallet).await;
 
     (instance, wallet, wallet2, asset)
 }
@@ -84,7 +54,6 @@ pub mod test_helpers {
     use fuels::programs::call_response::FuelCallResponse;
     use fuels::types::Identity;
 
-    use super::abigen_bindings::token_mod::TokenInitializeConfig;
     use super::abigen_bindings::vesting_contract_mod::{Asset, VestingSchedule};
     use super::*;
 
