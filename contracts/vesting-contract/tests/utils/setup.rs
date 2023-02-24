@@ -1,15 +1,9 @@
 use fuels::prelude::*;
-use test_utils::{interface::Token, setup::common::deploy_token};
+use test_utils::setup::common::deploy_vesting_contract;
+use test_utils::{interfaces::token::Token, setup::common::deploy_token};
 // TODO: do setup instead of copy/pasted code with minor adjustments
-
+use test_utils::interfaces::vesting::VestingContract;
 // Load abi from json
-abigen!(Contract(
-    name = "VestingContract",
-    abi = "contracts/vesting-contract/out/debug/vesting-contract-abi.json"
-));
-
-const VESTING_CONTRACT_BINARY_PATH: &str = "out/debug/vesting-contract.bin";
-const VESTING_CONTRACT_STORAGE_PATH: &str = "out/debug/vesting-contract-storage_slots.json";
 
 pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
     let config = Config {
@@ -31,16 +25,7 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
     let wallet = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
-        VESTING_CONTRACT_BINARY_PATH,
-        &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(VESTING_CONTRACT_STORAGE_PATH.to_string())),
-    )
-    .await
-    .unwrap();
-
-    let instance = VestingContract::new(id.clone(), wallet.clone());
+    let instance = deploy_vesting_contract(&wallet.clone()).await;
 
     let asset = deploy_token(&wallet).await;
 
@@ -48,11 +33,9 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
 }
 
 pub mod test_helpers {
-    use fuels::programs::call_response::FuelCallResponse;
-    use fuels::types::Identity;
-    use test_utils::interface::token::{initialize, mint_to_id};
 
-    use super::abigen_bindings::vesting_contract_mod::{Asset, VestingSchedule};
+    use test_utils::interfaces::token::{initialize, mint_to_id};
+
     use super::*;
 
     pub async fn init_and_mint_to_vesting(
@@ -78,48 +61,5 @@ pub mod test_helpers {
                 TxParameters::default(),
             )
             .await;
-    }
-
-    pub async fn instantiate_vesting_contract(
-        contract: &VestingContract,
-        admin: &Address,
-        vesting_schedule: &Vec<VestingSchedule>,
-        asset_contract: &Token,
-        amount: u64,
-    ) -> Result<FuelCallResponse<()>> {
-        let asset: Asset = Asset {
-            id: asset_contract.id().into(),
-            amount,
-        };
-
-        contract
-            .methods()
-            .constructor(
-                Identity::Address(admin.clone()),
-                vesting_schedule.clone(),
-                asset.clone(),
-            )
-            .call()
-            .await
-    }
-
-    pub fn get_vesting_schedule(
-        cliff_amount: u64,
-        cliff_timestamp: u64,
-        end_timestamp: u64,
-        claimed_amount: u64,
-        total_amount: u64,
-        recipient: Identity,
-        revocable: bool,
-    ) -> VestingSchedule {
-        VestingSchedule {
-            cliff_amount,
-            cliff_timestamp,
-            end_timestamp,
-            claimed_amount,
-            total_amount,
-            recipient,
-            revocable,
-        }
     }
 }

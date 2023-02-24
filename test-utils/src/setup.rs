@@ -1,12 +1,9 @@
-use super::interface::{Token, VestingContract};
-
-use fuels::{
-    prelude::{
-        Address, AssetId, Bech32Address, Contract, ContractId, Provider, Salt, SettableContract,
-        StorageConfiguration, TxParameters, WalletUnlocked,
-    },
-    tx::Contract as TxContract,
+use super::interfaces::{
+    token::{Token, TroveManagerContract},
+    vesting::VestingContract,
 };
+
+use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
 
 pub mod common {
     use super::*;
@@ -23,5 +20,35 @@ pub mod common {
         .unwrap();
 
         Token::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveManagerContract {
+        let id = Contract::deploy(
+            &TROVE_MANAGER_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                TROVE_MANAGER_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        TroveManagerContract::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_vesting_contract(wallet: &WalletUnlocked) -> VestingContract {
+        let id = Contract::deploy(
+            &VESTING_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                VESTING_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        VestingContract::new(id, wallet.clone())
     }
 }
