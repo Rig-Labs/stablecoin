@@ -1,19 +1,32 @@
-use fuels::{prelude::*, tx::ContractId, types::Identity};
+use fuels::prelude::*;
 
 // Load abi from json
-abigen!(Contract(
-    name = "TroveManagerContract",
-    abi = "contracts/borrow-operations-contract/out/debug/borrow-operations-contract-abi.json"
-));
+use test_utils::{
+    interfaces::borrow_operations as borrow_operations_abi,
+    interfaces::borrow_operations::BorrowOperations,
+    interfaces::oracle as oracle_abi,
+    interfaces::oracle::Oracle,
+    interfaces::sorted_troves as sorted_troves_abi,
+    interfaces::sorted_troves::SortedTroves,
+    interfaces::token as token_abi,
+    interfaces::token::Token,
+    interfaces::trove_manager as trove_manager_abi,
+    interfaces::trove_manager::TroveManagerContract,
+    setup::common::{
+        deploy_borrow_operations, deploy_oracle, deploy_sorted_troves, deploy_token,
+        deploy_trove_manager_contract,
+    },
+};
 
-// get path
-fn get_path(sub_path: String) -> String {
-    let mut path = std::env::current_dir().unwrap();
-    path.push(sub_path);
-    path.to_str().unwrap().to_string()
-}
-
-async fn get_contract_instance() -> (TroveManagerContract, ContractId, WalletUnlocked) {
+async fn get_contract_instances() -> (
+    BorrowOperations,
+    TroveManagerContract,
+    Oracle,
+    SortedTroves,
+    Token, /* Fuel */
+    Token, /* USDF */
+    WalletUnlocked,
+) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -27,25 +40,28 @@ async fn get_contract_instance() -> (TroveManagerContract, ContractId, WalletUnl
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
-        &get_path("out/debug/borrow-operations-contract.bin".to_string()),
-        &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            "out/debug/borrow-operations-contract-storage_slots.json".to_string(),
-        ))),
+    let bo_instance = deploy_borrow_operations(&wallet).await;
+    let oracle_instance = deploy_oracle(&wallet).await;
+    let sorted_troves = deploy_sorted_troves(&wallet).await;
+    let trove_manger = deploy_trove_manager_contract(&wallet).await;
+    let fuel = deploy_token(&wallet).await;
+    let usdf = deploy_token(&wallet).await;
+
+    (
+        bo_instance,
+        trove_manger,
+        oracle_instance,
+        sorted_troves,
+        fuel,
+        usdf,
+        wallets[0].clone(),
     )
-    .await
-    .unwrap();
-
-    let instance = TroveManagerContract::new(id.clone(), wallet);
-
-    (instance, id.into(), wallets[0].clone())
 }
 
 #[tokio::test]
 async fn can_set_and_retrieve_irc() {
-    // let (instance, _id, admin) = get_contract_instance().await;
+    let (_instance, _admin, _, _, _, _, _) = get_contract_instances().await;
+
     // let irc: u64 = 100;
     // // Increment the counter
     // let _result = instance
