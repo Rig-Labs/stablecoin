@@ -5,6 +5,7 @@ dep data_structures;
 use data_structures::{LocalVariables_OpenTrove};
 
 use libraries::data_structures::{Status};
+use libraries::token_interface::{Token};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::{MockOracle};
@@ -46,6 +47,25 @@ storage {
 
 impl BorrowOperations for Contract {
     #[storage(read, write)]
+    fn initialize(
+        trove_manager_contract: ContractId,
+        sorted_troves_contract: ContractId,
+        oracle_contract: ContractId,
+        asset_contract: ContractId,
+        usdf_contract: ContractId,
+        fpt_staking_contract: ContractId,
+    ) {
+        require(storage.trove_manager_contract.value == ZERO_B256, "BorrowOperations: contract is already initialized");
+
+        storage.trove_manager_contract = trove_manager_contract;
+        storage.sorted_troves_contract = sorted_troves_contract;
+        storage.oracle_contract = oracle_contract;
+        storage.asset_contract = asset_contract;
+        storage.usdf_contract = usdf_contract;
+        storage.fpt_staking_contract = fpt_staking_contract;
+    }
+
+    #[storage(read, write)]
     fn open_trove(
         _max_fee_percentage: u64,
         _usdf_amount: u64,
@@ -57,6 +77,7 @@ impl BorrowOperations for Contract {
         let oracle = abi(MockOracle, storage.oracle_contract.value);
         let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
+        let usdf = abi(Token, storage.usdf_contract.value);
 
         let mut vars = LocalVariables_OpenTrove::new();
 
@@ -86,6 +107,8 @@ impl BorrowOperations for Contract {
 
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
+
+        withdraw_usdf(sender, _usdf_amount, _usdf_amount);
     }
 
     #[storage(read, write)]
@@ -154,4 +177,11 @@ fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
 #[storage(read)]
 fn require_valid_asset_id() {
     require(msg_asset_id() != storage.asset_contract, "Invalid asset being transfered");
+}
+
+#[storage(read)]
+fn withdraw_usdf(recipient: Identity, amount: u64, net_debt_increase: u64) {
+    // increase the debt of the trove
+    let usdf = abi(Token, storage.usdf_contract.value);
+    usdf.mint_to_id(amount, recipient);
 }

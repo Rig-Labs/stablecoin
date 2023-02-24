@@ -1,20 +1,11 @@
 use fuels::prelude::*;
 
-use super::trove_manager::deploy_trove_manager_contract;
+use test_utils::interfaces::sorted_troves::SortedTroves;
+use test_utils::interfaces::trove_manager::TroveManagerContract;
+use test_utils::setup::common::deploy_trove_manager_contract;
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
-// Load abi from json
-abigen!(
-    Contract(
-        name = "SortedTroves",
-        abi = "contracts/sorted-troves-contract/out/debug/sorted-troves-contract-abi.json"
-    ),
-    Contract(
-        name = "TroveManagerContract",
-        abi = "contracts/trove-manager-contract/out/debug/trove-manager-contract-abi.json"
-    )
-);
-
+// Load abi from jso
 fn get_path(sub_path: String) -> String {
     let mut path = std::env::current_dir().unwrap();
     path.push(sub_path);

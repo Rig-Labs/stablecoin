@@ -23,9 +23,9 @@ async fn produce_block_at_height(provider: &Provider, target_height: u64) {
 
 mod success {
 
-    use crate::utils::setup::test_helpers::{
-        get_vesting_schedule, instantiate_vesting_contract, mint_to_vesting,
-    };
+    use test_utils::interfaces::vesting::{get_vesting_schedule, instantiate_vesting_contract};
+
+    use crate::utils::setup::test_helpers::init_and_mint_to_vesting;
 
     use super::*;
 
@@ -47,7 +47,7 @@ mod success {
             &vest,
             &admin.address().into(),
             &vesting_schedule.to_vec(),
-            &asset,
+            &asset.id().into(),
             10000,
         )
         .await;
@@ -93,12 +93,12 @@ mod success {
             &vest,
             &admin.address().into(),
             &vesting_schedule.to_vec(),
-            &asset,
+            &asset.contract_id().into(),
             10000,
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 
@@ -173,12 +173,12 @@ mod success {
             &vest,
             &admin.address().into(),
             &vesting_schedule.to_vec(),
-            &asset,
+            &asset.contract_id().into(),
             10000,
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 
@@ -333,12 +333,12 @@ mod success {
             &vest,
             &admin.address().into(),
             &vesting_schedule.to_vec(),
-            &asset,
+            &asset.contract_id().into(),
             10000,
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 

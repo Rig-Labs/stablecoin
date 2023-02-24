@@ -1,19 +1,10 @@
-use fuels::{prelude::*, tx::ContractId, types::Identity};
-
+use fuels::{prelude::*, types::Identity};
+use test_utils::{
+    interfaces::trove_manager::TroveManagerContract, setup::common::deploy_trove_manager_contract,
+};
 // Load abi from json
-abigen!(Contract(
-    name = "TroveManagerContract",
-    abi = "contracts/trove-manager-contract/out/debug/trove-manager-contract-abi.json"
-));
 
-// get path
-fn get_path(sub_path: String) -> String {
-    let mut path = std::env::current_dir().unwrap();
-    path.push(sub_path);
-    path.to_str().unwrap().to_string()
-}
-
-async fn get_contract_instance() -> (TroveManagerContract, ContractId, WalletUnlocked) {
+async fn get_contract_instance() -> (TroveManagerContract, WalletUnlocked) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -27,25 +18,14 @@ async fn get_contract_instance() -> (TroveManagerContract, ContractId, WalletUnl
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
-        &get_path("out/debug/trove-manager-contract.bin".to_string()),
-        &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            "out/debug/trove-manager-contract-storage_slots.json".to_string(),
-        ))),
-    )
-    .await
-    .unwrap();
+    let instance = deploy_trove_manager_contract(&wallet).await;
 
-    let instance = TroveManagerContract::new(id.clone(), wallet);
-
-    (instance, id.into(), wallets[0].clone())
+    (instance, wallets[0].clone())
 }
 
 #[tokio::test]
 async fn can_set_and_retrieve_irc() {
-    let (instance, _id, admin) = get_contract_instance().await;
+    let (instance, admin) = get_contract_instance().await;
     let irc: u64 = 100;
     // Increment the counter
     let _result = instance
