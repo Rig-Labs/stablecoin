@@ -1,8 +1,5 @@
 use fuels::prelude::*;
-use test_utils::{
-    interface::{abigen_bindings::token_mod::TokenInitializeConfig, Token},
-    setup::common::deploy_token,
-};
+use test_utils::{interface::Token, setup::common::deploy_token};
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
 // Load abi from json
@@ -53,11 +50,12 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
 pub mod test_helpers {
     use fuels::programs::call_response::FuelCallResponse;
     use fuels::types::Identity;
+    use test_utils::interface::token::{initialize, mint_to_id};
 
     use super::abigen_bindings::vesting_contract_mod::{Asset, VestingSchedule};
     use super::*;
 
-    pub async fn mint_to_vesting(
+    pub async fn init_and_mint_to_vesting(
         contract: &Token,
         vesting_contract: &VestingContract,
         amount: u64,
@@ -65,32 +63,12 @@ pub mod test_helpers {
     ) {
         let instance = Token::new(contract.id().clone(), admin.clone());
         let asset_id = AssetId::from(*instance.id().hash());
-        let mut name = "Fluid Protocol Test Token".to_string();
-        let mut symbol = "FPTT".to_string();
+        let name = "Fluid Protocol Test Token".to_string();
+        let symbol = "FPTT".to_string();
 
-        name.push_str(" ".repeat(32 - name.len()).as_str());
-        symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
+        let _ = initialize(&instance, amount, admin, name, symbol).await;
 
-        let config = TokenInitializeConfig {
-            name: fuels::types::SizedAsciiString::<32>::new(name).unwrap(),
-            symbol: fuels::types::SizedAsciiString::<8>::new(symbol).unwrap(),
-            decimals: 6,
-        };
-
-        let _ = instance
-            .methods()
-            .initialize(config, amount, Identity::Address(admin.address().into()))
-            .call()
-            .await;
-
-        let res = instance
-            .methods()
-            .mint_to_id(amount, Identity::Address(admin.address().into()))
-            .append_variable_outputs(1)
-            .call()
-            .await;
-
-        println!("res: {:?}", res);
+        let _ = mint_to_id(&instance, amount, admin).await;
 
         let _res = admin
             .force_transfer_to_contract(

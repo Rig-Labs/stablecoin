@@ -24,7 +24,7 @@ async fn produce_block_at_height(provider: &Provider, target_height: u64) {
 mod success {
 
     use crate::utils::setup::test_helpers::{
-        get_vesting_schedule, instantiate_vesting_contract, mint_to_vesting,
+        get_vesting_schedule, init_and_mint_to_vesting, instantiate_vesting_contract,
     };
 
     use super::*;
@@ -98,7 +98,7 @@ mod success {
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 
@@ -178,7 +178,7 @@ mod success {
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 
@@ -338,7 +338,7 @@ mod success {
         )
         .await;
 
-        let _ = mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
         let asset_id = AssetId::from(*asset.id().hash());
 
