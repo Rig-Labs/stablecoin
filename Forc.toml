@@ -4,7 +4,6 @@ members = [
   "./contracts/stability-pool-contract",
   "./contracts/trove-manager-contract",
   "./contracts/vesting-contract",
-  "./contracts/vesting-contract/tests/artifacts",
   "./contracts/sorted-troves-contract",
   "./contracts/borrow-operations-contract",
   "./contracts/token-contract",

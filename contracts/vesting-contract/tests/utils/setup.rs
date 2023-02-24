@@ -94,7 +94,8 @@ pub mod test_helpers {
         amount: u64,
         admin: &WalletUnlocked,
     ) {
-        let asset_id = AssetId::from(*contract.id().hash());
+        let instance = Token::new(contract.id().clone(), admin.clone());
+        let asset_id = AssetId::from(*instance.id().hash());
         let mut name = "Fluid Protocol Test Token".to_string();
         let mut symbol = "FPTT".to_string();
 
@@ -107,16 +108,13 @@ pub mod test_helpers {
             decimals: 6,
         };
 
-        let _ = contract
+        let _ = instance
             .methods()
             .initialize(config, amount, Identity::Address(admin.address().into()))
             .call()
             .await;
 
-        // println!("res: {:?}", res);
-        let prov = admin.get_provider().unwrap();
-
-        let res = contract
+        let res = instance
             .methods()
             .mint_to_id(amount, Identity::Address(admin.address().into()))
             .append_variable_outputs(1)
