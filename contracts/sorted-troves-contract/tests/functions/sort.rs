@@ -6,8 +6,8 @@ use crate::utils::sorted_troves::sorted_troves_utils::{
     assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
 };
 
-use crate::utils::trove_manager::trove_manager_abi_calls;
 use test_utils::interfaces::sorted_troves as sorted_troves_abi_calls;
+use test_utils::interfaces::trove_manager as trove_manager_abi_calls;
 
 #[tokio::test]
 async fn proper_initialization() {

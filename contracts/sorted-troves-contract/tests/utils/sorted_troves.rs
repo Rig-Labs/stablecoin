@@ -1,14 +1,12 @@
 use fuels::types::Identity;
 
-use crate::utils::setup::TroveManagerContract;
-
 use test_utils::interfaces::sorted_troves as sorted_troves_abi_calls;
 use test_utils::interfaces::sorted_troves::SortedTroves;
+use test_utils::interfaces::trove_manager as trove_manager_abi_calls;
+use test_utils::interfaces::trove_manager::TroveManagerContract;
 
 pub mod sorted_troves_utils {
     use fuels::signers::fuel_crypto::rand::{self, Rng};
-
-    use crate::utils::trove_manager::trove_manager_abi_calls;
 
     use super::*;
 
