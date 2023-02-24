@@ -1,6 +1,6 @@
 use fuels::{prelude::TxParameters, types::Identity};
 
-use crate::utils::setup::{initialize, setup};
+use crate::utils::setup::{initialize_st_and_tm, setup};
 
 use crate::utils::sorted_troves::sorted_troves_utils::{
     assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
@@ -14,7 +14,7 @@ async fn proper_initialization() {
     let (sorted_troves, trove_manager, _wallet, _wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
     // Increment the counter
-    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
     // Get the current value of the counter
     let result = sorted_troves.methods().get_max_size().call().await.unwrap();
@@ -36,7 +36,7 @@ async fn proper_head_and_tails_after_insert() {
     let (sorted_troves, trove_manager, wallet, wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
     // Increment the counter
-    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
     let _ = trove_manager
         .methods()
@@ -194,7 +194,7 @@ async fn proper_node_neighbors() {
     let (sorted_troves, trove_manager, wallet, wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
     // Increment the counter
-    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
     let _ = trove_manager_abi_calls::set_nominal_icr_and_insert(
         &trove_manager,
@@ -283,7 +283,7 @@ async fn proper_insertion_of_random_nodes() {
     let max_size: u64 = 10;
     let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
-    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
     let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
 
@@ -297,7 +297,7 @@ async fn proper_removal() {
     let max_size: u64 = 10;
     let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
 
-    let _ = initialize(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
     let mut nodes = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
 

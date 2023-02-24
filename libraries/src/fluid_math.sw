@@ -1,17 +1,18 @@
 library fluid_math;
 
+// Using Precision 6 until u128 is available
 pub const PCT_100: u64 = 1_000_000_000;
 
 pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
-pub const MCR: u64 = 120_000_000_000;
+pub const MCR: u64 = 1_200_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 
-pub const USDF_GAS_COMPENSATION: u64 = 10_000_000_000;
+pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
 // min debt is 500 USDF
-pub const MIN_NET_DEBT: u64 = 500_000_000_000;
+pub const MIN_NET_DEBT: u64 = 500_000_000;
 
 pub const PERCENT_DIVERSOR = 200;
 

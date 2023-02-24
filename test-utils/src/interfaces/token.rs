@@ -12,7 +12,7 @@ abigen!(Contract(
 pub async fn initialize(
     instance: &Token,
     amount: u64,
-    admin: &WalletUnlocked,
+    admin: &Identity,
     mut name: String,
     mut symbol: String,
 ) -> FuelCallResponse<()> {
@@ -27,7 +27,7 @@ pub async fn initialize(
 
     instance
         .methods()
-        .initialize(config, amount, Identity::Address(admin.address().into()))
+        .initialize(config, amount, admin.clone())
         .call()
         .await
         .unwrap()

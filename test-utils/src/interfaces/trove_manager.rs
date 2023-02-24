@@ -1,5 +1,5 @@
 use fuels::{
-    prelude::{abigen, TxParameters},
+    prelude::{abigen, ContractId, TxParameters},
     programs::call_response::FuelCallResponse,
     types::Identity,
 };
@@ -55,6 +55,18 @@ pub async fn remove(
         .remove(id)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
+        .call()
+        .await
+        .unwrap()
+}
+
+pub async fn initialize(
+    trove_manager: &TroveManagerContract,
+    sorted_troves_id: ContractId,
+) -> FuelCallResponse<()> {
+    trove_manager
+        .methods()
+        .initialize(sorted_troves_id)
         .call()
         .await
         .unwrap()

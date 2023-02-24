@@ -104,11 +104,13 @@ impl BorrowOperations for Contract {
         trove_manager.set_trove_status(sender, Status::Active);
         trove_manager.increase_trove_coll(sender, msg_amount());
         trove_manager.increase_trove_debt(sender, vars.composite_debt);
+        log(5);
 
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
-
+        log(6);
         withdraw_usdf(sender, _usdf_amount, _usdf_amount);
+        log(7);
     }
 
     #[storage(read, write)]
@@ -166,8 +168,8 @@ fn require_at_least_min_net_debt(_net_debt: u64) {
     require(_net_debt > MIN_NET_DEBT, "BorrowOperations: net debt must be greater than 0");
 }
 
-fn require_at_least_mcr(_net_debt: u64) {
-    require(_net_debt > MCR, "Minimum collateral ratio not met");
+fn require_at_least_mcr(icr: u64) {
+    require(icr > MCR, "Minimum collateral ratio not met");
 }
 
 fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
@@ -176,7 +178,7 @@ fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
 
 #[storage(read)]
 fn require_valid_asset_id() {
-    require(msg_asset_id() != storage.asset_contract, "Invalid asset being transfered");
+    require(msg_asset_id() == storage.asset_contract, "Invalid asset being transfered");
 }
 
 #[storage(read)]

@@ -17,3 +17,13 @@ pub const ORACLE_CONTRACT_BINARY_PATH: &str =
     "../../contracts/mock-oracle-contract/out/debug/mock-oracle-contract.bin";
 pub const ORACLE_CONTRACT_STORAGE_PATH: &str =
     "../../contracts/mock-oracle-contract/out/debug/mock-oracle-contract-storage_slots.json";
+
+pub const BORROW_OPERATIONS_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/borrow-operations-contract/out/debug/borrow-operations-contract.bin";
+pub const BORROW_OPERATIONS_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/borrow-operations-contract/out/debug/borrow-operations-contract-storage_slots.json";
+
+pub const SORTED_TROVES_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/sorted-troves-contract/out/debug/sorted-troves-contract.bin";
+pub const SORTED_TROVES_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/sorted-troves-contract/out/debug/sorted-troves-contract-storage_slots.json";

@@ -1,7 +1,7 @@
 use fuels::prelude::*;
 
 use test_utils::{
-    interfaces::oracle::{get_price, set_price, Oracle},
+    interfaces::oracle::{oracle_abi, Oracle},
     setup::common::deploy_oracle,
 };
 
@@ -29,10 +29,10 @@ async fn can_set_proper_price() {
     let instance = get_contract_instance().await;
     let new_price: u64 = 100;
     // Increment the counter
-    let _result = set_price(&instance, new_price).await;
+    let _result = oracle_abi::set_price(&instance, new_price).await;
 
     // Get the current value of the counter
-    let result = get_price(&instance).await;
+    let result = oracle_abi::get_price(&instance).await;
 
     // Check that the current value of the counter is 1.
     // Recall that the initial value of the counter was 0.
