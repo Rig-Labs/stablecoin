@@ -1,19 +1,11 @@
-use fuels::{prelude::*, tx::ContractId};
+use fuels::prelude::*;
 
-// Load abi from json
-abigen!(Contract(
-    name = "MyContract",
-    abi = "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
-));
+use test_utils::{
+    interfaces::oracle::{get_price, set_price, Oracle},
+    setup::common::deploy_oracle,
+};
 
-// get path
-fn get_path(sub_path: String) -> String {
-    let mut path = std::env::current_dir().unwrap();
-    path.push(sub_path);
-    path.to_str().unwrap().to_string()
-}
-
-async fn get_contract_instance() -> (MyContract, ContractId) {
+async fn get_contract_instance() -> Oracle {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -27,36 +19,20 @@ async fn get_contract_instance() -> (MyContract, ContractId) {
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
-        &get_path("out/debug/mock-oracle-contract.bin".to_string()),
-        &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            "out/debug/mock-oracle-contract-storage_slots.json".to_string(),
-        ))),
-    )
-    .await
-    .unwrap();
+    let instance = deploy_oracle(&wallet).await;
 
-    let instance = MyContract::new(id.clone(), wallet);
-
-    (instance, id.into())
+    instance
 }
 
 #[tokio::test]
 async fn can_set_proper_price() {
-    let (instance, _id) = get_contract_instance().await;
+    let instance = get_contract_instance().await;
     let new_price: u64 = 100;
     // Increment the counter
-    let _result = instance
-        .methods()
-        .set_price(new_price)
-        .call()
-        .await
-        .unwrap();
+    let _result = set_price(&instance, new_price).await;
 
     // Get the current value of the counter
-    let result = instance.methods().get_price().call().await.unwrap();
+    let result = get_price(&instance).await;
 
     // Check that the current value of the counter is 1.
     // Recall that the initial value of the counter was 0.

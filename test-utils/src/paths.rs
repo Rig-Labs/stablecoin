@@ -12,3 +12,8 @@ pub const VESTING_CONTRACT_BINARY_PATH: &str =
     "../../contracts/vesting-contract/out/debug/vesting-contract.bin";
 pub const VESTING_CONTRACT_STORAGE_PATH: &str =
     "../../contracts/vesting-contract/out/debug/vesting-contract-storage_slots.json";
+
+pub const ORACLE_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/mock-oracle-contract/out/debug/mock-oracle-contract.bin";
+pub const ORACLE_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/mock-oracle-contract/out/debug/mock-oracle-contract-storage_slots.json";
