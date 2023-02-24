@@ -34,6 +34,7 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
 
 pub mod test_helpers {
 
+    use fuels::types::Identity;
     use test_utils::interfaces::token::{initialize, mint_to_id};
 
     use super::*;
@@ -49,7 +50,14 @@ pub mod test_helpers {
         let name = "Fluid Protocol Test Token".to_string();
         let symbol = "FPTT".to_string();
 
-        let _ = initialize(&instance, amount, admin, name, symbol).await;
+        let _ = initialize(
+            &instance,
+            amount,
+            &Identity::Address(admin.address().into()),
+            name,
+            symbol,
+        )
+        .await;
 
         let _ = mint_to_id(&instance, amount, admin).await;
 

@@ -54,6 +54,7 @@ impl TroveManager for Contract {
     #[storage(read, write)]
     fn initialize(id: ContractId) {
         storage.sorted_troves_contract = id;
+        storage.borrow_operations_contract = id;
     }
 
     #[storage(read)]

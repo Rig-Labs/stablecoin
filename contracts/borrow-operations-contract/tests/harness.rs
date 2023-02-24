@@ -1,10 +1,10 @@
-use fuels::prelude::*;
+use fuels::{prelude::*, signers::wallet, types::Identity};
 
 // Load abi from json
 use test_utils::{
-    interfaces::borrow_operations as borrow_operations_abi,
+    interfaces::borrow_operations::borrow_operations_abi,
     interfaces::borrow_operations::BorrowOperations,
-    interfaces::oracle as oracle_abi,
+    interfaces::oracle::oracle_abi,
     interfaces::oracle::Oracle,
     interfaces::sorted_troves as sorted_troves_abi,
     interfaces::sorted_troves::SortedTroves,
@@ -47,6 +47,36 @@ async fn get_contract_instances() -> (
     let fuel = deploy_token(&wallet).await;
     let usdf = deploy_token(&wallet).await;
 
+    let _ = token_abi::initialize(
+        &fuel,
+        1_000_000_000,
+        &Identity::Address(wallet.address().into()),
+        "Fuel".to_string(),
+        "FUEL".to_string(),
+    )
+    .await;
+
+    let _ = token_abi::initialize(
+        &usdf,
+        0,
+        &Identity::ContractId(bo_instance.contract_id().into()),
+        "USD Fuel".to_string(),
+        "USDF".to_string(),
+    )
+    .await;
+
+    let _ = sorted_troves_abi::initialize(
+        &sorted_troves,
+        100,
+        bo_instance.contract_id().into(),
+        trove_manger.contract_id().into(),
+    )
+    .await;
+
+    let _ = trove_manager_abi::initialize(&trove_manger, bo_instance.contract_id().into()).await;
+
+    let _ = oracle_abi::set_price(&oracle_instance, 1_000_000).await;
+
     (
         bo_instance,
         trove_manger,
@@ -54,34 +84,81 @@ async fn get_contract_instances() -> (
         sorted_troves,
         fuel,
         usdf,
-        wallets[0].clone(),
+        wallet,
     )
 }
 
 #[tokio::test]
-async fn can_set_and_retrieve_irc() {
-    let (_instance, _admin, _, _, _, _, _) = get_contract_instances().await;
+async fn proper_creating_trove() {
+    let (
+        borrow_operations_instance,
+        trove_manager,
+        oracle,
+        sorted_troves,
+        fuel_token,
+        usdf_token,
+        admin,
+    ) = get_contract_instances().await;
 
-    // let irc: u64 = 100;
-    // // Increment the counter
-    // let _result = instance
-    //     .methods()
-    //     .set_nominal_icr(Identity::Address(admin.address().into()), irc)
-    //     .call()
-    //     .await
-    //     .unwrap();
+    let _ = token_abi::mint_to_id(&fuel_token, 5_000_000_000, &admin).await;
 
-    // // Get the current value of the counter
-    // let result = instance
-    //     .methods()
-    //     .get_nominal_icr(Identity::Address(admin.address().into()))
-    //     .call()
-    //     .await
-    //     .unwrap();
+    let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
 
-    // // Check that the current value of the counter is 1.
-    // // Recall that the initial value of the counter was 0.
-    // assert_eq!(result.value, irc);
+    let provider = admin.get_provider().unwrap();
+    let admin_balance = provider
+        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .await;
 
-    // Now you have an instance of your contract you can use to test each function
+    println!(
+        "Admin FUEL balance Before: {:?}",
+        admin_balance.unwrap() / 1_000_000
+    );
+
+    // let bo_instance = BorrowOperations::new(borrow_operations_instance.id().clone(), admin);
+
+    let _ = borrow_operations_abi::initialize(
+        &borrow_operations_instance,
+        trove_manager.contract_id().into(),
+        sorted_troves.contract_id().into(),
+        oracle.contract_id().into(),
+        fuel_token.contract_id().into(),
+        usdf_token.contract_id().into(),
+        usdf_token.contract_id().into(),
+    )
+    .await;
+
+    let _ = borrow_operations_abi::open_trove(
+        &borrow_operations_instance,
+        &oracle,
+        &fuel_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        0,
+        1_000_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    // println!("{:?}", res);
+    let admin_balance = provider
+        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .await;
+
+    println!(
+        "Admin FUEL balance After Deposit: {:?}",
+        admin_balance.unwrap() / 1_000_000
+    );
+
+    // check usdf balance
+    let usdf_balance = provider
+        .get_asset_balance(
+            admin.address().into(),
+            AssetId::from(*usdf_token.contract_id().hash()),
+        )
+        .await;
+
+    println!("USDF balance: {:?}", usdf_balance.unwrap() / 1_000_000);
 }
