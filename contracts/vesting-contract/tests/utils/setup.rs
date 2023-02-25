@@ -35,7 +35,7 @@ pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token)
 pub mod test_helpers {
 
     use fuels::types::Identity;
-    use test_utils::interfaces::token::{initialize, mint_to_id};
+    use test_utils::interfaces::token::{token_abi::initialize, token_abi::mint_to_id};
 
     use super::*;
 

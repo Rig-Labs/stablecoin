@@ -1,8 +1,8 @@
 use fuels::types::Identity;
 
-use test_utils::interfaces::sorted_troves as sorted_troves_abi_calls;
+use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
-use test_utils::interfaces::trove_manager as trove_manager_abi_calls;
+use test_utils::interfaces::trove_manager::trove_manager_abi;
 use test_utils::interfaces::trove_manager::TroveManagerContract;
 
 pub mod sorted_troves_utils {
@@ -16,10 +16,10 @@ pub mod sorted_troves_utils {
         prev_id: Identity,
         next_id: Identity,
     ) {
-        let next = sorted_troves_abi_calls::get_next(&sorted_troves, current.clone()).await;
+        let next = sorted_troves_abi::get_next(&sorted_troves, current.clone()).await;
         assert_eq!(next.value, next_id);
 
-        let prev = sorted_troves_abi_calls::get_prev(&sorted_troves, current.clone()).await;
+        let prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone()).await;
         assert_eq!(prev.value, prev_id);
     }
 
@@ -28,30 +28,27 @@ pub mod sorted_troves_utils {
         trove_manager: &TroveManagerContract,
     ) {
         let mut count = 0;
-        let size = sorted_troves_abi_calls::get_size(sorted_troves).await.value;
+        let size = sorted_troves_abi::get_size(sorted_troves).await.value;
 
-        let mut current = sorted_troves_abi_calls::get_first(sorted_troves)
-            .await
-            .value;
+        let mut current = sorted_troves_abi::get_first(sorted_troves).await.value;
 
-        let mut next = sorted_troves_abi_calls::get_next(sorted_troves, current.clone())
+        let mut next = sorted_troves_abi::get_next(sorted_troves, current.clone())
             .await
             .value;
 
         while next.clone() != Identity::Address([0; 32].into()) {
-            let current_icr =
-                trove_manager_abi_calls::get_nominal_icr(trove_manager, current.clone())
-                    .await
-                    .value;
+            let current_icr = trove_manager_abi::get_nominal_icr(trove_manager, current.clone())
+                .await
+                .value;
 
-            let next_icr = trove_manager_abi_calls::get_nominal_icr(trove_manager, next.clone())
+            let next_icr = trove_manager_abi::get_nominal_icr(trove_manager, next.clone())
                 .await
                 .value;
 
             assert!(current_icr >= next_icr);
 
             current = next.clone();
-            next = sorted_troves_abi_calls::get_next(&sorted_troves, current.clone())
+            next = sorted_troves_abi::get_next(&sorted_troves, current.clone())
                 .await
                 .value
                 .clone();
@@ -67,30 +64,27 @@ pub mod sorted_troves_utils {
         trove_manager: &TroveManagerContract,
     ) {
         let mut count = 0;
-        let size = sorted_troves_abi_calls::get_size(sorted_troves).await.value;
+        let size = sorted_troves_abi::get_size(sorted_troves).await.value;
 
-        let mut current = sorted_troves_abi_calls::get_last(&sorted_troves)
-            .await
-            .value;
+        let mut current = sorted_troves_abi::get_last(&sorted_troves).await.value;
 
-        let mut prev = sorted_troves_abi_calls::get_prev(&sorted_troves, current.clone())
+        let mut prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
             .await
             .value;
 
         while prev.clone() != Identity::Address([0; 32].into()) {
-            let current_icr =
-                trove_manager_abi_calls::get_nominal_icr(trove_manager, current.clone())
-                    .await
-                    .value;
+            let current_icr = trove_manager_abi::get_nominal_icr(trove_manager, current.clone())
+                .await
+                .value;
 
-            let prev_icr = trove_manager_abi_calls::get_nominal_icr(trove_manager, prev.clone())
+            let prev_icr = trove_manager_abi::get_nominal_icr(trove_manager, prev.clone())
                 .await
                 .value;
 
             assert!(current_icr <= prev_icr);
 
             current = prev.clone();
-            prev = sorted_troves_abi_calls::get_prev(&sorted_troves, current.clone())
+            prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
                 .await
                 .value
                 .clone();
@@ -119,7 +113,7 @@ pub mod sorted_troves_utils {
                 random_number.clone(),
             ));
 
-            let _res = trove_manager_abi_calls::set_nominal_icr_and_insert(
+            let _res = trove_manager_abi::set_nominal_icr_and_insert(
                 &trove_manager,
                 &sorted_troves,
                 Identity::Address(random_address.into()),

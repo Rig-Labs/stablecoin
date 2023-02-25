@@ -1,4 +1,4 @@
-use fuels::{prelude::*, signers::wallet, types::Identity};
+use fuels::{prelude::*, types::Identity};
 
 // Load abi from json
 use test_utils::{
@@ -6,11 +6,11 @@ use test_utils::{
     interfaces::borrow_operations::BorrowOperations,
     interfaces::oracle::oracle_abi,
     interfaces::oracle::Oracle,
-    interfaces::sorted_troves as sorted_troves_abi,
+    interfaces::sorted_troves::sorted_troves_abi,
     interfaces::sorted_troves::SortedTroves,
-    interfaces::token as token_abi,
+    interfaces::token::token_abi,
     interfaces::token::Token,
-    interfaces::trove_manager as trove_manager_abi,
+    interfaces::trove_manager::trove_manager_abi,
     interfaces::trove_manager::TroveManagerContract,
     setup::common::{
         deploy_borrow_operations, deploy_oracle, deploy_sorted_troves, deploy_token,
@@ -158,7 +158,25 @@ async fn proper_creating_trove() {
             admin.address().into(),
             AssetId::from(*usdf_token.contract_id().hash()),
         )
-        .await;
+        .await
+        .unwrap();
 
-    println!("USDF balance: {:?}", usdf_balance.unwrap() / 1_000_000);
+    let first = sorted_troves_abi::get_first(&sorted_troves).await.value;
+    let last = sorted_troves_abi::get_last(&sorted_troves).await.value;
+    let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
+    let _icr = trove_manager_abi::get_nominal_icr(
+        &trove_manager,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(size, 1);
+    assert_eq!(first, Identity::Address(admin.address().into()));
+    assert_eq!(last, Identity::Address(admin.address().into()));
+    assert_eq!(usdf_balance, 600_000_000);
+
+    println!("Admin USDF balance: {:?}", usdf_balance / 1_000_000);
+    // println!("ICR: {:?}", icr);
+    // TODO redo ICR calculation in trove_manager
 }
