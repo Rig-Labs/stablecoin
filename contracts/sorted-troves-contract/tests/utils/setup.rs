@@ -1,7 +1,9 @@
 use fuels::prelude::*;
 
-use test_utils::interfaces::sorted_troves::{initialize, SortedTroves};
-use test_utils::interfaces::trove_manager::{initialize as init_tm, TroveManagerContract};
+use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
+use test_utils::interfaces::trove_manager::{
+    trove_manager_abi::initialize as init_tm, TroveManagerContract,
+};
 use test_utils::setup::common::{deploy_sorted_troves, deploy_trove_manager_contract};
 // TODO: do setup instead of copy/pasted code with minor adjustments
 
