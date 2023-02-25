@@ -29,6 +29,17 @@ Make sure you have fuelup, fuel-core, cargo, and rust installed
 sh build-and-test.sh
 ```
 
+Functionality
+-------------------------------
+- [x] Create Trove
+- [ ] Add more collateral to trove
+- [ ] Remove more collateral to trove
+- [ ] Repay Loan
+- [ ] Close Trove
+- [ ] Liquidate
+- [ ] Stake FPT
+- [ ] Stability Pool
+
 License
 -------
 
