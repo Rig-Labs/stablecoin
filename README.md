@@ -31,7 +31,7 @@ sh build-and-test.sh
 
 Functionality
 -------------------------------
-- [x] Create Trove
+- [x] Create Trove and Recieve $USDF
 - [ ] Add more collateral to trove
 - [ ] Remove more collateral to trove
 - [ ] Repay Loan
