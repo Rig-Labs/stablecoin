@@ -1,4 +1,5 @@
 use fuels::{prelude::TxParameters, types::Identity};
+use test_utils::setup::common::setup_protocol;
 
 use crate::utils::setup::{initialize_st_and_tm, setup};
 
@@ -38,21 +39,6 @@ async fn proper_head_and_tails_after_insert() {
     // Increment the counter
     let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
 
-    let _ = trove_manager
-        .methods()
-        .set_nominal_icr(Identity::Address([0; 32].into()), 0)
-        .call()
-        .await
-        .unwrap();
-
-    let res = trove_manager
-        .methods()
-        .get_nominal_icr(Identity::Address([0; 32].into()))
-        .call()
-        .await
-        .unwrap();
-
-    assert_eq!(res.value, 0);
     // Get the current value of the counter
     // check if contains
     let result = sorted_troves
@@ -102,7 +88,11 @@ async fn proper_head_and_tails_after_insert() {
     assert_eq!(result_size.value, 1);
 
     let first = sorted_troves_abi::get_first(&sorted_troves).await;
-    assert_eq!(first.value, Identity::Address(wallet.address().into()));
+    assert_eq!(
+        first.value,
+        Identity::Address(wallet.address().into()),
+        "first should be wallet"
+    );
 
     let last = sorted_troves.methods().get_last().call().await.unwrap();
     assert_eq!(last.value, Identity::Address(wallet.address().into()));

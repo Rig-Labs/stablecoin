@@ -46,6 +46,54 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
+    pub async fn increase_trove_coll(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        amount: u64,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .increase_trove_coll(id, amount)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn increase_trove_debt(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        amount: u64,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .increase_trove_debt(id, amount)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn set_trove_status(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        status: Status,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .set_trove_status(id, status)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
     pub async fn remove(
         trove_manager: &TroveManagerContract,
         sorted_troves: &SortedTroves,
@@ -73,5 +121,26 @@ pub mod trove_manager_abi {
             .call()
             .await
             .unwrap()
+    }
+}
+
+pub mod trove_manager_utils {
+    use crate::interfaces::sorted_troves::sorted_troves_abi;
+
+    use super::*;
+
+    pub async fn set_coll_and_debt_insert(
+        trove_manager: &TroveManagerContract,
+        sorted_troves: &SortedTroves,
+        id: Identity,
+        coll: u64,
+        debt: u64,
+        prev_id: Identity,
+        next_id: Identity,
+    ) {
+        trove_manager_abi::increase_trove_coll(trove_manager, id.clone(), coll).await;
+        trove_manager_abi::increase_trove_debt(trove_manager, id.clone(), debt).await;
+        trove_manager_abi::set_trove_status(trove_manager, id.clone(), Status::Active).await;
+        sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id).await;
     }
 }

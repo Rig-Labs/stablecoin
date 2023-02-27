@@ -91,26 +91,25 @@ impl BorrowOperations for Contract {
         require_at_least_min_net_debt(vars.net_debt);
 
         // ICR is based on the composite debt, i.e. the requested LUSD amount + LUSD borrowing fee + LUSD gas comp.
-        vars.composite_debt = get_composite_debt(vars.net_debt);
-        require(vars.composite_debt > 0, "BorrowOperations: composite debt must be greater than 0");
+
+        require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
 
         let sender = msg_sender().unwrap();
 
-        vars.icr = fm_compute_cr(msg_amount(), vars.composite_debt, vars.price);
-        vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.composite_debt);
+        vars.icr = fm_compute_cr(msg_amount(), vars.net_debt, vars.price);
+        vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.net_debt);
 
         require_at_least_mcr(vars.icr);
 
         trove_manager.set_trove_status(sender, Status::Active);
         trove_manager.increase_trove_coll(sender, msg_amount());
-        trove_manager.increase_trove_debt(sender, vars.composite_debt);
-        log(5);
+        trove_manager.increase_trove_debt(sender, vars.net_debt);
 
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
-        log(6);
+
         withdraw_usdf(sender, _usdf_amount, _usdf_amount);
-        log(7);
+        
     }
 
     #[storage(read, write)]
@@ -160,9 +159,6 @@ fn internal_trigger_borrowing_fee() -> u64 {
     return 0
 }
 
-fn get_composite_debt(_net_debt: u64) -> u64 {
-    return fm_get_net_debt(_net_debt);
-}
 
 fn require_at_least_min_net_debt(_net_debt: u64) {
     require(_net_debt > MIN_NET_DEBT, "BorrowOperations: net debt must be greater than 0");

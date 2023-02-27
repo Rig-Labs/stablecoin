@@ -7,6 +7,7 @@ use data_structures::{Trove};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::data_structures::{Status};
+use libraries::fluid_math::*;
 
 use std::{
     address::Address,
@@ -59,7 +60,9 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64 {
-        return storage.nominal_icr.get(id);
+        let trove = storage.troves.get(id);
+
+        return fm_compute_nominal_cr(trove.coll, trove.debt);
     }
 
     #[storage(read, write)]
@@ -75,8 +78,11 @@ impl TroveManager for Contract {
         next_id: Identity,
     ) {
         storage.nominal_icr.insert(id, value);
-        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.insert(id, value, prev_id, next_id);
+        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
+        internal_increase_trove_coll(id, value);
+        internal_increase_trove_debt(id, 1);
+
+        sorted_troves_contract.insert(id, fm_compute_nominal_cr(value, 1), prev_id, next_id);
     }
 
     #[storage(read, write)]
@@ -99,18 +105,14 @@ impl TroveManager for Contract {
     fn increase_trove_coll(id: Identity, coll: u64) {
         require_caller_is_borrow_operations_contract();
 
-        let mut trove = storage.troves.get(id);
-        trove.coll += coll;
-        storage.troves.insert(id, trove);
+        internal_increase_trove_coll(id, coll);
     }
 
     #[storage(read, write)]
     fn increase_trove_debt(id: Identity, debt: u64) {
         require_caller_is_borrow_operations_contract();
 
-        let mut trove = storage.troves.get(id);
-        trove.debt += debt;
-        storage.troves.insert(id, trove);
+        internal_increase_trove_debt(id, debt);
     }
 
     #[storage(read, write)]
@@ -133,4 +135,18 @@ fn require_caller_is_borrow_operations_contract() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
     require(caller == borrow_operations_contract, "Caller is not the Borrow Operations contract");
+}
+
+#[storage(read, write)]
+fn internal_increase_trove_coll(id: Identity, coll: u64) {
+    let mut trove = storage.troves.get(id);
+    trove.coll += coll;
+    storage.troves.insert(id, trove);
+}
+
+#[storage(read, write)]
+fn internal_increase_trove_debt(id: Identity, debt: u64) {
+    let mut trove = storage.troves.get(id);
+    trove.debt += debt;
+    storage.troves.insert(id, trove);
 }

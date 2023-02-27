@@ -164,7 +164,7 @@ async fn proper_creating_trove() {
     let first = sorted_troves_abi::get_first(&sorted_troves).await.value;
     let last = sorted_troves_abi::get_last(&sorted_troves).await.value;
     let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
-    let _icr = trove_manager_abi::get_nominal_icr(
+    let icr = trove_manager_abi::get_nominal_icr(
         &trove_manager,
         Identity::Address(admin.address().into()),
     )
@@ -177,6 +177,6 @@ async fn proper_creating_trove() {
     assert_eq!(usdf_balance, 600_000_000);
 
     println!("Admin USDF balance: {:?}", usdf_balance / 1_000_000);
-    // println!("ICR: {:?}", icr);
+    println!("ICR: {:?}", icr);
     // TODO redo ICR calculation in trove_manager
 }

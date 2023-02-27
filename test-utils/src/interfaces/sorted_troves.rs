@@ -25,6 +25,21 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
+    pub async fn insert(
+        sorted_troves: &SortedTroves,
+        id: Identity,
+        icr: u64,
+        prev_id: Identity,
+        next_id: Identity,
+    ) -> FuelCallResponse<()> {
+        sorted_troves
+            .methods()
+            .insert(id, icr, prev_id, next_id)
+            .call()
+            .await
+            .unwrap()
+    }
+
     pub async fn get_first(sorted_troves: &SortedTroves) -> FuelCallResponse<Identity> {
         sorted_troves.methods().get_first().call().await.unwrap()
     }
