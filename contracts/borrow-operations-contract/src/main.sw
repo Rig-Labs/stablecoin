@@ -184,7 +184,7 @@ fn internal_adjust_trove(
         require_non_zero_debt_change(_lusd_change);
     }
 
-    require_singular_coll_change(_coll_withdrawal);
+    require_singular_coll_change(_asset_coll_added, _coll_withdrawal);
     require_non_zero_adjustment(_asset_coll_added, _coll_withdrawal, _lusd_change);
 
     let pos_res = internal_get_coll_change(_asset_coll_added, _coll_withdrawal);
@@ -231,10 +231,8 @@ fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
 }
 
 #[storage(read)]
-fn require_singular_coll_change(_coll_withdrawl: u64) {
-    let amount = msg_amount();
-
-    require(_coll_withdrawl == 0 || 0 == amount, "BorrowOperations: collateral change must be 0 or equal to the amount sent");
+fn require_singular_coll_change(_coll_added_amount: u64, _coll_withdrawl: u64) {
+    require(_coll_withdrawl == 0 || 0 == _coll_added_amount, "BorrowOperations: collateral change must be 0 or equal to the amount sent");
 }
 
 #[storage(read)]

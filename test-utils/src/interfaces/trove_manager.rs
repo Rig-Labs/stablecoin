@@ -50,7 +50,7 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract,
         id: Identity,
         amount: u64,
-    ) -> FuelCallResponse<()> {
+    ) -> FuelCallResponse<u64> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
         trove_manager
@@ -66,7 +66,7 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract,
         id: Identity,
         amount: u64,
-    ) -> FuelCallResponse<()> {
+    ) -> FuelCallResponse<u64> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
         trove_manager
@@ -118,6 +118,30 @@ pub mod trove_manager_abi {
         trove_manager
             .methods()
             .initialize(sorted_troves_id)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_trove_coll(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_trove_coll(id)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_trove_debt(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_trove_debt(id)
             .call()
             .await
             .unwrap()

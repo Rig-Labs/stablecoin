@@ -83,4 +83,36 @@ pub mod borrow_operations_abi {
             .await
             .unwrap()
     }
+
+    pub async fn add_coll(
+        borrow_operations: &BorrowOperations,
+        oracle: &Oracle,
+        fuel_token: &Token,
+        sorted_troves: &SortedTroves,
+        trove_manager: &TroveManagerContract,
+        amount: u64,
+        lower_hint: Identity,
+        upper_hint: Identity,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
+
+        let call_params: CallParameters = CallParameters {
+            amount,
+            asset_id: fuel_asset_id,
+            gas_forwarded: None,
+        };
+
+        borrow_operations
+            .methods()
+            .add_coll(lower_hint, upper_hint)
+            .call_params(call_params)
+            .set_contracts(&[oracle, fuel_token, sorted_troves, trove_manager])
+            .append_variable_outputs(1)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
 }
