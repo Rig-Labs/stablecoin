@@ -17,10 +17,16 @@ abi TroveManager {
     fn set_trove_status(id: Identity, value: Status);
 
     #[storage(read, write)]
-    fn increase_trove_coll(id: Identity, value: u64);
+    fn increase_trove_coll(id: Identity, value: u64) -> u64;
 
     #[storage(read, write)]
-    fn increase_trove_debt(id: Identity, value: u64);
+    fn increase_trove_debt(id: Identity, value: u64) -> u64;
+
+    #[storage(read, write)]
+    fn decrease_trove_coll(id: Identity, value: u64) -> u64;
+
+    #[storage(read, write)]
+    fn decrease_trove_debt(id: Identity, value: u64) -> u64;
 
     #[storage(read, write)]
     fn add_trove_owner_to_array(id: Identity) -> u64;

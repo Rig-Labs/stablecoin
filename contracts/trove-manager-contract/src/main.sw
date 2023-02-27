@@ -102,17 +102,31 @@ impl TroveManager for Contract {
     }
 
     #[storage(read, write)]
-    fn increase_trove_coll(id: Identity, coll: u64) {
+    fn increase_trove_coll(id: Identity, coll: u64) -> u64 {
         require_caller_is_borrow_operations_contract();
 
-        internal_increase_trove_coll(id, coll);
+        internal_increase_trove_coll(id, coll)
     }
 
     #[storage(read, write)]
-    fn increase_trove_debt(id: Identity, debt: u64) {
+    fn increase_trove_debt(id: Identity, debt: u64) -> u64 {
         require_caller_is_borrow_operations_contract();
 
-        internal_increase_trove_debt(id, debt);
+        internal_increase_trove_debt(id, debt)
+    }
+
+    #[storage(read, write)]
+    fn decrease_trove_coll(id: Identity, value: u64) -> u64 {
+        require_caller_is_borrow_operations_contract();
+
+        internal_decrease_trove_coll(id, value)
+    }
+
+    #[storage(read, write)]
+    fn decrease_trove_debt(id: Identity, value: u64) -> u64 {
+        require_caller_is_borrow_operations_contract();
+
+        internal_decrease_trove_debt(id, value)
     }
 
     #[storage(read, write)]
@@ -152,15 +166,37 @@ fn require_caller_is_borrow_operations_contract() {
 }
 
 #[storage(read, write)]
-fn internal_increase_trove_coll(id: Identity, coll: u64) {
+fn internal_increase_trove_coll(id: Identity, coll: u64) -> u64 {
     let mut trove = storage.troves.get(id);
     trove.coll += coll;
     storage.troves.insert(id, trove);
+
+    return trove.coll;
 }
 
 #[storage(read, write)]
-fn internal_increase_trove_debt(id: Identity, debt: u64) {
+fn internal_increase_trove_debt(id: Identity, debt: u64) -> u64 {
     let mut trove = storage.troves.get(id);
     trove.debt += debt;
     storage.troves.insert(id, trove);
+
+    return trove.debt;
+}
+
+#[storage(read, write)]
+fn internal_decrease_trove_coll(id: Identity, coll: u64) -> u64 {
+    let mut trove = storage.troves.get(id);
+    trove.coll -= coll;
+    storage.troves.insert(id, trove);
+
+    return trove.coll;
+}
+
+#[storage(read, write)]
+fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
+    let mut trove = storage.troves.get(id);
+    trove.debt -= debt;
+    storage.troves.insert(id, trove);
+
+    return trove.debt;
 }
