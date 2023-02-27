@@ -205,6 +205,8 @@ fn internal_adjust_trove(
         // TODO stake update 
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
+
+    // TODO move tokens and 
 }
 
 #[storage(read)]
@@ -284,6 +286,7 @@ fn internal_get_new_nominal_icr_from_trove_change(
     return new_icr;
 }
 
+#[storage(read)]
 fn internal_update_trove_from_adjustment(
     _borrower: Identity,
     _coll_change: u64,
