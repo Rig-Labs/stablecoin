@@ -118,10 +118,12 @@ impl BorrowOperations for Contract {
     }
 
     #[storage(read, write)]
-    fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity) {}
+    fn withdraw_coll(amount: u64, upper_hint: Identity, lower_hint: Identity) {
+        internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, 0);
+    }
 
     #[storage(read, write)]
-    fn withdraw_coll(amount: u64, upper_hint: Identity, lower_hint: Identity) {}
+    fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity) {}
 
     #[storage(read, write)]
     fn withdraw_usdf(
@@ -179,6 +181,7 @@ fn internal_adjust_trove(
     let price = oracle.get_price();
 
     let mut vars = LocalVariables_AdjustTrove::new();
+
     if _is_debt_increase {
         require_valid_max_fee_percentage(_max_fee_percentage);
         require_non_zero_debt_change(_lusd_change);
@@ -198,7 +201,9 @@ fn internal_adjust_trove(
     vars.new_icr = internal_get_new_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase, price);
 
     require(_coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
-    // TODO require valid adjustment in current mode 
+
+    require_at_least_mcr(vars.new_icr);
+    // TODO require valid adjustment in current mode or leave same if no recovery mode
     // TODO if debt increase and lusd change > 0 
     let new_position_res = internal_update_trove_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
 
@@ -206,6 +211,11 @@ fn internal_adjust_trove(
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
 
+    if !vars.is_coll_increase {
+        // TODO Remove this in favor of routing from active pool
+        log(69);
+        transfer(_coll_withdrawal, storage.asset_contract, _borrower);
+    } 
     // TODO move tokens and 
 }
 
