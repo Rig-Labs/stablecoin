@@ -47,3 +47,23 @@ pub struct LocalVariables_AdjustTrove {
     new_coll: u64,
     stake: u64,
 }
+
+impl LocalVariables_AdjustTrove {
+    pub fn new() -> Self {
+        LocalVariables_AdjustTrove {
+            price: 0,
+            coll_change: 0,
+            net_debt_change: 0,
+            is_coll_increase: false,
+            debt: 0,
+            coll: 0,
+            old_icr: 0,
+            new_icr: 0,
+            new_tcr: 0,
+            usdf_fee: 0,
+            new_debt: 0,
+            new_coll: 0,
+            stake: 0,
+        }
+    }
+}

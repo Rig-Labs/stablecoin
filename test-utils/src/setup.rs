@@ -7,12 +7,92 @@ use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocke
 
 pub mod common {
     use fuels::{
-        prelude::Salt,
+        prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
         signers::fuel_crypto::rand::{self, Rng},
+        types::Identity,
     };
 
     use super::*;
-    use crate::paths::*;
+    use crate::{
+        interfaces::{
+            oracle::oracle_abi, sorted_troves::sorted_troves_abi, token::token_abi,
+            trove_manager::trove_manager_abi,
+        },
+        paths::*,
+    };
+
+    pub async fn setup_protocol(
+        max_size: u64,
+    ) -> (
+        BorrowOperations,
+        TroveManagerContract,
+        Oracle,
+        SortedTroves,
+        Token, /* Fuel */
+        Token, /* USDF */
+        WalletUnlocked,
+    ) {
+        // Launch a local network and deploy the contract
+        let mut wallets = launch_custom_provider_and_get_wallets(
+            WalletsConfig::new(
+                Some(2),             /* Single wallet */
+                Some(1),             /* Single coin (UTXO) */
+                Some(1_000_000_000), /* Amount per coin */
+            ),
+            None,
+            None,
+        )
+        .await;
+        let wallet = wallets.pop().unwrap();
+
+        let bo_instance = deploy_borrow_operations(&wallet).await;
+        let oracle_instance = deploy_oracle(&wallet).await;
+        let sorted_troves = deploy_sorted_troves(&wallet).await;
+        let trove_manger = deploy_trove_manager_contract(&wallet).await;
+        let fuel = deploy_token(&wallet).await;
+        let usdf = deploy_token(&wallet).await;
+
+        let _ = token_abi::initialize(
+            &fuel,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            "Fuel".to_string(),
+            "FUEL".to_string(),
+        )
+        .await;
+
+        let _ = token_abi::initialize(
+            &usdf,
+            0,
+            &Identity::ContractId(bo_instance.contract_id().into()),
+            "USD Fuel".to_string(),
+            "USDF".to_string(),
+        )
+        .await;
+
+        let _ = sorted_troves_abi::initialize(
+            &sorted_troves,
+            max_size,
+            bo_instance.contract_id().into(),
+            trove_manger.contract_id().into(),
+        )
+        .await;
+
+        let _ =
+            trove_manager_abi::initialize(&trove_manger, bo_instance.contract_id().into()).await;
+
+        let _ = oracle_abi::set_price(&oracle_instance, 1_000_000).await;
+
+        (
+            bo_instance,
+            trove_manger,
+            oracle_instance,
+            sorted_troves,
+            fuel,
+            usdf,
+            wallet,
+        )
+    }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token {
         let mut rng = rand::thread_rng();

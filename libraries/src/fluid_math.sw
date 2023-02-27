@@ -16,10 +16,6 @@ pub const MIN_NET_DEBT: u64 = 500_000_000;
 
 pub const PERCENT_DIVERSOR = 200;
 
-pub fn fm_get_net_debt(_debt: u64) -> u64 {
-    return _debt + USDF_GAS_COMPENSATION;
-}
-
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {
         return (coll * DECIMAL_PRECISION) / (debt);

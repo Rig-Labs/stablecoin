@@ -17,16 +17,28 @@ abi TroveManager {
     fn set_trove_status(id: Identity, value: Status);
 
     #[storage(read, write)]
-    fn increase_trove_coll(id: Identity, value: u64);
+    fn increase_trove_coll(id: Identity, value: u64) -> u64;
 
     #[storage(read, write)]
-    fn increase_trove_debt(id: Identity, value: u64);
+    fn increase_trove_debt(id: Identity, value: u64) -> u64;
+
+    #[storage(read, write)]
+    fn decrease_trove_coll(id: Identity, value: u64) -> u64;
+
+    #[storage(read, write)]
+    fn decrease_trove_debt(id: Identity, value: u64) -> u64;
 
     #[storage(read, write)]
     fn add_trove_owner_to_array(id: Identity) -> u64;
 
     #[storage(read, write)]
     fn remove(id: Identity);
+
+    #[storage(read)]
+    fn get_trove_debt(id: Identity) -> u64;
+
+    #[storage(read)]
+    fn get_trove_coll(id: Identity) -> u64;
 
     #[storage(read, write)]
     fn set_nominal_icr_and_insert(id: Identity, value: u64, prev_id: Identity, next_id: Identity);
