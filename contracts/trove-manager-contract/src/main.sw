@@ -128,6 +128,20 @@ impl TroveManager for Contract {
 
         return indx;
     }
+
+    #[storage(read)]
+    fn get_trove_debt(id: Identity) -> u64 {
+        let trove = storage.troves.get(id);
+
+        return trove.debt;
+    }
+
+    #[storage(read)]
+    fn get_trove_coll(id: Identity) -> u64 {
+        let trove = storage.troves.get(id);
+
+        return trove.coll;
+    }
 }
 
 #[storage(read)]
