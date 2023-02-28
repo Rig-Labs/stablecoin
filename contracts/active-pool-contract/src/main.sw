@@ -27,6 +27,24 @@ storage {
 
 impl ActivePool for Contract {
     #[storage(read, write)]
+    fn initialize(
+        borrow_operations: Identity,
+        trove_manager: Identity,
+        stability_pool: Identity,
+        asset_id: ContractId,
+    ) {
+        require(storage.borrow_operations_contract == Identity::ContractId(ContractId::from(ZERO_B256)), "BorrowOperations contract is already set");
+        require(storage.trove_manager_contract == Identity::ContractId(ContractId::from(ZERO_B256)), "TroveManager contract is already set");
+        require(storage.stability_pool_contract == Identity::ContractId(ContractId::from(ZERO_B256)), "StabilityPool contract is already set");
+        require(storage.asset_id == ContractId::from(ZERO_B256), "Asset ID is already set");
+
+        storage.borrow_operations_contract = borrow_operations;
+        storage.trove_manager_contract = trove_manager;
+        storage.stability_pool_contract = stability_pool;
+        storage.asset_id = asset_id;
+    }
+
+    #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64) {
         require_caller_is_bo_or_tm_or_sp();
         transfer(amount, storage.asset_id, address);
