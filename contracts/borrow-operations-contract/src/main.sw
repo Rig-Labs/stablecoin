@@ -157,6 +157,8 @@ impl BorrowOperations for Contract {
         lower_hint: Identity,
     ) {}
 
+        // Since you cannot attach two different assets to a single transaction, 
+        // we need to check which asset is being used, probably will remove this function
     #[storage(read, write)]
     fn claim_collateral() {}
 
