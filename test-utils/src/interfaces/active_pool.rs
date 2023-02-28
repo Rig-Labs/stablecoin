@@ -80,4 +80,18 @@ pub mod active_pool_abi {
             .await
             .unwrap()
     }
+
+    pub async fn send_asset(
+        active_pool: &ActivePool,
+        recipient: Identity,
+        amount: u64,
+    ) -> FuelCallResponse<()> {
+        active_pool
+            .methods()
+            .send_asset(recipient, amount)
+            .append_variable_outputs(1)
+            .call()
+            .await
+            .unwrap()
+    }
 }

@@ -81,4 +81,31 @@ async fn proper_adjust_asset_col() {
 
     let asset_amount = active_pool_abi::get_asset(&active_pool).await.value;
     assert_eq!(asset_amount, 1_000_000);
+
+    let provdier = admin.get_provider().unwrap();
+
+    let asset_id = AssetId::from(*mock_fuel.contract_id().hash());
+    let balance_before = provdier
+        .get_asset_balance(admin.address().into(), asset_id)
+        .await
+        .unwrap();
+
+    active_pool_abi::send_asset(
+        &active_pool,
+        Identity::Address(admin.address().into()),
+        500_000,
+    )
+    .await;
+
+    let asset_amount = active_pool_abi::get_asset(&active_pool).await.value;
+    assert_eq!(asset_amount, 500_000);
+
+    let balance_after = provdier
+        .get_asset_balance(admin.address().into(), asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(balance_before + 500_000, balance_after);
 }
+
+// TODO Test adversarial cases
