@@ -19,6 +19,6 @@ abi ActivePool {
     #[storage(read, write)]
     fn decrease_usdf_debt(amount: u64);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn recieve();
 }

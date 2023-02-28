@@ -73,7 +73,7 @@ impl ActivePool for Contract {
         storage.usdf_debt_amount -= amount;
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn recieve() {
         require_caller_is_borrow_operations_or_default_pool();
         require_is_asset_id();

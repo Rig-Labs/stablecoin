@@ -13,6 +13,7 @@ pub mod borrow_operations_abi {
     use fuels::prelude::{AssetId, CallParameters};
 
     use super::*;
+    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
@@ -26,6 +27,7 @@ pub mod borrow_operations_abi {
         asset_contract: ContractId,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
+        active_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
@@ -38,6 +40,7 @@ pub mod borrow_operations_abi {
                 asset_contract,
                 usdf_contract,
                 fpt_staking_contract,
+                active_pool_contract,
             )
             .tx_params(tx_params)
             .call()
@@ -52,6 +55,7 @@ pub mod borrow_operations_abi {
         usdf_token: &Token,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
+        active_pool: &ActivePool,
         max_fee_percentage: u64,
         fuel_amount_deposit: u64,
         usdf_amount_withdrawn: u64,
@@ -76,7 +80,14 @@ pub mod borrow_operations_abi {
                 lower_hint,
             )
             .call_params(call_params)
-            .set_contracts(&[oracle, fuel_token, usdf_token, sorted_troves, trove_manager])
+            .set_contracts(&[
+                oracle,
+                active_pool,
+                fuel_token,
+                usdf_token,
+                sorted_troves,
+                trove_manager,
+            ])
             .append_variable_outputs(3)
             .tx_params(tx_params)
             .call()
@@ -90,6 +101,7 @@ pub mod borrow_operations_abi {
         fuel_token: &Token,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
+        active_pool: &ActivePool,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -108,7 +120,13 @@ pub mod borrow_operations_abi {
             .methods()
             .add_coll(lower_hint, upper_hint)
             .call_params(call_params)
-            .set_contracts(&[oracle, fuel_token, sorted_troves, trove_manager])
+            .set_contracts(&[
+                oracle,
+                fuel_token,
+                sorted_troves,
+                trove_manager,
+                active_pool,
+            ])
             .append_variable_outputs(1)
             .tx_params(tx_params)
             .call()
@@ -122,6 +140,7 @@ pub mod borrow_operations_abi {
         fuel_token: &Token,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
+        active_pool: &ActivePool,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -131,7 +150,13 @@ pub mod borrow_operations_abi {
         borrow_operations
             .methods()
             .withdraw_coll(amount, lower_hint, upper_hint)
-            .set_contracts(&[oracle, fuel_token, sorted_troves, trove_manager])
+            .set_contracts(&[
+                oracle,
+                fuel_token,
+                sorted_troves,
+                trove_manager,
+                active_pool,
+            ])
             .append_variable_outputs(1)
             .tx_params(tx_params)
             .call()

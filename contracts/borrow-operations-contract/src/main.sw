@@ -5,6 +5,7 @@ dep data_structures;
 use data_structures::{LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
 
 use libraries::data_structures::{Status};
+use libraries::active_pool_interface::{ActivePool};
 use libraries::token_interface::{Token};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
@@ -31,6 +32,7 @@ storage {
     trove_manager_contract: ContractId = ContractId::from(ZERO_B256),
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
+    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     asset_contract: ContractId = ContractId::from(ZERO_B256),
     usdf_contract: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
@@ -45,6 +47,7 @@ impl BorrowOperations for Contract {
         asset_contract: ContractId,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
+        active_pool_contract: ContractId,
     ) {
         require(storage.trove_manager_contract.value == ZERO_B256, "BorrowOperations: contract is already initialized");
 
@@ -54,6 +57,7 @@ impl BorrowOperations for Contract {
         storage.asset_contract = asset_contract;
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
+        storage.active_pool_contract = active_pool_contract;
     }
 
     #[storage(read, write)]
@@ -98,6 +102,7 @@ impl BorrowOperations for Contract {
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
+        internal_active_pool_add_coll(msg_amount());
         withdraw_usdf(sender, _usdf_amount, _usdf_amount);
     }
 
@@ -202,12 +207,7 @@ fn internal_adjust_trove(
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
 
-    if !vars.is_coll_increase {
-        // TODO Remove this in favor of routing from active pool
-        log(69);
-        transfer(_coll_withdrawal, storage.asset_contract, _borrower);
-    } 
-    // TODO move tokens and 
+    internal_move_usdf_and_asset_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, _lusd_change,_is_debt_increase, vars.net_debt_change);
 }
 
 #[storage(read)]
@@ -243,8 +243,9 @@ fn require_valid_asset_id() {
 
 #[storage(read)]
 fn withdraw_usdf(recipient: Identity, amount: u64, net_debt_increase: u64) {
-    // increase the debt of the trove
+    let active_pool = abi(ActivePool, storage.active_pool_contract.value);
     let usdf = abi(Token, storage.usdf_contract.value);
+    active_pool.increase_usdf_debt(net_debt_increase);
     usdf.mint_to_id(amount, recipient);
 }
 
@@ -333,4 +334,39 @@ fn internal_get_new_trove_amounts(
     };
 
     return (new_coll, new_debt);
+}
+
+#[storage(read)]
+fn internal_active_pool_add_coll(_coll_change: u64) {
+    let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+
+    active_pool.recieve {
+        coins: _coll_change,
+        asset_id: storage.asset_contract.value,
+    }();
+}
+
+#[storage(read)]
+fn internal_move_usdf_and_asset_from_adjustment(
+    _borrower: Identity,
+    _coll_change: u64,
+    _is_coll_increase: bool,
+    _usdf_change: u64,
+    _is_debt_increase: bool,
+    _net_debt_change: u64,
+) {
+    let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+    let usdf = abi(Token, storage.usdf_contract.value);
+
+    if _is_coll_increase {
+        internal_active_pool_add_coll(_coll_change);
+    } else {
+        active_pool.send_asset(_borrower, _coll_change);
+    }
+
+    if _is_debt_increase {
+        withdraw_usdf(_borrower, _usdf_change, _net_debt_change);
+    } else {
+        // usdf.mint_to_id(_debt_change, _borrower);
+    }
 }
