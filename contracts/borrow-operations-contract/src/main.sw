@@ -13,12 +13,7 @@ use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::fluid_math::*;
 
 use std::{
-    address::Address,
     auth::msg_sender,
-    block::{
-        height,
-        timestamp,
-    },
     call_frames::{
         contract_id,
         msg_asset_id,
@@ -27,10 +22,6 @@ use std::{
         msg_amount,
     },
     logging::log,
-    storage::{
-        StorageMap,
-        StorageVec,
-    },
     token::transfer,
 };
 
