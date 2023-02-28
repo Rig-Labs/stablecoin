@@ -350,6 +350,7 @@ async fn proper_increase_debt() {
     let provider = admin.get_provider().unwrap();
 
     let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
+    let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
     borrow_operations_abi::open_trove(
         &borrow_operations_instance,
@@ -421,6 +422,13 @@ async fn proper_increase_debt() {
         .unwrap();
 
     assert_eq!(admin_balance, 3_800_000_000, "Balance is wrong");
+
+    let usdf_balance = provider
+        .get_asset_balance(admin.address().into(), usdf_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(usdf_balance, 800_000_000, "USDF Balance is wrong");
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
     assert_eq!(active_pool_debt, 800_000_000, "Active Pool Debt is wrong");
