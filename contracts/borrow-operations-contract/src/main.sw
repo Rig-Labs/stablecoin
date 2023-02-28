@@ -85,7 +85,7 @@ impl BorrowOperations for Contract {
 
         require_at_least_min_net_debt(vars.net_debt);
 
-        // ICR is based on the composite debt, i.e. the requested LUSD amount + LUSD borrowing fee + LUSD gas comp.
+        // ICR is based on the composite debt, i.e. the requested usdf amount + usdf borrowing fee + usdf gas comp.
         require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
 
         let sender = msg_sender().unwrap();
@@ -127,7 +127,9 @@ impl BorrowOperations for Contract {
         amount: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-    ) {}
+    ) {
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint, max_fee);
+    }
 
     #[storage(read, write)]
     fn repay_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity) {}
@@ -159,13 +161,13 @@ fn internal_trigger_borrowing_fee() -> u64 {
     return 0
 }
 
-// function _adjustTrove(address _borrower, uint _collWithdrawal, uint _LUSDChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage) internal {
+// function _adjustTrove(address _borrower, uint _collWithdrawal, uint _usdfChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage) internal {
 #[storage(read)]
 fn internal_adjust_trove(
     _borrower: Identity,
     _asset_coll_added: u64,
     _coll_withdrawal: u64,
-    _lusd_change: u64,
+    _usdf_change: u64,
     _is_debt_increase: bool,
     _upper_hint: Identity,
     _lower_hint: Identity,
@@ -180,15 +182,22 @@ fn internal_adjust_trove(
 
     if _is_debt_increase {
         require_valid_max_fee_percentage(_max_fee_percentage);
-        require_non_zero_debt_change(_lusd_change);
+        require_non_zero_debt_change(_usdf_change);
     }
 
     require_singular_coll_change(_asset_coll_added, _coll_withdrawal);
-    require_non_zero_adjustment(_asset_coll_added, _coll_withdrawal, _lusd_change);
+    require_non_zero_adjustment(_asset_coll_added, _coll_withdrawal, _usdf_change);
 
     let pos_res = internal_get_coll_change(_asset_coll_added, _coll_withdrawal);
     vars.coll_change = pos_res.0;
     vars.is_coll_increase = pos_res.1;
+
+    vars.net_debt_change = _usdf_change;
+
+    if _is_debt_increase {
+        vars.usdf_fee = internal_trigger_borrowing_fee();
+        vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
+    }
 
     vars.debt = trove_manager.get_trove_debt(_borrower);
     vars.coll = trove_manager.get_trove_coll(_borrower);
@@ -200,19 +209,19 @@ fn internal_adjust_trove(
 
     require_at_least_mcr(vars.new_icr);
     // TODO require valid adjustment in current mode or leave same if no recovery mode
-    // TODO if debt increase and lusd change > 0 
+    // TODO if debt increase and usdf change > 0 
     let new_position_res = internal_update_trove_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
 
         // TODO stake update 
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
 
-    internal_move_usdf_and_asset_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, _lusd_change,_is_debt_increase, vars.net_debt_change);
+    internal_move_usdf_and_asset_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, _usdf_change, _is_debt_increase, vars.net_debt_change);
 }
 
 #[storage(read)]
-fn require_non_zero_adjustment(asset_amount: u64, _coll_withdrawl: u64, _lusd_change: u64) {
-    require(asset_amount > 0 || _coll_withdrawl > 0 || _lusd_change > 0, "BorrowOperations: coll withdrawal and debt change must be greater than 0");
+fn require_non_zero_adjustment(asset_amount: u64, _coll_withdrawl: u64, _usdf_change: u64) {
+    require(asset_amount > 0 || _coll_withdrawl > 0 || _usdf_change > 0, "BorrowOperations: coll withdrawal and debt change must be greater than 0");
 }
 
 fn require_at_least_min_net_debt(_net_debt: u64) {
@@ -242,9 +251,15 @@ fn require_valid_asset_id() {
 }
 
 #[storage(read)]
+fn require_valid_usdf_id() {
+    require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
+}
+
+#[storage(read)]
 fn withdraw_usdf(recipient: Identity, amount: u64, net_debt_increase: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
     let usdf = abi(Token, storage.usdf_contract.value);
+
     active_pool.increase_usdf_debt(net_debt_increase);
     usdf.mint_to_id(amount, recipient);
 }
@@ -267,6 +282,7 @@ fn internal_get_new_icr_from_trove_change(
     _price: u64,
 ) -> u64 {
     let new_position = internal_get_new_trove_amounts(_coll, _debt, _coll_change, _is_coll_increase, _debt_change, _is_debt_increase);
+
     let new_icr = fm_compute_cr(new_position.0, new_position.1, _price);
 
     return new_icr;
@@ -347,6 +363,16 @@ fn internal_active_pool_add_coll(_coll_change: u64) {
 }
 
 #[storage(read)]
+fn internal_repay_usdf(usdf_amount: u64) {
+    let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+    let usdf = abi(Token, storage.usdf_contract.value);
+
+    active_pool.decrease_usdf_debt(usdf_amount);
+    transfer(usdf_amount, storage.usdf_contract, Identity::ContractId(storage.usdf_contract));
+    usdf.burn_coins(usdf_amount);
+}
+
+#[storage(read)]
 fn internal_move_usdf_and_asset_from_adjustment(
     _borrower: Identity,
     _coll_change: u64,
@@ -358,15 +384,19 @@ fn internal_move_usdf_and_asset_from_adjustment(
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
     let usdf = abi(Token, storage.usdf_contract.value);
 
-    if _is_coll_increase {
-        internal_active_pool_add_coll(_coll_change);
-    } else {
-        active_pool.send_asset(_borrower, _coll_change);
+    if _coll_change > 0 {
+        if _is_coll_increase {
+            internal_active_pool_add_coll(_coll_change);
+        } else {
+            active_pool.send_asset(_borrower, _coll_change);
+        }
     }
 
-    if _is_debt_increase {
-        withdraw_usdf(_borrower, _usdf_change, _net_debt_change);
-    } else {
-        // usdf.mint_to_id(_debt_change, _borrower);
+    if _usdf_change > 0 {
+        if _is_debt_increase {
+            withdraw_usdf(_borrower, _usdf_change, _net_debt_change);
+        } else {
+            internal_repay_usdf(_usdf_change);
+        }
     }
 }

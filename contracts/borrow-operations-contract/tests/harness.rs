@@ -155,6 +155,7 @@ async fn proper_increase_collateral() {
         &borrow_operations_instance,
         &oracle,
         &fuel_token,
+        &usdf_token,
         &sorted_troves,
         &trove_manager,
         &active_pool,
@@ -314,6 +315,120 @@ async fn proper_decrease_collateral() {
     let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
     assert_eq!(
         active_pool_col, 900_000_000,
+        "Active Pool Collateral is wrong"
+    );
+}
+
+#[tokio::test]
+async fn proper_increase_debt() {
+    let (
+        borrow_operations_instance,
+        trove_manager,
+        oracle,
+        sorted_troves,
+        fuel_token,
+        usdf_token,
+        active_pool,
+        admin,
+    ) = setup_protocol(100).await;
+
+    let balance = 5_000_000_000;
+    token_abi::mint_to_id(&fuel_token, balance, &admin).await;
+
+    borrow_operations_abi::initialize(
+        &borrow_operations_instance,
+        trove_manager.contract_id().into(),
+        sorted_troves.contract_id().into(),
+        oracle.contract_id().into(),
+        fuel_token.contract_id().into(),
+        usdf_token.contract_id().into(),
+        usdf_token.contract_id().into(),
+        active_pool.contract_id().into(),
+    )
+    .await;
+
+    let provider = admin.get_provider().unwrap();
+
+    let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_instance,
+        &oracle,
+        &fuel_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    borrow_operations_abi::withdraw_usdf(
+        &borrow_operations_instance,
+        &oracle,
+        &fuel_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        200_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+
+    let trove_col = trove_manager_abi::get_trove_coll(
+        &trove_manager,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .value;
+
+    let trove_debt = trove_manager_abi::get_trove_debt(
+        &trove_manager,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_debt, 800_000_000, "Trove Debt is wrong");
+
+    let first = sorted_troves_abi::get_first(&sorted_troves).await.value;
+    let last = sorted_troves_abi::get_last(&sorted_troves).await.value;
+    let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
+    let icr = trove_manager_abi::get_nominal_icr(
+        &trove_manager,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(size, 1);
+    assert_eq!(first, Identity::Address(admin.address().into()));
+    assert_eq!(last, Identity::Address(admin.address().into()));
+
+    assert_eq!(icr, 1_500_000_000, "ICR is wrong");
+
+    let admin_balance = provider
+        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(admin_balance, 3_800_000_000, "Balance is wrong");
+
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    assert_eq!(active_pool_debt, 800_000_000, "Active Pool Debt is wrong");
+
+    let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
+
+    assert_eq!(
+        active_pool_col, 1_200_000_000,
         "Active Pool Collateral is wrong"
     );
 }
