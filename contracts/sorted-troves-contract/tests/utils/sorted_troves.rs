@@ -7,7 +7,6 @@ use test_utils::interfaces::trove_manager::TroveManagerContract;
 
 pub mod sorted_troves_utils {
     use fuels::signers::fuel_crypto::rand::{self, Rng};
-    use test_utils::interfaces::trove_manager::trove_manager_utils;
 
     use super::*;
 

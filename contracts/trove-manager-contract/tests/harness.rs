@@ -1,10 +1,10 @@
-use fuels::{prelude::*, types::Identity};
+use fuels::prelude::*;
 use test_utils::{
     interfaces::trove_manager::TroveManagerContract, setup::common::deploy_trove_manager_contract,
 };
 // Load abi from json
 
-async fn get_contract_instance() -> (TroveManagerContract, WalletUnlocked) {
+async fn _get_contract_instance() -> (TroveManagerContract, WalletUnlocked) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

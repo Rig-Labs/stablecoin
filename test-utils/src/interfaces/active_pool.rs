@@ -10,7 +10,7 @@ abigen!(Contract(
 pub mod active_pool_abi {
     use crate::interfaces::token::Token;
     use fuels::{
-        prelude::{AssetId, CallParameters, ContractId, TxParameters},
+        prelude::{AssetId, CallParameters, ContractId},
         types::Identity,
     };
 

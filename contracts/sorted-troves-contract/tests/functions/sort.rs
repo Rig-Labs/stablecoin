@@ -1,5 +1,4 @@
 use fuels::{prelude::TxParameters, types::Identity};
-use test_utils::setup::common::setup_protocol;
 
 use crate::utils::setup::{initialize_st_and_tm, setup};
 

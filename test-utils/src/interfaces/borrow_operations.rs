@@ -99,6 +99,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
+        usdf_token: &Token,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -126,6 +127,7 @@ pub mod borrow_operations_abi {
                 sorted_troves,
                 trove_manager,
                 active_pool,
+                usdf_token,
             ])
             .append_variable_outputs(1)
             .tx_params(tx_params)
@@ -156,6 +158,39 @@ pub mod borrow_operations_abi {
                 sorted_troves,
                 trove_manager,
                 active_pool,
+            ])
+            .append_variable_outputs(1)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn withdraw_usdf(
+        borrow_operations: &BorrowOperations,
+        oracle: &Oracle,
+        fuel_token: &Token,
+        usdf_token: &Token,
+        sorted_troves: &SortedTroves,
+        trove_manager: &TroveManagerContract,
+        active_pool: &ActivePool,
+        max_fee_percentage: u64,
+        amount: u64,
+        lower_hint: Identity,
+        upper_hint: Identity,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        borrow_operations
+            .methods()
+            .withdraw_usdf(max_fee_percentage, amount, lower_hint, upper_hint)
+            .set_contracts(&[
+                oracle,
+                fuel_token,
+                sorted_troves,
+                trove_manager,
+                active_pool,
+                usdf_token,
             ])
             .append_variable_outputs(1)
             .tx_params(tx_params)
