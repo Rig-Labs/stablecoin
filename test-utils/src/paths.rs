@@ -27,3 +27,8 @@ pub const SORTED_TROVES_CONTRACT_BINARY_PATH: &str =
     "../../contracts/sorted-troves-contract/out/debug/sorted-troves-contract.bin";
 pub const SORTED_TROVES_CONTRACT_STORAGE_PATH: &str =
     "../../contracts/sorted-troves-contract/out/debug/sorted-troves-contract-storage_slots.json";
+
+pub const ACTIVE_POOL_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/active-pool-contract/out/debug/active-pool-contract.bin";
+pub const ACTIVE_POOL_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/active-pool-contract/out/debug/active-pool-contract-storage_slots.json";

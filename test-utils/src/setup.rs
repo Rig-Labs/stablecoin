@@ -1,6 +1,7 @@
 use super::interfaces::{
-    borrow_operations::BorrowOperations, oracle::Oracle, sorted_troves::SortedTroves, token::Token,
-    trove_manager::TroveManagerContract, vesting::VestingContract,
+    active_pool::ActivePool, borrow_operations::BorrowOperations, oracle::Oracle,
+    sorted_troves::SortedTroves, token::Token, trove_manager::TroveManagerContract,
+    vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
@@ -182,5 +183,20 @@ pub mod common {
         .unwrap();
 
         BorrowOperations::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool {
+        let id = Contract::deploy(
+            &ACTIVE_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                ACTIVE_POOL_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        ActivePool::new(id, wallet.clone())
     }
 }

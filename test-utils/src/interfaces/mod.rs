@@ -1,3 +1,4 @@
+pub mod active_pool;
 pub mod borrow_operations;
 pub mod oracle;
 pub mod sorted_troves;
