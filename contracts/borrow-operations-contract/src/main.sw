@@ -35,6 +35,7 @@ storage {
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     asset_contract: ContractId = ContractId::from(ZERO_B256),
     usdf_contract: ContractId = ContractId::from(ZERO_B256),
+    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
 }
 
@@ -119,7 +120,12 @@ impl BorrowOperations for Contract {
     }
 
     #[storage(read, write)]
-    fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity) {}
+    fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity) {
+        require_caller_is_stability_pool();
+        require_valid_asset_id();
+
+        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, 0);
+    }
 
     #[storage(read, write)]
     fn withdraw_usdf(
@@ -132,7 +138,11 @@ impl BorrowOperations for Contract {
     }
 
     #[storage(read, write)]
-    fn repay_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity) {}
+    fn repay_usdf(upper_hint: Identity, lower_hint: Identity) {
+        require_valid_usdf_id();
+
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint, 0);
+    }
 
     #[storage(read, write)]
     fn close_trove() {}
@@ -217,6 +227,11 @@ fn internal_adjust_trove(
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
 
     internal_move_usdf_and_asset_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, _usdf_change, _is_debt_increase, vars.net_debt_change);
+}
+
+#[storage(read)]
+fn require_caller_is_stability_pool() {
+    require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract), "BorrowOperations: Caller is not Stability Pool");
 }
 
 #[storage(read)]
