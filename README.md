@@ -35,8 +35,8 @@ Functionality
 - [x] Create Trove and Recieve $USDF
 - [x] Add more collateral to trove
 - [x] Add more debt to trove
+- [x] Repay Loan debt to trove
 - [ ] Remove collateral to trove
-- [ ] Repay Loan
 - [ ] Close Trove
 - [ ] Liquidate
 - [ ] Stake FPT
