@@ -16,8 +16,8 @@ pub mod common {
     use super::*;
     use crate::{
         interfaces::{
-            oracle::oracle_abi, sorted_troves::sorted_troves_abi, token::token_abi,
-            trove_manager::trove_manager_abi,
+            active_pool::active_pool_abi, oracle::oracle_abi, sorted_troves::sorted_troves_abi,
+            token::token_abi, trove_manager::trove_manager_abi,
         },
         paths::*,
     };
@@ -31,6 +31,7 @@ pub mod common {
         SortedTroves,
         Token, /* Fuel */
         Token, /* USDF */
+        ActivePool,
         WalletUnlocked,
     ) {
         // Launch a local network and deploy the contract
@@ -52,8 +53,19 @@ pub mod common {
         let trove_manger = deploy_trove_manager_contract(&wallet).await;
         let fuel = deploy_token(&wallet).await;
         let usdf = deploy_token(&wallet).await;
+        let active_pool = deploy_active_pool(&wallet).await;
 
-        let _ = token_abi::initialize(
+        // TODO Change stability pool when implemented
+        active_pool_abi::initialize(
+            &active_pool,
+            Identity::ContractId(bo_instance.contract_id().into()),
+            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(oracle_instance.contract_id().into()),
+            fuel.contract_id().into(),
+        )
+        .await;
+
+        token_abi::initialize(
             &fuel,
             1_000_000_000,
             &Identity::Address(wallet.address().into()),
@@ -62,7 +74,7 @@ pub mod common {
         )
         .await;
 
-        let _ = token_abi::initialize(
+        token_abi::initialize(
             &usdf,
             0,
             &Identity::ContractId(bo_instance.contract_id().into()),
@@ -71,7 +83,7 @@ pub mod common {
         )
         .await;
 
-        let _ = sorted_troves_abi::initialize(
+        sorted_troves_abi::initialize(
             &sorted_troves,
             max_size,
             bo_instance.contract_id().into(),
@@ -79,10 +91,9 @@ pub mod common {
         )
         .await;
 
-        let _ =
-            trove_manager_abi::initialize(&trove_manger, bo_instance.contract_id().into()).await;
+        trove_manager_abi::initialize(&trove_manger, bo_instance.contract_id().into()).await;
 
-        let _ = oracle_abi::set_price(&oracle_instance, 1_000_000).await;
+        oracle_abi::set_price(&oracle_instance, 1_000_000).await;
 
         (
             bo_instance,
@@ -91,6 +102,7 @@ pub mod common {
             sorted_troves,
             fuel,
             usdf,
+            active_pool,
             wallet,
         )
     }

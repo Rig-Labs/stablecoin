@@ -3,8 +3,10 @@ use fuels::{prelude::*, types::Identity};
 // Load abi from json
 use test_utils::{
     interfaces::borrow_operations::borrow_operations_abi,
-    interfaces::sorted_troves::sorted_troves_abi, interfaces::token::token_abi,
-    interfaces::trove_manager::trove_manager_abi, setup::common::setup_protocol,
+    interfaces::sorted_troves::sorted_troves_abi,
+    interfaces::trove_manager::trove_manager_abi,
+    interfaces::{active_pool::active_pool_abi, token::token_abi},
+    setup::common::setup_protocol,
 };
 
 #[tokio::test]
@@ -16,24 +18,13 @@ async fn proper_creating_trove() {
         sorted_troves,
         fuel_token,
         usdf_token,
+        active_pool,
         admin,
     ) = setup_protocol(100).await;
 
     let _ = token_abi::mint_to_id(&fuel_token, 5_000_000_000, &admin).await;
 
-    // let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
-
     let provider = admin.get_provider().unwrap();
-    // let admin_balance = provider
-    //     .get_asset_balance(admin.address().into(), fuel_asset_id)
-    //     .await;
-
-    // println!(
-    //     "Admin FUEL balance Before: {:?}",
-    //     admin_balance.unwrap() / 1_000_000
-    // );
-
-    // let bo_instance = BorrowOperations::new(borrow_operations_instance.id().clone(), admin);
 
     let _ = borrow_operations_abi::initialize(
         &borrow_operations_instance,
@@ -43,6 +34,7 @@ async fn proper_creating_trove() {
         fuel_token.contract_id().into(),
         usdf_token.contract_id().into(),
         usdf_token.contract_id().into(),
+        active_pool.contract_id().into(),
     )
     .await;
 
@@ -53,6 +45,7 @@ async fn proper_creating_trove() {
         &usdf_token,
         &sorted_troves,
         &trove_manager,
+        &active_pool,
         0,
         1_200_000_000,
         600_000_000,
@@ -61,17 +54,6 @@ async fn proper_creating_trove() {
     )
     .await;
 
-    // println!("{:?}", res);
-    // let admin_balance = provider
-    //     .get_asset_balance(admin.address().into(), fuel_asset_id)
-    //     .await;
-
-    // println!(
-    //     "Admin FUEL balance After Deposit: {:?}",
-    //     admin_balance.unwrap() / 1_000_000
-    // );
-
-    // check usdf balance
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
@@ -115,7 +97,15 @@ async fn proper_creating_trove() {
 
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
     assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
-    // TODO redo ICR calculation in trove_manager
+
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+
+    let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
+    assert_eq!(
+        active_pool_col, 1_200_000_000,
+        "Active Pool Collateral is wrong"
+    );
 }
 
 #[tokio::test]
@@ -127,6 +117,7 @@ async fn proper_increase_collateral() {
         sorted_troves,
         fuel_token,
         usdf_token,
+        active_pool,
         admin,
     ) = setup_protocol(100).await;
 
@@ -140,6 +131,7 @@ async fn proper_increase_collateral() {
         fuel_token.contract_id().into(),
         usdf_token.contract_id().into(),
         usdf_token.contract_id().into(),
+        active_pool.contract_id().into(),
     )
     .await;
 
@@ -150,6 +142,7 @@ async fn proper_increase_collateral() {
         &usdf_token,
         &sorted_troves,
         &trove_manager,
+        &active_pool,
         0,
         1_200_000_000,
         600_000_000,
@@ -164,6 +157,7 @@ async fn proper_increase_collateral() {
         &fuel_token,
         &sorted_troves,
         &trove_manager,
+        &active_pool,
         1_200_000_000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
@@ -202,6 +196,15 @@ async fn proper_increase_collateral() {
     assert_eq!(last, Identity::Address(admin.address().into()));
 
     assert_eq!(icr, 4_000_000_000, "ICR is wrong");
+
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+
+    let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
+    assert_eq!(
+        active_pool_col, 2_400_000_000,
+        "Active Pool Collateral is wrong"
+    );
 }
 
 #[tokio::test]
@@ -213,6 +216,7 @@ async fn proper_decrease_collateral() {
         sorted_troves,
         fuel_token,
         usdf_token,
+        active_pool,
         admin,
     ) = setup_protocol(100).await;
 
@@ -227,6 +231,7 @@ async fn proper_decrease_collateral() {
         fuel_token.contract_id().into(),
         usdf_token.contract_id().into(),
         usdf_token.contract_id().into(),
+        active_pool.contract_id().into(),
     )
     .await;
 
@@ -241,6 +246,7 @@ async fn proper_decrease_collateral() {
         &usdf_token,
         &sorted_troves,
         &trove_manager,
+        &active_pool,
         0,
         1_200_000_000,
         600_000_000,
@@ -255,6 +261,7 @@ async fn proper_decrease_collateral() {
         &fuel_token,
         &sorted_troves,
         &trove_manager,
+        &active_pool,
         30_000_0000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
@@ -300,4 +307,13 @@ async fn proper_decrease_collateral() {
         .unwrap();
 
     assert_eq!(admin_balance, 4_100_000_000, "Balance is wrong");
+
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+
+    let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
+    assert_eq!(
+        active_pool_col, 900_000_000,
+        "Active Pool Collateral is wrong"
+    );
 }
