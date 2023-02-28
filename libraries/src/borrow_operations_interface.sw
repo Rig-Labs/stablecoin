@@ -20,7 +20,7 @@ abi BorrowOperations {
     fn withdraw_usdf(max_fee: u64, amount: u64, upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read, write)]
-    fn repay_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity);
+    fn repay_usdf(upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read, write)]
     fn close_trove();
