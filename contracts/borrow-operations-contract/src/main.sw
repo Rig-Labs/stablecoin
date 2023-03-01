@@ -228,6 +228,7 @@ fn internal_adjust_trove(
     vars.is_coll_increase = pos_res.1;
 
     vars.net_debt_change = _usdf_change;
+
     if _is_debt_increase {
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
@@ -244,6 +245,10 @@ fn internal_adjust_trove(
     require_at_least_mcr(vars.new_icr);
     // TODO require valid adjustment in current mode or leave same if no recovery mode
     // TODO if debt increase and usdf change > 0 
+    if !_is_debt_increase {
+        require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
+    }
+
     let new_position_res = internal_update_trove_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
 
         // TODO stake update 

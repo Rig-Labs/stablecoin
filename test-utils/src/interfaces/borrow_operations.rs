@@ -10,7 +10,7 @@ abigen!(Contract(
 ));
 
 pub mod borrow_operations_abi {
-    use fuels::prelude::{AssetId, CallParameters};
+    use fuels::prelude::{AssetId, CallParameters, Error};
 
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
@@ -61,7 +61,7 @@ pub mod borrow_operations_abi {
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
 
@@ -92,7 +92,6 @@ pub mod borrow_operations_abi {
             .tx_params(tx_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn add_coll(
@@ -106,7 +105,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
@@ -133,7 +132,6 @@ pub mod borrow_operations_abi {
             .tx_params(tx_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn withdraw_coll(
@@ -146,7 +144,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
         borrow_operations
@@ -163,7 +161,6 @@ pub mod borrow_operations_abi {
             .tx_params(tx_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn withdraw_usdf(
@@ -210,7 +207,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
@@ -236,7 +233,6 @@ pub mod borrow_operations_abi {
             .call_params(call_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn close_trove(
