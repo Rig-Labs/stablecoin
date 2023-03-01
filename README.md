@@ -36,7 +36,7 @@ Functionality
 - [x] Add more collateral to trove
 - [x] Add more debt to trove
 - [x] Repay Loan debt to trove
-- [x] Remove collateral to trove
+- [x] Reduce collateral from trove
 - [x] Close Trove
 - [ ] Fees
 - [ ] Liquidate
