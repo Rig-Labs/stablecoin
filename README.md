@@ -42,6 +42,7 @@ Functionality
 - [ ] Liquidate
 - [ ] Stake FPT
 - [ ] Stability Pool
+- [ ] Multiple assets (Fuel, stFuel)
 
 License
 -------
