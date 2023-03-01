@@ -105,7 +105,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
@@ -132,7 +132,6 @@ pub mod borrow_operations_abi {
             .tx_params(tx_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn withdraw_coll(

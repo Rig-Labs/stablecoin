@@ -5,7 +5,7 @@ use test_utils::{
     interfaces::sorted_troves::sorted_troves_abi,
     interfaces::trove_manager::trove_manager_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
-    setup::common::setup_protocol,
+    setup::common::{deploy_token, setup_protocol},
 };
 
 #[tokio::test]
@@ -329,5 +329,145 @@ async fn fails_decrease_collateral_under_mcr() {
     assert!(
         res,
         "Borrow operation: Should not be able to reduce collateral to less than 1.2 MCR"
+    );
+}
+
+#[tokio::test]
+async fn fails_incorrect_token_as_collateral_or_repayment() {
+    // MCR = 1_200_000
+    // TODO update this if MCR changes
+    let (
+        borrow_operations,
+        trove_manager,
+        oracle,
+        sorted_troves,
+        fuel_token,
+        usdf_token,
+        active_pool,
+        admin,
+        _,
+    ) = setup_protocol(100, 2).await;
+
+    let mock_fake_token = deploy_token(&admin).await;
+
+    token_abi::initialize(
+        &mock_fake_token,
+        0,
+        &Identity::Address(admin.address().into()),
+        "Fake Fuel".to_string(),
+        "FFUEL".to_string(),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &mock_fake_token,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &fuel_token,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    let res = borrow_operations_abi::open_trove(
+        &borrow_operations,
+        &oracle,
+        &mock_fake_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .is_err();
+
+    assert!(
+        res,
+        "Borrow operation: Should not be able to open trove with incorrect token as collateral"
+    );
+
+    // Set up real trove and try to add collateral
+    borrow_operations_abi::open_trove(
+        &borrow_operations,
+        &oracle,
+        &fuel_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    let res = borrow_operations_abi::add_coll(
+        &borrow_operations,
+        &oracle,
+        &mock_fake_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        1_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .is_err();
+
+    assert!(
+        res,
+        "Borrow operation: Should not be able to add collateral with incorrect token as collateral"
+    );
+
+    let fake_usdf_token = deploy_token(&admin).await;
+
+    token_abi::initialize(
+        &fake_usdf_token,
+        0,
+        &Identity::Address(admin.address().into()),
+        "Fake USDF".to_string(),
+        "FUSDF".to_string(),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &fake_usdf_token,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    let res = borrow_operations_abi::repay_usdf(
+        &borrow_operations,
+        &oracle,
+        &fuel_token,
+        &fake_usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        1_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .is_err();
+
+    assert!(
+        res,
+        "Borrow operation: Should not be able to repay with incorrect token as repayment"
     );
 }
