@@ -561,3 +561,6 @@ async fn proper_decrease_debt() {
         "Active Pool Collateral is wrong"
     );
 }
+
+#[tokio::test]
+async fn proper_close_trove() {}

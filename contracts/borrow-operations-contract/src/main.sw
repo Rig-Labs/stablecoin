@@ -145,7 +145,31 @@ impl BorrowOperations for Contract {
     }
 
     #[storage(read, write)]
-    fn close_trove() {}
+    fn close_trove() {
+        let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+        let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+        let oracle = abi(MockOracle, storage.oracle_contract.value);
+
+        // TODO require trove is active
+        let price = oracle.get_price();
+
+        // TODO trove manager apply pending rewards
+        let coll = trove_manager.get_trove_coll(msg_sender().unwrap());
+        let debt = trove_manager.get_trove_debt(msg_sender().unwrap());
+
+        if debt > 0 {
+            require_valid_usdf_id();
+            require(debt <= msg_amount(), "BorrowOperations: cannot close trove with insufficient usdf balance");
+        }
+
+        trove_manager.close_trove(msg_sender().unwrap());
+        trove_manager.remove_stake(msg_sender().unwrap());
+
+        internal_repay_usdf(debt);
+        active_pool.send_asset(msg_sender().unwrap(), coll);
+
+        // TODO refund excess usdf
+    }
 
     #[storage(read, write)]
     fn adjust_trove(
@@ -205,7 +229,6 @@ fn internal_adjust_trove(
     vars.is_coll_increase = pos_res.1;
 
     vars.net_debt_change = _usdf_change;
-
     if _is_debt_increase {
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
@@ -384,9 +407,9 @@ fn internal_repay_usdf(usdf_amount: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
     let usdf = abi(Token, storage.usdf_contract.value);
 
-    active_pool.decrease_usdf_debt(usdf_amount);
     transfer(usdf_amount, storage.usdf_contract, Identity::ContractId(storage.usdf_contract));
     usdf.burn_coins(usdf_amount);
+    active_pool.decrease_usdf_debt(usdf_amount);
 }
 
 #[storage(read)]

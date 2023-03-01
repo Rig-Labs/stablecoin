@@ -11,6 +11,12 @@ abi TroveManager {
     fn initialize(id: ContractId);
 
     #[storage(read, write)]
+    fn remove_stake(id: Identity);
+
+    #[storage(read, write)]
+    fn close_trove(id: Identity);
+
+    #[storage(read, write)]
     fn set_nominal_icr(id: Identity, value: u64);
 
     #[storage(read, write)]
