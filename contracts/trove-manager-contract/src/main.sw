@@ -53,9 +53,9 @@ storage {
 
 impl TroveManager for Contract {
     #[storage(read, write)]
-    fn initialize(id: ContractId) {
-        storage.sorted_troves_contract = id;
-        storage.borrow_operations_contract = id;
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId) {
+        storage.sorted_troves_contract = sorted_troves;
+        storage.borrow_operations_contract = borrow_operations;
     }
 
     #[storage(read)]
@@ -156,6 +156,57 @@ impl TroveManager for Contract {
 
         return trove.coll;
     }
+
+    #[storage(read, write)]
+    fn close_trove(id: Identity) {
+        require_caller_is_borrow_operations_contract();
+
+        internal_close_trove(id, Status::ClosedByOwner);
+    }
+
+    #[storage(read, write)]
+    fn remove_stake(id: Identity) {}
+}
+
+#[storage(read, write)]
+fn internal_close_trove(id: Identity, close_status: Status) {
+    require(close_status != Status::NonExistent || close_status != Status::Active, "Invalid status");
+
+    let trove_owner_array_length = storage.trove_owners.len();
+
+    require_more_than_one_trove_in_system(trove_owner_array_length);
+
+    let mut trove = storage.troves.get(id);
+    trove.status = close_status;
+    trove.coll = 0;
+    trove.debt = 0;
+    storage.troves.insert(id, trove);
+
+    // TODO Reward snapshot
+    internal_remove_trove_owner(id, trove_owner_array_length);
+    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    sorted_troves_contract.remove(id);
+}
+
+#[storage(read, write)]
+fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u64) {
+    let mut trove = storage.troves.get(_borrower);
+
+    require(trove.status != Status::NonExistent && trove.status != Status::Active, "Trove does not exist");
+
+    let index = trove.array_index;
+    let length = _trove_array_owner_length;
+    let indx_last = length - 1;
+
+    require(index <= indx_last, "Trove does not exist");
+
+    let address_to_move = storage.trove_owners.get(indx_last).unwrap();
+
+    let mut trove_to_move = storage.troves.get(address_to_move);
+    trove_to_move.array_index = index;
+    storage.troves.insert(address_to_move, trove_to_move);
+
+    let a = storage.trove_owners.swap_remove(index);
 }
 
 #[storage(read)]
@@ -199,4 +250,11 @@ fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
     storage.troves.insert(id, trove);
 
     return trove.debt;
+}
+
+#[storage(read)]
+fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
+    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    let size = sorted_troves_contract.get_size();
+    require(trove_owner_array_length > 1 && size > 1, "There is only one trove in the system");
 }

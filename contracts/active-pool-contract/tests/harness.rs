@@ -75,7 +75,12 @@ async fn proper_adjust_debt() {
 async fn proper_adjust_asset_col() {
     let (active_pool, mock_fuel, admin) = get_contract_instance().await;
 
-    token_abi::mint_to_id(&mock_fuel, 1_000_000, &admin.clone()).await;
+    token_abi::mint_to_id(
+        &mock_fuel,
+        1_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
 
     active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
 

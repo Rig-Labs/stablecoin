@@ -7,6 +7,8 @@ use super::interfaces::{
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
 
 pub mod common {
+    use core::num;
+
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
         signers::fuel_crypto::rand::{self, Rng},
@@ -16,14 +18,16 @@ pub mod common {
     use super::*;
     use crate::{
         interfaces::{
-            active_pool::active_pool_abi, oracle::oracle_abi, sorted_troves::sorted_troves_abi,
-            token::token_abi, trove_manager::trove_manager_abi,
+            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
+            oracle::oracle_abi, sorted_troves::sorted_troves_abi, token::token_abi,
+            trove_manager::trove_manager_abi,
         },
         paths::*,
     };
 
     pub async fn setup_protocol(
         max_size: u64,
+        num_wallets: u64,
     ) -> (
         BorrowOperations,
         TroveManagerContract,
@@ -33,11 +37,12 @@ pub mod common {
         Token, /* USDF */
         ActivePool,
         WalletUnlocked,
+        Vec<WalletUnlocked>,
     ) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
             WalletsConfig::new(
-                Some(2),             /* Single wallet */
+                Some(num_wallets),   /* Single wallet */
                 Some(1),             /* Single coin (UTXO) */
                 Some(1_000_000_000), /* Amount per coin */
             ),
@@ -91,9 +96,26 @@ pub mod common {
         )
         .await;
 
-        trove_manager_abi::initialize(&trove_manger, bo_instance.contract_id().into()).await;
+        trove_manager_abi::initialize(
+            &trove_manger,
+            bo_instance.contract_id().into(),
+            sorted_troves.contract_id().into(),
+        )
+        .await;
 
         oracle_abi::set_price(&oracle_instance, 1_000_000).await;
+
+        borrow_operations_abi::initialize(
+            &bo_instance,
+            trove_manger.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            oracle_instance.contract_id().into(),
+            fuel.contract_id().into(),
+            usdf.contract_id().into(),
+            usdf.contract_id().into(),
+            active_pool.contract_id().into(),
+        )
+        .await;
 
         (
             bo_instance,
@@ -104,6 +126,7 @@ pub mod common {
             usdf,
             active_pool,
             wallet,
+            wallets,
         )
     }
 

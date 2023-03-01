@@ -113,11 +113,12 @@ pub mod trove_manager_abi {
 
     pub async fn initialize(
         trove_manager: &TroveManagerContract,
+        borrow_operations: ContractId,
         sorted_troves_id: ContractId,
     ) -> FuelCallResponse<()> {
         trove_manager
             .methods()
-            .initialize(sorted_troves_id)
+            .initialize(borrow_operations, sorted_troves_id)
             .call()
             .await
             .unwrap()

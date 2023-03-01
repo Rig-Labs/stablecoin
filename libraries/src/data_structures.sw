@@ -14,6 +14,30 @@ pub enum Status {
     ClosedByRedemption: (),
 }
 
+impl Status {
+    pub fn eq(self, other: Status) -> bool {
+        match (self, other) {
+            (Status::NonExistent, Status::NonExistent) => true,
+            (Status::Active, Status::Active) => true,
+            (Status::ClosedByOwner, Status::ClosedByOwner) => true,
+            (Status::ClosedByLiquidation, Status::ClosedByLiquidation) => true,
+            (Status::ClosedByRedemption, Status::ClosedByRedemption) => true,
+            _ => false,
+        }
+    }
+
+   pub fn neq(self, other: Status) -> bool {
+        match (self, other) {
+            (Status::NonExistent, Status::NonExistent) => false,
+            (Status::Active, Status::Active) => false,
+            (Status::ClosedByOwner, Status::ClosedByOwner) => false,
+            (Status::ClosedByLiquidation, Status::ClosedByLiquidation) => false,
+            (Status::ClosedByRedemption, Status::ClosedByRedemption) => false,
+            _ => true,
+        }
+    }
+}
+
 pub struct Asset {
     /// Identifier of asset
     id: ContractId,
