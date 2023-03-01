@@ -729,4 +729,21 @@ async fn proper_close_trove() {
         active_pool_col, 3_000_000_000,
         "Active Pool Collateral is wrong"
     );
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_wallet2,
+        &oracle,
+        &fuel_token,
+        &usdf_token,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        2_000_000_000,
+        1_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await;
+    // Can open a new trove after closing one
 }

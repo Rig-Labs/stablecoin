@@ -256,6 +256,5 @@ fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
 fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
     let size = sorted_troves_contract.get_size();
-    log(size);
     require(trove_owner_array_length > 1 && size > 1, "There is only one trove in the system");
 }
