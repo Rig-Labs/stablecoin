@@ -8,7 +8,7 @@ abi TroveManager {
     fn get_nominal_icr(id: Identity) -> u64;
 
     #[storage(read, write)]
-    fn initialize(id: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId);
 
     #[storage(read, write)]
     fn remove_stake(id: Identity);

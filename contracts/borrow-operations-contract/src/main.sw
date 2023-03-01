@@ -164,7 +164,6 @@ impl BorrowOperations for Contract {
 
         trove_manager.close_trove(msg_sender().unwrap());
         trove_manager.remove_stake(msg_sender().unwrap());
-
         internal_repay_usdf(debt);
         active_pool.send_asset(msg_sender().unwrap(), coll);
 

@@ -57,5 +57,10 @@ pub async fn initialize_st_and_tm(
     )
     .await;
 
-    let _ = init_tm(trove_manager, sorted_troves.contract_id().into()).await;
+    let _ = init_tm(
+        trove_manager,
+        sorted_troves.contract_id().into(),
+        sorted_troves.contract_id().into(),
+    )
+    .await;
 }

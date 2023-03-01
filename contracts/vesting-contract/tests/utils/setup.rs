@@ -59,7 +59,7 @@ pub mod test_helpers {
         )
         .await;
 
-        let _ = mint_to_id(&instance, amount, admin).await;
+        let _ = mint_to_id(&instance, amount, Identity::Address(admin.address().into())).await;
 
         let _res = admin
             .force_transfer_to_contract(

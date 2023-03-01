@@ -238,4 +238,42 @@ pub mod borrow_operations_abi {
             .await
             .unwrap()
     }
+
+    pub async fn close_trove(
+        borrow_operations: &BorrowOperations,
+        oracle: &Oracle,
+        fuel_token: &Token,
+        usdf_token: &Token,
+        sorted_troves: &SortedTroves,
+        trove_manager: &TroveManagerContract,
+        active_pool: &ActivePool,
+        amount: u64,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+
+        let call_params: CallParameters = CallParameters {
+            amount,
+            asset_id: usdf_asset_id,
+            gas_forwarded: None,
+        };
+
+        borrow_operations
+            .methods()
+            .close_trove()
+            .set_contracts(&[
+                oracle,
+                fuel_token,
+                sorted_troves,
+                trove_manager,
+                active_pool,
+                usdf_token,
+            ])
+            .append_variable_outputs(1)
+            .tx_params(tx_params)
+            .call_params(call_params)
+            .call()
+            .await
+            .unwrap()
+    }
 }

@@ -38,11 +38,11 @@ pub mod token_abi {
     pub async fn mint_to_id(
         instance: &Token,
         amount: u64,
-        admin: &WalletUnlocked,
+        admin: Identity,
     ) -> FuelCallResponse<()> {
         instance
             .methods()
-            .mint_to_id(amount, Identity::Address(admin.address().into()))
+            .mint_to_id(amount, admin)
             .append_variable_outputs(1)
             .call()
             .await
