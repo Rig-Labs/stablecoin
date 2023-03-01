@@ -1,8 +1,4 @@
-use fuels::{
-    prelude::{abigen, WalletUnlocked},
-    programs::call_response::FuelCallResponse,
-    types::Identity,
-};
+use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
 
 abigen!(Contract(
     name = "Token",

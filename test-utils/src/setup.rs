@@ -7,7 +7,6 @@ use super::interfaces::{
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
 
 pub mod common {
-    use core::num;
 
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
