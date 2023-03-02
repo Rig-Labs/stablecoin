@@ -48,11 +48,6 @@ impl TroveManager for Contract {
     }
 
     #[storage(read, write)]
-    fn set_nominal_icr(id: Identity, value: u64) {
-        return storage.nominal_icr.insert(id, value);
-    }
-
-    #[storage(read, write)]
     fn set_nominal_icr_and_insert(
         id: Identity,
         value: u64,
@@ -119,6 +114,15 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn remove_stake(id: Identity) {}
+
+    #[storage(read, write)]
+    fn liquidate(id: Identity) {}
+
+    #[storage(read, write)]
+    fn liquidate_troves(num_troves: u64) {}
+
+    #[storage(read, write)]
+    fn batch_liquidate_troves(ids: Vec<Identity>) {}
 }
 
 #[storage(read, write)]
