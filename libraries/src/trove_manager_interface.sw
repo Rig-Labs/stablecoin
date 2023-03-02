@@ -14,10 +14,16 @@ abi TroveManager {
     fn remove_stake(id: Identity);
 
     #[storage(read, write)]
-    fn close_trove(id: Identity);
+    fn liquidate(id: Identity);
 
     #[storage(read, write)]
-    fn set_nominal_icr(id: Identity, value: u64);
+    fn liquidate_troves(num_troves: u64);
+
+    #[storage(read, write)]
+    fn batch_liquidate_troves(ids: Vec<Identity>);
+
+    #[storage(read, write)]
+    fn close_trove(id: Identity);
 
     #[storage(read, write)]
     fn set_trove_status(id: Identity, value: Status);

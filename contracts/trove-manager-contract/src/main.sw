@@ -2,10 +2,11 @@ contract;
 
 dep data_structures;
 
-use data_structures::{Trove};
+use data_structures::{LocalVariablesOuterLiquidationFunction, Trove};
 
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::{MockOracle};
 use libraries::data_structures::{Status};
 use libraries::fluid_math::*;
 
@@ -36,6 +37,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    oracle_contract: ContractId = ContractId::from(ZERO_B256),
     usdf: ContractId = ContractId::from(ZERO_B256),
     fpt_token: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
@@ -66,17 +68,13 @@ impl TroveManager for Contract {
     }
 
     #[storage(read, write)]
-    fn set_nominal_icr(id: Identity, value: u64) {
-        return storage.nominal_icr.insert(id, value);
-    }
-
-    #[storage(read, write)]
     fn set_nominal_icr_and_insert(
         id: Identity,
         value: u64,
         prev_id: Identity,
         next_id: Identity,
     ) {
+        // TODO Remove this function 
         storage.nominal_icr.insert(id, value);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
         internal_increase_trove_coll(id, value);
@@ -166,6 +164,24 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn remove_stake(id: Identity) {}
+
+    #[storage(read, write)]
+    fn batch_liquidate_troves(borrowers: Vec<Identity>) {
+        internal_batch_liquidate_troves(borrowers);
+    }
+
+    #[storage(read, write)]
+    fn liquidate(id: Identity) {
+        require_trove_is_active(id);
+
+        let mut borrowers: Vec<Identity> = Vec::new();
+        borrowers.push(id);
+
+        internal_batch_liquidate_troves(borrowers);
+    }
+
+    #[storage(read, write)]
+    fn liquidate_troves(num_troves: u64) {}
 }
 
 #[storage(read, write)]
@@ -207,6 +223,23 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
     storage.troves.insert(address_to_move, trove_to_move);
 
     let a = storage.trove_owners.swap_remove(index);
+}
+
+#[storage(read)]
+fn require_trove_is_active(id: Identity) {
+    let trove = storage.troves.get(id);
+    require(trove.status == Status::Active, "Trove is not active");
+}
+
+#[storage(read, write)]
+fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
+    require(borrowers.len() > 0, "No borrowers to liquidate");
+
+    let mut vars = LocalVariablesOuterLiquidationFunction::default();
+    let oracle = abi(MockOracle, storage.oracle_contract.into());
+
+    vars.price = oracle.get_price();
+    // TODO stabilit pool get usdf balance
 }
 
 #[storage(read)]
@@ -252,6 +285,27 @@ fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
     return trove.debt;
 }
 
+#[storage(read)]
+fn internal_get_totals_from_batch_liquidate(
+    price: u64,
+    usdf_in_stability_pool: u64,
+    borrowers: Vec<Identity>,
+) -> (u64, u64) {
+    let mut total_coll = 0;
+    let mut total_debt = 0;
+
+    // let mut vars = LocalVariablesLiquidationSequence::default();
+    // let mut single_liquidation = LocalVariablesSingleLiquidation::default();
+    // for borrower in borrowers {
+    //     let trove = storage.troves.get(borrower);
+    //     total_coll += trove.coll;
+    //     total_debt += trove.debt;
+    // }
+    return (total_coll, total_debt);
+}
+
+// #[storage(read)]
+// fn get_total
 #[storage(read)]
 fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
