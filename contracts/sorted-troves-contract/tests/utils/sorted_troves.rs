@@ -1,12 +1,13 @@
 use fuels::types::Identity;
 
+use super::setup::MockTroveManagerContract;
 use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
-use test_utils::interfaces::trove_manager::trove_manager_abi;
-use test_utils::interfaces::trove_manager::TroveManagerContract;
 
 pub mod sorted_troves_utils {
     use fuels::signers::fuel_crypto::rand::{self, Rng};
+
+    use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
 
     use super::*;
 
@@ -25,7 +26,7 @@ pub mod sorted_troves_utils {
 
     pub async fn assert_in_order_from_head(
         sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
+        trove_manager: &MockTroveManagerContract,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
@@ -37,13 +38,9 @@ pub mod sorted_troves_utils {
             .value;
 
         while next.clone() != Identity::Address([0; 32].into()) {
-            let current_icr = trove_manager_abi::get_nominal_icr(trove_manager, current.clone())
-                .await
-                .value;
+            let current_icr = get_nominal_icr(trove_manager, current.clone()).await.value;
 
-            let next_icr = trove_manager_abi::get_nominal_icr(trove_manager, next.clone())
-                .await
-                .value;
+            let next_icr = get_nominal_icr(trove_manager, next.clone()).await.value;
 
             assert!(current_icr >= next_icr);
 
@@ -61,7 +58,7 @@ pub mod sorted_troves_utils {
 
     pub async fn assert_in_order_from_tail(
         sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
+        trove_manager: &MockTroveManagerContract,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
@@ -73,13 +70,9 @@ pub mod sorted_troves_utils {
             .value;
 
         while prev.clone() != Identity::Address([0; 32].into()) {
-            let current_icr = trove_manager_abi::get_nominal_icr(trove_manager, current.clone())
-                .await
-                .value;
+            let current_icr = get_nominal_icr(trove_manager, current.clone()).await.value;
 
-            let prev_icr = trove_manager_abi::get_nominal_icr(trove_manager, prev.clone())
-                .await
-                .value;
+            let prev_icr = get_nominal_icr(trove_manager, prev.clone()).await.value;
 
             assert!(current_icr <= prev_icr);
 
@@ -95,7 +88,7 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn generate_random_nodes(
-        trove_manager: &TroveManagerContract,
+        trove_manager: &MockTroveManagerContract,
         sorted_troves: &SortedTroves,
         max_size: u64,
     ) -> Vec<(Identity, u64)> {
@@ -113,8 +106,8 @@ pub mod sorted_troves_utils {
                 random_number.clone(),
             ));
 
-            let _res = trove_manager_abi::set_nominal_icr_and_insert(
-                &trove_manager,
+            let _res = set_nominal_icr_and_insert(
+                trove_manager,
                 &sorted_troves,
                 Identity::Address(random_address.into()),
                 random_number,
