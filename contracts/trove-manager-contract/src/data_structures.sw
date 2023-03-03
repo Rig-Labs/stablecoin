@@ -45,11 +45,22 @@ impl LocalVariablesOuterLiquidationFunction {
     }
 }
 
-struct LocalVariablesLiquidationSequence {
+pub struct LocalVariablesLiquidationSequence {
     remaining_usdf_in_stability_pool: u64,
     i: u64,
     icr: u64,
     borrower: Identity,
+}
+
+impl LocalVariablesLiquidationSequence {
+    pub fn default() -> Self {
+        LocalVariablesLiquidationSequence {
+            remaining_usdf_in_stability_pool: 0,
+            i: 0,
+            icr: 0,
+            borrower: Identity::Address(Address::from(0x0000000000000000000000000000000000000000000000000000000000000000)),
+        }
+    }
 }
 
 pub struct LiquidationValues {

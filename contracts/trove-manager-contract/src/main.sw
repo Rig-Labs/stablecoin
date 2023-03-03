@@ -1,8 +1,14 @@
 contract;
 
 dep data_structures;
+dep utils;
 
-use data_structures::{LocalVariablesOuterLiquidationFunction, Trove};
+use data_structures::{
+    LiquidationValues,
+    LocalVariablesLiquidationSequence,
+    LocalVariablesOuterLiquidationFunction,
+    Trove,
+};
 
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
@@ -290,18 +296,16 @@ fn internal_get_totals_from_batch_liquidate(
     price: u64,
     usdf_in_stability_pool: u64,
     borrowers: Vec<Identity>,
-) -> (u64, u64) {
-    let mut total_coll = 0;
-    let mut total_debt = 0;
+) {
+    let mut vars = LocalVariablesLiquidationSequence::default();
+    let mut single_liquidation = LiquidationValues::default();
+    let mut i = 0;
+    while i < borrowers.len() {
+        vars.borrower = borrowers.get(i).unwrap();
+        vars.icr = internal_get_current_icr(vars.borrower, price);
 
-    // let mut vars = LocalVariablesLiquidationSequence::default();
-    // let mut single_liquidation = LocalVariablesSingleLiquidation::default();
-    // for borrower in borrowers {
-    //     let trove = storage.troves.get(borrower);
-    //     total_coll += trove.coll;
-    //     total_debt += trove.debt;
-    // }
-    return (total_coll, total_debt);
+        if vars.icr < MCR {        }
+    }
 }
 
 // #[storage(read)]
@@ -311,4 +315,17 @@ fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
     let size = sorted_troves_contract.get_size();
     require(trove_owner_array_length > 1 && size > 1, "There is only one trove in the system");
+}
+
+#[storage(read)]
+fn internal_get_current_icr(borrower: Identity, price: u64) -> u64 {
+    let trove = storage.troves.get(borrower);
+    let coll = trove.coll;
+    let debt = trove.debt;
+
+    return fm_compute_cr(coll, debt, price);
+}
+#[storage(read, write)]
+fn internal_liquidate(borrower: Identity, usdf_in_stability_pool: u64) -> LiquidationValues {
+    return LiquidationValues::default();
 }
