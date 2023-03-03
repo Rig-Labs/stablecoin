@@ -153,7 +153,8 @@ async fn proper_increase_collateral() {
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     let trove_col = trove_manager_abi::get_trove_coll(
         &trove_manager,
