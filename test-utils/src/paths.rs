@@ -32,3 +32,9 @@ pub const ACTIVE_POOL_CONTRACT_BINARY_PATH: &str =
     "../../contracts/active-pool-contract/out/debug/active-pool-contract.bin";
 pub const ACTIVE_POOL_CONTRACT_STORAGE_PATH: &str =
     "../../contracts/active-pool-contract/out/debug/active-pool-contract-storage_slots.json";
+
+pub const STABILITY_POOL_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/stability-pool-contract/out/debug/stability-pool-contract.bin";
+
+pub const STABILITY_POOL_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/stability-pool-contract/out/debug/stability-pool-contract-storage_slots.json";

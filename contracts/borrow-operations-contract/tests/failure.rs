@@ -20,6 +20,7 @@ async fn fails_open_two_troves() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
@@ -133,6 +134,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
@@ -179,6 +181,7 @@ async fn fails_open_trove_under_min_usdf_required() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
@@ -224,6 +227,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         usdf_token,
         active_pool,
         admin,
+        _,
         _,
     ) = setup_protocol(100, 2).await;
 
@@ -286,6 +290,7 @@ async fn fails_decrease_collateral_under_mcr() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
@@ -345,6 +350,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         usdf_token,
         active_pool,
         admin,
+        _,
         _,
     ) = setup_protocol(100, 2).await;
 

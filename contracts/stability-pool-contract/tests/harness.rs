@@ -1,19 +1,14 @@
-use fuels::{prelude::*, tx::ContractId};
+use fuels::{prelude::*, types::Identity};
+use test_utils::{
+    interfaces::{
+        borrow_operations::borrow_operations_abi,
+        stability_pool::{stability_pool_abi, StabilityPool},
+        token::token_abi,
+    },
+    setup::common::{deploy_stability_pool, setup_protocol},
+};
 
-// Load abi from json
-abigen!(Contract(
-    name = "OracleContract",
-    abi = "contracts/stability-pool-contract/out/debug/stability-pool-contract-abi.json"
-));
-
-// get path
-fn get_path(sub_path: String) -> String {
-    let mut path = std::env::current_dir().unwrap();
-    path.push(sub_path);
-    path.to_str().unwrap().to_string()
-}
-
-async fn get_contract_instance() -> (OracleContract, ContractId) {
+async fn get_contract_instance() -> (WalletUnlocked, StabilityPool) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -27,40 +22,186 @@ async fn get_contract_instance() -> (OracleContract, ContractId) {
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let id = Contract::deploy(
-        &get_path("out/debug/stability-pool-contract.bin".to_string()),
-        &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_path(
-            "out/debug/stability-pool-contract-storage_slots.json".to_string(),
-        ))),
+    let stability_pool = deploy_stability_pool(&wallet).await;
+
+    (wallet, stability_pool)
+}
+
+#[tokio::test]
+async fn proper_initialization() {
+    let (_, stability_pool) = get_contract_instance().await;
+
+    let asset_amount = stability_pool_abi::get_asset(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(asset_amount, 0);
+
+    let total_usdf_deposits = stability_pool_abi::get_total_usdf_deposits(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(total_usdf_deposits, 0);
+}
+
+#[tokio::test]
+async fn proper_stability_deposit() {
+    let (
+        borrow_operations,
+        trove_manager,
+        oracle,
+        sorted_troves,
+        fuel,
+        usdf,
+        active_pool,
+        admin,
+        _wallets,
+        stability_pool,
+    ) = setup_protocol(10, 4).await;
+
+    token_abi::mint_to_id(
+        &fuel,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations,
+        &oracle,
+        &fuel,
+        &usdf,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
-    let instance = OracleContract::new(id.clone(), wallet);
+    stability_pool_abi::provide_to_stability_pool(&stability_pool, &usdf, 600_000_000)
+        .await
+        .unwrap();
 
-    (instance, id.into())
+    let asset_amount = stability_pool_abi::get_asset(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(asset_amount, 0);
+
+    let total_usdf_deposits = stability_pool_abi::get_total_usdf_deposits(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(total_usdf_deposits, 600_000_000);
+
+    let compounded_usdf = stability_pool_abi::get_compounded_usdf_deposit(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(compounded_usdf, 600_000_000);
+
+    let gain = stability_pool_abi::get_depositor_asset_gain(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(gain, 0);
 }
 
 #[tokio::test]
-async fn can_set_proper_price() {
-    // let (instance, _id) = get_contract_instance().await;
-    // let new_price: u64 = 100;
-    // // Increment the counter
-    // let _result = instance
-    //     .methods()
-    //     .set_price(new_price)
-    //     .call()
-    //     .await
-    //     .unwrap();
+async fn proper_stability_widthdrawl() {
+    let (
+        borrow_operations,
+        trove_manager,
+        oracle,
+        sorted_troves,
+        fuel,
+        usdf,
+        active_pool,
+        admin,
+        _wallets,
+        stability_pool,
+    ) = setup_protocol(10, 4).await;
 
-    // // Get the current value of the counter
-    // let result = instance.methods().get_price().call().await.unwrap();
+    token_abi::mint_to_id(
+        &fuel,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
 
-    // // Check that the current value of the counter is 1.
-    // // Recall that the initial value of the counter was 0.
-    // assert_eq!(result.value, new_price);
+    borrow_operations_abi::open_trove(
+        &borrow_operations,
+        &oracle,
+        &fuel,
+        &usdf,
+        &sorted_troves,
+        &trove_manager,
+        &active_pool,
+        0,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
 
-    // Now you have an instance of your contract you can use to test each function
+    stability_pool_abi::provide_to_stability_pool(&stability_pool, &usdf, 600_000_000)
+        .await
+        .unwrap();
+
+    stability_pool_abi::withdraw_from_stability_pool(&stability_pool, &usdf, &fuel, 300_000_000)
+        .await
+        .unwrap();
+
+    let asset_amount = stability_pool_abi::get_asset(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(asset_amount, 0);
+
+    let total_usdf_deposits = stability_pool_abi::get_total_usdf_deposits(&stability_pool)
+        .await
+        .unwrap()
+        .value;
+
+    assert_eq!(total_usdf_deposits, 300_000_000);
+
+    let compounded_usdf = stability_pool_abi::get_compounded_usdf_deposit(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(compounded_usdf, 300_000_000);
+
+    let gain = stability_pool_abi::get_depositor_asset_gain(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(gain, 0);
 }

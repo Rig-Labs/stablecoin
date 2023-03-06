@@ -1,7 +1,7 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations, oracle::Oracle,
-    sorted_troves::SortedTroves, token::Token, trove_manager::TroveManagerContract,
-    vesting::VestingContract,
+    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
+    trove_manager::TroveManagerContract, vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
@@ -18,8 +18,8 @@ pub mod common {
     use crate::{
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            oracle::oracle_abi, sorted_troves::sorted_troves_abi, token::token_abi,
-            trove_manager::trove_manager_abi,
+            oracle::oracle_abi, sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
         },
         paths::*,
     };
@@ -37,6 +37,7 @@ pub mod common {
         ActivePool,
         WalletUnlocked,
         Vec<WalletUnlocked>,
+        StabilityPool,
     ) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
@@ -58,6 +59,7 @@ pub mod common {
         let fuel = deploy_token(&wallet).await;
         let usdf = deploy_token(&wallet).await;
         let active_pool = deploy_active_pool(&wallet).await;
+        let stability_pool = deploy_stability_pool(&wallet).await;
 
         // TODO Change stability pool when implemented
         active_pool_abi::initialize(
@@ -116,6 +118,20 @@ pub mod common {
         )
         .await;
 
+        stability_pool_abi::initialize(
+            &stability_pool,
+            bo_instance.contract_id().into(),
+            trove_manger.contract_id().into(),
+            active_pool.contract_id().into(),
+            usdf.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            oracle_instance.contract_id().into(),
+            oracle_instance.contract_id().into(),
+            fuel.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
         (
             bo_instance,
             trove_manger,
@@ -126,6 +142,7 @@ pub mod common {
             active_pool,
             wallet,
             wallets,
+            stability_pool,
         )
     }
 
@@ -232,5 +249,20 @@ pub mod common {
         .unwrap();
 
         ActivePool::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool {
+        let id = Contract::deploy(
+            &STABILITY_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                STABILITY_POOL_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        StabilityPool::new(id, wallet.clone())
     }
 }
