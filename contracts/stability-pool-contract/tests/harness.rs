@@ -102,4 +102,24 @@ async fn proper_stability_deposit() {
         .value;
 
     assert_eq!(total_usdf_deposits, 600_000_000);
+
+    let compounded_usdf = stability_pool_abi::get_compounded_usdf_deposit(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(compounded_usdf, 600_000_000);
+
+    let gain = stability_pool_abi::get_depositor_asset_gain(
+        &stability_pool,
+        Identity::Address(admin.address().into()),
+    )
+    .await
+    .unwrap()
+    .value;
+
+    assert_eq!(gain, 0);
 }

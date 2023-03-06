@@ -10,7 +10,10 @@ abigen!(Contract(
 ));
 
 pub mod stability_pool_abi {
-    use fuels::prelude::{AssetId, CallParameters, Error};
+    use fuels::{
+        prelude::{AssetId, CallParameters, Error},
+        types::Identity,
+    };
 
     use super::*;
 
@@ -79,6 +82,28 @@ pub mod stability_pool_abi {
         stability_pool
             .methods()
             .get_total_usdf_deposits()
+            .call()
+            .await
+    }
+
+    pub async fn get_depositor_asset_gain(
+        stability_pool: &StabilityPool,
+        depositor: Identity,
+    ) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool
+            .methods()
+            .get_depositor_asset_gain(depositor)
+            .call()
+            .await
+    }
+
+    pub async fn get_compounded_usdf_deposit(
+        stability_pool: &StabilityPool,
+        depositor: Identity,
+    ) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool
+            .methods()
+            .get_compounded_usdf_deposit(depositor)
             .call()
             .await
     }

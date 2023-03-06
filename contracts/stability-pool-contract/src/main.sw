@@ -75,11 +75,12 @@ impl StabilityPool for Contract {
 
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
         // TODO Trigger FPT issuance
-        let depositor_asset_gain = get_depositor_asset_gain(msg_sender().unwrap());
-        let compounded_usdf_deposit = get_compounded_usdf_deposit(msg_sender().unwrap());
+        let depositor_asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap());
+        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
         let new_position = compounded_usdf_deposit + msg_amount();
+        internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         storage.total_usdf_deposits += msg_amount();
         // Pay out FPT gains
         send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
@@ -110,6 +111,16 @@ impl StabilityPool for Contract {
     fn get_total_usdf_deposits() -> u64 {
         return storage.total_usdf_deposits;
     }
+
+    #[storage(read)]
+    fn get_depositor_asset_gain(depositor: Identity) -> u64 {
+        return internal_get_depositor_asset_gain(depositor);
+    }
+
+    #[storage(read)]
+    fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
+        return internal_get_compounded_usdf_deposit(depositor);
+    }
 }
 
 #[storage(read)]
@@ -119,7 +130,7 @@ fn require_usdf_is_valid_and_non_zero() {
 }
 
 #[storage(read)]
-fn get_depositor_asset_gain(depositor: Identity) -> u64 {
+fn internal_get_depositor_asset_gain(depositor: Identity) -> u64 {
     let initial_deposit = storage.deposits.get(depositor);
 
     if initial_deposit == 0 {
@@ -132,7 +143,7 @@ fn get_depositor_asset_gain(depositor: Identity) -> u64 {
 }
 
 #[storage(read)]
-fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
+fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
     let initial_deposit = storage.deposits.get(depositor);
 
     if initial_deposit == 0 {
