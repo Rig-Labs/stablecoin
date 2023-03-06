@@ -102,12 +102,12 @@ impl StabilityPool for Contract {
 
     #[storage(read)]
     fn get_asset() -> u64 {
-        return 0
+        return storage.asset;
     }
 
     #[storage(read)]
     fn get_total_usdf_deposits() -> u64 {
-        return 0
+        return storage.total_usdf_deposits;
     }
 }
 
