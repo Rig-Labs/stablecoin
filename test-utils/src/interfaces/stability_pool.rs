@@ -68,10 +68,20 @@ pub mod stability_pool_abi {
             .call()
             .await
     }
+
+    pub async fn get_asset(stability_pool: &StabilityPool) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool.methods().get_asset().call().await
+    }
+
+    pub async fn get_total_usdf_deposits(
+        stability_pool: &StabilityPool,
+    ) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool
+            .methods()
+            .get_total_usdf_deposits()
+            .call()
+            .await
+    }
 }
 
-pub mod stability_pool_utils {
-    use crate::interfaces::sorted_troves::sorted_troves_abi;
-
-    use super::*;
-}
+pub mod stability_pool_utils {}

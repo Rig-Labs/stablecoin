@@ -80,6 +80,7 @@ impl StabilityPool for Contract {
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
         let new_position = compounded_usdf_deposit + msg_amount();
+        storage.total_usdf_deposits += msg_amount();
         // Pay out FPT gains
         send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
     }

@@ -22,6 +22,7 @@ async fn proper_creating_trove() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     let _ = token_abi::mint_to_id(
@@ -114,6 +115,7 @@ async fn proper_increase_collateral() {
         usdf_token,
         active_pool,
         admin,
+        _,
         _,
     ) = setup_protocol(100, 2).await;
 
@@ -210,6 +212,7 @@ async fn proper_decrease_collateral() {
         usdf_token,
         active_pool,
         admin,
+        _,
         _,
     ) = setup_protocol(100, 2).await;
 
@@ -316,6 +319,7 @@ async fn proper_increase_debt() {
         usdf_token,
         active_pool,
         admin,
+        _,
         _,
     ) = setup_protocol(100, 2).await;
 
@@ -434,6 +438,7 @@ async fn proper_decrease_debt() {
         active_pool,
         admin,
         _,
+        _,
     ) = setup_protocol(100, 2).await;
 
     let balance = 5_000_000_000;
@@ -551,6 +556,7 @@ async fn proper_open_multiple_troves() {
         active_pool,
         _admin,
         mut wallets,
+        _,
     ) = setup_protocol(100, 4).await;
 
     let wallet1 = wallets.pop().unwrap();
@@ -646,6 +652,7 @@ async fn proper_close_trove() {
         active_pool,
         admin,
         mut wallets,
+        _,
     ) = setup_protocol(100, 4).await;
 
     let wallet1 = wallets.pop().unwrap();
