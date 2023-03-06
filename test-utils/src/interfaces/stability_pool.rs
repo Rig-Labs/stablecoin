@@ -107,6 +107,24 @@ pub mod stability_pool_abi {
             .call()
             .await
     }
+
+    pub async fn withdraw_from_stability_pool(
+        stability_pool: &StabilityPool,
+        usdf_token: &Token,
+        fuel_token: &Token,
+        amount: u64,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        stability_pool
+            .methods()
+            .withdraw_from_stability_pool(amount)
+            .tx_params(tx_params)
+            .append_variable_outputs(2)
+            .set_contracts(&[usdf_token, fuel_token])
+            .call()
+            .await
+    }
 }
 
 pub mod stability_pool_utils {}

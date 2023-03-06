@@ -87,7 +87,26 @@ impl StabilityPool for Contract {
     }
 
     #[storage(read, write)]
-    fn withdraw_from_stability_pool(amount: u64) {}
+    fn withdraw_from_stability_pool(amount: u64) {
+        let initial_deposit = storage.deposits.get(msg_sender().unwrap());
+
+        require_user_has_initial_deposit(initial_deposit);
+        // TODO Trigger FPT issuance
+        let depositor_asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap());
+        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
+        let mut usdf_to_withdraw = amount;
+
+                // TODO Change to min when available
+        if amount >= compounded_usdf_deposit {
+            usdf_to_withdraw = compounded_usdf_deposit;
+        }
+
+        let new_position = compounded_usdf_deposit - usdf_to_withdraw;
+
+        internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
+        send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
+        send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
+    }
 
     #[storage(read, write)]
     fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity) {}
@@ -241,10 +260,24 @@ fn send_asset_gain_to_depositor(depositor: Identity, gain: u64) {
 }
 
 #[storage(read, write)]
+fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
+    if (amount == 0) {
+        return;
+    }
+    storage.total_usdf_deposits -= amount;
+    let usdf_address = storage.usdf_address;
+    transfer(amount, usdf_address, depositor);
+}
+
+#[storage(read, write)]
 fn require_caller_is_trove_manager() {
     // TODO May have to generalize with multiple trove managers
     let trove_manager_address = Identity::ContractId(storage.trove_manager_address);
     require(msg_sender().unwrap() == trove_manager_address, "Caller is not the TroveManager");
+}
+
+fn require_user_has_initial_deposit(deposit: u64) {
+    require(deposit > 0, "User has no initial deposit");
 }
 
 #[storage(read, write)]
