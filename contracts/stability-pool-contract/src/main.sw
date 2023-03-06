@@ -79,7 +79,9 @@ impl StabilityPool for Contract {
         let compounded_usdf_deposit = get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
-        let new_posit = compounded_usdf_deposit + msg_amount();
+        let new_position = compounded_usdf_deposit + msg_amount();
+        // Pay out FPT gains
+        send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
     }
 
     #[storage(read, write)]
@@ -89,7 +91,14 @@ impl StabilityPool for Contract {
     fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity) {}
 
     #[storage(read, write)]
-    fn offset(debt: u64, coll: u64) {}
+    fn offset(debt_to_offset: u64, coll_to_offset: u64) {
+        require_caller_is_trove_manager();
+        let total_usdf = storage.total_usdf_deposits;
+
+        if total_usdf == 0 || debt_to_offset == 0 {
+            return;
+        }
+    }
 
     #[storage(read)]
     fn get_asset() -> u64 {
@@ -131,7 +140,7 @@ fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
 
     let mut snapshots = storage.deposit_snapshots.get(depositor);
 
-    return 0;
+    return get_compounded_stake_from_snapshots(initial_deposit, snapshots)
 }
 
 #[storage(read)]
@@ -155,7 +164,7 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     let scale_snapshot = snapshots.scale;
     let p_snapshot = snapshots.P;
 
-    if (epoch_snapshot == storage.current_epoch) {
+    if (epoch_snapshot < storage.current_epoch) {
         return 0;
     }
 
@@ -171,6 +180,10 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     }
 
     if (compounded_stake < initial_stake / DECIMAL_PRECISION) {
+        return 0;
+    }
+
+    if (compounded_stake < initial_stake / 1_000_000_000) {
         return 0;
     }
 
@@ -202,4 +215,76 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     };
 
     storage.deposit_snapshots.insert(depositor, snapshots);
+}
+
+#[storage(read, write)]
+fn send_asset_gain_to_depositor(depositor: Identity, gain: u64) {
+    if (gain == 0) {
+        return;
+    }
+    storage.asset -= gain;
+    let asset_address = storage.asset_address;
+
+    transfer(gain, asset_address, depositor);
+}
+
+#[storage(read, write)]
+fn require_caller_is_trove_manager() {
+    // TODO May have to generalize with multiple trove managers
+    let trove_manager_address = Identity::ContractId(storage.trove_manager_address);
+    require(msg_sender().unwrap() == trove_manager_address, "Caller is not the TroveManager");
+}
+
+#[storage(read, write)]
+fn compute_rewards_per_unit_staked(
+    coll_to_add: u64,
+    debt_to_offset: u64,
+    total_usdf_deposits: u64,
+) -> (u64, u64) {
+    let asset_numerator = coll_to_add * DECIMAL_PRECISION + storage.last_asset_error_offset;
+
+    require(debt_to_offset < total_usdf_deposits, "Debt offset exceeds total USDF deposits");
+
+    let mut usdf_loss_per_unit_staked: u64 = 0;
+    if (debt_to_offset == total_usdf_deposits) {
+        usdf_loss_per_unit_staked = DECIMAL_PRECISION;
+        storage.last_usdf_error_offset = 0;
+    } else {
+        let usdf_loss_per_unit_staked_numerator = debt_to_offset * DECIMAL_PRECISION - storage.last_usdf_error_offset;
+
+        usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / total_usdf_deposits + 1;
+        storage.last_usdf_error_offset = usdf_loss_per_unit_staked_numerator * total_usdf_deposits - usdf_loss_per_unit_staked_numerator;
+    }
+
+    let asset_gain_per_unit_staked = asset_numerator / total_usdf_deposits;
+
+    storage.last_asset_error_offset = asset_numerator - (asset_gain_per_unit_staked * total_usdf_deposits);
+
+    return (asset_gain_per_unit_staked, usdf_loss_per_unit_staked);
+}
+
+#[storage(read, write)]
+fn update_reward_sum_and_product(
+    asset_gain_per_unit_staked: u64,
+    usdf_loss_per_unit_staked: u64,
+) {
+    let current_p = storage.p;
+    let mut new_p: u64 = 0;
+
+    let new_product_factor = DECIMAL_PRECISION - usdf_loss_per_unit_staked;
+    let current_epoch = storage.current_epoch;
+    let current_scale = storage.current_scale;
+
+    let current_s = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale));
+
+    let marginal_asset_gain = asset_gain_per_unit_staked * current_p;
+    let new_sum = current_s + marginal_asset_gain;
+
+    storage.epoch_to_scale_to_sum.insert((current_epoch, current_scale), new_sum);
+
+    if (new_product_factor == 0) {
+        storage.current_epoch += 1;
+        storage.current_scale = 0;
+        new_p = DECIMAL_PRECISION;
+    }
 }
