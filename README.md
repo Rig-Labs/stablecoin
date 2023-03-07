@@ -38,8 +38,8 @@ Functionality
 - [x] Repay Loan debt to trove
 - [x] Reduce collateral from trove
 - [x] Close Trove
-- [ ] Fees
 - [ ] Liquidate
+- [ ] Fees
 - [ ] Stake FPT
 - [ ] Stability Pool
 - [ ] Multiple assets (Fuel, stFuel)
