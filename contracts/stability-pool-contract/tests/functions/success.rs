@@ -1,35 +1,16 @@
+use crate::utils::setup::setup;
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     interfaces::{
-        borrow_operations::borrow_operations_abi,
-        stability_pool::{stability_pool_abi, StabilityPool},
+        borrow_operations::borrow_operations_abi, stability_pool::stability_pool_abi,
         token::token_abi,
     },
-    setup::common::{deploy_stability_pool, setup_protocol},
+    setup::common::setup_protocol,
 };
-
-async fn get_contract_instance() -> (WalletUnlocked, StabilityPool) {
-    // Launch a local network and deploy the contract
-    let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(1),             /* Single wallet */
-            Some(1),             /* Single coin (UTXO) */
-            Some(1_000_000_000), /* Amount per coin */
-        ),
-        None,
-        None,
-    )
-    .await;
-    let wallet = wallets.pop().unwrap();
-
-    let stability_pool = deploy_stability_pool(&wallet).await;
-
-    (wallet, stability_pool)
-}
 
 #[tokio::test]
 async fn proper_initialization() {
-    let (_, stability_pool) = get_contract_instance().await;
+    let (stability_pool, _, _, _, _) = setup(Some(4)).await;
 
     let asset_amount = stability_pool_abi::get_asset(&stability_pool)
         .await

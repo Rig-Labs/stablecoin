@@ -338,7 +338,17 @@ fn update_reward_sum_and_product(
         storage.current_epoch += 1;
         storage.current_scale = 0;
         new_p = DECIMAL_PRECISION;
+    } else if (current_p * new_product_factor / DECIMAL_PRECISION < SCALE_FACTOR)
+    {
+        new_p = current_p * SCALE_FACTOR / DECIMAL_PRECISION;
+        storage.current_scale += 1;
+    } else {
+        new_p = current_p * new_product_factor / DECIMAL_PRECISION;
     }
+
+    require(new_p > 0, "New p is 0");
+
+    storage.p = new_p;
 }
 
 #[storage(read, write)]

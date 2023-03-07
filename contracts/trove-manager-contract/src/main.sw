@@ -308,8 +308,6 @@ fn internal_get_totals_from_batch_liquidate(
     }
 }
 
-// #[storage(read)]
-// fn get_total
 #[storage(read)]
 fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
