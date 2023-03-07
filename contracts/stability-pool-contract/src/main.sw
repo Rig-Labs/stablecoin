@@ -4,6 +4,7 @@ dep data_structures;
 use data_structures::{Snapshots};
 
 use libraries::stability_pool_interface::{StabilityPool};
+use libraries::active_pool_interface::{ActivePool};
 
 use std::{
     auth::msg_sender,
@@ -96,7 +97,7 @@ impl StabilityPool for Contract {
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let mut usdf_to_withdraw = amount;
 
-                // TODO Change to min when available
+        // TODO Change to min when available
         if amount >= compounded_usdf_deposit {
             usdf_to_withdraw = compounded_usdf_deposit;
         }
@@ -119,6 +120,12 @@ impl StabilityPool for Contract {
         if total_usdf == 0 || debt_to_offset == 0 {
             return;
         }
+
+        let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf);
+
+        update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1);
+
+        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset);
     }
 
     #[storage(read)]
@@ -332,4 +339,16 @@ fn update_reward_sum_and_product(
         storage.current_scale = 0;
         new_p = DECIMAL_PRECISION;
     }
+}
+
+#[storage(read, write)]
+fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
+    let active_pool_address = storage.active_pool_address;
+
+    let active_pool = abi(ActivePool, active_pool_address.value);
+
+    active_pool.decrease_usdf_debt(debt_to_offset);
+
+    // TODO Burn the offset usdf debt    
+    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
 }
