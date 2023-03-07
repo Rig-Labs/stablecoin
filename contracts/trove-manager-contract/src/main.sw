@@ -362,9 +362,9 @@ fn get_offset_and_redistribution_vals(coll: u64, debt: u64, usdf_in_stab_pool: u
 
     let liquidated_position_vals = calculate_liqudated_trove_values(coll, debt, price);
 
-    let liquidated_position_coll = liquidated_position_vals.0;
-    let liquidated_position_debt = liquidated_position_vals.1;
-    let is_partial_liquidation = liquidated_position_vals.2;
+    let liquidated_position_coll = liquidated_position_vals.coll_to_send_to_sp;
+    let liquidated_position_debt = liquidated_position_vals.debt_repaid;
+    let is_partial_liquidation = liquidated_position_vals.is_partial_liquidation;
 
     if (usdf_in_stab_pool > 0) {   
         // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
