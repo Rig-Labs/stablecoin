@@ -10,5 +10,6 @@ members = [
     "./contracts/token-contract",
     "./contracts/active-pool-contract",
     "./contracts/sorted-troves-contract/tests/artifacts",
+    "./contracts/stability-pool-contract/tests/artifacts",
     "./test-utils",
 ]
