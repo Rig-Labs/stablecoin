@@ -90,3 +90,9 @@ impl LiquidationValues {
         }
     }
 }
+
+pub struct LiquidatedTroveValsInner {
+    debt_repaid: u64,
+    coll_to_send_to_sp: u64,
+    is_partial_liquidation: bool,
+}
