@@ -1,7 +1,7 @@
 library utils;
 
 dep data_structures;
-use data_structures::{LiquidatedTroveValsInner, LiquidationValues};
+use data_structures::{LiquidatedTroveValsInner, LiquidationTotals, LiquidationValues};
 use libraries::fluid_math::*;
 
 pub fn calculate_liqudated_trove_values(
@@ -30,7 +30,7 @@ pub fn calculate_liqudated_trove_values(
     }
 }
 
-fn get_offset_and_redistribution_vals(
+pub fn get_offset_and_redistribution_vals(
     coll: u64,
     debt: u64,
     usdf_in_stab_pool: u64,
@@ -74,6 +74,21 @@ fn get_offset_and_redistribution_vals(
     }
 
     return vars;
+}
+
+pub fn add_liquidation_vals_to_totals(
+    old_totals: LiquidationTotals,
+    vals: LiquidationValues,
+) -> LiquidationTotals {
+    let mut new_totals = old_totals;
+    new_totals.total_debt_to_offset += vals.debt_to_offset;
+    new_totals.total_coll_to_send_to_sp += vals.coll_to_send_to_sp;
+    new_totals.total_debt_to_redistribute += vals.debt_to_redistribute;
+    new_totals.total_coll_to_redistribute += vals.coll_to_redistribute;
+    new_totals.total_coll_gas_compensation += vals.coll_gas_compensation;
+    new_totals.total_usdf_gas_compensation += vals.usdf_gas_compensation;
+    new_totals.total_coll_surplus += vals.coll_surplus;
+    return new_totals;
 }
 
 #[test]

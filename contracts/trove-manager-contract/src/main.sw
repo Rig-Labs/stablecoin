@@ -3,8 +3,9 @@ contract;
 dep data_structures;
 dep utils;
 
-use utils::{calculate_liqudated_trove_values};
+use utils::{add_liquidation_vals_to_totals, get_offset_and_redistribution_vals};
 use data_structures::{
+    LiquidationTotals,
     LiquidationValues,
     LocalVariablesLiquidationSequence,
     LocalVariablesOuterLiquidationFunction,
@@ -13,6 +14,7 @@ use data_structures::{
 
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::stability_pool_interface::{StabilityPool};
 use libraries::{MockOracle};
 use libraries::data_structures::{Status};
 use libraries::fluid_math::*;
@@ -44,6 +46,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
     usdf: ContractId = ContractId::from(ZERO_B256),
     fpt_token: ContractId = ContractId::from(ZERO_B256),
@@ -246,7 +249,15 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     let oracle = abi(MockOracle, storage.oracle_contract.into());
 
     vars.price = oracle.get_price();
-    // TODO stabilit pool get usdf balance
+    let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
+    let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
+
+    let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers);
+
+    // TODO Require
+    stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
+
+    // TODO Redistribute coll and debt if needed
 }
 
 #[storage(read)]
@@ -292,21 +303,34 @@ fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
     return trove.debt;
 }
 
-#[storage(read)]
+#[storage(read, write)]
 fn internal_get_totals_from_batch_liquidate(
     price: u64,
     usdf_in_stability_pool: u64,
     borrowers: Vec<Identity>,
-) {
+) -> LiquidationTotals {
     let mut vars = LocalVariablesLiquidationSequence::default();
+    vars.remaining_usdf_in_stability_pool = usdf_in_stability_pool;
     let mut single_liquidation = LiquidationValues::default();
     let mut i = 0;
+    let mut totals = LiquidationTotals::default();
+
     while i < borrowers.len() {
         vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
 
-        if vars.icr < MCR {        }
+        if vars.icr < MCR {
+            let trove = storage.troves.get(vars.borrower);
+            let single_liqudation = get_offset_and_redistribution_vals(trove.coll, trove.debt, usdf_in_stability_pool, price);
+            internal_apply_liquidation(vars.borrower, single_liquidation);
+            vars.remaining_usdf_in_stability_pool -= single_liqudation.debt_to_offset;
+
+            totals = add_liquidation_vals_to_totals(totals, single_liqudation);
+        } else {
+            break;
+        }
     }
+    return totals;
 }
 
 #[storage(read)]
@@ -350,4 +374,20 @@ fn get_entire_debt_and_coll(borrower: Identity) -> (u64, u64) {
     // TODO Include pending USDF rewards
     // TODO Include pending ASSET rewards
     return (coll, debt);
+}
+
+#[storage(read, write)]
+fn internal_apply_liquidation(borrower: Identity, liquidation_values: LiquidationValues) {
+    if (liquidation_values.is_partial_liquidation) {
+        let mut trove = storage.troves.get(borrower);
+        trove.coll = liquidation_values.remaining_trove_coll;
+        trove.debt = liquidation_values.remaining_trove_debt;
+        storage.troves.insert(borrower, trove);
+
+        let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
+        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+        sorted_troves_contract.re_insert(borrower, new_ncr, Identity::Address(Address::from(ZERO_B256)), Identity::Address(Address::from(ZERO_B256)));
+    } else {
+        internal_close_trove(borrower, Status::ClosedByLiquidation());
+    }
 }
