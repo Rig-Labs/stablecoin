@@ -73,6 +73,9 @@ pub struct LiquidationValues {
     coll_surplus: u64,
     coll_gas_compensation: u64,
     usdf_gas_compensation: u64,
+    is_partial_liquidation: bool,
+    remaining_trove_coll: u64,
+    remaining_trove_debt: u64,
 }
 
 impl LiquidationValues {
@@ -87,12 +90,15 @@ impl LiquidationValues {
             coll_surplus: 0,
             coll_gas_compensation: 0,
             usdf_gas_compensation: 0,
+            is_partial_liquidation: false,
+            remaining_trove_coll: 0,
+            remaining_trove_debt: 0,
         }
     }
 }
 
 pub struct LiquidatedTroveValsInner {
-    debt_repaid: u64,
-    coll_to_send_to_sp: u64,
+    trove_debt_to_repay: u64,
+    trove_coll_liquidated: u64,
     is_partial_liquidation: bool,
 }

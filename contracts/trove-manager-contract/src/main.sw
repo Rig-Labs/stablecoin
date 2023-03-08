@@ -351,36 +351,3 @@ fn get_entire_debt_and_coll(borrower: Identity) -> (u64, u64) {
     // TODO Include pending ASSET rewards
     return (coll, debt);
 }
-
-#[storage(read)]
-fn get_offset_and_redistribution_vals(coll: u64, debt: u64, usdf_in_stab_pool: u64, price: u64) {
-    let mut debt_to_offset = 0;
-    let mut coll_to_send_to_sp = 0;
-    let mut debt_to_redistribute = 0;
-    let mut coll_to_redistribute = 0;
-    let mut is_partial_liquidation = false;
-
-    let liquidated_position_vals = calculate_liqudated_trove_values(coll, debt, price);
-
-    let liquidated_position_coll = liquidated_position_vals.coll_to_send_to_sp;
-    let liquidated_position_debt = liquidated_position_vals.debt_repaid;
-    let is_partial_liquidation = liquidated_position_vals.is_partial_liquidation;
-
-    if (usdf_in_stab_pool > 0) {   
-        // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
-        if (liquidated_position_debt > usdf_in_stab_pool) {
-            debt_to_offset = usdf_in_stab_pool;
-        } else {
-            // If the Stability Pool has enough USDF to offset the entire debt, offset the entire debt
-            debt_to_offset = liquidated_position_debt;
-        }
-        // Send collateral to the Stability Pool proportional to the amount of debt offset
-        coll_to_send_to_sp = liquidated_position_coll * debt_to_offset / liquidated_position_debt;
-        // If stability pool doesn't have enough USDF to offset the entire debt, redistribute the remaining debt and collateral
-        debt_to_redistribute = liquidated_position_debt - debt_to_offset;
-        coll_to_redistribute = liquidated_position_coll - coll_to_send_to_sp;
-    } else {
-        debt_to_redistribute = liquidated_position_debt;
-        coll_to_redistribute = liquidated_position_coll;
-    }
-}

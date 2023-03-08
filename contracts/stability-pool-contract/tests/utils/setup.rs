@@ -159,6 +159,7 @@ pub async fn setup(
 
     let stability_pool = deploy_stability_pool(&wallet).await;
     let trove_instance = deploy_mock_trove_manager_contract(&wallet2).await;
+    
     let fuel_token = deploy_token(&wallet).await;
     let usdf_token = deploy_token(&wallet).await;
 
