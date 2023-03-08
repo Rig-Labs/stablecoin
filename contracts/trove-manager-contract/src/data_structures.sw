@@ -97,6 +97,30 @@ impl LiquidationValues {
     }
 }
 
+pub struct LiquidationTotals {
+    total_debt_to_offset: u64,
+    total_coll_to_send_to_sp: u64,
+    total_debt_to_redistribute: u64,
+    total_coll_to_redistribute: u64,
+    total_coll_gas_compensation: u64,
+    total_usdf_gas_compensation: u64,
+    total_coll_surplus: u64,
+}
+
+impl LiquidationTotals {
+    pub fn default() -> Self {
+        LiquidationTotals {
+            total_debt_to_offset: 0,
+            total_coll_to_send_to_sp: 0,
+            total_debt_to_redistribute: 0,
+            total_coll_to_redistribute: 0,
+            total_coll_gas_compensation: 0,
+            total_usdf_gas_compensation: 0,
+            total_coll_surplus: 0,
+        }
+    }
+}
+
 pub struct LiquidatedTroveValsInner {
     trove_debt_to_repay: u64,
     trove_coll_liquidated: u64,
