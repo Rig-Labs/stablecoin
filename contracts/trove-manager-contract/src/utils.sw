@@ -102,7 +102,7 @@ fn test_calculate_liqudated_trove_values() {
 }
 
 #[test]
-fn test_get_offset_and_redistribution_vals() {
+fn test_get_offset_and_redistribution_vals_full_liquidation_empty_pool() {
     // Full liquidation, Empty Stability Pool
     let starting_coll = 1_100_000_000;
     let starting_debt = 1_000_000_000;
@@ -118,4 +118,102 @@ fn test_get_offset_and_redistribution_vals() {
     assert(liquidation_vals.coll_to_send_to_sp == 0);
     assert(liquidation_vals.debt_to_redistribute == starting_debt);
     assert(liquidation_vals.coll_to_redistribute == 1_050_000_000);
+}
+
+#[test]
+fn test_get_offset_and_redistribution_vals_full_liquidation_enough_pool() {
+    // Full liquidation, Stability Pool has enough USDF to offset the entire debt
+    let starting_coll = 1_100_000_000;
+    let starting_debt = 1_000_000_000;
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, 2_000_000_000, 1_000_000);
+
+    assert(liquidation_vals.entire_trove_coll == starting_coll);
+    assert(liquidation_vals.entire_trove_debt == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == false);
+    assert(liquidation_vals.remaining_trove_coll == 0);
+    assert(liquidation_vals.remaining_trove_debt == 0);
+    assert(liquidation_vals.coll_surplus == starting_coll - (starting_debt * (ONE + STABILITY_POOL_FEE)) / 1_000_000);
+    assert(liquidation_vals.debt_to_offset == 1_000_000_000);
+    assert(liquidation_vals.coll_to_send_to_sp == 1_050_000_000);
+    assert(liquidation_vals.debt_to_redistribute == 0);
+    assert(liquidation_vals.coll_to_redistribute == 0);
+}
+
+#[test]
+fn test_get_offset_and_redistribution_vals_full_liquidation_partial_pool() {
+    // Full liquidation, Stability Pool doesn't have enough USDF to offset the entire debt
+    let starting_coll = 1_100_000_000;
+    let starting_debt = 1_000_000_000;
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, 500_000_000, 1_000_000);
+
+    assert(liquidation_vals.entire_trove_coll == starting_coll);
+    assert(liquidation_vals.entire_trove_debt == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == false);
+    assert(liquidation_vals.remaining_trove_coll == 0);
+    assert(liquidation_vals.remaining_trove_debt == 0);
+    assert(liquidation_vals.coll_surplus == starting_coll - (starting_debt * (ONE + STABILITY_POOL_FEE)) / 1_000_000);
+    assert(liquidation_vals.debt_to_offset == 500_000_000);
+    assert(liquidation_vals.coll_to_send_to_sp == 525_000_000);
+    assert(liquidation_vals.debt_to_redistribute == 500_000_000);
+    assert(liquidation_vals.coll_to_redistribute == 525_000_000);
+}
+
+#[test]
+fn test_get_offset_and_redistribution_vals_partial_liquidation_empty_pool() {
+     // Partial liquidation, Empty Stability Pool
+    let starting_coll = 12_000_000_000;
+    let starting_debt = 10_000_000_000;
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, 0, 1_000_000);
+    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, 1_000_000);
+
+    assert(liquidation_vals.entire_trove_coll == starting_coll);
+    assert(liquidation_vals.entire_trove_debt == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == true);
+    assert(icr == POST_COLLATERAL_RATIO);
+    assert(liquidation_vals.coll_surplus == 0);
+    assert(liquidation_vals.debt_to_offset == 0);
+    assert(liquidation_vals.coll_to_send_to_sp == 0);
+    assert(liquidation_vals.debt_to_redistribute == starting_debt - liquidation_vals.remaining_trove_debt);
+    assert(liquidation_vals.coll_to_redistribute == starting_coll - liquidation_vals.remaining_trove_coll);
+}
+
+#[test]
+fn test_get_offset_and_redistribution_vals_partial_liquidation_enough_pool() {
+    // Partial liquidation, Stability Pool has enough USDF to offset the entire debt
+    let starting_coll = 12_000_000_000;
+    let starting_debt = 10_000_000_000;
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, 20_000_000_000, 1_000_000);
+    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, 1_000_000);
+
+    assert(liquidation_vals.entire_trove_coll == starting_coll);
+    assert(liquidation_vals.entire_trove_debt == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == true);
+    assert(icr == POST_COLLATERAL_RATIO);
+    assert(liquidation_vals.coll_surplus == 0);
+    assert(liquidation_vals.debt_to_offset == starting_debt - liquidation_vals.remaining_trove_debt);
+    assert(liquidation_vals.coll_to_send_to_sp == starting_coll - liquidation_vals.remaining_trove_coll);
+    assert(liquidation_vals.debt_to_redistribute == 0);
+    assert(liquidation_vals.coll_to_redistribute == 0);
+}
+
+#[test]
+fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
+    // Partial liquidation, Stability Pool doesn't have enough USDF to offset the entire debt
+    let starting_coll = 12_000_000_000;
+    let starting_debt = 10_000_000_000;
+    let total_usdf = 1_000_000_000;
+
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, total_usdf, 1_000_000);
+    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, 1_000_000);
+    let coll_removed = starting_coll - liquidation_vals.remaining_trove_coll;
+
+    assert(liquidation_vals.entire_trove_coll == starting_coll);
+    assert(liquidation_vals.entire_trove_debt == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == true);
+    assert(icr == POST_COLLATERAL_RATIO);
+    assert(liquidation_vals.coll_surplus == 0);
+    assert(liquidation_vals.debt_to_offset == total_usdf);
+    assert(liquidation_vals.coll_to_send_to_sp == (total_usdf * coll_removed) / (starting_debt - liquidation_vals.remaining_trove_debt));
+    assert(liquidation_vals.debt_to_redistribute == starting_debt - liquidation_vals.remaining_trove_debt - total_usdf);
+    assert(liquidation_vals.coll_to_redistribute == starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_to_send_to_sp);
 }
