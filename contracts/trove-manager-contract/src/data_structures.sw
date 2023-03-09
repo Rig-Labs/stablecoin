@@ -105,6 +105,8 @@ pub struct LiquidationTotals {
     total_coll_gas_compensation: u64,
     total_usdf_gas_compensation: u64,
     total_coll_surplus: u64,
+    total_debt_in_sequence: u64,
+    total_coll_in_sequence: u64,
 }
 
 impl LiquidationTotals {
@@ -117,6 +119,8 @@ impl LiquidationTotals {
             total_coll_gas_compensation: 0,
             total_usdf_gas_compensation: 0,
             total_coll_surplus: 0,
+            total_debt_in_sequence: 0,
+            total_coll_in_sequence: 0,
         }
     }
 }

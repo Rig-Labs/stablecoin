@@ -128,7 +128,6 @@ impl StabilityPool for Contract {
         update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1);
 
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset);
-
     }
 
     #[storage(read)]
@@ -232,6 +231,16 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
 }
 
 #[storage(read, write)]
+fn internal_decrease_usdf(total_usdf_to_decrease: u64) {
+    storage.total_usdf_deposits -= total_usdf_to_decrease;
+}
+
+#[storage(read, write)]
+fn internal_increase_asset(total_asset_to_increase: u64) {
+    storage.asset += total_asset_to_increase;
+}
+
+#[storage(read, write)]
 fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposits.insert(depositor, amount);
 
@@ -308,18 +317,14 @@ fn compute_rewards_per_unit_staked(
     } else {
         let usdf_loss_per_unit_staked_numerator: U128 = U128::from_u64(debt_to_offset) * U128::from_u64(DECIMAL_PRECISION) - U128::from_u64(storage.last_usdf_error_offset);
 
-
         usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from_u64(total_usdf_deposits) + U128::from_u64(1);
 
         let last_usdf_error_offset = (usdf_loss_per_unit_staked_numerator * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator);
 
-
         // storage.last_usdf_error_offset = (usdf_loss_per_unit_staked_numerator * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator).as_u64().unwrap();
-
     }
 
     let asset_gain_per_unit_staked = asset_numerator / U128::from_u64(total_usdf_deposits);
-
 
     // storage.last_asset_error_offset = (asset_numerator - (asset_gain_per_unit_staked * total_usdf_de4(posits)).as_u64().u)nwrap();
     return (
@@ -369,7 +374,8 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
     let active_pool_address = storage.active_pool_address;
 
     let active_pool = abi(ActivePool, active_pool_address.value);
-
+    internal_decrease_usdf(debt_to_offset);
+    internal_increase_asset(coll_to_add);
     active_pool.decrease_usdf_debt(debt_to_offset);
 
     // TODO Burn the offset usdf debt    
