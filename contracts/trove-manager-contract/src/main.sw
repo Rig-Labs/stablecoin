@@ -11,10 +11,11 @@ use data_structures::{
     LocalVariablesOuterLiquidationFunction,
     Trove,
 };
-
+use libraries::numbers::*;
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::stability_pool_interface::{StabilityPool};
+use libraries::active_pool_interface::{ActivePool};
 use libraries::{MockOracle};
 use libraries::data_structures::{Status};
 use libraries::fluid_math::*;
@@ -39,6 +40,7 @@ use std::{
         StorageVec,
     },
     token::transfer,
+    u128::U128,
 };
 
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
@@ -48,14 +50,15 @@ storage {
     borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
+    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     usdf: ContractId = ContractId::from(ZERO_B256),
     fpt_token: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
     total_stakes: u64 = 0,
     total_stakes_snapshot: u64 = 0,
     total_collateral_snapshot: u64 = 0,
-    f_asset: u64 = 0,
-    f_usdf_debt: u64 = 0,
+    l_asset: u64 = 0,
+    l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
     last_usdf_error_redistribution: u64 = 0,
     nominal_icr: StorageMap<Identity, u64> = StorageMap {},
@@ -273,6 +276,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
 
+    internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
     // TODO Redistribute coll and debt if needed
 }
 
@@ -393,4 +397,28 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
     } else {
         internal_close_trove(borrower, Status::ClosedByLiquidation());
     }
+}
+
+#[storage(read, write)]
+fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
+    if (debt == 0) {
+        return;
+    }
+
+    let asset_numerator: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_asset_error_redistribution);
+    let usdf_numerator: U128 = U128::from_u64(debt) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_usdf_error_redistribution);
+
+    let asset_reward_per_unit_staked = asset_numerator / U128::from_u64(storage.total_stakes);
+    let usdf_reward_per_unit_staked = usdf_numerator / U128::from_u64(storage.total_stakes);
+
+    storage.last_asset_error_redistribution = (asset_numerator - (asset_reward_per_unit_staked * U128::from_u64(storage.total_stakes))).as_u64().unwrap();
+    storage.last_usdf_error_redistribution = (usdf_numerator - (usdf_reward_per_unit_staked * U128::from_u64(storage.total_stakes))).as_u64().unwrap();
+
+    storage.l_asset += asset_reward_per_unit_staked.as_u64().unwrap();
+    storage.l_usdf += usdf_reward_per_unit_staked.as_u64().unwrap();
+
+    let active_pool = abi(ActivePool, storage.active_pool_contract.into());
+    active_pool.decrease_usdf_debt(debt);
+    // TODO Default pool increase debt
+    // active pool send asset to default pool
 }
