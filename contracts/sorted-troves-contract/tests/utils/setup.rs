@@ -144,6 +144,8 @@ pub async fn initialize_st_and_tm(
         .initialize(
             sorted_troves.contract_id().into(),
             sorted_troves.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            sorted_troves.contract_id().into(),
         )
         .call()
         .await

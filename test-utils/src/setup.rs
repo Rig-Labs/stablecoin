@@ -66,7 +66,7 @@ pub mod common {
             &active_pool,
             Identity::ContractId(bo_instance.contract_id().into()),
             Identity::ContractId(trove_manger.contract_id().into()),
-            Identity::ContractId(oracle_instance.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
             fuel.contract_id().into(),
         )
         .await;
@@ -101,6 +101,8 @@ pub mod common {
             &trove_manger,
             bo_instance.contract_id().into(),
             sorted_troves.contract_id().into(),
+            oracle_instance.contract_id().into(),
+            stability_pool.contract_id().into(),
         )
         .await;
 

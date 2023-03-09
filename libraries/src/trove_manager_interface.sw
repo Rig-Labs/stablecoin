@@ -1,14 +1,14 @@
 library trove_manager_interface;
 
 dep data_structures;
-use data_structures::{Status};
+use data_structures::{Status, Trove};
 
 abi TroveManager {
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;
 
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId);
 
     #[storage(read, write)]
     fn remove_stake(id: Identity);
@@ -51,6 +51,9 @@ abi TroveManager {
 
     #[storage(read)]
     fn get_trove_coll(id: Identity) -> u64;
+
+    #[storage(read)]
+    fn get_trove_status(id: Identity) -> Status;
 
     #[storage(read, write)]
     fn set_nominal_icr_and_insert(id: Identity, value: u64, prev_id: Identity, next_id: Identity);
