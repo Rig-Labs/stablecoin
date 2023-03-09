@@ -270,7 +270,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
 
     let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers);
 
-    // TODO Require
+    require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
 
     // TODO Redistribute coll and debt if needed
