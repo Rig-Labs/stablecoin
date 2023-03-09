@@ -1,5 +1,6 @@
 library interface;
 
+dep numbers;
 dep data_structures;
 dep sorted_troves_interface;
 dep trove_manager_interface;

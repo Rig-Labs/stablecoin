@@ -65,9 +65,17 @@ storage {
 
 impl TroveManager for Contract {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId) {
+    fn initialize(
+        borrow_operations: ContractId,
+        sorted_troves: ContractId,
+        oracle: ContractId,
+        stability_pool: ContractId,
+    ) {
+        // Require not already initialized
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
+        storage.stability_pool_contract = stability_pool;
+        storage.oracle_contract = oracle;
     }
 
     #[storage(read)]
@@ -95,6 +103,7 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn remove(id: Identity) {
+        // TODO Remove this function
         storage.nominal_icr.insert(id, 0);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         sorted_troves_contract.remove(id);
@@ -174,6 +183,13 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn remove_stake(id: Identity) {}
+
+    #[storage(read)]
+    fn get_trove_status(id: Identity) -> Status {
+        let trove = storage.troves.get(id);
+
+        return trove.status;
+    }
 
     #[storage(read, write)]
     fn batch_liquidate_troves(borrowers: Vec<Identity>) {
@@ -322,7 +338,9 @@ fn internal_get_totals_from_batch_liquidate(
         if vars.icr < MCR {
             let trove = storage.troves.get(vars.borrower);
             let single_liqudation = get_offset_and_redistribution_vals(trove.coll, trove.debt, usdf_in_stability_pool, price);
+
             internal_apply_liquidation(vars.borrower, single_liquidation);
+
             vars.remaining_usdf_in_stability_pool -= single_liqudation.debt_to_offset;
 
             totals = add_liquidation_vals_to_totals(totals, single_liqudation);
@@ -347,22 +365,6 @@ fn internal_get_current_icr(borrower: Identity, price: u64) -> u64 {
     let debt = trove.debt;
 
     return fm_compute_cr(coll, debt, price);
-}
-#[storage(read, write)]
-fn internal_liquidate(
-    borrower: Identity,
-    usdf_in_stability_pool: u64,
-    price: u64,
-) -> LiquidationValues {
-    let mut vars = LiquidationValues::default();
-
-    let position = get_entire_debt_and_coll(borrower);
-    vars.entire_trove_coll = position.0;
-    vars.entire_trove_debt = position.1;
-
-    // TODO move pending trove rewards to active pool
-    // TODO Determine coll/usdf gas compensation 
-    return vars;
 }
 
 #[storage(read)]

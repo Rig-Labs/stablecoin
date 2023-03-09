@@ -17,7 +17,7 @@ impl Trove {
             coll: 0,
             stake: 0,
             array_index: 0,
-            status: Status::Active,
+            status: Status::NonExistent,
         }
     }
 }

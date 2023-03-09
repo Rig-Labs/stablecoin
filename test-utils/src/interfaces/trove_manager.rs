@@ -4,7 +4,10 @@ use fuels::{
     types::Identity,
 };
 
+use crate::interfaces::active_pool::ActivePool;
+use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
+use crate::interfaces::stability_pool::StabilityPool;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -12,6 +15,9 @@ abigen!(Contract(
 ));
 
 pub mod trove_manager_abi {
+
+    use fuels::prelude::Error;
+
     use super::*;
 
     pub async fn get_nominal_icr(
@@ -24,6 +30,26 @@ pub mod trove_manager_abi {
             .call()
             .await
             .unwrap()
+    }
+
+    pub async fn liquidate(
+        trove_manager: &TroveManagerContract,
+        stability_pool: &StabilityPool,
+        oracle: &Oracle,
+        sorted_troves: &SortedTroves,
+        active_pool: &ActivePool,
+        id: Identity,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .liquidate(id)
+            .tx_params(tx_params)
+            .set_contracts(&[stability_pool, oracle, sorted_troves, active_pool])
+            .append_variable_outputs(3)
+            .call()
+            .await
     }
 
     pub async fn increase_trove_coll(
@@ -95,10 +121,17 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract,
         borrow_operations: ContractId,
         sorted_troves_id: ContractId,
+        oracle_id: ContractId,
+        stability_pool: ContractId,
     ) -> FuelCallResponse<()> {
         trove_manager
             .methods()
-            .initialize(borrow_operations, sorted_troves_id)
+            .initialize(
+                borrow_operations,
+                sorted_troves_id,
+                oracle_id,
+                stability_pool,
+            )
             .call()
             .await
             .unwrap()
@@ -126,6 +159,13 @@ pub mod trove_manager_abi {
             .call()
             .await
             .unwrap()
+    }
+
+    pub async fn get_trove_status(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> Result<FuelCallResponse<Status>, Error> {
+        trove_manager.methods().get_trove_status(id).call().await
     }
 }
 

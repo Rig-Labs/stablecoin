@@ -37,7 +37,12 @@ storage {
 
 impl TroveManager for Contract {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId) {
+    fn initialize(
+        borrow_operations: ContractId,
+        sorted_troves: ContractId,
+        oracle: ContractId,
+        stability_pool: ContractId,
+    ) {
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
     }
@@ -72,22 +77,27 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn increase_trove_coll(id: Identity, coll: u64) -> u64 {
-       return 0 
+        return 0
     }
 
     #[storage(read, write)]
     fn increase_trove_debt(id: Identity, debt: u64) -> u64 {
-        return 0 
+        return 0
     }
 
     #[storage(read, write)]
     fn decrease_trove_coll(id: Identity, value: u64) -> u64 {
-        return 0 
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_trove_status(id: Identity) -> Status {
+        return Status::Active
     }
 
     #[storage(read, write)]
     fn decrease_trove_debt(id: Identity, value: u64) -> u64 {
-        return 0 
+        return 0
     }
 
     #[storage(read, write)]
@@ -131,11 +141,9 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     sorted_troves_contract.remove(id);
 }
 
-
 #[storage(read)]
 fn require_caller_is_borrow_operations_contract() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
     require(caller == borrow_operations_contract, "Caller is not the Borrow Operations contract");
 }
-
