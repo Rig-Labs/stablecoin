@@ -123,15 +123,12 @@ impl StabilityPool for Contract {
             return;
         }
 
-        log(11);
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf);
-        log(22);
 
-        log(33);
         update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1);
-        log(44);
+
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset);
-        log(55);
+
     }
 
     #[storage(read)]
@@ -300,33 +297,31 @@ fn compute_rewards_per_unit_staked(
     total_usdf_deposits: u64,
 ) -> (u64, u64) {
     let asset_numerator: U128 = U128::from_u64(coll_to_add) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_asset_error_offset);
-    log(1);
-    require(debt_to_offset < total_usdf_deposits, "Debt offset exceeds total USDF deposits");
+
+    require(debt_to_offset <= total_usdf_deposits, "Debt offset exceeds total USDF deposits");
 
     let mut usdf_loss_per_unit_staked: U128 = U128::from_u64(0);
-    log(2);
+
     if (debt_to_offset == total_usdf_deposits) {
         usdf_loss_per_unit_staked = U128::from_u64(DECIMAL_PRECISION);
         storage.last_usdf_error_offset = 0;
     } else {
         let usdf_loss_per_unit_staked_numerator: U128 = U128::from_u64(debt_to_offset) * U128::from_u64(DECIMAL_PRECISION) - U128::from_u64(storage.last_usdf_error_offset);
-        log(3);
+
 
         usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from_u64(total_usdf_deposits) + U128::from_u64(1);
 
-        log(4);
         let last_usdf_error_offset = (usdf_loss_per_unit_staked_numerator * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator);
-        log(10);
-        log(last_usdf_error_offset);
+
+
         // storage.last_usdf_error_offset = (usdf_loss_per_unit_staked_numerator * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator).as_u64().unwrap();
-        log(5);
+
     }
 
     let asset_gain_per_unit_staked = asset_numerator / U128::from_u64(total_usdf_deposits);
 
 
     // storage.last_asset_error_offset = (asset_numerator - (asset_gain_per_unit_staked * total_usdf_de4(posits)).as_u64().u)nwrap();
-    log(6);
     return (
         asset_gain_per_unit_staked.as_u64().unwrap(),
         usdf_loss_per_unit_staked.as_u64().unwrap(),

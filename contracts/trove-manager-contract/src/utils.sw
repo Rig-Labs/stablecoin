@@ -3,6 +3,12 @@ library utils;
 dep data_structures;
 use data_structures::{LiquidatedTroveValsInner, LiquidationTotals, LiquidationValues};
 use libraries::fluid_math::*;
+use libraries::numbers::*;
+
+use std::{
+    logging::log,
+    u128::U128,
+};
 
 pub fn calculate_liqudated_trove_values(
     coll: u64,
@@ -64,7 +70,8 @@ pub fn get_offset_and_redistribution_vals(
             vars.debt_to_offset = liquidated_position_vals.trove_debt_to_repay;
         }
         // Send collateral to the Stability Pool proportional to the amount of debt offset
-        vars.coll_to_send_to_sp = liquidated_position_vals.trove_coll_liquidated * vars.debt_to_offset / liquidated_position_vals.trove_debt_to_repay;
+        let coll_to_send_to_sp_u128 : U128 = U128::from_u64(liquidated_position_vals.trove_coll_liquidated) * U128::from_u64(vars.debt_to_offset) / U128::from_u64(liquidated_position_vals.trove_debt_to_repay);
+        vars.coll_to_send_to_sp = coll_to_send_to_sp_u128.as_u64().unwrap();
         // If stability pool doesn't have enough USDF to offset the entire debt, redistribute the remaining debt and collateral
         vars.debt_to_redistribute = liquidated_position_vals.trove_debt_to_repay - vars.debt_to_offset;
         vars.coll_to_redistribute = liquidated_position_vals.trove_coll_liquidated - vars.coll_to_send_to_sp;

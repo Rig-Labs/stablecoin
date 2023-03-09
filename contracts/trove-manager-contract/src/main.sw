@@ -337,13 +337,14 @@ fn internal_get_totals_from_batch_liquidate(
 
         if vars.icr < MCR {
             let trove = storage.troves.get(vars.borrower);
-            let single_liqudation = get_offset_and_redistribution_vals(trove.coll, trove.debt, usdf_in_stability_pool, price);
+
+            single_liquidation = get_offset_and_redistribution_vals(trove.coll, trove.debt, usdf_in_stability_pool, price);
 
             internal_apply_liquidation(vars.borrower, single_liquidation);
 
-            vars.remaining_usdf_in_stability_pool -= single_liqudation.debt_to_offset;
+            vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
 
-            totals = add_liquidation_vals_to_totals(totals, single_liqudation);
+            totals = add_liquidation_vals_to_totals(totals, single_liquidation);
         } else {
             break;
         }
