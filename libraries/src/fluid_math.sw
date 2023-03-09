@@ -1,5 +1,12 @@
 library fluid_math;
 
+dep numbers;
+use numbers::*;
+use std::{
+    logging::log,
+    u128::U128,
+};
+
 // Using Precision 6 until u128 is available
 pub const PCT_100: u64 = 1_000_000_000;
 
@@ -24,7 +31,8 @@ pub const ONE: u64 = 1_000_000;
 
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {
-        return (coll * DECIMAL_PRECISION) / (debt);
+        let ncr: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(debt);
+        return ncr.as_u64().unwrap();
     } else {
         return MAX_U64;
     }
@@ -32,7 +40,8 @@ pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
 
 pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     if (debt > 0) {
-        return (coll * price) / (debt);
+        let cr: U128 = U128::from_u64(coll) * U128::from_u64(price) / U128::from_u64(debt);
+        return cr.as_u64().unwrap();
     } else {
         return MAX_U64;
     }
