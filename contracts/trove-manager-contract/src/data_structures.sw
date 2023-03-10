@@ -27,6 +27,15 @@ pub struct RewardSnapshot {
     usdf_debt: u64,
 }
 
+impl RewardSnapshot {
+    pub fn default() -> Self {
+        RewardSnapshot {
+            asset: 0,
+            usdf_debt: 0,
+        }
+    }
+}
+
 pub struct LocalVariablesOuterLiquidationFunction {
     price: u64,
     usdf_in_stability_pool: u64,
