@@ -19,8 +19,8 @@ directory.
 | [`stability-pool`](contracts/stability-pool-contract)       | Manages $USDF desposits to liquidate user troves | 40/100
 | [`protocol-factory`](contracts/protocol-contract)       | Routes risk functions to riskies trove from all trove managers, instatiates everything | 0/100
 | [`token`](contracts/token-contract)       | FRC-20 to use in local tests made by Sway Gang | 95/100
-| [`vesting`](contracts/vesting-contract)       | Manages $FPT vesting schedules | 85/100
-| [`staking`](contracts/staking-contract)       | Manages $FPT staking emissions from fee collection | 0/100 |
+| [`FPT-vesting`](contracts/vesting-contract)       | Manages $FPT vesting schedules | 85/100
+| [`FPT-staking`](contracts/staking-contract)       | Manages $FPT staking emissions from fee collection | 0/100 |
 
 Build + Test Contracts
 -------------------------------
