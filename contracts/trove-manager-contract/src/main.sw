@@ -100,8 +100,8 @@ impl TroveManager for Contract {
         // TODO Remove this function 
         storage.nominal_icr.insert(id, value);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
-        internal_increase_trove_coll(id, value);
-        internal_increase_trove_debt(id, 1);
+        let _ = internal_increase_trove_coll(id, value);
+        let _ = internal_increase_trove_debt(id, 1);
 
         sorted_troves_contract.insert(id, fm_compute_nominal_cr(value, 1), prev_id, next_id);
     }
@@ -128,6 +128,13 @@ impl TroveManager for Contract {
         require_caller_is_borrow_operations_contract();
 
         internal_increase_trove_coll(id, coll)
+    }
+
+    #[storage(read, write)]
+    fn update_stake_and_total_stakes(id: Identity) -> u64 {
+        require_caller_is_borrow_operations_contract();
+
+        internal_update_stake_and_total_stakes(id)
     }
 
     #[storage(read, write)]
@@ -195,7 +202,6 @@ impl TroveManager for Contract {
 
         return trove.status;
     }
-
     #[storage(read, write)]
     fn batch_liquidate_troves(borrowers: Vec<Identity>) {
         internal_batch_liquidate_troves(borrowers);
@@ -394,9 +400,10 @@ fn get_entire_debt_and_coll(borrower: Identity) -> (u64, u64) {
     let coll = trove.coll;
     let debt = trove.debt;
 
-    // TODO Include pending USDF rewards
-    // TODO Include pending ASSET rewards
-    return (coll, debt);
+    let pending_coll_rewards = get_pending_asset_reward(borrower);
+    let pending_debt_rewards = get_pending_usdf_reward(borrower);
+
+    return (coll + pending_coll_rewards, debt + pending_debt_rewards);
 }
 
 #[storage(read, write)]
@@ -407,7 +414,7 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         trove.debt = liquidation_values.remaining_trove_debt;
 
         storage.troves.insert(borrower, trove);
-        internal_update_stake_and_total_stakes(borrower);
+        let _ = internal_update_stake_and_total_stakes(borrower);
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
@@ -443,7 +450,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 }
 
 #[storage(read, write)]
-fn internal_update_stake_and_total_stakes(address: Identity) {
+fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address);
     let new_stake = internal_compute_new_stake(trove.coll);
     let old_stake = trove.stake;
@@ -452,6 +459,7 @@ fn internal_update_stake_and_total_stakes(address: Identity) {
 
     let old_total_stakes = storage.total_stakes;
     storage.total_stakes = old_total_stakes + new_stake - old_stake;
+    return new_stake;
 }
 
 #[storage(read)]

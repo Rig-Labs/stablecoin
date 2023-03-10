@@ -80,7 +80,7 @@ impl BorrowOperations for Contract {
         vars.net_debt = _usdf_amount;
         vars.price = oracle.get_price();
 
-        // TODO Rqure Trove is not active / exists
+        // TODO Require Trove is not active / exists
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
@@ -99,6 +99,9 @@ impl BorrowOperations for Contract {
         trove_manager.set_trove_status(sender, Status::Active);
         trove_manager.increase_trove_coll(sender, msg_amount());
         trove_manager.increase_trove_debt(sender, vars.net_debt);
+
+        // TODO Update trove rewards snapshot 
+        let _ = trove_manager.update_stake_and_total_stakes(sender);
 
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
@@ -251,7 +254,7 @@ fn internal_adjust_trove(
 
     let new_position_res = internal_update_trove_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
 
-        // TODO stake update 
+    let _ = trove_manager.update_stake_and_total_stakes(_borrower);
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
     sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
 

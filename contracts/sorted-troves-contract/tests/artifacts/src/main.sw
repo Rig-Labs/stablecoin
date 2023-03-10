@@ -133,6 +133,11 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn batch_liquidate_troves(ids: Vec<Identity>) {}
+
+    #[storage(read, write)]
+    fn update_stake_and_total_stakes(id: Identity) -> u64 {
+        return 0
+    }
 }
 
 #[storage(read, write)]
