@@ -38,3 +38,8 @@ pub const STABILITY_POOL_CONTRACT_BINARY_PATH: &str =
 
 pub const STABILITY_POOL_CONTRACT_STORAGE_PATH: &str =
     "../../contracts/stability-pool-contract/out/debug/stability-pool-contract-storage_slots.json";
+
+pub const DEFAULT_POOL_CONTRACT_BINARY_PATH: &str =
+    "../../contracts/default-pool-contract/out/debug/default-pool-contract.bin";
+pub const DEFAULT_POOL_CONTRACT_STORAGE_PATH: &str =
+    "../../contracts/default-pool-contract/out/debug/default-pool-contract-storage_slots.json";
