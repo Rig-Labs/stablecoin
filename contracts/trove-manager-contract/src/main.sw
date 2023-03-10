@@ -9,6 +9,7 @@ use data_structures::{
     LiquidationValues,
     LocalVariablesLiquidationSequence,
     LocalVariablesOuterLiquidationFunction,
+    RewardSnapshot,
     Trove,
 };
 use libraries::numbers::*;
@@ -64,6 +65,7 @@ storage {
     nominal_icr: StorageMap<Identity, u64> = StorageMap {},
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
+    reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap {},
 }
 
 impl TroveManager for Contract {
@@ -277,7 +279,6 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
-    // TODO Redistribute coll and debt if needed
 }
 
 #[storage(read)]
@@ -373,6 +374,21 @@ fn internal_get_current_icr(borrower: Identity, price: u64) -> u64 {
 }
 
 #[storage(read)]
+fn internal_get_trove_stake(borrower: Identity) -> u64 {
+    let trove = storage.troves.get(borrower);
+    return trove.stake;
+}
+
+#[storage(read, write)]
+fn internal_remove_stake(borrower: Identity) {
+    let mut trove = storage.troves.get(borrower);
+    storage.total_stakes -= trove.stake;
+    // TODO use update function when available
+    trove.stake = 0;
+    storage.troves.insert(borrower, trove);
+}
+
+#[storage(read)]
 fn get_entire_debt_and_coll(borrower: Identity) -> (u64, u64) {
     let trove = storage.troves.get(borrower);
     let coll = trove.coll;
@@ -389,12 +405,15 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         let mut trove = storage.troves.get(borrower);
         trove.coll = liquidation_values.remaining_trove_coll;
         trove.debt = liquidation_values.remaining_trove_debt;
+
         storage.troves.insert(borrower, trove);
+        internal_update_stake_and_total_stakes(borrower);
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         sorted_troves_contract.re_insert(borrower, new_ncr, Identity::Address(Address::from(ZERO_B256)), Identity::Address(Address::from(ZERO_B256)));
     } else {
+        internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
     }
 }
@@ -421,4 +440,69 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
     active_pool.decrease_usdf_debt(debt);
     // TODO Default pool increase debt
     // active pool send asset to default pool
+}
+
+#[storage(read, write)]
+fn internal_update_stake_and_total_stakes(address: Identity) {
+    let mut trove = storage.troves.get(address);
+    let new_stake = internal_compute_new_stake(trove.coll);
+    let old_stake = trove.stake;
+    trove.stake = new_stake;
+    storage.troves.insert(address, trove);
+
+    let old_total_stakes = storage.total_stakes;
+    storage.total_stakes = old_total_stakes + new_stake - old_stake;
+}
+
+#[storage(read)]
+fn internal_compute_new_stake(coll: u64) -> u64 {
+    if (storage.total_collateral_snapshot == 0) {
+        return coll;
+    } else {
+        require(storage.total_stakes_snapshot > 0, "Total stakes snapshot is zero");
+        let stake = (U128::from_u64(coll) * U128::from_u64(storage.total_stakes_snapshot)) / U128::from_u64(storage.total_collateral_snapshot);
+        return stake.as_u64().unwrap();
+    }
+}
+
+#[storage(read)]
+fn get_pending_asset_reward(address: Identity) -> u64 {
+    let snapshot_asset = storage.reward_snapshots.get(address).asset;
+    let reward_per_unit_staked = storage.l_asset - snapshot_asset;
+
+    if (reward_per_unit_staked == 0
+        || storage.troves.get(address).status != Status::Active())
+    {
+        return 0;
+    }
+    let stake = storage.troves.get(address).stake;
+    let pending_asset_reward = (U128::from_u64(reward_per_unit_staked) * U128::from_u64(stake)) / U128::from_u64(DECIMAL_PRECISION);
+
+    return pending_asset_reward.as_u64().unwrap();
+}
+
+#[storage(read)]
+fn get_pending_usdf_reward(address: Identity) -> u64 {
+    let snapshot_usdf = storage.reward_snapshots.get(address).usdf_debt;
+    let reward_per_unit_staked = storage.l_usdf - snapshot_usdf;
+
+    if (reward_per_unit_staked == 0
+        || storage.troves.get(address).status != Status::Active())
+    {
+        return 0;
+    }
+    let stake = storage.troves.get(address).stake;
+    let pending_usdf_reward = (U128::from_u64(reward_per_unit_staked) * U128::from_u64(stake)) / U128::from_u64(DECIMAL_PRECISION);
+
+    return pending_usdf_reward.as_u64().unwrap();
+}
+
+#[storage(read)]
+fn has_pending_rewards(address: Identity) -> bool {
+    if (storage.troves.get(address).status != Status::Active())
+    {
+        return false;
+    }
+
+    return (storage.reward_snapshots.get(address).asset < storage.l_asset);
 }
