@@ -9,6 +9,7 @@ dep fluid_math;
 dep token_interface;
 dep active_pool_interface;
 dep stability_pool_interface;
+dep default_pool_interface;
 
 use data_structures::{Trove};
 

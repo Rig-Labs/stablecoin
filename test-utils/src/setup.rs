@@ -1,6 +1,6 @@
 use super::interfaces::{
-    active_pool::ActivePool, borrow_operations::BorrowOperations, oracle::Oracle,
-    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
+    active_pool::ActivePool, borrow_operations::BorrowOperations, default_pool::DefaultPool,
+    oracle::Oracle, sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
     trove_manager::TroveManagerContract, vesting::VestingContract,
 };
 
@@ -266,5 +266,20 @@ pub mod common {
         .unwrap();
 
         StabilityPool::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool {
+        let id = Contract::deploy(
+            &DEFAULT_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                DEFAULT_POOL_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        DefaultPool::new(id, wallet.clone())
     }
 }
