@@ -14,6 +14,9 @@ abi TroveManager {
     fn update_stake_and_total_stakes(id: Identity) -> u64;
 
     #[storage(read, write)]
+    fn update_trove_reward_snapshots(id: Identity);
+
+    #[storage(read, write)]
     fn remove_stake(id: Identity);
 
     #[storage(read, write)]

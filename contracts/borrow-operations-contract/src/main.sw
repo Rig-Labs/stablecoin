@@ -63,13 +63,12 @@ impl BorrowOperations for Contract {
 
     #[storage(read, write)]
     fn open_trove(
-        _max_fee_percentage: u64,
         _usdf_amount: u64,
         _upper_hint: Identity,
         _lower_hint: Identity,
     ) {
         require_valid_asset_id();
-        require_valid_max_fee_percentage(_max_fee_percentage);
+
         let oracle = abi(MockOracle, storage.oracle_contract.value);
         let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
@@ -100,7 +99,7 @@ impl BorrowOperations for Contract {
         trove_manager.increase_trove_coll(sender, msg_amount());
         trove_manager.increase_trove_debt(sender, vars.net_debt);
 
-        // TODO Update trove rewards snapshot 
+        trove_manager.update_trove_reward_snapshots(sender);
         let _ = trove_manager.update_stake_and_total_stakes(sender);
 
         sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
@@ -114,12 +113,12 @@ impl BorrowOperations for Contract {
     fn add_coll(_upper_hint: Identity, _lower_hint: Identity) {
         require_valid_asset_id();
 
-        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, _upper_hint, _lower_hint, 0);
+        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, _upper_hint, _lower_hint);
     }
 
     #[storage(read, write)]
     fn withdraw_coll(amount: u64, upper_hint: Identity, lower_hint: Identity) {
-        internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, 0);
+        internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint);
     }
 
     #[storage(read, write)]
@@ -127,24 +126,19 @@ impl BorrowOperations for Contract {
         require_caller_is_stability_pool();
         require_valid_asset_id();
 
-        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, 0);
+        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint);
     }
 
     #[storage(read, write)]
-    fn withdraw_usdf(
-        max_fee: u64,
-        amount: u64,
-        upper_hint: Identity,
-        lower_hint: Identity,
-    ) {
-        internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint, max_fee);
+    fn withdraw_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity) {
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint);
     }
 
     #[storage(read, write)]
     fn repay_usdf(upper_hint: Identity, lower_hint: Identity) {
         require_valid_usdf_id();
 
-        internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint, 0);
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint);
     }
 
     #[storage(read, write)]
@@ -175,7 +169,6 @@ impl BorrowOperations for Contract {
 
     #[storage(read, write)]
     fn adjust_trove(
-        max_fee: u64,
         coll_withdrawl: u64,
         debt_change: u64,
         is_debt_increase: bool,
@@ -209,7 +202,6 @@ fn internal_adjust_trove(
     _is_debt_increase: bool,
     _upper_hint: Identity,
     _lower_hint: Identity,
-    _max_fee_percentage: u64,
 ) {
     let oracle = abi(MockOracle, storage.oracle_contract.value);
     let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
@@ -219,7 +211,6 @@ fn internal_adjust_trove(
     let mut vars = LocalVariables_AdjustTrove::new();
 
     if _is_debt_increase {
-        require_valid_max_fee_percentage(_max_fee_percentage);
         require_non_zero_debt_change(_usdf_change);
     }
 

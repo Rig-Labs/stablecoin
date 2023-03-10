@@ -219,6 +219,40 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn liquidate_troves(num_troves: u64) {}
+
+    #[storage(read, write)]
+    fn update_trove_reward_snapshots(id: Identity) {
+        require_caller_is_borrow_operations_contract();
+
+        internal_update_trove_reward_snapshots(id);
+    }
+}
+
+#[storage(read, write)]
+fn internal_update_trove_reward_snapshots(id: Identity) {
+    let mut reward_snapshot = storage.reward_snapshots.get(id);
+
+    reward_snapshot.asset = storage.l_asset;
+    reward_snapshot.usdf_debt = storage.l_usdf;
+
+    storage.reward_snapshots.insert(id, reward_snapshot);
+}
+
+#[storage(read, write)]
+fn internal_apply_pending_rewards(borrower: Identity) {
+    if (has_pending_rewards(borrower)) {
+        let pending_asset = get_pending_asset_reward(borrower);
+        let pending_usdf = get_pending_usdf_reward(borrower);
+
+        let mut trove = storage.troves.get(borrower);
+        trove.coll += pending_asset;
+        trove.debt += pending_usdf;
+        storage.troves.insert(borrower, trove);
+
+        internal_update_trove_reward_snapshots(borrower);
+
+        // TODO Move pending rewards to default pool
+    }
 }
 
 #[storage(read, write)]
@@ -261,7 +295,6 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
 
     let a = storage.trove_owners.swap_remove(index);
 }
-
 #[storage(read)]
 fn require_trove_is_active(id: Identity) {
     let trove = storage.troves.get(id);
@@ -352,7 +385,6 @@ fn internal_get_totals_from_batch_liquidate(
             single_liquidation = get_offset_and_redistribution_vals(trove.coll, trove.debt, usdf_in_stability_pool, price);
 
             internal_apply_liquidation(vars.borrower, single_liquidation);
-
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
 
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);

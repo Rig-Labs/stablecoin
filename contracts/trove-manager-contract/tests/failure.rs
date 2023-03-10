@@ -47,7 +47,6 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &sorted_troves,
         &trove_manager,
         &active_pool,
-        0,
         1_100_000_000,
         1_000_000_000,
         Identity::Address([0; 32].into()),

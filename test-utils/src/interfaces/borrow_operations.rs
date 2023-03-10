@@ -56,7 +56,6 @@ pub mod borrow_operations_abi {
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
-        max_fee_percentage: u64,
         fuel_amount_deposit: u64,
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
@@ -73,12 +72,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .open_trove(
-                max_fee_percentage,
-                usdf_amount_withdrawn,
-                upper_hint,
-                lower_hint,
-            )
+            .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
             .call_params(call_params)
             .set_contracts(&[
                 oracle,
@@ -171,7 +165,6 @@ pub mod borrow_operations_abi {
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
-        max_fee_percentage: u64,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -180,7 +173,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .withdraw_usdf(max_fee_percentage, amount, lower_hint, upper_hint)
+            .withdraw_usdf(amount, lower_hint, upper_hint)
             .set_contracts(&[
                 oracle,
                 fuel_token,
