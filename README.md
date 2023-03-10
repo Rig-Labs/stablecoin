@@ -13,6 +13,7 @@ directory.
 | [`mock-oracle`](contracts/mock-oracle-contract)       | Oracle for on-chain data | 95/100
 | [`token`](contracts/token-contract)       | FRC-20 to use in local tests made by sway gang | 95/100
 | [`active-pool`](contracts/active-pool-contract)       | Central place for holding asset collateral | 90/100 
+| [`default-pool`](contracts/default-pool-contract)       | Central place for holding 'unapplied' rewards from liquidation redistributions | 90/100 
 | [`sorted-troves`](contracts/sorted-troves-contract)       | Manages data of troves in the Linked list format | 90/100
 | [`vesting`](contracts/vesting-contract)       | Manages $FPT vesting schedules | 85/100
 | [`borrow-operations`](contracts/borrow-operations-contract)       | Interface with which users manager their troves | 80/100 |
