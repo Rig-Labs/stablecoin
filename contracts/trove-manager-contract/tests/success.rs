@@ -1,7 +1,9 @@
 use fuels::types::Identity;
 use test_utils::{
     interfaces::{
+        active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
+        default_pool::default_pool_abi,
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
@@ -147,6 +149,28 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     // 5% Penalty on 1_000_000_000 of debt
     assert_eq!(asset, 1_050_000_000);
+
+    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
+        .await
+        .value;
+
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
+        .await
+        .value;
+
+    assert_eq!(active_pool_asset, 10_000_000_000);
+    assert_eq!(active_pool_debt, 5_000_000_000);
+
+    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
+        .await
+        .value;
+
+    let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
+        .await
+        .value;
+
+    assert_eq!(default_pool_asset, 0);
+    assert_eq!(default_pool_debt, 0);
 }
 
 #[tokio::test]

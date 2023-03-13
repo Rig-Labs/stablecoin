@@ -381,5 +381,5 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
     active_pool.decrease_usdf_debt(debt_to_offset);
 
     // TODO Burn the offset usdf debt  
-    active_pool.send_asset_to_default_pool(coll_to_add);
+    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
 }

@@ -55,6 +55,7 @@ storage {
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     default_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
     usdf: ContractId = ContractId::from(ZERO_B256),
     fpt_token: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
@@ -323,6 +324,12 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
 
+    if (totals.total_coll_surplus > 0) {
+        // TODO Change add to coll_surplus_pool and also 
+        let active_pool = abi(ActivePool, storage.active_pool_contract.into());
+        active_pool.send_asset(Identity::ContractId(storage.oracle_contract), totals.total_coll_surplus);
+    }
+
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
 }
 
@@ -465,6 +472,7 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
     }
+    // TODO Add coll surplus to surplus pool
 }
 
 #[storage(read, write)]
