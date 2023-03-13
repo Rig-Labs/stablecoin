@@ -1,6 +1,7 @@
 contract;
 
 use libraries::default_pool_interface::DefaultPool;
+use libraries::active_pool_interface::ActivePool;
 use std::{
     auth::msg_sender,
     call_frames::{
@@ -17,7 +18,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 
 storage {
     trove_manager_contract: Identity = Identity::ContractId(ContractId::from(ZERO_B256)),
-    active_pool: Identity = Identity::ContractId(ContractId::from(ZERO_B256)),
+    active_pool: ContractId = ContractId::from(ZERO_B256),
     asset_id: ContractId = ContractId::from(ZERO_B256),
     asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
@@ -27,7 +28,7 @@ impl DefaultPool for Contract {
     #[storage(read, write)]
     fn initialize(
         trove_manager: Identity,
-        active_pool: Identity,
+        active_pool: ContractId,
         asset_id: ContractId,
     ) {
         require(storage.trove_manager_contract == Identity::ContractId(ContractId::from(ZERO_B256)), "TroveManager contract is already set");
@@ -41,8 +42,12 @@ impl DefaultPool for Contract {
     #[storage(read, write)]
     fn send_asset_to_active_pool(amount: u64) {
         require_is_trove_manager();
-        transfer(amount, storage.asset_id, storage.active_pool);
         storage.asset_amount -= amount;
+        let active_pool = abi(ActivePool, storage.active_pool.value);
+        active_pool.recieve {
+            coins: amount,
+            asset_id: storage.asset_id.value,
+        }();
     }
 
     #[storage(read)]
@@ -92,5 +97,5 @@ fn require_is_trove_manager() {
 fn require_is_active_pool() {
     let caller = msg_sender().unwrap();
     let active_pool_contract = storage.active_pool;
-    require(caller == active_pool_contract, "Caller is not ActivePool");
+    require(caller == Identity::ContractId(active_pool_contract), "Caller is not ActivePool");
 }

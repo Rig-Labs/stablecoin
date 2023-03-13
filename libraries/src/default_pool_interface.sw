@@ -2,7 +2,7 @@ library default_pool_interface;
 
 abi DefaultPool {
     #[storage(read, write)]
-    fn initialize(trove_manager: Identity, active_pool: Identity, asset_id: ContractId);
+    fn initialize(trove_manager: Identity, active_pool: ContractId, asset_id: ContractId);
 
     #[storage(read, write)]
     fn send_asset_to_active_pool(amount: u64);

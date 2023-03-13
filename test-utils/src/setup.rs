@@ -8,6 +8,8 @@ use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocke
 
 pub mod common {
 
+    use std::default;
+
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
         signers::fuel_crypto::rand::{self, Rng},
@@ -38,6 +40,7 @@ pub mod common {
         WalletUnlocked,
         Vec<WalletUnlocked>,
         StabilityPool,
+        DefaultPool,
     ) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
@@ -60,6 +63,7 @@ pub mod common {
         let usdf = deploy_token(&wallet).await;
         let active_pool = deploy_active_pool(&wallet).await;
         let stability_pool = deploy_stability_pool(&wallet).await;
+        let default_pool = deploy_default_pool(&wallet).await;
 
         // TODO Change stability pool when implemented
         active_pool_abi::initialize(
@@ -68,6 +72,7 @@ pub mod common {
             Identity::ContractId(trove_manger.contract_id().into()),
             Identity::ContractId(stability_pool.contract_id().into()),
             fuel.contract_id().into(),
+            default_pool.contract_id().into(),
         )
         .await;
 
@@ -145,6 +150,7 @@ pub mod common {
             wallet,
             wallets,
             stability_pool,
+            default_pool,
         )
     }
 

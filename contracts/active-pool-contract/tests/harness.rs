@@ -2,8 +2,11 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     interfaces::active_pool::{active_pool_abi, ActivePool},
-    interfaces::token::{token_abi, Token},
-    setup::common::{deploy_active_pool, deploy_token},
+    interfaces::{
+        default_pool,
+        token::{token_abi, Token},
+    },
+    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
 };
 
 async fn get_contract_instance() -> (ActivePool, Token, WalletUnlocked) {
@@ -21,6 +24,7 @@ async fn get_contract_instance() -> (ActivePool, Token, WalletUnlocked) {
     let wallet = wallets.pop().unwrap();
 
     let instance = deploy_active_pool(&wallet).await;
+    let default_pool = deploy_default_pool(&wallet).await;
 
     let asset = deploy_token(&wallet).await;
 
@@ -39,6 +43,7 @@ async fn get_contract_instance() -> (ActivePool, Token, WalletUnlocked) {
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
         asset.contract_id().into(),
+        default_pool.contract_id().into(),
     )
     .await;
 

@@ -2,11 +2,14 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     interfaces::default_pool::{default_pool_abi, DefaultPool},
-    interfaces::token::{token_abi, Token},
-    setup::common::{deploy_default_pool, deploy_token},
+    interfaces::{
+        active_pool::{active_pool_abi, ActivePool},
+        token::{token_abi, Token},
+    },
+    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
 };
 
-async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked) {
+async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked, ActivePool) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -21,6 +24,7 @@ async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked) {
     let wallet = wallets.pop().unwrap();
 
     let instance = deploy_default_pool(&wallet).await;
+    let active_pool = deploy_active_pool(&wallet).await;
 
     let asset = deploy_token(&wallet).await;
 
@@ -36,17 +40,27 @@ async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked) {
     default_pool_abi::initialize(
         &instance,
         Identity::Address(wallet.address().into()),
-        Identity::Address(wallet.address().into()),
+        active_pool.contract_id().into(),
         asset.contract_id().into(),
     )
     .await;
 
-    (instance, asset, wallet)
+    active_pool_abi::initialize(
+        &active_pool,
+        Identity::Address(wallet.address().into()),
+        Identity::Address(wallet.address().into()),
+        Identity::Address(wallet.address().into()),
+        asset.contract_id().into(),
+        instance.contract_id().into(),
+    )
+    .await;
+
+    (instance, asset, wallet, active_pool)
 }
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (default_pool, _mock_fuel, _admin) = get_contract_instance().await;
+    let (default_pool, _mock_fuel, _admin, _) = get_contract_instance().await;
 
     let debt = default_pool_abi::get_usdf_debt(&default_pool).await.value;
     assert_eq!(debt, 0);
@@ -57,7 +71,7 @@ async fn proper_intialize() {
 
 #[tokio::test]
 async fn proper_adjust_debt() {
-    let (default_pool, _mock_fuel, _admin) = get_contract_instance().await;
+    let (default_pool, _mock_fuel, _admin, _) = get_contract_instance().await;
 
     default_pool_abi::increase_usdf_debt(&default_pool, 1000).await;
 
@@ -72,7 +86,7 @@ async fn proper_adjust_debt() {
 
 #[tokio::test]
 async fn proper_adjust_asset_col() {
-    let (default_pool, mock_fuel, admin) = get_contract_instance().await;
+    let (default_pool, mock_fuel, admin, active_pool) = get_contract_instance().await;
 
     token_abi::mint_to_id(
         &mock_fuel,
@@ -81,28 +95,17 @@ async fn proper_adjust_asset_col() {
     )
     .await;
 
-    default_pool_abi::recieve(&default_pool, &mock_fuel, 1_000_000).await;
+    active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
+
+    active_pool_abi::send_asset_to_default_pool(&active_pool, &default_pool, &mock_fuel, 1_000_000)
+        .await
+        .unwrap();
 
     let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
     assert_eq!(asset_amount, 1_000_000);
 
-    let provdier = admin.get_provider().unwrap();
-
-    let asset_id = AssetId::from(*mock_fuel.contract_id().hash());
-    let balance_before = provdier
-        .get_asset_balance(admin.address().into(), asset_id)
-        .await
-        .unwrap();
-
-    default_pool_abi::send_asset_to_active_pool(&default_pool, 500_000).await;
+    default_pool_abi::send_asset_to_active_pool(&default_pool, &active_pool, 500_000).await;
 
     let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
     assert_eq!(asset_amount, 500_000);
-
-    let balance_after = provdier
-        .get_asset_balance(admin.address().into(), asset_id)
-        .await
-        .unwrap();
-
-    assert_eq!(balance_before + 500_000, balance_after);
 }

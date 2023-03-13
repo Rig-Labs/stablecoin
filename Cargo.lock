@@ -13,6 +13,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "active-pool-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
+]
+
+[[package]]
 name = "aes"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -880,6 +889,15 @@ dependencies = [
  "darling_core 0.14.3",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "default-pool-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
 ]
 
 [[package]]
@@ -2292,6 +2310,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock-trove-manager-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "tokio",
+]
+
+[[package]]
+name = "mock-trove-manager-sp-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "tokio",
+]
+
+[[package]]
 name = "multer"
 version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3214,6 +3248,7 @@ name = "stability-pool-contract"
 version = "0.1.0"
 dependencies = [
  "fuels",
+ "test-utils",
  "tokio",
 ]
 

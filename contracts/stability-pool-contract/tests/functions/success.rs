@@ -40,6 +40,7 @@ async fn proper_stability_deposit() {
         admin,
         _wallets,
         stability_pool,
+        _,
     ) = setup_protocol(10, 4).await;
 
     token_abi::mint_to_id(
@@ -117,6 +118,7 @@ async fn proper_stability_widthdrawl() {
         admin,
         _wallets,
         stability_pool,
+        _,
     ) = setup_protocol(10, 4).await;
 
     token_abi::mint_to_id(

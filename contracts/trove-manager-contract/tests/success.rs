@@ -23,6 +23,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         _admin,
         mut wallets,
         stability_pool,
+        _,
     ) = setup_protocol(10, 5).await;
 
     oracle_abi::set_price(&oracle, 10_000_000).await;
@@ -166,6 +167,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         _admin,
         mut wallets,
         stability_pool,
+        _,
     ) = setup_protocol(10, 5).await;
 
     oracle_abi::set_price(&oracle, 10_000_000).await;

@@ -8,9 +8,10 @@ abigen!(Contract(
 ));
 
 pub mod active_pool_abi {
+    use crate::interfaces::default_pool::DefaultPool;
     use crate::interfaces::token::Token;
     use fuels::{
-        prelude::{AssetId, CallParameters, ContractId},
+        prelude::{AssetId, CallParameters, ContractId, Error},
         types::Identity,
     };
 
@@ -22,10 +23,17 @@ pub mod active_pool_abi {
         trove_manager: Identity,
         stability_pool: Identity,
         asset_id: ContractId,
+        default_pool: ContractId,
     ) -> FuelCallResponse<()> {
         active_pool
             .methods()
-            .initialize(borrow_operations, trove_manager, stability_pool, asset_id)
+            .initialize(
+                borrow_operations,
+                trove_manager,
+                stability_pool,
+                asset_id,
+                default_pool,
+            )
             .call()
             .await
             .unwrap()
@@ -93,5 +101,20 @@ pub mod active_pool_abi {
             .call()
             .await
             .unwrap()
+    }
+
+    pub async fn send_asset_to_default_pool(
+        active_pool: &ActivePool,
+        default_pool: &DefaultPool,
+        asset: &Token,
+        amount: u64,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        active_pool
+            .methods()
+            .send_asset_to_default_pool(amount)
+            .set_contracts(&[default_pool, asset])
+            .append_variable_outputs(1)
+            .call()
+            .await
     }
 }
