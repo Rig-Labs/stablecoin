@@ -22,6 +22,7 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         _admin,
         mut wallets,
         stability_pool,
+        _,
     ) = setup_protocol(10, 5).await;
 
     oracle_abi::set_price(&oracle, 10_000_000).await;
