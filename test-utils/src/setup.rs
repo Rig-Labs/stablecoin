@@ -24,22 +24,22 @@ pub mod common {
         paths::*,
     };
 
+    pub struct ProtocolContracts {
+        pub borrow_operations: BorrowOperations,
+        pub trove_manager: TroveManagerContract,
+        pub oracle: Oracle,
+        pub sorted_troves: SortedTroves,
+        pub fuel: Token,
+        pub usdf: Token,
+        pub active_pool: ActivePool,
+        pub stability_pool: StabilityPool,
+        pub default_pool: DefaultPool,
+    }
+
     pub async fn setup_protocol(
         max_size: u64,
         num_wallets: u64,
-    ) -> (
-        BorrowOperations,
-        TroveManagerContract,
-        Oracle,
-        SortedTroves,
-        Token, /* Fuel */
-        Token, /* USDF */
-        ActivePool,
-        WalletUnlocked,
-        Vec<WalletUnlocked>,
-        StabilityPool,
-        DefaultPool,
-    ) {
+    ) -> (ProtocolContracts, WalletUnlocked, Vec<WalletUnlocked>) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
             WalletsConfig::new(
@@ -146,19 +146,19 @@ pub mod common {
         .await
         .unwrap();
 
-        (
-            bo_instance,
-            trove_manger,
-            oracle_instance,
+        let contracts = ProtocolContracts {
+            borrow_operations: bo_instance,
+            trove_manager: trove_manger,
+            oracle: oracle_instance,
             sorted_troves,
             fuel,
             usdf,
             active_pool,
-            wallet,
-            wallets,
             stability_pool,
             default_pool,
-        )
+        };
+
+        (contracts, wallet, wallets)
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token {

@@ -10,22 +10,10 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_open_two_troves() {
-    let (
-        borrow_operations_instance,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
@@ -34,13 +22,13 @@ async fn fails_open_two_troves() {
     let provider = admin.get_provider().unwrap();
 
     borrow_operations_abi::open_trove(
-        &borrow_operations_instance,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -50,13 +38,13 @@ async fn fails_open_two_troves() {
     .unwrap();
 
     let res = borrow_operations_abi::open_trove(
-        &borrow_operations_instance,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -70,16 +58,22 @@ async fn fails_open_two_troves() {
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
-            AssetId::from(*usdf_token.contract_id().hash()),
+            AssetId::from(*contracts.usdf.contract_id().hash()),
         )
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await.value;
-    let last = sorted_troves_abi::get_last(&sorted_troves).await.value;
-    let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
+        .await
+        .value;
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves)
+        .await
+        .value;
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves)
+        .await
+        .value;
     let icr = trove_manager_abi::get_nominal_icr(
-        &trove_manager,
+        &contracts.trove_manager,
         Identity::Address(admin.address().into()),
     )
     .await
@@ -93,14 +87,14 @@ async fn fails_open_two_troves() {
     assert_eq!(icr, 2_000_000_000, "ICR is wrong");
 
     let trove_col = trove_manager_abi::get_trove_coll(
-        &trove_manager,
+        &contracts.trove_manager,
         Identity::Address(admin.address().into()),
     )
     .await
     .value;
 
     let trove_debt = trove_manager_abi::get_trove_debt(
-        &trove_manager,
+        &contracts.trove_manager,
         Identity::Address(admin.address().into()),
     )
     .await
@@ -109,10 +103,14 @@ async fn fails_open_two_troves() {
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
     assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
+        .await
+        .value;
     assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&active_pool).await.value;
+    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
+        .await
+        .value;
     assert_eq!(
         active_pool_col, 1_200_000_000,
         "Active Pool Collateral is wrong"
@@ -123,35 +121,23 @@ async fn fails_open_two_troves() {
 async fn fails_open_trove_under_minimum_collateral_ratio() {
     // MCR = 1_200_000
     // TODO update this if MCR changes
-    let (
-        borrow_operations_instance,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let res = borrow_operations_abi::open_trove(
-        &borrow_operations_instance,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         1_000_000_000,
         Identity::Address([0; 32].into()),
@@ -170,35 +156,23 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 async fn fails_open_trove_under_min_usdf_required() {
     // MCR = 1_200_000
     // TODO update this if MCR changes
-    let (
-        borrow_operations_instance,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let res = borrow_operations_abi::open_trove(
-        &borrow_operations_instance,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         100_000_000,
         Identity::Address([0; 32].into()),
@@ -217,35 +191,23 @@ async fn fails_open_trove_under_min_usdf_required() {
 async fn fails_reduce_debt_under_min_usdf_required() {
     // MCR = 1_200_000
     // TODO update this if MCR changes
-    let (
-        borrow_operations,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     borrow_operations_abi::open_trove(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -255,13 +217,13 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     .unwrap();
 
     let res = borrow_operations_abi::repay_usdf(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         300_000_000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
@@ -279,35 +241,23 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 async fn fails_decrease_collateral_under_mcr() {
     // MCR = 1_200_000
     // TODO update this if MCR changes
-    let (
-        borrow_operations,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     borrow_operations_abi::open_trove(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -317,12 +267,12 @@ async fn fails_decrease_collateral_under_mcr() {
     .unwrap();
 
     let res = borrow_operations_abi::withdraw_coll(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_000_000_000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
@@ -340,19 +290,7 @@ async fn fails_decrease_collateral_under_mcr() {
 async fn fails_incorrect_token_as_collateral_or_repayment() {
     // MCR = 1_200_000
     // TODO update this if MCR changes
-    let (
-        borrow_operations,
-        trove_manager,
-        oracle,
-        sorted_troves,
-        fuel_token,
-        usdf_token,
-        active_pool,
-        admin,
-        _,
-        _,
-        _,
-    ) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2).await;
 
     let mock_fake_token = deploy_token(&admin).await;
 
@@ -373,20 +311,20 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     .await;
 
     token_abi::mint_to_id(
-        &fuel_token,
+        &contracts.fuel,
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let res = borrow_operations_abi::open_trove(
-        &borrow_operations,
-        &oracle,
+        &contracts.borrow_operations,
+        &contracts.oracle,
         &mock_fake_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -402,13 +340,13 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
 
     // Set up real trove and try to add collateral
     borrow_operations_abi::open_trove(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_200_000_000,
         600_000_000,
         Identity::Address([0; 32].into()),
@@ -418,13 +356,13 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     .unwrap();
 
     let res = borrow_operations_abi::add_coll(
-        &borrow_operations,
-        &oracle,
+        &contracts.borrow_operations,
+        &contracts.oracle,
         &mock_fake_token,
-        &usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_000_000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
@@ -456,13 +394,13 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     .await;
 
     let res = borrow_operations_abi::repay_usdf(
-        &borrow_operations,
-        &oracle,
-        &fuel_token,
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
         &fake_usdf_token,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
         1_000_000,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),

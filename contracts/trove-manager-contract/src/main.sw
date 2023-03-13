@@ -81,7 +81,7 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
     ) {
-        // Require not already initialized
+        // TODO Require not already initialized
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
         storage.stability_pool_contract = stability_pool;
