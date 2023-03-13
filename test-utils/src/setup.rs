@@ -10,6 +10,7 @@ pub mod common {
 
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
+        programs::call_response::FuelCallResponse,
         signers::fuel_crypto::rand::{self, Rng},
         types::Identity,
     };
@@ -294,5 +295,12 @@ pub mod common {
         .unwrap();
 
         DefaultPool::new(id, wallet.clone())
+    }
+
+    pub fn print_response(response: FuelCallResponse<()>) {
+        response.receipts.iter().for_each(|r| match r.ra() {
+            Some(r) => println!("{:?}", r),
+            _ => (),
+        });
     }
 }

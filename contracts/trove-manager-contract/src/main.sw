@@ -577,5 +577,6 @@ fn internal_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
 
     default_pool.decrease_usdf_debt(debt);
     active_pool.increase_usdf_debt(debt);
+
     default_pool.send_asset_to_active_pool(coll);
 }
