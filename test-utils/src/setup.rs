@@ -8,10 +8,9 @@ use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocke
 
 pub mod common {
 
-    use std::default;
-
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
+        programs::call_response::FuelCallResponse,
         signers::fuel_crypto::rand::{self, Rng},
         types::Identity,
     };
@@ -20,28 +19,28 @@ pub mod common {
     use crate::{
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            oracle::oracle_abi, sorted_troves::sorted_troves_abi,
+            default_pool::default_pool_abi, oracle::oracle_abi, sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
         },
         paths::*,
     };
 
+    pub struct ProtocolContracts {
+        pub borrow_operations: BorrowOperations,
+        pub trove_manager: TroveManagerContract,
+        pub oracle: Oracle,
+        pub sorted_troves: SortedTroves,
+        pub fuel: Token,
+        pub usdf: Token,
+        pub active_pool: ActivePool,
+        pub stability_pool: StabilityPool,
+        pub default_pool: DefaultPool,
+    }
+
     pub async fn setup_protocol(
         max_size: u64,
         num_wallets: u64,
-    ) -> (
-        BorrowOperations,
-        TroveManagerContract,
-        Oracle,
-        SortedTroves,
-        Token, /* Fuel */
-        Token, /* USDF */
-        ActivePool,
-        WalletUnlocked,
-        Vec<WalletUnlocked>,
-        StabilityPool,
-        DefaultPool,
-    ) {
+    ) -> (ProtocolContracts, WalletUnlocked, Vec<WalletUnlocked>) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
             WalletsConfig::new(
@@ -65,7 +64,14 @@ pub mod common {
         let stability_pool = deploy_stability_pool(&wallet).await;
         let default_pool = deploy_default_pool(&wallet).await;
 
-        // TODO Change stability pool when implemented
+        default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(trove_manger.contract_id().into()),
+            active_pool.contract_id().into(),
+            fuel.contract_id().into(),
+        )
+        .await;
+
         active_pool_abi::initialize(
             &active_pool,
             Identity::ContractId(bo_instance.contract_id().into()),
@@ -108,6 +114,8 @@ pub mod common {
             sorted_troves.contract_id().into(),
             oracle_instance.contract_id().into(),
             stability_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
 
@@ -139,19 +147,19 @@ pub mod common {
         .await
         .unwrap();
 
-        (
-            bo_instance,
-            trove_manger,
-            oracle_instance,
+        let contracts = ProtocolContracts {
+            borrow_operations: bo_instance,
+            trove_manager: trove_manger,
+            oracle: oracle_instance,
             sorted_troves,
             fuel,
             usdf,
             active_pool,
-            wallet,
-            wallets,
             stability_pool,
             default_pool,
-        )
+        };
+
+        (contracts, wallet, wallets)
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token {
@@ -287,5 +295,12 @@ pub mod common {
         .unwrap();
 
         DefaultPool::new(id, wallet.clone())
+    }
+
+    pub fn print_response(response: FuelCallResponse<()>) {
+        response.receipts.iter().for_each(|r| match r.ra() {
+            Some(r) => println!("{:?}", r),
+            _ => (),
+        });
     }
 }

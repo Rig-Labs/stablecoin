@@ -42,6 +42,8 @@ impl TroveManager for Contract {
         sorted_troves: ContractId,
         oracle: ContractId,
         stability_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
     ) {
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;

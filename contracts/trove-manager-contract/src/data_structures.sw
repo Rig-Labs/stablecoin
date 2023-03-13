@@ -139,3 +139,10 @@ pub struct LiquidatedTroveValsInner {
     trove_coll_liquidated: u64,
     is_partial_liquidation: bool,
 }
+
+pub struct EntireTroveDebtAndColl {
+    entire_trove_debt: u64,
+    entire_trove_coll: u64,
+    pending_debt_rewards: u64,
+    pending_coll_rewards: u64,
+}
