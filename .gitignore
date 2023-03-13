@@ -1,0 +1,5 @@
+out
+target
+*.lock
+.DS_Store
+*.DS_Store
