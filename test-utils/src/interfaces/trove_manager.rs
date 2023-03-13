@@ -5,10 +5,10 @@ use fuels::{
 };
 
 use crate::interfaces::active_pool::ActivePool;
+use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
-
 abigen!(Contract(
     name = "TroveManagerContract",
     abi = "contracts/trove-manager-contract/out/debug/trove-manager-contract-abi.json"
@@ -38,6 +38,7 @@ pub mod trove_manager_abi {
         oracle: &Oracle,
         sorted_troves: &SortedTroves,
         active_pool: &ActivePool,
+        default_pool: &DefaultPool,
         id: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
@@ -46,7 +47,13 @@ pub mod trove_manager_abi {
             .methods()
             .liquidate(id)
             .tx_params(tx_params)
-            .set_contracts(&[stability_pool, oracle, sorted_troves, active_pool])
+            .set_contracts(&[
+                stability_pool,
+                oracle,
+                sorted_troves,
+                active_pool,
+                default_pool,
+            ])
             .append_variable_outputs(3)
             .call()
             .await
@@ -123,6 +130,8 @@ pub mod trove_manager_abi {
         sorted_troves_id: ContractId,
         oracle_id: ContractId,
         stability_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
     ) -> FuelCallResponse<()> {
         trove_manager
             .methods()
@@ -131,6 +140,8 @@ pub mod trove_manager_abi {
                 sorted_troves_id,
                 oracle_id,
                 stability_pool,
+                default_pool,
+                active_pool,
             )
             .call()
             .await

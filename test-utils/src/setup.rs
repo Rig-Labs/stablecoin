@@ -20,7 +20,7 @@ pub mod common {
     use crate::{
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            oracle::oracle_abi, sorted_troves::sorted_troves_abi,
+            default_pool::default_pool_abi, oracle::oracle_abi, sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
         },
         paths::*,
@@ -65,7 +65,14 @@ pub mod common {
         let stability_pool = deploy_stability_pool(&wallet).await;
         let default_pool = deploy_default_pool(&wallet).await;
 
-        // TODO Change stability pool when implemented
+        default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(trove_manger.contract_id().into()),
+            active_pool.contract_id().into(),
+            fuel.contract_id().into(),
+        )
+        .await;
+
         active_pool_abi::initialize(
             &active_pool,
             Identity::ContractId(bo_instance.contract_id().into()),
@@ -108,6 +115,8 @@ pub mod common {
             sorted_troves.contract_id().into(),
             oracle_instance.contract_id().into(),
             stability_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
 

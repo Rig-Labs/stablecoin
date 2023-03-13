@@ -40,6 +40,7 @@ storage {
     borrow_operations_address: ContractId = ContractId::from(ZERO_B256),
     trove_manager_address: ContractId = ContractId::from(ZERO_B256),
     active_pool_address: ContractId = ContractId::from(ZERO_B256),
+    default_pool_address: ContractId = ContractId::from(ZERO_B256),
     usdf_address: ContractId = ContractId::from(ZERO_B256),
     sorted_troves_address: ContractId = ContractId::from(ZERO_B256),
     oracle_address: ContractId = ContractId::from(ZERO_B256),
@@ -374,10 +375,11 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
     let active_pool_address = storage.active_pool_address;
 
     let active_pool = abi(ActivePool, active_pool_address.value);
+
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add);
     active_pool.decrease_usdf_debt(debt_to_offset);
 
-    // TODO Burn the offset usdf debt    
-    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
+    // TODO Burn the offset usdf debt  
+    active_pool.send_asset_to_default_pool(coll_to_add);
 }

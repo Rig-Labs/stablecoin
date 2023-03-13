@@ -52,6 +52,7 @@ storage {
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     oracle_contract: ContractId = ContractId::from(ZERO_B256),
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    default_pool_contract: ContractId = ContractId::from(ZERO_B256),
     usdf: ContractId = ContractId::from(ZERO_B256),
     fpt_token: ContractId = ContractId::from(ZERO_B256),
     fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
@@ -75,12 +76,16 @@ impl TroveManager for Contract {
         sorted_troves: ContractId,
         oracle: ContractId,
         stability_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
     ) {
         // Require not already initialized
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
         storage.stability_pool_contract = stability_pool;
         storage.oracle_contract = oracle;
+        storage.default_pool_contract = default_pool;
+        storage.active_pool_contract = active_pool;
     }
 
     #[storage(read)]
@@ -286,7 +291,6 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
     let indx_last = length - 1;
 
     require(index <= indx_last, "Trove does not exist");
-
     let address_to_move = storage.trove_owners.get(indx_last).unwrap();
 
     let mut trove_to_move = storage.troves.get(address_to_move);
