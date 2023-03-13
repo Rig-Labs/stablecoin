@@ -108,4 +108,6 @@ async fn proper_adjust_asset_col() {
 
     let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
     assert_eq!(asset_amount, 500_000);
+
+    println!("Asset amount: {}", asset_amount);
 }
