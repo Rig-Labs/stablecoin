@@ -8,8 +8,6 @@ use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocke
 
 pub mod common {
 
-    use std::default;
-
     use fuels::{
         prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
         signers::fuel_crypto::rand::{self, Rng},

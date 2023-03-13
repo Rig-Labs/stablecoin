@@ -9,6 +9,7 @@ use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
+
 abigen!(Contract(
     name = "TroveManagerContract",
     abi = "contracts/trove-manager-contract/out/debug/trove-manager-contract-abi.json"
