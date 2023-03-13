@@ -1,7 +1,6 @@
 use fuels::types::Identity;
 use test_utils::{
     interfaces::{
-        active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         default_pool::default_pool_abi,
         oracle::oracle_abi,
@@ -144,4 +143,21 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     assert_eq!(default_pool_asset, 0);
     assert_eq!(default_pool_debt, 0);
     assert_eq!(collateral_ratio, 1_300_000);
+
+    let pending_asset_rewards = trove_manager_abi::get_pending_asset_reward(
+        &contracts.trove_manager,
+        Identity::Address(wallet1.address().into()),
+    )
+    .await
+    .value;
+
+    let pending_usdf_rewards = trove_manager_abi::get_pending_usdf_reward(
+        &contracts.trove_manager,
+        Identity::Address(wallet1.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(pending_asset_rewards, 0);
+    assert_eq!(pending_usdf_rewards, 0);
 }

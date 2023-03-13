@@ -335,4 +335,22 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     // 1.05 * 500_000_000
     assert_eq!(default_pool_asset, 525_000_000);
     assert_eq!(default_pool_debt, 500_000_000);
+
+    let pending_asset_rewards = trove_manager_abi::get_pending_asset_reward(
+        &contracts.trove_manager,
+        Identity::Address(wallet2.address().into()),
+    )
+    .await
+    .value;
+
+    let pending_usdf_rewards = trove_manager_abi::get_pending_usdf_reward(
+        &contracts.trove_manager,
+        Identity::Address(wallet2.address().into()),
+    )
+    .await
+    .value;
+
+    // Wallet2 was redistributed the remaining collateral and debt
+    assert_eq!(pending_asset_rewards, 525_000_000);
+    assert_eq!(pending_usdf_rewards, 500_000_000);
 }

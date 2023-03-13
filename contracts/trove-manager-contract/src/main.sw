@@ -234,6 +234,16 @@ impl TroveManager for Contract {
 
         internal_update_trove_reward_snapshots(id);
     }
+
+    #[storage(read)]
+    fn get_pending_usdf_rewards(address: Identity) -> u64 {
+        internal_get_pending_usdf_reward(address)
+    }
+
+    #[storage(read)]
+    fn get_pending_asset_rewards(address: Identity) -> u64 {
+        internal_get_pending_asset_reward(address)
+    }
 }
 
 #[storage(read, write)]
@@ -249,8 +259,8 @@ fn internal_update_trove_reward_snapshots(id: Identity) {
 #[storage(read, write)]
 fn internal_apply_pending_rewards(borrower: Identity) {
     if (has_pending_rewards(borrower)) {
-        let pending_asset = get_pending_asset_reward(borrower);
-        let pending_usdf = get_pending_usdf_reward(borrower);
+        let pending_asset = internal_get_pending_asset_reward(borrower);
+        let pending_usdf = internal_get_pending_usdf_reward(borrower);
 
         let mut trove = storage.troves.get(borrower);
         trove.coll += pending_asset;
@@ -300,7 +310,7 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
     trove_to_move.array_index = index;
     storage.troves.insert(address_to_move, trove_to_move);
 
-    let a = storage.trove_owners.swap_remove(index);
+    let _ = storage.trove_owners.swap_remove(index);
 }
 #[storage(read)]
 fn require_trove_is_active(id: Identity) {
@@ -444,8 +454,8 @@ fn get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndColl {
     let coll = trove.coll;
     let debt = trove.debt;
 
-    let pending_coll_rewards = get_pending_asset_reward(borrower);
-    let pending_debt_rewards = get_pending_usdf_reward(borrower);
+    let pending_coll_rewards = internal_get_pending_asset_reward(borrower);
+    let pending_debt_rewards = internal_get_pending_usdf_reward(borrower);
 
     return EntireTroveDebtAndColl {
         entire_trove_debt: debt + pending_debt_rewards,
@@ -526,7 +536,7 @@ fn internal_compute_new_stake(coll: u64) -> u64 {
 }
 
 #[storage(read)]
-fn get_pending_asset_reward(address: Identity) -> u64 {
+fn internal_get_pending_asset_reward(address: Identity) -> u64 {
     let snapshot_asset = storage.reward_snapshots.get(address).asset;
     let reward_per_unit_staked = storage.l_asset - snapshot_asset;
 
@@ -542,7 +552,7 @@ fn get_pending_asset_reward(address: Identity) -> u64 {
 }
 
 #[storage(read)]
-fn get_pending_usdf_reward(address: Identity) -> u64 {
+fn internal_get_pending_usdf_reward(address: Identity) -> u64 {
     let snapshot_usdf = storage.reward_snapshots.get(address).usdf_debt;
     let reward_per_unit_staked = storage.l_usdf - snapshot_usdf;
 

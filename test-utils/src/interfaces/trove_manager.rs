@@ -179,6 +179,30 @@ pub mod trove_manager_abi {
     ) -> Result<FuelCallResponse<Status>, Error> {
         trove_manager.methods().get_trove_status(id).call().await
     }
+
+    pub async fn get_pending_asset_reward(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_pending_asset_rewards(id)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_pending_usdf_reward(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_pending_usdf_rewards(id)
+            .call()
+            .await
+            .unwrap()
+    }
 }
 
 pub mod trove_manager_utils {
