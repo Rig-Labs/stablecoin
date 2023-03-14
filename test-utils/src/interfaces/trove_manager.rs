@@ -224,4 +224,65 @@ pub mod trove_manager_utils {
         trove_manager_abi::set_trove_status(trove_manager, id.clone(), Status::Active).await;
         sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id).await;
     }
+
+    pub async fn assert_trove_coll(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        expected_coll: u64,
+    ) {
+        let real_coll = trove_manager_abi::get_trove_coll(&trove_manager, id)
+            .await
+            .value;
+
+        assert_eq!(real_coll, expected_coll);
+    }
+
+    pub async fn assert_trove_debt(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        expected_debt: u64,
+    ) {
+        let real_debt = trove_manager_abi::get_trove_debt(&trove_manager, id)
+            .await
+            .value;
+
+        assert_eq!(real_debt, expected_debt);
+    }
+
+    pub async fn assert_trove_status(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        expected_status: Status,
+    ) {
+        let real_status = trove_manager_abi::get_trove_status(&trove_manager, id)
+            .await
+            .unwrap()
+            .value;
+
+        assert_eq!(real_status, expected_status);
+    }
+
+    pub async fn assert_pending_asset_rewards(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        expected_rewards: u64,
+    ) {
+        let real_rewards = trove_manager_abi::get_pending_asset_reward(&trove_manager, id)
+            .await
+            .value;
+
+        assert_eq!(real_rewards, expected_rewards);
+    }
+
+    pub async fn assert_pending_usdf_rewards(
+        trove_manager: &TroveManagerContract,
+        id: Identity,
+        expected_rewards: u64,
+    ) {
+        let real_rewards = trove_manager_abi::get_pending_usdf_reward(&trove_manager, id)
+            .await
+            .value;
+
+        assert_eq!(real_rewards, expected_rewards);
+    }
 }
