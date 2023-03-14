@@ -217,6 +217,8 @@ fn internal_adjust_trove(
     require_singular_coll_change(_asset_coll_added, _coll_withdrawal);
     require_non_zero_adjustment(_asset_coll_added, _coll_withdrawal, _usdf_change);
 
+    trove_manager.apply_pending_rewards(_borrower);
+
     let pos_res = internal_get_coll_change(_asset_coll_added, _coll_withdrawal);
     vars.coll_change = pos_res.0;
     vars.is_coll_increase = pos_res.1;
