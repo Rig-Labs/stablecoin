@@ -41,7 +41,7 @@ abi TroveManager {
     #[storage(read, write)]
     fn add_trove_owner_to_array(id: Identity) -> u64;
 
-    #[storage(read,)]
+    #[storage(read, write)]
     fn apply_pending_rewards(id: Identity);
 
     #[storage(read)]
@@ -50,22 +50,22 @@ abi TroveManager {
     #[storage(read)]
     fn get_pending_usdf_rewards(id: Identity) -> u64;
 
-    #[storage(read,)]
+    #[storage(read)]
     fn has_pending_rewards(id: Identity) -> bool;
 
     #[storage(read)]
     fn get_entire_debt_and_coll(id: Identity) -> (u64, u64, u64, u64);
 
-     #[storage(read, write)]
+    #[storage(read, write)]
     fn close_trove(id: Identity);
 
     #[storage(read, write)]
     fn remove_stake(id: Identity);
 
-    #[storage(read,)]
+    #[storage(read)]
     fn get_redemption_rate() -> u64;
 
-    #[storage(read,)]
+    #[storage(read)]
     fn get_redemption_rate_with_decay() -> u64;
 
     #[storage(read)]

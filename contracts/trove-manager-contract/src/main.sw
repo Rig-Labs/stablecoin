@@ -122,24 +122,25 @@ impl TroveManager for Contract {
         sorted_troves_contract.remove(id);
     }
 
-    #[storage(read)]
-    fn apply_pending_rewards(id: Identity) {}
-
-        // TODO
-    #[storage(read)]
-    fn has_pending_rewards(id: Identity) -> bool {
-        // TODO
-        return false;
+    #[storage(read, write)]
+    fn apply_pending_rewards(id: Identity) {
+        require_caller_is_borrow_operations_contract();
+        internal_apply_pending_rewards(id);
     }
 
+    #[storage(read)]
+    fn has_pending_rewards(id: Identity) -> bool {
+        internal_has_pending_rewards(id)
+    }
+
+  // TODO
+        // redeem collateral
     #[storage(read, write)]
     fn redeem_collateral() {}
 
-        // TODO
     #[storage(read)]
     fn get_current_icr(id: Identity, price: u64) -> u64 {
-        // TODO
-        return 0;
+        internal_get_current_icr(id, price)
     }
 
     #[storage(read)]
@@ -333,7 +334,7 @@ fn internal_update_trove_reward_snapshots(id: Identity) {
 }
 #[storage(read, write)]
 fn internal_apply_pending_rewards(borrower: Identity) {
-    if (has_pending_rewards(borrower)) {
+    if (internal_has_pending_rewards(borrower)) {
         let pending_asset = internal_get_pending_asset_reward(borrower);
         let pending_usdf = internal_get_pending_usdf_reward(borrower);
 
@@ -642,7 +643,7 @@ fn internal_get_pending_usdf_reward(address: Identity) -> u64 {
 }
 
 #[storage(read)]
-fn has_pending_rewards(address: Identity) -> bool {
+fn internal_has_pending_rewards(address: Identity) -> bool {
     if (storage.troves.get(address).status != Status::Active())
     {
         return false;

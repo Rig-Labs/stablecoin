@@ -124,7 +124,7 @@ impl TroveManager for Contract {
         return 0
     }
 
-    #[storage(read)]
+    #[storage(read, write)]
     fn apply_pending_rewards(id: Identity) {}
 
         // TODO
