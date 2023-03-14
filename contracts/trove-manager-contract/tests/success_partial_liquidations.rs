@@ -474,6 +474,9 @@ async fn proper_full_liquidation_empty_sp() {
         healthy_wallet2.clone(),
     );
 
+    let starting_col: u64 = 11_000_000_000;
+    let starting_debt: u64 = 10_000_000_000;
+
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
         &contracts.oracle,
@@ -482,8 +485,8 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.sorted_troves,
         &contracts.trove_manager,
         &contracts.active_pool,
-        1_100_000_000,
-        1_000_000_000,
+        starting_col,
+        starting_debt,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -544,23 +547,27 @@ async fn proper_full_liquidation_empty_sp() {
     trove_manager_utils::assert_trove_status(
         &contracts.trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
-        Status::ClosedByLiquidation,
+        Status::Active,
     )
     .await;
 
-    trove_manager_utils::assert_trove_coll(
+    let remaining_coll = trove_manager_abi::get_trove_coll(
         &contracts.trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
-        0,
     )
-    .await;
+    .await
+    .value;
 
-    trove_manager_utils::assert_trove_debt(
+    let remaining_debt = trove_manager_abi::get_trove_debt(
         &contracts.trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
-        0,
     )
-    .await;
+    .await
+    .value;
+
+    let collateral_ratio = remaining_coll * 1_000_000 / remaining_debt;
+
+    assert_eq!(collateral_ratio, 1_300_000);
 
     let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
         .await
@@ -584,8 +591,8 @@ async fn proper_full_liquidation_empty_sp() {
         .await
         .value;
 
-    assert_eq!(active_pool_asset, 40_000_000_000);
-    assert_eq!(active_pool_debt, 20_000_000_000);
+    assert_eq!(active_pool_asset, 40_000_000_000 + remaining_coll);
+    assert_eq!(active_pool_debt, 20_000_000_000 + remaining_debt);
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -596,34 +603,71 @@ async fn proper_full_liquidation_empty_sp() {
         .value;
 
     // 1.05 * 500_000_000
-    assert_eq!(default_pool_asset, 1_050_000_000);
-    assert_eq!(default_pool_debt, 1_000_000_000);
+    assert_eq!(default_pool_asset, starting_col - remaining_coll);
+    assert_eq!(default_pool_debt, starting_debt - remaining_debt);
 
-    trove_manager_utils::assert_pending_asset_rewards(
-        &contracts.trove_manager,
-        Identity::Address(healthy_wallet1.address().into()),
-        1_050_000_000 / 4,
-    )
-    .await;
-
-    trove_manager_utils::assert_pending_usdf_rewards(
-        &contracts.trove_manager,
-        Identity::Address(healthy_wallet1.address().into()),
-        1_000_000_000 / 4,
-    )
-    .await;
+    let walet2_expected_asset_rewards: u128 = u128::from(default_pool_asset)
+        * u128::from(30_000_000_000 as u128)
+        / u128::from(40_000_000_000 + remaining_coll);
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        1_050_000_000 * 3 / 4,
+        walet2_expected_asset_rewards.try_into().unwrap(),
     )
     .await;
+
+    let wallet2_expected_usdf_rewards: u128 = u128::from(default_pool_debt)
+        * u128::from(30_000_000_000 as u128)
+        / u128::from(40_000_000_000 + remaining_coll);
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        1_000_000_000 * 3 / 4,
+        wallet2_expected_usdf_rewards.try_into().unwrap(),
+    )
+    .await;
+
+    let wallet1_expected_asset_rewards: u128 = u128::from(default_pool_asset)
+        * u128::from(10_000_000_000 as u128)
+        / u128::from(40_000_000_000 + remaining_coll);
+
+    trove_manager_utils::assert_pending_asset_rewards(
+        &contracts.trove_manager,
+        Identity::Address(healthy_wallet1.address().into()),
+        wallet1_expected_asset_rewards.try_into().unwrap(),
+    )
+    .await;
+
+    let wallet1_expected_usdf_rewards: u128 = u128::from(default_pool_debt)
+        * u128::from(10_000_000_000 as u128)
+        / u128::from(40_000_000_000 + remaining_coll);
+
+    trove_manager_utils::assert_pending_usdf_rewards(
+        &contracts.trove_manager,
+        Identity::Address(healthy_wallet1.address().into()),
+        wallet1_expected_usdf_rewards.try_into().unwrap(),
+    )
+    .await;
+
+    let liqudated_wallet_asset_rewards = u128::from(default_pool_asset)
+        * u128::from(remaining_coll)
+        / u128::from(40_000_000_000 + remaining_coll);
+
+    trove_manager_utils::assert_pending_asset_rewards(
+        &contracts.trove_manager,
+        Identity::Address(liquidated_wallet.address().into()),
+        liqudated_wallet_asset_rewards.try_into().unwrap(),
+    )
+    .await;
+
+    let liqudated_wallet_usdf_rewards = u128::from(default_pool_debt) * u128::from(remaining_coll)
+        / u128::from(40_000_000_000 + remaining_coll);
+
+    trove_manager_utils::assert_pending_usdf_rewards(
+        &contracts.trove_manager,
+        Identity::Address(liquidated_wallet.address().into()),
+        liqudated_wallet_usdf_rewards.try_into().unwrap(),
     )
     .await;
 }

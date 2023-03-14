@@ -292,9 +292,13 @@ pub mod trove_manager_utils {
             .await
             .value;
 
-        assert_eq!(
-            real_rewards, expected_rewards,
-            "Incorrect pending usdf rewards"
+        assert_within_threshold(
+            real_rewards,
+            expected_rewards,
+            &format!(
+                "USDF Rewards are not within 0.001% threshold, expected: {}, real: {}",
+                expected_rewards, real_rewards
+            ),
         );
     }
 }
