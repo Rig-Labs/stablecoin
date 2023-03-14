@@ -39,7 +39,7 @@ Functionality
 - [x] Repay trove debt 
 - [x] Reduce collateral from trove
 - [x] Close Trove
-- [ ] Liquidate Troves
+- [x] Liquidate Troves
 - [ ] Stability Pool
 - [ ] Redeem Fuel/stFuel w/ USDF
 - [ ] Multiple assets (Fuel, stFuel)
