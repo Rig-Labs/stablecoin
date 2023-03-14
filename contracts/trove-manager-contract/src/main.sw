@@ -122,6 +122,83 @@ impl TroveManager for Contract {
         sorted_troves_contract.remove(id);
     }
 
+    #[storage(read)]
+    fn apply_pending_rewards(id: Identity) {}
+
+        // TODO
+    #[storage(read)]
+    fn has_pending_rewards(id: Identity) -> bool {
+        // TODO
+        return false;
+    }
+
+    #[storage(read, write)]
+    fn redeem_collateral() {}
+
+        // TODO
+    #[storage(read)]
+    fn get_current_icr(id: Identity, price: u64) -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_entire_debt_and_coll(id: Identity) -> (u64, u64, u64, u64) {
+        return (0, 0, 0, 0)
+        // TODO
+    }
+
+    #[storage(read)]
+    fn get_redemption_rate() -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_redemption_rate_with_decay() -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_borrowing_fee(debt: u64) -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read, write)]
+    fn decay_base_rate_from_borrowing() {}
+
+        // TODO
+    #[storage(read)]
+    fn get_trove_stake(id: Identity) -> u64 {
+        internal_get_trove_stake(id)
+    }
+
+    #[storage(read)]
+    fn get_borrowing_fee_with_decay(debt: u64) -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_borrowing_rate() -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_borrowing_rate_with_decay() -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_tcr() -> u64 {
+        // TODO
+        return 0
+    }
+
     #[storage(read, write)]
     fn set_trove_status(id: Identity, status: Status) {
         require_caller_is_borrow_operations_contract();
@@ -186,7 +263,6 @@ impl TroveManager for Contract {
 
         return trove.debt;
     }
-
     #[storage(read)]
     fn get_trove_coll(id: Identity) -> u64 {
         let trove = storage.troves.get(id);
@@ -241,8 +317,8 @@ impl TroveManager for Contract {
     }
 
     #[storage(read)]
-    fn get_pending_asset_rewards(address: Identity) -> u64 {
-        internal_get_pending_asset_reward(address)
+    fn get_pending_asset_rewards(id: Identity) -> u64 {
+        internal_get_pending_asset_reward(id)
     }
 }
 
@@ -255,7 +331,6 @@ fn internal_update_trove_reward_snapshots(id: Identity) {
 
     storage.reward_snapshots.insert(id, reward_snapshot);
 }
-
 #[storage(read, write)]
 fn internal_apply_pending_rewards(borrower: Identity) {
     if (has_pending_rewards(borrower)) {
@@ -268,7 +343,6 @@ fn internal_apply_pending_rewards(borrower: Identity) {
         storage.troves.insert(borrower, trove);
 
         internal_update_trove_reward_snapshots(borrower);
-
         internal_pending_trove_rewards_to_active_pool(pending_asset, pending_usdf);
     }
 }
@@ -278,7 +352,6 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     require(close_status != Status::NonExistent || close_status != Status::Active, "Invalid status");
 
     let trove_owner_array_length = storage.trove_owners.len();
-
     require_more_than_one_trove_in_system(trove_owner_array_length);
 
     let mut trove = storage.troves.get(id);
@@ -515,7 +588,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address);
     let new_stake = internal_compute_new_stake(trove.coll);
-    
+
     let old_stake = trove.stake;
     trove.stake = new_stake;
     storage.troves.insert(address, trove);

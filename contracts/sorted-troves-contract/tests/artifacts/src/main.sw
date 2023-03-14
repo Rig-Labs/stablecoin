@@ -108,6 +108,81 @@ impl TroveManager for Contract {
     }
 
     #[storage(read)]
+    fn get_borrowing_fee(debt: u64) -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read, write)]
+    fn decay_base_rate_from_borrowing() {}
+
+    #[storage(read, write)]
+    fn redeem_collateral() {}
+        // TODO
+    #[storage(read)]
+    fn get_trove_stake(id: Identity) -> u64 {
+        return 0
+    }
+
+    #[storage(read)]
+    fn apply_pending_rewards(id: Identity) {}
+
+        // TODO
+    #[storage(read)]
+    fn has_pending_rewards(id: Identity) -> bool {
+        // TODO
+        return false;
+    }
+
+    #[storage(read)]
+    fn get_borrowing_fee_with_decay(debt: u64) -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_current_icr(id: Identity, price: u64) -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_entire_debt_and_coll(id: Identity) -> (u64, u64, u64, u64) {
+        return (0, 0, 0, 0)
+        // TODO
+    }
+
+    #[storage(read)]
+    fn get_redemption_rate() -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_redemption_rate_with_decay() -> u64 {
+        // TODO
+        return 0;
+    }
+
+    #[storage(read)]
+    fn get_borrowing_rate_with_decay() -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_borrowing_rate() -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_tcr() -> u64 {
+        // TODO
+        return 0
+    }
+
+    #[storage(read)]
     fn get_trove_debt(id: Identity) -> u64 {
         return 0
     }
