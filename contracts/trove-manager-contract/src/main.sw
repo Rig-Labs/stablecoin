@@ -471,8 +471,8 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         let mut trove = storage.troves.get(borrower);
         trove.coll = liquidation_values.remaining_trove_coll;
         trove.debt = liquidation_values.remaining_trove_debt;
-
         storage.troves.insert(borrower, trove);
+
         let _ = internal_update_stake_and_total_stakes(borrower);
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
@@ -515,6 +515,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address);
     let new_stake = internal_compute_new_stake(trove.coll);
+    
     let old_stake = trove.stake;
     trove.stake = new_stake;
     storage.troves.insert(address, trove);

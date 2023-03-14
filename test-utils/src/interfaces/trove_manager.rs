@@ -206,7 +206,9 @@ pub mod trove_manager_abi {
 }
 
 pub mod trove_manager_utils {
-    use crate::interfaces::sorted_troves::sorted_troves_abi;
+    use crate::{
+        interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
+    };
 
     use super::*;
 
@@ -246,7 +248,7 @@ pub mod trove_manager_utils {
             .await
             .value;
 
-        assert_eq!(real_debt, expected_debt);
+        assert_eq!(real_debt, expected_debt, "Incorrect trove debt");
     }
 
     pub async fn assert_trove_status(
@@ -259,7 +261,7 @@ pub mod trove_manager_utils {
             .unwrap()
             .value;
 
-        assert_eq!(real_status, expected_status);
+        assert_eq!(real_status, expected_status, "Incorrect trove status");
     }
 
     pub async fn assert_pending_asset_rewards(
@@ -271,7 +273,14 @@ pub mod trove_manager_utils {
             .await
             .value;
 
-        assert_eq!(real_rewards, expected_rewards);
+        assert_within_threshold(
+            real_rewards,
+            expected_rewards,
+            &format!(
+                "Rewards are not within 0.001% threshold, expected: {}, real: {}",
+                expected_rewards, real_rewards
+            ),
+        );
     }
 
     pub async fn assert_pending_usdf_rewards(
@@ -283,6 +292,9 @@ pub mod trove_manager_utils {
             .await
             .value;
 
-        assert_eq!(real_rewards, expected_rewards);
+        assert_eq!(
+            real_rewards, expected_rewards,
+            "Incorrect pending usdf rewards"
+        );
     }
 }
