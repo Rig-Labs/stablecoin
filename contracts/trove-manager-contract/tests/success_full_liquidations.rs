@@ -485,19 +485,6 @@ async fn proper_full_liquidation_empty_sp() {
     .await
     .unwrap();
 
-    let stability_pool_healthy_wallet1 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        healthy_wallet1.clone(),
-    );
-
-    stability_pool_abi::provide_to_stability_pool(
-        &stability_pool_healthy_wallet1,
-        &contracts.usdf,
-        500_000_000,
-    )
-    .await
-    .unwrap();
-
     oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
@@ -548,8 +535,7 @@ async fn proper_full_liquidation_empty_sp() {
         .unwrap()
         .value;
 
-    // 5% Penalty on 1_000_000_000 of debt
-    assert_eq!(asset, 525_000_000);
+    assert_eq!(asset, 0);
 
     let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -571,34 +557,34 @@ async fn proper_full_liquidation_empty_sp() {
         .value;
 
     // 1.05 * 500_000_000
-    assert_eq!(default_pool_asset, 525_000_000);
-    assert_eq!(default_pool_debt, 500_000_000);
+    assert_eq!(default_pool_asset, 1_050_000_000);
+    assert_eq!(default_pool_debt, 1_000_000_000);
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        525_000_000 / 4,
+        1_050_000_000 / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        500_000_000 / 4,
+        1_000_000_000 / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        525_000_000 * 3 / 4,
+        1_050_000_000 * 3 / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        500_000_000 * 3 / 4,
+        1_000_000_000 * 3 / 4,
     )
     .await;
 }
