@@ -303,4 +303,9 @@ pub mod common {
             _ => (),
         });
     }
+
+    pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
+        let threshold = a / 100000;
+        assert!(a >= b - threshold && a <= b + threshold, "{}", comment);
+    }
 }

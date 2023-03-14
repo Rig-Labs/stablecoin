@@ -143,6 +143,16 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn update_trove_reward_snapshots(id: Identity) {}
+
+    #[storage(read)]
+    fn get_pending_usdf_rewards(address: Identity) -> u64 {
+        return 0
+    }
+
+    #[storage(read)]
+    fn get_pending_asset_rewards(address: Identity) -> u64 {
+        return 0
+    }
 }
 
 #[storage(read, write)]

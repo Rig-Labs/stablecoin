@@ -18,9 +18,9 @@ pub fn calculate_liqudated_trove_values(
     let trove_debt_to_repay = (trove_debt_numerator / trove_debt_denominator).as_u64().unwrap();
     let trove_coll_liquidated_numerator: U128 = U128::from_u64(trove_debt_to_repay) * (U128::from_u64(ONE) + U128::from_u64(STABILITY_POOL_FEE));
     let mut trove_coll_liquidated = (trove_coll_liquidated_numerator / U128::from_u64(price)).as_u64().unwrap();
-    
+
     let remaining_debt = debt - trove_debt_to_repay;
-    
+
     if remaining_debt < MIN_NET_DEBT {
         trove_coll_liquidated = debt * (ONE + STABILITY_POOL_FEE) / price;
         return LiquidatedTroveValsInner {
