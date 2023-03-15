@@ -116,6 +116,7 @@ pub mod common {
             stability_pool.contract_id().into(),
             default_pool.contract_id().into(),
             active_pool.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
 

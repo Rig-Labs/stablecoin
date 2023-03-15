@@ -2,11 +2,9 @@ library fluid_math;
 
 dep numbers;
 use numbers::*;
-use std::{
-    logging::log,
-    u128::U128,
-};
+use std::{logging::log, u128::U128};
 
+const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 // Using Precision 6 until u128 is available
 pub const PCT_100: u64 = 1_000_000_000;
 
@@ -45,4 +43,50 @@ pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     } else {
         return MAX_U64;
     }
+}
+
+pub fn fm_min(a: u64, b: u64) -> u64 {
+    if a < b { return a; } else { return b; }
+}
+
+pub fn fm_max(a: u64, b: u64) -> u64 {
+    if a > b { return a; } else { return b; }
+}
+
+fn dec_mul(a: u64, b: u64) -> U128 {
+    let prod = U128::from_u64(a) * U128::from_u64(b);
+    let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
+    return dec_prod;
+}
+
+fn dec_pow(base: u64, _minutes: u64) -> U128 {
+    let mut minutes = _minutes;
+    if minutes > 525600000 {
+        minutes = 525600000;
+    }
+
+    let mut y = DECIMAL_PRECISION;
+    let mut x = base;
+    let mut n = minutes;
+
+    while n > 1 {
+        if n % 2 == 0 {
+            x = dec_mul(x, x).as_u64().unwrap();
+            n = n / 2;
+        } else {
+            y = dec_mul(x, y).as_u64().unwrap();
+            x = dec_mul(x, x).as_u64().unwrap();
+            n = (n - 1) / 2;
+        }
+    }
+
+    return dec_mul(x, y);
+}
+
+pub fn null_identity_address() -> Identity {
+    return Identity::Address(Address::from(ZERO_B256))
+}
+
+pub fn null_contract()-> ContractId {
+    return ContractId::from(ZERO_B256)
 }
