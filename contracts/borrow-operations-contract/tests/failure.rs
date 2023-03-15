@@ -11,8 +11,7 @@ use test_utils::{
 #[tokio::test]
 async fn fails_open_two_troves() {
     let (contracts, admin, _) = setup_protocol(100, 2).await;
-    return;
-    
+
     token_abi::mint_to_id(
         &contracts.fuel,
         5_000_000_000,
