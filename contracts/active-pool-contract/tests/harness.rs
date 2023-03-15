@@ -2,10 +2,7 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     interfaces::active_pool::{active_pool_abi, ActivePool},
-    interfaces::{
-        default_pool,
-        token::{token_abi, Token},
-    },
+    interfaces::token::{token_abi, Token},
     setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
 };
 

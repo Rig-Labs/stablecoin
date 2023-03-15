@@ -169,7 +169,7 @@ impl TroveManager for Contract {
 
         let mut remaining_itterations = max_itterations;
 
-        while (current_borrower != Identity::Address(Address::from(ZERO_B256)) && totals.remaining_usdf > 0 && remaining_itterations > 0) {
+        while (current_borrower != null_identity_address() && totals.remaining_usdf > 0 && remaining_itterations > 0) {
             remaining_itterations -= 1;
 
             let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
@@ -618,7 +618,7 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.re_insert(borrower, new_ncr, Identity::Address(Address::from(ZERO_B256)), Identity::Address(Address::from(ZERO_B256)));
+        sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address());
     } else {
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
@@ -766,6 +766,8 @@ fn internal_redeem_collateral_from_trove(
         internal_redeem_close_trove(borrower, 0, new_coll);
     } else {
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
+
+        // TODO Consider removing this check
 
         // if (new_nicr != partial_redemption_hint
         //     || new_debt < MIN_NET_DEBT)
