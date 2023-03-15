@@ -46,3 +46,19 @@ pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
         return MAX_U64;
     }
 }
+
+pub fn fm_min(a: u64, b: u64) -> u64 {
+    if a < b {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+pub fn fm_max(a: u64, b: u64) -> u64 {
+    if a > b {
+        return a;
+    } else {
+        return b;
+    }
+}

@@ -117,7 +117,7 @@ impl TroveManager for Contract {
     fn decay_base_rate_from_borrowing() {}
 
     #[storage(read, write)]
-    fn redeem_collateral() {}
+    fn redeem_collateral(max_itterations: u64, max_fee_percentage: u64, partial_redemption_hint:u64 , upper_partial_hint:Identity, lower_partial_hint:Identity) {}
         // TODO
     #[storage(read)]
     fn get_trove_stake(id: Identity) -> u64 {
