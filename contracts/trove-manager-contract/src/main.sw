@@ -52,16 +52,16 @@ use std::{
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
 storage {
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    oracle_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    default_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf: ContractId = ContractId::from(ZERO_B256),
-    fpt_token: ContractId = ContractId::from(ZERO_B256),
-    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
+    sorted_troves_contract: ContractId = null_contract(),
+    borrow_operations_contract: ContractId = null_contract(),
+    stability_pool_contract: ContractId = null_contract(),
+    oracle_contract: ContractId = null_contract(),
+    active_pool_contract: ContractId = null_contract(),
+    default_pool_contract: ContractId = null_contract(),
+    coll_surplus_pool_contract: ContractId = null_contract(),
+    usdf_contract: ContractId = null_contract(),
+    fpt_token: ContractId = null_contract(),
+    fpt_staking_contract: ContractId = null_contract(),
     total_stakes: u64 = 0,
     total_stakes_snapshot: u64 = 0,
     total_collateral_snapshot: u64 = 0,
@@ -84,6 +84,7 @@ impl TroveManager for Contract {
         stability_pool: ContractId,
         default_pool: ContractId,
         active_pool: ContractId,
+        coll_surplus_pool: ContractId,
     ) {
         // TODO Require not already initialized
         storage.sorted_troves_contract = sorted_troves;
@@ -92,6 +93,7 @@ impl TroveManager for Contract {
         storage.oracle_contract = oracle;
         storage.default_pool_contract = default_pool;
         storage.active_pool_contract = active_pool;
+        storage.coll_surplus_pool_contract = coll_surplus_pool;
     }
 
     #[storage(read)]
@@ -145,6 +147,9 @@ impl TroveManager for Contract {
         lower_partial_hint: Identity,
     ) {
         // TODO Require functions
+        require_valid_usdf_id();
+        require(msg_amount() > 0, "Redemption amount must be greater than 0");
+
         let mut totals: RedemptionTotals = RedemptionTotals::default();
         let oracle_contract = abi(MockOracle, storage.oracle_contract.into());
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
@@ -156,7 +161,7 @@ impl TroveManager for Contract {
 
         let mut current_borrower = sorted_troves_contract.get_last();
 
-        while (current_borrower != Identity::Address(Address::from(ZERO_B256)) && internal_get_current_icr(current_borrower, totals.price) < MCR) {
+        while (current_borrower != null_identity_address() && internal_get_current_icr(current_borrower, totals.price) < MCR) {
             let current_trove = sorted_troves_contract.get_prev(current_borrower);
         }
 
@@ -186,16 +191,15 @@ impl TroveManager for Contract {
         internal_update_base_rate_from_redemption(0, 0, 0);
 
         totals.asset_fee = internal_get_redemption_fee(totals.total_asset_drawn);
+        // Consider spliting fee with person being redeemed from
         // TODO require user accepts fee
         // TODO active pool send fee to stakers
         // TODO lqty staking increase f_asset
-
         totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
 
         // Burn USDF
         active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
         active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
-
     }
 
     #[storage(read)]
@@ -762,13 +766,12 @@ fn internal_redeem_collateral_from_trove(
     } else {
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
 
-        if (new_nicr != partial_redemption_hint
-            || new_debt < MIN_NET_DEBT)
-        {
-            single_redemption_values.cancelled_partial = true;
-            return single_redemption_values;
-        }
-
+        // if (new_nicr != partial_redemption_hint
+        //     || new_debt < MIN_NET_DEBT)
+        // {
+        //     single_redemption_values.cancelled_partial = true;
+        //     return single_redemption_values;
+        // }
         sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
@@ -806,4 +809,9 @@ fn internal_minutes_passed_since_last_fee_op() -> u64 {
 fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
     // TODO FEE
     return 0;
+}
+
+#[storage(read)]
+fn require_valid_usdf_id() {
+    require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
 }

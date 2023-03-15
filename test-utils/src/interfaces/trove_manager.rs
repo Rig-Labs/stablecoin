@@ -9,6 +9,7 @@ use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
+use crate::interfaces::token::Token;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -17,7 +18,9 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::Error;
+    use fuels::prelude::{AssetId, CallParameters, Error};
+
+    use crate::interfaces::{coll_surplus_pool, default_pool};
 
     use super::*;
 
@@ -133,6 +136,7 @@ pub mod trove_manager_abi {
         stability_pool: ContractId,
         default_pool: ContractId,
         active_pool: ContractId,
+        coll_surplus_pool: ContractId,
     ) -> FuelCallResponse<()> {
         trove_manager
             .methods()
@@ -143,6 +147,7 @@ pub mod trove_manager_abi {
                 stability_pool,
                 default_pool,
                 active_pool,
+                coll_surplus_pool,
             )
             .call()
             .await
@@ -199,6 +204,46 @@ pub mod trove_manager_abi {
         trove_manager
             .methods()
             .get_pending_usdf_rewards(id)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn redeem_collateral(
+        trove_manager: &TroveManagerContract,
+        amount: u64,
+        max_iterations: u64,
+        max_fee_percentage: u64,
+        partial_redemption_hint: u64,
+        upper_partial_hint: Option<Identity>,
+        lower_partial_hint: Option<Identity>,
+        usdf: &Token,
+        fuel: &Token,
+        sorted_troves: &SortedTroves,
+        active_pool: &ActivePool,
+    ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
+
+        let call_params: CallParameters = CallParameters {
+            amount,
+            asset_id: usdf_asset_id,
+            gas_forwarded: None,
+        };
+
+        trove_manager
+            .methods()
+            .redeem_collateral(
+                max_iterations,
+                max_fee_percentage,
+                partial_redemption_hint,
+                upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+                lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+            )
+            .tx_params(tx_params)
+            .call_params(call_params)
+            .set_contracts(&[sorted_troves, active_pool, fuel, usdf])
+            .append_variable_outputs(10)
             .call()
             .await
             .unwrap()

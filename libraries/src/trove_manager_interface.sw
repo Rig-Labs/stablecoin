@@ -5,7 +5,7 @@ use data_structures::{Status, Trove};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool:ContractId);
 
     // TODO REMOVE 
     #[storage(read, write)]

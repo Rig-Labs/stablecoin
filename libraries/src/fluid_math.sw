@@ -83,6 +83,10 @@ fn dec_pow(base: u64, _minutes: u64) -> U128 {
     return dec_mul(x, y);
 }
 
-pub fn null_address() -> Identity {
+pub fn null_identity_address() -> Identity {
     return Identity::Address(Address::from(ZERO_B256))
+}
+
+pub fn null_contract()-> ContractId {
+    return ContractId::from(ZERO_B256)
 }
