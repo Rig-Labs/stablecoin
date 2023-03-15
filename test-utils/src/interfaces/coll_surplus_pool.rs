@@ -7,7 +7,7 @@ abigen!(Contract(
     abi = "contracts/coll-surplus-pool-contract/out/debug/coll-surplus-pool-contract-abi.json"
 ));
 
-pub mod default_pool_abi {
+pub mod coll_surplus_pool_abi {
     use crate::interfaces::active_pool::ActivePool;
     use fuels::{prelude::ContractId, types::Identity};
 
@@ -54,7 +54,6 @@ pub mod default_pool_abi {
         default_pool
             .methods()
             .get_collateral(acount)
-            .append_variable_outputs(1)
             .call()
             .await
             .unwrap()

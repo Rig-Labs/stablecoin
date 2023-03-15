@@ -85,6 +85,7 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
+        usdf_contract: ContractId,
     ) {
         // TODO Require not already initialized
         storage.sorted_troves_contract = sorted_troves;
@@ -94,6 +95,7 @@ impl TroveManager for Contract {
         storage.default_pool_contract = default_pool;
         storage.active_pool_contract = active_pool;
         storage.coll_surplus_pool_contract = coll_surplus_pool;
+        storage.usdf_contract = usdf_contract;
     }
 
     #[storage(read)]
@@ -753,8 +755,7 @@ fn internal_redeem_collateral_from_trove(
     // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
     let trove = storage.troves.get(borrower);
     single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
-    single_redemption_values.asset_lot = ((U128::from_u64(single_redemption_values.usdf_lot) * U128::from_u64(DECIMAL_PRECISION)) / U128::from_u64(price)).as_u64().unwrap();
-
+    single_redemption_values.asset_lot = ((U128::from_u64(single_redemption_values.usdf_lot) * U128::from_u64(ORACLE_PRICE_PRECISION)) / U128::from_u64(price)).as_u64().unwrap();
     let new_debt = trove.debt - single_redemption_values.usdf_lot;
     let new_coll = trove.coll - single_redemption_values.asset_lot;
 

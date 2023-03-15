@@ -45,6 +45,7 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus: ContractId,
+        usdf_contract: ContractId,
     ) {
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;

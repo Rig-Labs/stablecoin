@@ -5,7 +5,7 @@ use data_structures::{Status, Trove};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool:ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId);
 
     // TODO REMOVE 
     #[storage(read, write)]
@@ -30,7 +30,7 @@ abi TroveManager {
     fn batch_liquidate_troves(ids: Vec<Identity>);
 
     #[storage(read, write)]
-    fn redeem_collateral(max_itterations: u64, max_fee_percentage: u64, partial_redemption_hint:u64 , upper_partial_hint:Identity, lower_partial_hint:Identity);
+    fn redeem_collateral(max_itterations: u64, max_fee_percentage: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity);
 
     #[storage(read, write)]
     fn update_stake_and_total_stakes(id: Identity) -> u64;
