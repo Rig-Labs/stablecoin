@@ -1,6 +1,7 @@
 use super::interfaces::{
-    active_pool::ActivePool, borrow_operations::BorrowOperations, default_pool::DefaultPool,
-    oracle::Oracle, sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
+    active_pool::ActivePool, borrow_operations::BorrowOperations,
+    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
+    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
     trove_manager::TroveManagerContract, vesting::VestingContract,
 };
 
@@ -19,7 +20,8 @@ pub mod common {
     use crate::{
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            default_pool::default_pool_abi, oracle::oracle_abi, sorted_troves::sorted_troves_abi,
+            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
+            oracle::oracle_abi, sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
         },
         paths::*,
@@ -35,6 +37,7 @@ pub mod common {
         pub active_pool: ActivePool,
         pub stability_pool: StabilityPool,
         pub default_pool: DefaultPool,
+        pub coll_surplus_pool: CollSurplusPool,
     }
 
     pub async fn setup_protocol(
@@ -63,6 +66,7 @@ pub mod common {
         let active_pool = deploy_active_pool(&wallet).await;
         let stability_pool = deploy_stability_pool(&wallet).await;
         let default_pool = deploy_default_pool(&wallet).await;
+        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
 
         default_pool_abi::initialize(
             &default_pool,
@@ -79,6 +83,15 @@ pub mod common {
             Identity::ContractId(stability_pool.contract_id().into()),
             fuel.contract_id().into(),
             default_pool.contract_id().into(),
+        )
+        .await;
+
+        coll_surplus_pool_abi::initialize(
+            &coll_surplus_pool,
+            Identity::ContractId(trove_manger.contract_id().into()),
+            active_pool.contract_id().into(),
+            bo_instance.contract_id().into(),
+            fuel.contract_id().into(),
         )
         .await;
 
@@ -116,7 +129,8 @@ pub mod common {
             stability_pool.contract_id().into(),
             default_pool.contract_id().into(),
             active_pool.contract_id().into(),
-            active_pool.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+            usdf.contract_id().into(),
         )
         .await;
 
@@ -158,6 +172,7 @@ pub mod common {
             active_pool,
             stability_pool,
             default_pool,
+            coll_surplus_pool,
         };
 
         (contracts, wallet, wallets)
@@ -296,6 +311,21 @@ pub mod common {
         .unwrap();
 
         DefaultPool::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_coll_surplus_pool(wallet: &WalletUnlocked) -> CollSurplusPool {
+        let id = Contract::deploy(
+            &COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+        )
+        .await
+        .unwrap();
+
+        CollSurplusPool::new(id, wallet.clone())
     }
 
     pub fn print_response(response: FuelCallResponse<()>) {

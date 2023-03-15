@@ -10,6 +10,8 @@ pub const PCT_100: u64 = 1_000_000_000;
 
 pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
+pub const ORACLE_PRICE_PRECISION: u64 = 1_000_000;
+
 pub const MCR: u64 = 1_200_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
@@ -87,6 +89,6 @@ pub fn null_identity_address() -> Identity {
     return Identity::Address(Address::from(ZERO_B256))
 }
 
-pub fn null_contract()-> ContractId {
+pub fn null_contract() -> ContractId {
     return ContractId::from(ZERO_B256)
 }

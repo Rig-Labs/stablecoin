@@ -5,6 +5,7 @@ use fuels::{
 };
 
 use crate::interfaces::active_pool::ActivePool;
+use crate::interfaces::coll_surplus_pool::CollSurplusPool;
 use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
@@ -19,8 +20,6 @@ abigen!(Contract(
 pub mod trove_manager_abi {
 
     use fuels::prelude::{AssetId, CallParameters, Error};
-
-    use crate::interfaces::{coll_surplus_pool, default_pool};
 
     use super::*;
 
@@ -137,6 +136,7 @@ pub mod trove_manager_abi {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
+        usdf: ContractId,
     ) -> FuelCallResponse<()> {
         trove_manager
             .methods()
@@ -148,6 +148,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 active_pool,
                 coll_surplus_pool,
+                usdf,
             )
             .call()
             .await
@@ -221,6 +222,9 @@ pub mod trove_manager_abi {
         fuel: &Token,
         sorted_troves: &SortedTroves,
         active_pool: &ActivePool,
+        coll_surplus_pool: &CollSurplusPool,
+        oracle: &Oracle,
+        default_pool: &DefaultPool,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
         let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
@@ -242,7 +246,15 @@ pub mod trove_manager_abi {
             )
             .tx_params(tx_params)
             .call_params(call_params)
-            .set_contracts(&[sorted_troves, active_pool, fuel, usdf])
+            .set_contracts(&[
+                sorted_troves,
+                active_pool,
+                fuel,
+                usdf,
+                coll_surplus_pool,
+                oracle,
+                default_pool,
+            ])
             .append_variable_outputs(10)
             .call()
             .await
