@@ -18,6 +18,7 @@ pub mod borrow_operations_abi {
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
+    use crate::interfaces::usdf_token::USDFToken;
 
     pub async fn initialize(
         borrow_operations: &BorrowOperations,
@@ -28,6 +29,7 @@ pub mod borrow_operations_abi {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
@@ -41,6 +43,7 @@ pub mod borrow_operations_abi {
                 usdf_contract,
                 fpt_staking_contract,
                 active_pool_contract,
+                coll_surplus_pool_contract,
             )
             .tx_params(tx_params)
             .call()
@@ -52,7 +55,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -92,7 +95,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -161,7 +164,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -193,7 +196,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -232,7 +235,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,

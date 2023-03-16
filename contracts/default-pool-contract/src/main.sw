@@ -2,6 +2,7 @@ contract;
 
 use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
+use libraries::fluid_math::{null_contract, null_identity_address};
 use std::{
     auth::msg_sender,
     call_frames::{
@@ -14,12 +15,10 @@ use std::{
     token::transfer,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 storage {
-    trove_manager_contract: Identity = Identity::ContractId(ContractId::from(ZERO_B256)),
-    active_pool: ContractId = ContractId::from(ZERO_B256),
-    asset_id: ContractId = ContractId::from(ZERO_B256),
+    trove_manager_contract: Identity = null_identity_address(),
+    active_pool: ContractId = null_contract(),
+    asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
 }
@@ -31,8 +30,8 @@ impl DefaultPool for Contract {
         active_pool: ContractId,
         asset_id: ContractId,
     ) {
-        require(storage.trove_manager_contract == Identity::ContractId(ContractId::from(ZERO_B256)), "TroveManager contract is already set");
-        require(storage.asset_id == ContractId::from(ZERO_B256), "Asset ID is already set");
+        require(storage.trove_manager_contract == null_identity_address(), "TroveManager contract is already set");
+        require(storage.asset_id == null_contract(), "Asset ID is already set");
 
         storage.trove_manager_contract = trove_manager;
         storage.active_pool = active_pool;

@@ -7,8 +7,10 @@ use data_structures::{LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
 use libraries::data_structures::{Status};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::token_interface::{Token};
+use libraries::usdf_token_interface::{USDFToken};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::coll_surplus_pool_interface::{CollSurplusPool};
 use libraries::{MockOracle};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::fluid_math::*;
@@ -26,17 +28,16 @@ use std::{
     token::transfer,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 storage {
-    trove_manager_contract: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    oracle_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    asset_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
+    trove_manager_contract: ContractId = null_contract(),
+    sorted_troves_contract: ContractId = null_contract(),
+    oracle_contract: ContractId = null_contract(),
+    active_pool_contract: ContractId = null_contract(),
+    asset_contract: ContractId = null_contract(),
+    usdf_contract: ContractId = null_contract(),
+    stability_pool_contract: ContractId = null_contract(),
+    coll_surplus_pool_contract: ContractId = null_contract(),
+    fpt_staking_contract: ContractId = null_contract(),
 }
 
 impl BorrowOperations for Contract {
@@ -49,8 +50,9 @@ impl BorrowOperations for Contract {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) {
-        require(storage.trove_manager_contract.value == ZERO_B256, "BorrowOperations: contract is already initialized");
+        require(storage.trove_manager_contract == null_contract(), "BorrowOperations: contract is already initialized");
 
         storage.trove_manager_contract = trove_manager_contract;
         storage.sorted_troves_contract = sorted_troves_contract;
@@ -59,6 +61,7 @@ impl BorrowOperations for Contract {
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.active_pool_contract = active_pool_contract;
+        storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
     }
 
     #[storage(read, write)]
@@ -75,11 +78,11 @@ impl BorrowOperations for Contract {
         let usdf = abi(Token, storage.usdf_contract.value);
 
         let mut vars = LocalVariables_OpenTrove::new();
-
+        let sender = msg_sender().unwrap();
         vars.net_debt = _usdf_amount;
         vars.price = oracle.get_price();
 
-        // TODO Require Trove is not active / exists
+        require_trove_is_not_active(sender);
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
@@ -87,8 +90,6 @@ impl BorrowOperations for Contract {
 
         // ICR is based on the composite debt, i.e. the requested usdf amount + usdf borrowing fee + usdf gas comp.
         require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
-
-        let sender = msg_sender().unwrap();
 
         vars.icr = fm_compute_cr(msg_amount(), vars.net_debt, vars.price);
         vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.net_debt);
@@ -146,23 +147,24 @@ impl BorrowOperations for Contract {
         let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
         let active_pool = abi(ActivePool, storage.active_pool_contract.value);
         let oracle = abi(MockOracle, storage.oracle_contract.value);
+        let borrower = msg_sender().unwrap();
 
-        // TODO require trove is active
+        require_trove_is_active(borrower);
         let price = oracle.get_price();
+        trove_manager.apply_pending_rewards(borrower);
 
-        // TODO trove manager apply pending rewards
-        let coll = trove_manager.get_trove_coll(msg_sender().unwrap());
-        let debt = trove_manager.get_trove_debt(msg_sender().unwrap());
+        let coll = trove_manager.get_trove_coll(borrower);
+        let debt = trove_manager.get_trove_debt(borrower);
 
         if debt > 0 {
             require_valid_usdf_id();
             require(debt <= msg_amount(), "BorrowOperations: cannot close trove with insufficient usdf balance");
         }
 
-        trove_manager.close_trove(msg_sender().unwrap());
-        trove_manager.remove_stake(msg_sender().unwrap());
+        trove_manager.close_trove(borrower);
+        trove_manager.remove_stake(borrower);
         internal_repay_usdf(debt);
-        active_pool.send_asset(msg_sender().unwrap(), coll);
+        active_pool.send_asset(borrower, coll);
 
         // TODO refund excess usdf
     }
@@ -178,10 +180,13 @@ impl BorrowOperations for Contract {
 
         // Since you cannot attach two different assets to a single transaction, 
         // we need to check which asset is being used, probably will remove this function
-    #[storage(read, write)]
-    fn claim_collateral() {}
+    #[storage(read)]
+    fn claim_collateral() {
+        let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
+        coll_surplus.claim_coll(msg_sender().unwrap());
+    }
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn get_composite_debt(id: Identity) -> u64 {
         return 0
     }
@@ -192,7 +197,6 @@ fn internal_trigger_borrowing_fee() -> u64 {
     return 0
 }
 
-// function _adjustTrove(address _borrower, uint _collWithdrawal, uint _usdfChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage) internal {
 #[storage(read)]
 fn internal_adjust_trove(
     _borrower: Identity,
@@ -260,6 +264,20 @@ fn require_caller_is_stability_pool() {
 }
 
 #[storage(read)]
+fn require_trove_is_not_active(borrower: Identity) {
+    let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+    let status = trove_manager.get_trove_status(borrower);
+    require(status != Status::Active, "BorrowOperations: User already has an active Trove");
+}
+
+#[storage(read)]
+fn require_trove_is_active(borrower: Identity) {
+    let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+    let status = trove_manager.get_trove_status(borrower);
+    require(status == Status::Active, "BorrowOperations: User does not have an active Trove");
+}
+
+#[storage(read)]
 fn require_non_zero_adjustment(asset_amount: u64, _coll_withdrawl: u64, _usdf_change: u64) {
     require(asset_amount > 0 || _coll_withdrawl > 0 || _usdf_change > 0, "BorrowOperations: coll withdrawal and debt change must be greater than 0");
 }
@@ -298,10 +316,10 @@ fn require_valid_usdf_id() {
 #[storage(read)]
 fn withdraw_usdf(recipient: Identity, amount: u64, net_debt_increase: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
-    let usdf = abi(Token, storage.usdf_contract.value);
+    let usdf = abi(USDFToken, storage.usdf_contract.value);
 
     active_pool.increase_usdf_debt(net_debt_increase);
-    usdf.mint_to_id(amount, recipient);
+    usdf.mint(amount, recipient);
 }
 
 fn internal_get_coll_change(_coll_recieved: u64, _requested_coll_withdrawn: u64) -> (u64, bool) {
@@ -405,10 +423,13 @@ fn internal_active_pool_add_coll(_coll_change: u64) {
 #[storage(read)]
 fn internal_repay_usdf(usdf_amount: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
-    let usdf = abi(Token, storage.usdf_contract.value);
+    let usdf = abi(USDFToken, storage.usdf_contract.value);
 
-    transfer(usdf_amount, storage.usdf_contract, Identity::ContractId(storage.usdf_contract));
-    usdf.burn_coins(usdf_amount);
+    usdf.burn {
+            coins: usdf_amount,
+            asset_id: storage.usdf_contract.value,
+        }();
+        
     active_pool.decrease_usdf_debt(usdf_amount);
 }
 
