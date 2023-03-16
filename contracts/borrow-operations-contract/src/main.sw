@@ -9,6 +9,7 @@ use libraries::active_pool_interface::{ActivePool};
 use libraries::token_interface::{Token};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
+use libraries::coll_surplus_pool_interface::{CollSurplusPool};
 use libraries::{MockOracle};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::fluid_math::*;
@@ -48,6 +49,7 @@ impl BorrowOperations for Contract {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) {
         require(storage.trove_manager_contract == null_contract(), "BorrowOperations: contract is already initialized");
 
@@ -58,6 +60,7 @@ impl BorrowOperations for Contract {
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.active_pool_contract = active_pool_contract;
+        storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
     }
 
     #[storage(read, write)]
@@ -177,10 +180,13 @@ impl BorrowOperations for Contract {
 
         // Since you cannot attach two different assets to a single transaction, 
         // we need to check which asset is being used, probably will remove this function
-    #[storage(read, write)]
-    fn claim_collateral() {}
+    #[storage(read)]
+    fn claim_collateral() {
+        let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
+        coll_surplus.claim_coll(msg_sender().unwrap());
+    }
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn get_composite_debt(id: Identity) -> u64 {
         return 0
     }
@@ -191,7 +197,6 @@ fn internal_trigger_borrowing_fee() -> u64 {
     return 0
 }
 
-// function _adjustTrove(address _borrower, uint _collWithdrawal, uint _usdfChange, bool _isDebtIncrease, address _upperHint, address _lowerHint, uint _maxFeePercentage) internal {
 #[storage(read)]
 fn internal_adjust_trove(
     _borrower: Identity,

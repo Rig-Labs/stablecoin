@@ -53,8 +53,9 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(wallet1.address().into()),
     )
     .await
-    .expect_err("Should fail not below MCR");
+    .expect_err("Improper liquidation of trove not below MCR");
 }

@@ -3,6 +3,7 @@ use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
+        coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, StabilityPool},
@@ -102,6 +103,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(wallet1.address().into()),
     )
     .await
@@ -161,6 +163,18 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     assert_eq!(pending_asset_rewards, 0);
     assert_eq!(pending_usdf_rewards, 0);
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(wallet1.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
+    );
 }
 
 #[tokio::test]
@@ -286,6 +300,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -425,10 +440,22 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         liqudated_wallet_usdf_rewards.try_into().unwrap(),
     )
     .await;
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
+    );
 }
 
 #[tokio::test]
-async fn proper_full_liquidation_empty_sp() {
+async fn proper_partial_liquidation_empty_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
 
     oracle_abi::set_price(&contracts.oracle, 10_000_000).await;
@@ -537,6 +564,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -670,4 +698,16 @@ async fn proper_full_liquidation_empty_sp() {
         liqudated_wallet_usdf_rewards.try_into().unwrap(),
     )
     .await;
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
+    );
 }

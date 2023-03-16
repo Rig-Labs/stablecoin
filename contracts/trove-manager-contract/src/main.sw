@@ -49,8 +49,6 @@ use std::{
     u128::U128,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 storage {
     sorted_troves_contract: ContractId = null_contract(),
     borrow_operations_contract: ContractId = null_contract(),
@@ -478,7 +476,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     if (totals.total_coll_surplus > 0) {
         // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-        active_pool.send_asset(Identity::ContractId(storage.oracle_contract), totals.total_coll_surplus);
+        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus);
     }
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
@@ -622,8 +620,10 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
     } else {
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
+        let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
     }
-    // TODO Add coll surplus to surplus pool
+    
 }
 
 #[storage(read, write)]

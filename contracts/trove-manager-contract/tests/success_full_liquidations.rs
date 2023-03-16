@@ -3,6 +3,7 @@ use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
+        coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, StabilityPool},
@@ -102,6 +103,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -171,6 +173,18 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     assert_eq!(default_pool_asset, 0);
     assert_eq!(default_pool_debt, 0);
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 50_000_000,
+        "Liquidated wallet collateral surplus was not 50_000"
+    );
 }
 
 #[tokio::test]
@@ -293,6 +307,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -386,6 +401,18 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         500_000_000 * 3 / 4,
     )
     .await;
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 50_000_000,
+        "Liquidated wallet collateral surplus was not 50_000"
+    );
 }
 
 #[tokio::test]
@@ -495,6 +522,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -587,4 +615,16 @@ async fn proper_full_liquidation_empty_sp() {
         1_000_000_000 * 3 / 4,
     )
     .await;
+
+    let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
+        &contracts.coll_surplus_pool,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .value;
+
+    assert_eq!(
+        liq_coll_surplus, 50_000_000,
+        "Liquidated wallet collateral surplus was not 50_000"
+    );
 }

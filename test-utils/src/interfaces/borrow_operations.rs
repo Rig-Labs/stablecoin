@@ -14,6 +14,7 @@ pub mod borrow_operations_abi {
 
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
+    use crate::interfaces::coll_surplus_pool;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
@@ -28,6 +29,7 @@ pub mod borrow_operations_abi {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
@@ -41,6 +43,7 @@ pub mod borrow_operations_abi {
                 usdf_contract,
                 fpt_staking_contract,
                 active_pool_contract,
+                coll_surplus_pool_contract,
             )
             .tx_params(tx_params)
             .call()
