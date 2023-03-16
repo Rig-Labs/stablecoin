@@ -41,8 +41,8 @@ Functionality
 - [x] Reduce collateral from trove
 - [x] Close Trove
 - [x] Liquidate Troves
+- [x] Redeem Collateral w/ USDF
 - [ ] Stability Pool
-- [ ] Redeem Fuel/stFuel w/ USDF
 - [ ] Multiple assets (Fuel, stFuel)
 - [ ] Fees
 - [ ] Stake FPT
