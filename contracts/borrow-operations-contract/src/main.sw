@@ -26,17 +26,16 @@ use std::{
     token::transfer,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 storage {
-    trove_manager_contract: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    oracle_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    asset_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
+    trove_manager_contract: ContractId = null_contract(),
+    sorted_troves_contract: ContractId = null_contract(),
+    oracle_contract: ContractId = null_contract(),
+    active_pool_contract: ContractId = null_contract(),
+    asset_contract: ContractId = null_contract(),
+    usdf_contract: ContractId = null_contract(),
+    stability_pool_contract: ContractId = null_contract(),
+    coll_surplus_pool_contract: ContractId = null_contract(),
+    fpt_staking_contract: ContractId = null_contract(),
 }
 
 impl BorrowOperations for Contract {
@@ -50,7 +49,7 @@ impl BorrowOperations for Contract {
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
     ) {
-        require(storage.trove_manager_contract.value == ZERO_B256, "BorrowOperations: contract is already initialized");
+        require(storage.trove_manager_contract == null_contract(), "BorrowOperations: contract is already initialized");
 
         storage.trove_manager_contract = trove_manager_contract;
         storage.sorted_troves_contract = sorted_troves_contract;

@@ -6,6 +6,7 @@ use data_structures::{Snapshots};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::numbers::*;
+use libraries::fluid_math::{null_contract, null_identity_address};
 
 use std::{
     auth::msg_sender,
@@ -21,7 +22,6 @@ use std::{
     u128::U128,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 const SCALE_FACTOR = 1_000_000_000;
 const DECIMAL_PRECISION = 1_000_000;
 
@@ -37,15 +37,15 @@ storage {
     last_fpt_error: u64 = 0,
     last_asset_error_offset: u64 = 0,
     last_usdf_error_offset: u64 = 0,
-    borrow_operations_address: ContractId = ContractId::from(ZERO_B256),
-    trove_manager_address: ContractId = ContractId::from(ZERO_B256),
-    active_pool_address: ContractId = ContractId::from(ZERO_B256),
-    default_pool_address: ContractId = ContractId::from(ZERO_B256),
-    usdf_address: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_address: ContractId = ContractId::from(ZERO_B256),
-    oracle_address: ContractId = ContractId::from(ZERO_B256),
-    community_issuance_address: ContractId = ContractId::from(ZERO_B256),
-    asset_address: ContractId = ContractId::from(ZERO_B256),
+    borrow_operations_address: ContractId = null_contract(),
+    trove_manager_address: ContractId = null_contract(),
+    active_pool_address: ContractId = null_contract(),
+    default_pool_address: ContractId = null_contract(),
+    usdf_address: ContractId = null_contract(),
+    sorted_troves_address: ContractId = null_contract(),
+    oracle_address: ContractId = null_contract(),
+    community_issuance_address: ContractId = null_contract(),
+    asset_address: ContractId = null_contract(),
     p: u64 = DECIMAL_PRECISION,
 }
 
@@ -61,7 +61,7 @@ impl StabilityPool for Contract {
         community_issuance_address: ContractId,
         asset_address: ContractId,
     ) {
-        require(storage.borrow_operations_address == ContractId::from(ZERO_B256), "Already initialized");
+        require(storage.borrow_operations_address == null_contract(), "Already initialized");
 
         storage.borrow_operations_address = borrow_operations_address;
         storage.trove_manager_address = trove_manager_address;
