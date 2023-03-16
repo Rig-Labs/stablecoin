@@ -3,9 +3,9 @@ use fuels::{prelude::*, types::Identity};
 use test_utils::{
     interfaces::borrow_operations::borrow_operations_abi,
     interfaces::sorted_troves::sorted_troves_abi,
-    interfaces::trove_manager::trove_manager_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
-    setup::common::{deploy_token, setup_protocol},
+    interfaces::{trove_manager::trove_manager_abi, usdf_token::usdf_token_abi},
+    setup::common::{deploy_token, deploy_usdf_token, setup_protocol},
 };
 
 #[tokio::test]
@@ -375,18 +375,19 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         "Borrow operation: Should not be able to add collateral with incorrect token as collateral"
     );
 
-    let fake_usdf_token = deploy_token(&admin).await;
+    let fake_usdf_token = deploy_usdf_token(&admin).await;
 
-    token_abi::initialize(
+    usdf_token_abi::initialize(
         &fake_usdf_token,
-        0,
-        &Identity::Address(admin.address().into()),
         "Fake USDF".to_string(),
         "FUSDF".to_string(),
+        Identity::Address(admin.address().into()),
+        Identity::Address(admin.address().into()),
+        Identity::Address(admin.address().into()),
     )
     .await;
 
-    token_abi::mint_to_id(
+    usdf_token_abi::mint(
         &fake_usdf_token,
         5_000_000_000,
         Identity::Address(admin.address().into()),

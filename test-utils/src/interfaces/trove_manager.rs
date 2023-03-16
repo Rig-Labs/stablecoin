@@ -11,6 +11,7 @@ use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::token::Token;
+use crate::interfaces::usdf_token::USDFToken;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -220,7 +221,7 @@ pub mod trove_manager_abi {
         partial_redemption_hint: u64,
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
-        usdf: &Token,
+        usdf: &USDFToken,
         fuel: &Token,
         sorted_troves: &SortedTroves,
         active_pool: &ActivePool,

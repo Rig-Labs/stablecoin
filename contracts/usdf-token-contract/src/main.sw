@@ -63,21 +63,22 @@ impl USDFToken for Contract {//////////////////////////////////////
         storage.config = config;
     }
 
-    #[storage(read)]
-    fn mint_to_id(amount: u64, address: Identity) {
+    #[storage(read, write)]
+    fn mint(amount: u64, address: Identity) {
         require_caller_is_borrower_operations();
         mint_to(amount, address);
         storage.total_supply += amount;
     }
 
-    #[storage(read), payable]
-    fn burn_coins(burn_amount: u64) {
+    #[storage(read, write), payable]
+    fn burn() {
         require_caller_is_bo_or_tm_or_sp();
+        let burn_amount = msg_amount();
         burn(burn_amount);
         storage.total_supply -= burn_amount;
     }
 
-        //////////////////////////////////////
+    //////////////////////////////////////
     // Read-Only methods
     //////////////////////////////////////#[storage(read)]
     #[storage(read)]

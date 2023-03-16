@@ -7,6 +7,7 @@ use data_structures::{LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
 use libraries::data_structures::{Status};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::token_interface::{Token};
+use libraries::usdf_token_interface::{USDFToken};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::coll_surplus_pool_interface::{CollSurplusPool};
@@ -315,10 +316,10 @@ fn require_valid_usdf_id() {
 #[storage(read)]
 fn withdraw_usdf(recipient: Identity, amount: u64, net_debt_increase: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
-    let usdf = abi(Token, storage.usdf_contract.value);
+    let usdf = abi(USDFToken, storage.usdf_contract.value);
 
     active_pool.increase_usdf_debt(net_debt_increase);
-    usdf.mint_to_id(amount, recipient);
+    usdf.mint(amount, recipient);
 }
 
 fn internal_get_coll_change(_coll_recieved: u64, _requested_coll_withdrawn: u64) -> (u64, bool) {
@@ -422,10 +423,13 @@ fn internal_active_pool_add_coll(_coll_change: u64) {
 #[storage(read)]
 fn internal_repay_usdf(usdf_amount: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
-    let usdf = abi(Token, storage.usdf_contract.value);
+    let usdf = abi(USDFToken, storage.usdf_contract.value);
 
-    transfer(usdf_amount, storage.usdf_contract, Identity::ContractId(storage.usdf_contract));
-    usdf.burn_coins(usdf_amount);
+    usdf.burn {
+            coins: usdf_amount,
+            asset_id: storage.usdf_contract.value,
+        }();
+        
     active_pool.decrease_usdf_debt(usdf_amount);
 }
 

@@ -14,11 +14,11 @@ pub mod borrow_operations_abi {
 
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
-    use crate::interfaces::coll_surplus_pool;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
+    use crate::interfaces::usdf_token::USDFToken;
 
     pub async fn initialize(
         borrow_operations: &BorrowOperations,
@@ -55,7 +55,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -95,7 +95,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -164,7 +164,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -196,7 +196,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,
@@ -235,7 +235,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations,
         oracle: &Oracle,
         fuel_token: &Token,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         sorted_troves: &SortedTroves,
         trove_manager: &TroveManagerContract,
         active_pool: &ActivePool,

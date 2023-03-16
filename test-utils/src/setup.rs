@@ -2,7 +2,7 @@ use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
     sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, vesting::VestingContract,
+    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
@@ -23,6 +23,7 @@ pub mod common {
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
             oracle::oracle_abi, sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
+            usdf_token::usdf_token_abi,
         },
         paths::*,
     };
@@ -33,7 +34,7 @@ pub mod common {
         pub oracle: Oracle,
         pub sorted_troves: SortedTroves,
         pub fuel: Token,
-        pub usdf: Token,
+        pub usdf: USDFToken,
         pub active_pool: ActivePool,
         pub stability_pool: StabilityPool,
         pub default_pool: DefaultPool,
@@ -62,7 +63,7 @@ pub mod common {
         let sorted_troves = deploy_sorted_troves(&wallet).await;
         let trove_manger = deploy_trove_manager_contract(&wallet).await;
         let fuel = deploy_token(&wallet).await;
-        let usdf = deploy_token(&wallet).await;
+        let usdf = deploy_usdf_token(&wallet).await;
         let active_pool = deploy_active_pool(&wallet).await;
         let stability_pool = deploy_stability_pool(&wallet).await;
         let default_pool = deploy_default_pool(&wallet).await;
@@ -104,12 +105,13 @@ pub mod common {
         )
         .await;
 
-        token_abi::initialize(
+        usdf_token_abi::initialize(
             &usdf,
-            0,
-            &Identity::ContractId(bo_instance.contract_id().into()),
             "USD Fuel".to_string(),
             "USDF".to_string(),
+            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            Identity::ContractId(bo_instance.contract_id().into()),
         )
         .await;
 
@@ -327,6 +329,25 @@ pub mod common {
         .unwrap();
 
         CollSurplusPool::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        let id = Contract::deploy_with_parameters(
+            &USDF_TOKEN_CONTRACT_BINARY_PATH.to_string(),
+            &wallet,
+            TxParameters::default(),
+            StorageConfiguration::with_storage_path(Some(
+                USDF_TOKEN_CONTRACT_STORAGE_PATH.to_string(),
+            )),
+            Salt::from(salt),
+        )
+        .await
+        .unwrap();
+
+        USDFToken::new(id, wallet.clone())
     }
 
     pub fn print_response(response: FuelCallResponse<()>) {

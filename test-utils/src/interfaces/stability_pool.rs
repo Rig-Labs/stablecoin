@@ -4,6 +4,7 @@ use fuels::{
 };
 
 use crate::interfaces::token::Token;
+use crate::interfaces::usdf_token::USDFToken;
 abigen!(Contract(
     name = "StabilityPool",
     abi = "contracts/stability-pool-contract/out/debug/stability-pool-contract-abi.json"
@@ -49,7 +50,7 @@ pub mod stability_pool_abi {
 
     pub async fn provide_to_stability_pool(
         stability_pool: &StabilityPool,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
@@ -110,7 +111,7 @@ pub mod stability_pool_abi {
 
     pub async fn withdraw_from_stability_pool(
         stability_pool: &StabilityPool,
-        usdf_token: &Token,
+        usdf_token: &USDFToken,
         fuel_token: &Token,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {

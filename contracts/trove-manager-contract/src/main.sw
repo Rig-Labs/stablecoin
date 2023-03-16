@@ -17,6 +17,7 @@ use data_structures::{
 };
 use libraries::numbers::*;
 use libraries::trove_manager_interface::{TroveManager};
+use libraries::usdf_token_interface::{USDFToken};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::default_pool_interface::{DefaultPool};
@@ -154,6 +155,7 @@ impl TroveManager for Contract {
         let oracle_contract = abi(MockOracle, storage.oracle_contract.into());
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         let active_pool_contract = abi(ActivePool, storage.active_pool_contract.into());
+        let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
 
         totals.remaining_usdf = msg_amount();
         totals.price = oracle_contract.get_price();
@@ -197,7 +199,11 @@ impl TroveManager for Contract {
         // TODO lqty staking increase f_asset
         totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
 
-        // Burn USDF
+        usdf_contract.burn {
+            coins: totals.total_usdf_to_redeem,
+            asset_id: storage.usdf_contract.value,
+        }();
+
         active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
         active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
     }
@@ -623,7 +629,6 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         internal_close_trove(borrower, Status::ClosedByLiquidation());
         coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
     }
-    
 }
 
 #[storage(read, write)]
@@ -768,7 +773,6 @@ fn internal_redeem_collateral_from_trove(
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
 
         // TODO Consider removing this check
-
         // if (new_nicr != partial_redemption_hint
         //     || new_debt < MIN_NET_DEBT)
         // {
@@ -789,9 +793,14 @@ fn internal_redeem_collateral_from_trove(
 
 #[storage(read, write)]
 fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
-    // TODO Burn USDF
+    let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+
+    usdf_contract.burn {
+        coins: usdf,
+        asset_id: storage.usdf_contract.value,
+    }();
 
     active_pool.decrease_usdf_debt(usdf);
     coll_surplus_pool.account_surplus(borrower, asset);
