@@ -4,9 +4,10 @@ dep data_structures;
 use data_structures::{Snapshots};
 
 use libraries::stability_pool_interface::{StabilityPool};
+use libraries::usdf_token_interface::{USDFToken};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::numbers::*;
-use libraries::fluid_math::{null_contract, null_identity_address};
+use libraries::fluid_math::{fm_min, null_contract, null_identity_address};
 
 use std::{
     auth::msg_sender,
@@ -98,12 +99,7 @@ impl StabilityPool for Contract {
         // TODO Trigger FPT issuance
         let depositor_asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap());
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-        let mut usdf_to_withdraw = amount;
-
-        // TODO Change to min when available
-        if amount >= compounded_usdf_deposit {
-            usdf_to_withdraw = compounded_usdf_deposit;
-        }
+        let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
 
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
 
@@ -375,11 +371,15 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
     let active_pool_address = storage.active_pool_address;
 
     let active_pool = abi(ActivePool, active_pool_address.value);
-
+    let usdf_contract = abi(USDFToken, storage.usdf_address.value);
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add);
     active_pool.decrease_usdf_debt(debt_to_offset);
 
-    // TODO Burn the offset usdf debt  
+    usdf_contract.burn {
+        coins: debt_to_offset,
+        asset_id: storage.usdf_address.value,
+    }();
+
     active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
 }

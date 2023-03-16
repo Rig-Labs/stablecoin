@@ -5,7 +5,6 @@ use fuels::types::Identity;
 use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
 
 use test_utils::setup::common::deploy_sorted_troves;
-// TODO: do setup instead of copy/pasted code with minor adjustments
 
 abigen!(Contract(
     name = "MockTroveManagerContract",
