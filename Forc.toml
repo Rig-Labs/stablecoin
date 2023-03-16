@@ -10,6 +10,7 @@ members = [
   "./contracts/default-pool-contract",
    "./contracts/coll-surplus-pool-contract",
   "./contracts/token-contract",
+  "./contracts/usdf-token-contract",
   "./contracts/sorted-troves-contract/tests/artifacts",
   "./contracts/stability-pool-contract/tests/artifacts",
 ]

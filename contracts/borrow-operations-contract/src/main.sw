@@ -77,11 +77,11 @@ impl BorrowOperations for Contract {
         let usdf = abi(Token, storage.usdf_contract.value);
 
         let mut vars = LocalVariables_OpenTrove::new();
-
+        let sender = msg_sender().unwrap();
         vars.net_debt = _usdf_amount;
         vars.price = oracle.get_price();
 
-        // TODO Require Trove is not active / exists
+        require_trove_is_not_active(sender);
         vars.usdf_fee = internal_trigger_borrowing_fee();
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
@@ -89,8 +89,6 @@ impl BorrowOperations for Contract {
 
         // ICR is based on the composite debt, i.e. the requested usdf amount + usdf borrowing fee + usdf gas comp.
         require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
-
-        let sender = msg_sender().unwrap();
 
         vars.icr = fm_compute_cr(msg_amount(), vars.net_debt, vars.price);
         vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.net_debt);
@@ -148,23 +146,24 @@ impl BorrowOperations for Contract {
         let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
         let active_pool = abi(ActivePool, storage.active_pool_contract.value);
         let oracle = abi(MockOracle, storage.oracle_contract.value);
+        let borrower = msg_sender().unwrap();
 
-        // TODO require trove is active
+        require_trove_is_active(borrower);
         let price = oracle.get_price();
+        trove_manager.apply_pending_rewards(borrower);
 
-        // TODO trove manager apply pending rewards
-        let coll = trove_manager.get_trove_coll(msg_sender().unwrap());
-        let debt = trove_manager.get_trove_debt(msg_sender().unwrap());
+        let coll = trove_manager.get_trove_coll(borrower);
+        let debt = trove_manager.get_trove_debt(borrower);
 
         if debt > 0 {
             require_valid_usdf_id();
             require(debt <= msg_amount(), "BorrowOperations: cannot close trove with insufficient usdf balance");
         }
 
-        trove_manager.close_trove(msg_sender().unwrap());
-        trove_manager.remove_stake(msg_sender().unwrap());
+        trove_manager.close_trove(borrower);
+        trove_manager.remove_stake(borrower);
         internal_repay_usdf(debt);
-        active_pool.send_asset(msg_sender().unwrap(), coll);
+        active_pool.send_asset(borrower, coll);
 
         // TODO refund excess usdf
     }
@@ -261,6 +260,20 @@ fn internal_adjust_trove(
 #[storage(read)]
 fn require_caller_is_stability_pool() {
     require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract), "BorrowOperations: Caller is not Stability Pool");
+}
+
+#[storage(read)]
+fn require_trove_is_not_active(borrower: Identity) {
+    let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+    let status = trove_manager.get_trove_status(borrower);
+    require(status != Status::Active, "BorrowOperations: User already has an active Trove");
+}
+
+#[storage(read)]
+fn require_trove_is_active(borrower: Identity) {
+    let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+    let status = trove_manager.get_trove_status(borrower);
+    require(status == Status::Active, "BorrowOperations: User does not have an active Trove");
 }
 
 #[storage(read)]

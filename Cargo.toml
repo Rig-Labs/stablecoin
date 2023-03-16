@@ -8,6 +8,7 @@ members = [
     "./contracts/sorted-troves-contract",
     "./contracts/borrow-operations-contract",
     "./contracts/token-contract",
+    "./contracts/usdf-token-contract",
     "./contracts/active-pool-contract",
     "./contracts/coll-surplus-pool-contract",
     "./contracts/default-pool-contract",

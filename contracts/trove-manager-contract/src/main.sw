@@ -618,9 +618,9 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address());
     } else {
+        let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
-        let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
     }
     
