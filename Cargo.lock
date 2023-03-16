@@ -3758,8 +3758,8 @@ dependencies = [
 name = "usdf-token-contract"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "fuels",
+ "test-utils",
  "tokio",
 ]
 

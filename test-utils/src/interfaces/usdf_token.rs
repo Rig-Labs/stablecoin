@@ -6,6 +6,8 @@ abigen!(Contract(
 ));
 
 pub mod usdf_token_abi {
+    use fuels::prelude::{AssetId, CallParameters, Error, TxParameters};
+
     use super::*;
     pub async fn initialize(
         instance: &USDFToken,
@@ -32,13 +34,40 @@ pub mod usdf_token_abi {
             .unwrap()
     }
 
-    pub async fn mint(instance: &USDFToken, amount: u64, admin: Identity) -> FuelCallResponse<()> {
+    pub async fn mint(
+        instance: &USDFToken,
+        amount: u64,
+        address: Identity,
+    ) -> Result<FuelCallResponse<()>, Error> {
         instance
             .methods()
-            .mint(amount, admin)
+            .mint(amount, address)
             .append_variable_outputs(1)
             .call()
             .await
-            .unwrap()
+    }
+
+    pub async fn burn(usdf_token: &USDFToken, amount: u64) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+
+        let call_params: CallParameters = CallParameters {
+            amount,
+            asset_id: usdf_asset_id,
+            gas_forwarded: None,
+        };
+
+        usdf_token
+            .methods()
+            .burn()
+            .call_params(call_params)
+            .tx_params(tx_params)
+            .append_variable_outputs(1)
+            .call()
+            .await
+    }
+
+    pub async fn total_supply(instance: &USDFToken) -> FuelCallResponse<u64> {
+        instance.methods().total_supply().call().await.unwrap()
     }
 }

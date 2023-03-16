@@ -166,7 +166,10 @@ impl BorrowOperations for Contract {
         internal_repay_usdf(debt);
         active_pool.send_asset(borrower, coll);
 
-        // TODO refund excess usdf
+        if (debt < msg_amount()) {
+            let usdf_to_send = msg_amount() - debt;
+            transfer(usdf_to_send, storage.usdf_contract, borrower);
+        }
     }
 
     #[storage(read, write)]
@@ -243,7 +246,7 @@ fn internal_adjust_trove(
     require(_coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
 
     require_at_least_mcr(vars.new_icr);
-    // TODO require valid adjustment in current mode or leave same if no recovery mode
+
     // TODO if debt increase and usdf change > 0 
     if !_is_debt_increase {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
@@ -426,10 +429,10 @@ fn internal_repay_usdf(usdf_amount: u64) {
     let usdf = abi(USDFToken, storage.usdf_contract.value);
 
     usdf.burn {
-            coins: usdf_amount,
-            asset_id: storage.usdf_contract.value,
-        }();
-        
+        coins: usdf_amount,
+        asset_id: storage.usdf_contract.value,
+    }();
+
     active_pool.decrease_usdf_debt(usdf_amount);
 }
 
