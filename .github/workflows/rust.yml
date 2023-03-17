@@ -68,7 +68,6 @@ jobs:
       - name: Test Sway
         run: |
           forc test
-      - name: Run Rust tests
-        run: |
-          export RUST_TEST_THREADS=$(nproc)
-          cargo test -- --test-threads=$RUST_TEST_THREADS
+
+      - name: Run tests
+        run: cargo test
