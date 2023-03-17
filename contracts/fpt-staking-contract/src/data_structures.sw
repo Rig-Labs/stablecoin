@@ -6,8 +6,8 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    pub fn default() self -> {
-        Snapshot {
+    pub fn default() -> Self {
+        Self {
             f_fuel_snapshot: 0,
             f_usdf_snapshot: 0,
         }
