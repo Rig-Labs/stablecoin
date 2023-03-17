@@ -70,5 +70,4 @@ jobs:
           forc test
       - name: Run Rust tests
         run: |
-          export RUST_TEST_THREADS=$(nproc)
-          cargo test -- --test-threads=$RUST_TEST_THREADS
+          cargo test
