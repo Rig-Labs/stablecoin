@@ -1180,6 +1180,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fpt-staking-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
+]
+
+[[package]]
 name = "fuel-abi-types"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3446,7 +3455,6 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-contract"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "fuels",
  "tokio",
 ]
@@ -3792,7 +3800,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vesting-contract"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "fuels",
  "test-utils",
  "tokio",

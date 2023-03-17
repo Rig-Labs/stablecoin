@@ -11,6 +11,7 @@ members = [
    "./contracts/coll-surplus-pool-contract",
   "./contracts/token-contract",
   "./contracts/usdf-token-contract",
+  "./contracts/fpt-staking-contract",
   "./contracts/sorted-troves-contract/tests/artifacts",
   "./contracts/stability-pool-contract/tests/artifacts",
 ]

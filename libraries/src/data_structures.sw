@@ -26,7 +26,7 @@ impl Status {
         }
     }
 
-   pub fn neq(self, other: Status) -> bool {
+    pub fn neq(self, other: Status) -> bool {
         match (self, other) {
             (Status::NonExistent, Status::NonExistent) => false,
             (Status::Active, Status::Active) => false,

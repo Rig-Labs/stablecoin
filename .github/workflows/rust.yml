@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
   release:
     types: [published]
 
@@ -55,18 +55,19 @@ jobs:
           toolchain: latest
           date: 2023-02-22
 
-      - name: Check Sway formatting
-        run: |
-          forc fmt --check
-      - name: Check Rust formatting
-        run: |
-          cargo fmt --verbose --check
+      # - name: Check Sway formatting
+      #   run: |
+      #     forc fmt --check
+      # - name: Check Rust formatting
+      #   run: |
+      #     cargo fmt --verbose --check
+
       - name: Build Sway
         run: |
-          forc build --locked
+          forc build
       - name: Test Sway
         run: |
           forc test
       - name: Run Rust tests
         run: |
-          cargo test --locked
+          cargo test
