@@ -128,4 +128,74 @@ pub mod stability_pool_abi {
     }
 }
 
-pub mod stability_pool_utils {}
+pub mod stability_pool_utils {
+    use fuels::types::Identity;
+
+    use crate::setup::common::assert_within_threshold;
+
+    use super::*;
+
+    pub async fn assert_pool_asset(stability_pool: &StabilityPool, expected_asset_amount: u64) {
+        let pool_asset = super::stability_pool_abi::get_asset(stability_pool)
+            .await
+            .unwrap()
+            .value;
+
+        assert_eq!(pool_asset, expected_asset_amount);
+    }
+
+    pub async fn assert_total_usdf_deposits(
+        stability_pool: &StabilityPool,
+        expected_usdf_amount: u64,
+    ) {
+        let total_usdf_deposits =
+            super::stability_pool_abi::get_total_usdf_deposits(stability_pool)
+                .await
+                .unwrap()
+                .value;
+
+        assert_eq!(total_usdf_deposits, expected_usdf_amount);
+    }
+
+    pub async fn assert_depositor_asset_gain(
+        stability_pool: &StabilityPool,
+        depositor: Identity,
+        expected_asset_gain: u64,
+    ) {
+        let depositor_asset_gain =
+            super::stability_pool_abi::get_depositor_asset_gain(stability_pool, depositor)
+                .await
+                .unwrap()
+                .value;
+
+        assert_within_threshold(
+            expected_asset_gain,
+            depositor_asset_gain,
+            &format!(
+                "Depsoitor gains not within 0.001% threshold, expected: {}, real: {}",
+                expected_asset_gain, depositor_asset_gain
+            ),
+        );
+    }
+
+    pub async fn assert_compounded_usdf_deposit(
+        stability_pool: &StabilityPool,
+        depositor: Identity,
+        expected_compounded_usdf_deposit: u64,
+    ) {
+        let compounded_usdf_deposit =
+            super::stability_pool_abi::get_compounded_usdf_deposit(stability_pool, depositor)
+                .await
+                .unwrap()
+                .value;
+
+        assert_within_threshold(
+            expected_compounded_usdf_deposit,
+            compounded_usdf_deposit,
+            &format!(
+                "Compounded USDF deposit not within 0.001% threshold, expected: {}, real: {}",
+                expected_compounded_usdf_deposit, compounded_usdf_deposit
+            ),
+        );
+    }
+}

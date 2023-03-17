@@ -350,7 +350,10 @@ pub mod common {
         USDFToken::new(id, wallet.clone())
     }
 
-    pub fn print_response(response: FuelCallResponse<()>) {
+    pub fn print_response<T>(response: FuelCallResponse<T>)
+    where
+        T: std::fmt::Debug,
+    {
         response.receipts.iter().for_each(|r| match r.ra() {
             Some(r) => println!("{:?}", r),
             _ => (),
@@ -359,6 +362,10 @@ pub mod common {
 
     pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
         let threshold = a / 100000;
-        assert!(a >= b - threshold && a <= b + threshold, "{}", comment);
+        assert!(
+            a >= b.saturating_sub(threshold) && a <= b.saturating_add(threshold),
+            "{}",
+            comment
+        );
     }
 }

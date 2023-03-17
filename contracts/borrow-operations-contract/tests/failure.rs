@@ -387,7 +387,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         5_000_000_000,
         Identity::Address(admin.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     let res = borrow_operations_abi::repay_usdf(
         &contracts.borrow_operations,
