@@ -10,7 +10,7 @@ use test_utils::{
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
-    setup::common::{print_response, setup_protocol},
+    setup::common::setup_protocol,
 };
 
 #[tokio::test]
@@ -88,6 +88,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet2,
         &contracts.usdf,
+        &contracts.fuel,
         15_000_000_000,
     )
     .await
@@ -286,6 +287,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
         &contracts.usdf,
+        &contracts.fuel,
         500_000_000,
     )
     .await
@@ -557,7 +559,7 @@ async fn proper_partial_liquidation_empty_sp() {
     oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
-    let response = trove_manager_abi::liquidate(
+    trove_manager_abi::liquidate(
         &contracts.trove_manager,
         &contracts.stability_pool,
         &contracts.oracle,

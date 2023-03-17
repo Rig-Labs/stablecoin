@@ -51,6 +51,7 @@ pub mod stability_pool_abi {
     pub async fn provide_to_stability_pool(
         stability_pool: &StabilityPool,
         usdf_token: &USDFToken,
+        fuel_token: &Token,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
@@ -68,7 +69,8 @@ pub mod stability_pool_abi {
             .provide_to_stability_pool()
             .tx_params(tx_params)
             .call_params(call_params)
-            .set_contracts(&[usdf_token])
+            .append_variable_outputs(2)
+            .set_contracts(&[usdf_token, fuel_token])
             .call()
             .await
     }
