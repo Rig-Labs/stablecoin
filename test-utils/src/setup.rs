@@ -350,7 +350,10 @@ pub mod common {
         USDFToken::new(id, wallet.clone())
     }
 
-    pub fn print_response(response: FuelCallResponse<()>) {
+    pub fn print_response<T>(response: FuelCallResponse<T>)
+    where
+        T: std::fmt::Debug,
+    {
         response.receipts.iter().for_each(|r| match r.ra() {
             Some(r) => println!("{:?}", r),
             _ => (),

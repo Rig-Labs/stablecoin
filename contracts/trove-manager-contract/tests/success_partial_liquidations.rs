@@ -294,7 +294,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
-    let response = trove_manager_abi::liquidate(
+    let _response = trove_manager_abi::liquidate(
         &contracts.trove_manager,
         &contracts.stability_pool,
         &contracts.oracle,
@@ -307,8 +307,6 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     )
     .await
     .unwrap();
-
-    print_response(response);
 
     trove_manager_utils::assert_trove_status(
         &contracts.trove_manager,
@@ -572,8 +570,6 @@ async fn proper_partial_liquidation_empty_sp() {
     )
     .await
     .unwrap();
-
-    print_response(response);
 
     trove_manager_utils::assert_trove_status(
         &contracts.trove_manager,

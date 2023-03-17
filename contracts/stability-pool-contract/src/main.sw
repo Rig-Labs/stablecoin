@@ -309,10 +309,9 @@ fn compute_rewards_per_unit_staked(
         storage.last_usdf_error_offset = U128::from_u64(0);
     } else {
         let usdf_loss_per_unit_staked_numerator: U128 = U128::from_u64(debt_to_offset) * U128::from_u64(DECIMAL_PRECISION) - storage.last_usdf_error_offset;
-
         usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from_u64(total_usdf_deposits) + U128::from_u64(1);
 
-        storage.last_usdf_error_offset = usdf_loss_per_unit_staked_numerator * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator;
+        storage.last_usdf_error_offset = usdf_loss_per_unit_staked * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator;
     }
 
     let asset_gain_per_unit_staked = asset_numerator / U128::from_u64(total_usdf_deposits);
@@ -329,7 +328,6 @@ fn update_reward_sum_and_product(
 ) {
     let current_p = storage.p;
     let mut new_p: U128 = U128::from_u64(0);
-
     let new_product_factor = U128::from_u64(DECIMAL_PRECISION) - usdf_loss_per_unit_staked;
     let current_epoch = storage.current_epoch;
     let current_scale = storage.current_scale;
@@ -347,12 +345,11 @@ fn update_reward_sum_and_product(
         new_p = U128::from_u64(DECIMAL_PRECISION);
     } else if (current_p * new_product_factor / U128::from_u64(DECIMAL_PRECISION) < U128::from_u64(SCALE_FACTOR))
     {
-        new_p = current_p * U128::from_u64(SCALE_FACTOR) / U128::from_u64(DECIMAL_PRECISION);
+        new_p = current_p * new_product_factor * U128::from_u64(SCALE_FACTOR) / U128::from_u64(DECIMAL_PRECISION);
         storage.current_scale += 1;
     } else {
         new_p = current_p * new_product_factor / U128::from_u64(DECIMAL_PRECISION);
     }
-
     require(new_p > U128::from_u64(0), "New p is 0");
 
     storage.p = new_p;
