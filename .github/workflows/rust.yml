@@ -63,10 +63,10 @@ jobs:
       #     cargo fmt --verbose --check
       - name: Build Sway
         run: |
-          forc build --locked
+          forc build
       - name: Test Sway
         run: |
           forc test
       - name: Run Rust tests
         run: |
-          cargo test --locked
+          cargo test
