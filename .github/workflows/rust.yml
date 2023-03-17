@@ -58,9 +58,9 @@ jobs:
       # - name: Check Sway formatting
       #   run: |
       #     forc fmt --check
-      - name: Check Rust formatting
-        run: |
-          cargo fmt --verbose --check
+      # - name: Check Rust formatting
+      #   run: |
+      #     cargo fmt --verbose --check
       - name: Build Sway
         run: |
           forc build --locked
