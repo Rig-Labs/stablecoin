@@ -246,7 +246,7 @@ fn internal_adjust_trove(
     require(_coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
 
     require_at_least_mcr(vars.new_icr);
-
+    
     // TODO if debt increase and usdf change > 0 
     if !_is_debt_increase {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);

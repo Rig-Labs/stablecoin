@@ -104,6 +104,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
+        &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -308,6 +309,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
+        &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await
@@ -523,6 +525,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
+        &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
     )
     .await

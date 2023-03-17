@@ -44,6 +44,7 @@ pub mod trove_manager_abi {
         active_pool: &ActivePool,
         default_pool: &DefaultPool,
         coll_surplus_pool: &CollSurplusPool,
+        usdf: &USDFToken,
         id: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
@@ -59,6 +60,7 @@ pub mod trove_manager_abi {
                 active_pool,
                 default_pool,
                 coll_surplus_pool,
+                usdf,
             ])
             .append_variable_outputs(3)
             .call()
