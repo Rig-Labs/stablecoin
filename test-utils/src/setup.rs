@@ -359,6 +359,10 @@ pub mod common {
 
     pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
         let threshold = a / 100000;
-        assert!(a >= b - threshold && a <= b + threshold, "{}", comment);
+        assert!(
+            a >= b.saturating_sub(threshold) && a <= b.saturating_add(threshold),
+            "{}",
+            comment
+        );
     }
 }
