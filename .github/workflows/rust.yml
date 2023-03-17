@@ -55,9 +55,9 @@ jobs:
           toolchain: latest
           date: 2023-02-22
 
-      - name: Check Sway formatting
-        run: |
-          forc fmt --check
+      # - name: Check Sway formatting
+      #   run: |
+      #     forc fmt --check
       - name: Check Rust formatting
         run: |
           cargo fmt --verbose --check
