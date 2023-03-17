@@ -55,12 +55,16 @@ jobs:
           toolchain: latest
           date: 2023-02-22
 
+      - name: Set test threads
+        run: export RUST_TEST_THREADS=$(nproc)
+
       # - name: Check Sway formatting
       #   run: |
       #     forc fmt --check
       # - name: Check Rust formatting
       #   run: |
       #     cargo fmt --verbose --check
+
       - name: Build Sway
         run: |
           forc build
@@ -69,4 +73,4 @@ jobs:
           forc test
       - name: Run Rust tests
         run: |
-          cargo test
+          cargo test -- --test-threads=$RUST_TEST_THREADS
