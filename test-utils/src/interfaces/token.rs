@@ -45,3 +45,5 @@ pub mod token_abi {
             .unwrap()
     }
 }
+
+pub mod token_utils {}

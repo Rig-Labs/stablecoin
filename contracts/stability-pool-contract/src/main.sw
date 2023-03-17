@@ -41,7 +41,6 @@ storage {
     borrow_operations_address: ContractId = null_contract(),
     trove_manager_address: ContractId = null_contract(),
     active_pool_address: ContractId = null_contract(),
-    default_pool_address: ContractId = null_contract(),
     usdf_address: ContractId = null_contract(),
     sorted_troves_address: ContractId = null_contract(),
     oracle_address: ContractId = null_contract(),
@@ -86,6 +85,7 @@ impl StabilityPool for Contract {
 
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
+
         storage.total_usdf_deposits += msg_amount();
         // Pay out FPT gains
         send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
@@ -194,7 +194,6 @@ fn get_asset_gain_from_snapshots(initial_deposit: u64, snapshots: Snapshots) -> 
 
     return gain.as_u64().unwrap();
 }
-
 #[storage(read)]
 fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots) -> u64 {
     let epoch_snapshot = snapshots.epoch;
