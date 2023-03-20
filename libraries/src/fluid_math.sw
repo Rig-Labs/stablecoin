@@ -8,7 +8,17 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 // Using Precision 6 until u128 is available
 pub const PCT_100: u64 = 1_000_000_000;
 
+pub const SECONDS_IN_ONE_MINUTE: u64 = 60;
+
+pub const MINUTE_DECAY_FACTOR: u64 = 999037758833783000;
+
 pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
+
+// Max borrowing fee is 5%
+pub const MAX_BORROWING_FEE: u64 = 50_000_000;
+
+// Min borrowing fee is 0.5%
+pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
 pub const ORACLE_PRICE_PRECISION: u64 = 1_000_000;
 
@@ -55,13 +65,13 @@ pub fn fm_max(a: u64, b: u64) -> u64 {
     if a > b { return a; } else { return b; }
 }
 
-fn dec_mul(a: u64, b: u64) -> U128 {
+pub fn dec_mul(a: u64, b: u64) -> U128 {
     let prod = U128::from_u64(a) * U128::from_u64(b);
     let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
     return dec_prod;
 }
 
-fn dec_pow(base: u64, _minutes: u64) -> U128 {
+pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
     let mut minutes = _minutes;
     if minutes > 525600000 {
         minutes = 525600000;

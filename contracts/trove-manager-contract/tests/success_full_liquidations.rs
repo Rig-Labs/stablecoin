@@ -13,6 +13,8 @@ use test_utils::{
     setup::common::setup_protocol,
 };
 
+
+
 #[tokio::test]
 async fn proper_full_liquidation_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;

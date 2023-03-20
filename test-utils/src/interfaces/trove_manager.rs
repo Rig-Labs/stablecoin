@@ -265,6 +265,15 @@ pub mod trove_manager_abi {
             .await
             .unwrap()
     }
+
+    pub async fn get_borrowing_rate(trove_manager: &TroveManagerContract) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_borrowing_rate()
+            .call()
+            .await
+            .unwrap()
+    }
 }
 
 pub mod trove_manager_utils {

@@ -85,7 +85,7 @@ impl BorrowOperations for Contract {
         vars.price = oracle.get_price();
 
         require_trove_is_not_active(sender);
-        vars.usdf_fee = internal_trigger_borrowing_fee();
+        vars.usdf_fee = internal_trigger_borrowing_fee(0, 0);
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
         require_at_least_min_net_debt(vars.net_debt);
@@ -197,8 +197,16 @@ impl BorrowOperations for Contract {
     }
 }
 
-fn internal_trigger_borrowing_fee() -> u64 {
-    // TODO
+#[storage(read)]
+fn internal_trigger_borrowing_fee(usdf_amount: u64, max_fee_percentage: u64) -> u64 {
+
+    // let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
+    // let usdf = abi(USDFToken, storage.usdf_contract.value);
+    // trove_manager.decay_base_rate_from_borrowing();
+    // let usdf_fee = trove_manager.get_borrowing_fee(usdf_amount);
+    // TODO require user accepts fee
+    // TODO increase lqty staking rewards
+    // TODO Mint usdf to LQTY staking contract
     return 0
 }
 
@@ -235,7 +243,7 @@ fn internal_adjust_trove(
     vars.net_debt_change = _usdf_change;
 
     if _is_debt_increase {
-        vars.usdf_fee = internal_trigger_borrowing_fee();
+        vars.usdf_fee = internal_trigger_borrowing_fee(0, 0);
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
     }
 
