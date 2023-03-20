@@ -65,8 +65,8 @@ pub fn fm_max(a: u64, b: u64) -> u64 {
     if a > b { return a; } else { return b; }
 }
 
-pub fn dec_mul(a: u64, b: u64) -> U128 {
-    let prod = U128::from_u64(a) * U128::from_u64(b);
+pub fn dec_mul(a: U128, b: U128) -> U128 {
+    let prod = a * b;
     let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
     return dec_prod;
 }
@@ -77,18 +77,18 @@ pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
         minutes = 525600000;
     }
 
-    let mut y = DECIMAL_PRECISION;
-    let mut x = base;
-    let mut n = minutes;
+    let mut y = U128::from_u64(DECIMAL_PRECISION);
+    let mut x = U128::from_u64(base);
+    let mut n = U128::from_u64(minutes);
 
-    while n > 1 {
-        if n % 2 == 0 {
-            x = dec_mul(x, x).as_u64().unwrap();
-            n = n / 2;
+    while n > U128::from_u64(1) {
+        if n % U128::from_u64(2) == U128::from_u64(0) {
+            x = dec_mul(x, x);
+            n = n / U128::from_u64(2);
         } else {
-            y = dec_mul(x, y).as_u64().unwrap();
-            x = dec_mul(x, x).as_u64().unwrap();
-            n = (n - 1) / 2;
+            y = dec_mul(x, y);
+            x = dec_mul(x, x);
+            n = (n - U128::from_u64(1)) / U128::from_u64(2);
         }
     }
 
@@ -101,4 +101,12 @@ pub fn null_identity_address() -> Identity {
 
 pub fn null_contract() -> ContractId {
     return ContractId::from(ZERO_B256)
+}
+
+#[test]
+fn test_dec_pow() {
+    let base = 1_000_000_000;
+    let minutes = 525600000;
+    // let result = dec_pow(base, minutes);
+    // assert(result == U128::from_u64(1_000_000_000));
 }

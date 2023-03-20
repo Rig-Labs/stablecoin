@@ -274,6 +274,44 @@ pub mod trove_manager_abi {
             .await
             .unwrap()
     }
+
+    pub async fn get_borrowing_rate_with_decay(
+        trove_manager: &TroveManagerContract,
+    ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::new(Some(1), Some(2_000_000), Some(0));
+
+        trove_manager
+            .methods()
+            .get_borrowing_rate_with_decay()
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_borrowing_fee(
+        trove_manager: &TroveManagerContract,
+        usdf_borrowed: u64,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_borrowing_fee(usdf_borrowed)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_borrowing_fee_with_decay(
+        trove_manager: &TroveManagerContract,
+        usdf_borrowed: u64,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_borrowing_fee_with_decay(usdf_borrowed)
+            .call()
+            .await
+            .unwrap()
+    }
 }
 
 pub mod trove_manager_utils {
