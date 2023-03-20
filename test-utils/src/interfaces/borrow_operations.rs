@@ -30,6 +30,7 @@ pub mod borrow_operations_abi {
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
         coll_surplus_pool_contract: ContractId,
+        stability_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
 
@@ -44,6 +45,7 @@ pub mod borrow_operations_abi {
                 fpt_staking_contract,
                 active_pool_contract,
                 coll_surplus_pool_contract,
+                stability_pool_contract,
             )
             .tx_params(tx_params)
             .call()

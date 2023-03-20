@@ -6,7 +6,7 @@ use test_utils::{
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
         token::token_abi,
-        trove_manager::trove_manager_abi,
+        trove_manager::{trove_manager_abi, trove_manager_utils},
     },
     setup::common::setup_protocol,
 };
@@ -572,6 +572,126 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
         500_000_000,
+    )
+    .await;
+}
+
+#[tokio::test]
+async fn proper_depositor_move_gain_to_trove() {
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4).await;
+    oracle_abi::set_price(&contracts.oracle, 10_000_000).await;
+
+    let liquidated_wallet = wallets.pop().unwrap();
+
+    token_abi::mint_to_id(
+        &contracts.fuel,
+        6_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &contracts.fuel,
+        5_000_000_000,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await;
+
+    borrow_operations_abi::open_trove(
+        &contracts.borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
+        6_000_000_000,
+        3_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    let liq_borrow_operations = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        liquidated_wallet.clone(),
+    );
+
+    borrow_operations_abi::open_trove(
+        &liq_borrow_operations,
+        &contracts.oracle,
+        &contracts.fuel,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.trove_manager,
+        &contracts.active_pool,
+        1_100_000_000,
+        1_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.usdf,
+        &contracts.fuel,
+        1_500_000_000,
+    )
+    .await
+    .unwrap();
+
+    oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
+
+    trove_manager_abi::liquidate(
+        &contracts.trove_manager,
+        &contracts.stability_pool,
+        &contracts.oracle,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        &contracts.coll_surplus_pool,
+        &contracts.usdf,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .unwrap();
+
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        1_050_000_000,
+    )
+    .await;
+
+    stability_pool_abi::withdraw_gain_to_trove(
+        &contracts.stability_pool,
+        &contracts.usdf,
+        &contracts.fuel,
+        &contracts.trove_manager,
+        &contracts.borrow_operations,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.oracle,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        0,
+    )
+    .await;
+
+    trove_manager_utils::assert_trove_coll(
+        &contracts.trove_manager,
+        Identity::Address(admin.address().into()),
+        6_000_000_000 + 1_050_000_000,
     )
     .await;
 }

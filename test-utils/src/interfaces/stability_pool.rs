@@ -3,8 +3,14 @@ use fuels::{
     programs::call_response::FuelCallResponse,
 };
 
+use crate::interfaces::active_pool::ActivePool;
+use crate::interfaces::borrow_operations::BorrowOperations;
+use crate::interfaces::oracle::Oracle;
+use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
+use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
+
 abigen!(Contract(
     name = "StabilityPool",
     abi = "contracts/stability-pool-contract/out/debug/stability-pool-contract-abi.json"
@@ -125,6 +131,38 @@ pub mod stability_pool_abi {
             .tx_params(tx_params)
             .append_variable_outputs(2)
             .set_contracts(&[usdf_token, fuel_token])
+            .call()
+            .await
+    }
+
+    pub async fn withdraw_gain_to_trove(
+        stability_pool: &StabilityPool,
+        usdf_token: &USDFToken,
+        fuel_token: &Token,
+        trove_manager: &TroveManagerContract,
+        borrow_operations: &BorrowOperations,
+        sorted_troves: &SortedTroves,
+        active_pool: &ActivePool,
+        oracle: &Oracle,
+        lower_hint: Identity,
+        upper_hint: Identity,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+
+        stability_pool
+            .methods()
+            .withdraw_gain_to_trove(lower_hint, upper_hint)
+            .tx_params(tx_params)
+            .append_variable_outputs(2)
+            .set_contracts(&[
+                usdf_token,
+                fuel_token,
+                trove_manager,
+                borrow_operations,
+                sorted_troves,
+                active_pool,
+                oracle,
+            ])
             .call()
             .await
     }

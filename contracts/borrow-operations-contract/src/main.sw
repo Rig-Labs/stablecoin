@@ -51,6 +51,7 @@ impl BorrowOperations for Contract {
         fpt_staking_contract: ContractId,
         active_pool_contract: ContractId,
         coll_surplus_pool_contract: ContractId,
+        stability_pool_contract: ContractId,
     ) {
         require(storage.trove_manager_contract == null_contract(), "BorrowOperations: contract is already initialized");
 
@@ -62,9 +63,10 @@ impl BorrowOperations for Contract {
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.active_pool_contract = active_pool_contract;
         storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
+        storage.stability_pool_contract = stability_pool_contract;
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn open_trove(
         _usdf_amount: u64,
         _upper_hint: Identity,
@@ -110,7 +112,7 @@ impl BorrowOperations for Contract {
         withdraw_usdf(sender, _usdf_amount, _usdf_amount);
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn add_coll(_upper_hint: Identity, _lower_hint: Identity) {
         require_valid_asset_id();
 
@@ -122,7 +124,7 @@ impl BorrowOperations for Contract {
         internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint);
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity) {
         require_caller_is_stability_pool();
         require_valid_asset_id();
@@ -135,14 +137,14 @@ impl BorrowOperations for Contract {
         internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint);
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn repay_usdf(upper_hint: Identity, lower_hint: Identity) {
         require_valid_usdf_id();
 
         internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint);
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn close_trove() {
         let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
         let active_pool = abi(ActivePool, storage.active_pool_contract.value);
@@ -172,7 +174,7 @@ impl BorrowOperations for Contract {
         }
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn adjust_trove(
         coll_withdrawl: u64,
         debt_change: u64,
@@ -246,8 +248,8 @@ fn internal_adjust_trove(
     require(_coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
 
     require_at_least_mcr(vars.new_icr);
-    
-    // TODO if debt increase and usdf change > 0 
+
+        // TODO if debt increase and usdf change > 0 
     if !_is_debt_increase {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }
@@ -295,10 +297,6 @@ fn require_non_zero_debt_change(_debt_change: u64) {
 
 fn require_at_least_mcr(icr: u64) {
     require(icr > MCR, "Minimum collateral ratio not met");
-}
-
-fn require_valid_max_fee_percentage(_max_fee_percentage: u64) {
-    require(_max_fee_percentage < DECIMAL_PRECISION, "BorrowOperations: max fee percentage must be less than 100");
 }
 
 #[storage(read)]

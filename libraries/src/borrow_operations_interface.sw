@@ -2,15 +2,15 @@ library borrow_operations_interface;
 
 abi BorrowOperations {
     #[storage(read, write)]
-    fn initialize(trove_manager_contract: ContractId, sorted_troves_contract: ContractId, oracle_contract: ContractId, asset_contract: ContractId, usdf_contract: ContractId, fpt_staking_contract: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId);
+    fn initialize(trove_manager_contract: ContractId, sorted_troves_contract: ContractId, oracle_contract: ContractId, asset_contract: ContractId, usdf_contract: ContractId, fpt_staking_contract: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, stability_pool: ContractId);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn move_asset_gain_to_trove(id: Identity, upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read, write)]
@@ -19,13 +19,13 @@ abi BorrowOperations {
     #[storage(read, write)]
     fn withdraw_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn repay_usdf(upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn close_trove();
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn adjust_trove(coll_withdrawl: u64, debt_change: u64, is_debt_increase: bool, upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read)]

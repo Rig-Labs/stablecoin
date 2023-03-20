@@ -148,6 +148,7 @@ pub mod common {
             usdf.contract_id().into(),
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+            stability_pool.contract_id().into(),
         )
         .await;
 
