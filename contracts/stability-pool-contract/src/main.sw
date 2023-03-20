@@ -3,9 +3,12 @@ contract;
 dep data_structures;
 use data_structures::{Snapshots};
 
+use libraries::data_structures::{Status};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::usdf_token_interface::{USDFToken};
 use libraries::active_pool_interface::{ActivePool};
+use libraries::trove_manager_interface::{TroveManager};
+use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::numbers::*;
 use libraries::fluid_math::{fm_min, null_contract, null_identity_address};
 
@@ -109,7 +112,28 @@ impl StabilityPool for Contract {
     }
 
     #[storage(read, write)]
-    fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity) {}
+    fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity) {
+        let sender = msg_sender().unwrap();
+        let initial_deposit = storage.deposits.get(sender);
+        let borrower_operations = abi(BorrowOperations, storage.borrow_operations_address.value);
+        require_user_has_initial_deposit(initial_deposit);
+        require_user_has_asset_gain(sender);
+        require_user_has_trove(sender);
+
+        // TODO Trigger FPT issuance
+        let depositor_asset_gain = internal_get_depositor_asset_gain(sender);
+        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(sender);
+
+        let usdf_loss = initial_deposit - compounded_usdf_deposit;
+        internal_update_deposits_and_snapshots(sender, compounded_usdf_deposit);
+
+        storage.asset -= depositor_asset_gain;
+
+        borrower_operations.move_asset_gain_to_trove {
+            coins: depositor_asset_gain,
+            asset_id: storage.asset_address.value,
+        }(sender, lower_hint, upper_hint);
+    }
 
     #[storage(read, write)]
     fn offset(debt_to_offset: u64, coll_to_offset: u64) {
@@ -152,6 +176,13 @@ impl StabilityPool for Contract {
 fn require_usdf_is_valid_and_non_zero() {
     require(storage.usdf_address == msg_asset_id(), "USDF contract not initialized");
     require(msg_amount() > 0, "USDF amount must be greater than 0");
+}
+
+#[storage(read)]
+fn require_user_has_trove(address: Identity) {
+    let trove_manager = abi(TroveManager, storage.trove_manager_address.value);
+    let status = trove_manager.get_trove_status(address);
+    require(status == Status::Active, "User does not have an active trove");
 }
 
 #[storage(read)]
@@ -281,7 +312,13 @@ fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
     transfer(amount, usdf_address, depositor);
 }
 
-#[storage(read, write)]
+#[storage(read)]
+fn require_user_has_asset_gain(depositor: Identity) {
+    let gain = internal_get_depositor_asset_gain(depositor);
+    require(gain > 0, "User has no asset gain");
+}
+
+#[storage(read)]
 fn require_caller_is_trove_manager() {
     let trove_manager_address = Identity::ContractId(storage.trove_manager_address);
     require(msg_sender().unwrap() == trove_manager_address, "Caller is not the TroveManager");
