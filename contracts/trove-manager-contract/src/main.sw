@@ -68,6 +68,8 @@ storage {
     l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
     last_usdf_error_redistribution: u64 = 0,
+    last_fee_operation_timestamp: u64 = 0,
+    base_rate: U128 = U128::from_u64(0),
     nominal_icr: StorageMap<Identity, u64> = StorageMap {},
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
@@ -233,12 +235,13 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_borrowing_fee(debt: u64) -> u64 {
-        // TODO
-        return 0
+        internal_calculate_borrowing_fee(internal_get_borrowing_rate(), debt)
     }
 
     #[storage(read, write)]
-    fn decay_base_rate_from_borrowing() {}
+    fn decay_base_rate_from_borrowing() {
+        require_caller_is_borrow_operations_contract();
+    }
 
         // TODO
     #[storage(read)]
@@ -248,20 +251,17 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_borrowing_fee_with_decay(debt: u64) -> u64 {
-        // TODO
-        return 0
+        internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), debt)
     }
 
     #[storage(read)]
     fn get_borrowing_rate() -> u64 {
-        // TODO
-        return 0
+        internal_get_borrowing_rate()
     }
 
     #[storage(read)]
     fn get_borrowing_rate_with_decay() -> u64 {
-        // TODO
-        return 0
+        internal_get_borrowing_rate_with_decay()
     }
 
     #[storage(read)]
@@ -773,12 +773,10 @@ fn internal_redeem_collateral_from_trove(
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
 
         // TODO Consider removing this check
-        // if (new_nicr != partial_redemption_hint
-        //     || new_debt < MIN_NET_DEBT)
-        // {
-        //     single_redemption_values.cancelled_partial = true;
-        //     return single_redemption_values;
-        // }
+        if (new_debt < MIN_NET_DEBT) {
+            single_redemption_values.cancelled_partial = true;
+            return single_redemption_values;
+        }
         sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
@@ -812,18 +810,59 @@ fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total
 
     // TODO FEE
 #[storage(read)]
-fn internal_minutes_passed_since_last_fee_op() -> u64 {
-    // TODO FEE
+fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
     return 0;
 }
 
 #[storage(read)]
-fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
-    // TODO FEE
-    return 0;
+fn internal_get_borrowing_fee(usdf_debt: u64) -> u64 {
+    return internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), usdf_debt);
+}
+
+#[storage(read)]
+fn internal_calculate_borrowing_fee(borrowing_rate: u64, usdf_debt: u64) -> u64 {
+    let numerator = U128::from_u64(borrowing_rate) * U128::from_u64(usdf_debt);
+    let prod = (numerator / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
+    return prod;
+}
+
+#[storage(read)]
+fn internal_get_borrowing_rate() -> u64 {
+    internal_calculate_borrowing_rate(storage.base_rate.as_u64().unwrap())
+}
+
+#[storage(read)]
+fn internal_get_borrowing_rate_with_decay() -> u64 {
+    internal_calculate_borrowing_rate(calculate_delayed_base_rate())
+}
+
+#[storage(read)]
+fn internal_calculate_borrowing_rate(base_rate: u64) -> u64 {
+    return fm_min(BORROWING_FEE_FLOOR + base_rate, MAX_BORROWING_FEE);
 }
 
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
+}
+
+#[storage(read)]
+fn calculate_delayed_base_rate() -> u64 {
+    let minutes_passed = internal_minutes_passed_since_last_fee_op();
+    let decay_factor = dec_pow(MINUTE_DECAY_FACTOR, minutes_passed);
+    return (storage.base_rate.as_u64().unwrap() * decay_factor.as_u64().unwrap()) / DECIMAL_PRECISION;
+}
+
+#[storage(read)]
+fn internal_minutes_passed_since_last_fee_op() -> u64 {
+    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
+    return time_passed / SECONDS_IN_ONE_MINUTE;
+}
+
+#[storage(read, write)]
+fn update_last_fee_op_time() {
+    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
+    if (time_passed >= SECONDS_IN_ONE_MINUTE) {
+        storage.last_fee_operation_timestamp = timestamp();
+    }
 }

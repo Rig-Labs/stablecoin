@@ -58,6 +58,7 @@ impl ActivePool for Contract {
         require_caller_is_bo_or_tm_or_sp();
         storage.asset_amount -= amount;
         let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
+
         dafault_pool.recieve {
             coins: amount,
             asset_id: storage.asset_id.value,

@@ -1,17 +1,14 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    interfaces::default_pool::{default_pool_abi, DefaultPool},
-    interfaces::{
-        active_pool::{active_pool_abi, ActivePool},
-        token::{token_abi, Token},
-    },
-    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
+    interfaces::coll_surplus_pool::{coll_surplus_pool_abi, CollSurplusPool},
+    interfaces::token::{token_abi, Token},
+    setup::common::{deploy_coll_surplus_pool, deploy_token},
 };
 
 // TODO Test coll surplus pool contract instead of default pool
 
-async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked, ActivePool) {
+async fn get_contract_instance() -> (CollSurplusPool, Token, WalletUnlocked) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -25,8 +22,7 @@ async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked, ActiveP
     .await;
     let wallet = wallets.pop().unwrap();
 
-    let instance = deploy_default_pool(&wallet).await;
-    let active_pool = deploy_active_pool(&wallet).await;
+    let coll_pool = deploy_coll_surplus_pool(&wallet).await;
 
     let asset = deploy_token(&wallet).await;
 
@@ -39,77 +35,42 @@ async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked, ActiveP
     )
     .await;
 
-    default_pool_abi::initialize(
-        &instance,
+    coll_surplus_pool_abi::initialize(
+        &coll_pool,
         Identity::Address(wallet.address().into()),
-        active_pool.contract_id().into(),
+        coll_pool.contract_id().into(),
+        asset.contract_id().into(),
         asset.contract_id().into(),
     )
     .await;
 
-    active_pool_abi::initialize(
-        &active_pool,
-        Identity::Address(wallet.address().into()),
-        Identity::Address(wallet.address().into()),
-        Identity::Address(wallet.address().into()),
-        asset.contract_id().into(),
-        instance.contract_id().into(),
-    )
-    .await;
-
-    (instance, asset, wallet, active_pool)
+    (coll_pool, asset, wallet)
 }
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (default_pool, _mock_fuel, _admin, _) = get_contract_instance().await;
+    let (coll_surplus_pool, _mock_fuel, admin) = get_contract_instance().await;
 
-    let debt = default_pool_abi::get_usdf_debt(&default_pool).await.value;
-    assert_eq!(debt, 0);
+    let coll = coll_surplus_pool_abi::get_asset(&coll_surplus_pool)
+        .await
+        .value;
+    assert_eq!(coll, 0);
 
-    let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
-    assert_eq!(asset_amount, 0);
-}
-
-#[tokio::test]
-async fn proper_adjust_debt() {
-    let (default_pool, _mock_fuel, _admin, _) = get_contract_instance().await;
-
-    default_pool_abi::increase_usdf_debt(&default_pool, 1000).await;
-
-    let debt = default_pool_abi::get_usdf_debt(&default_pool).await.value;
-    assert_eq!(debt, 1000);
-
-    default_pool_abi::decrease_usdf_debt(&default_pool, 500).await;
-
-    let debt = default_pool_abi::get_usdf_debt(&default_pool).await.value;
-    assert_eq!(debt, 500);
-}
-
-#[tokio::test]
-async fn proper_adjust_asset_col() {
-    let (default_pool, mock_fuel, admin, active_pool) = get_contract_instance().await;
-
-    token_abi::mint_to_id(
-        &mock_fuel,
-        1_000_000,
+    let balance = coll_surplus_pool_abi::get_collateral(
+        &coll_surplus_pool,
         Identity::Address(admin.address().into()),
     )
     .await;
 
-    active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
+    assert_eq!(balance.value, 0);
+}
 
-    active_pool_abi::send_asset_to_default_pool(&active_pool, &default_pool, &mock_fuel, 1_000_000)
-        .await
-        .unwrap();
+#[tokio::test]
+async fn proper_adjust_debt() {
+    // TODO
+}
 
-    let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
-    assert_eq!(asset_amount, 1_000_000);
-
-    default_pool_abi::send_asset_to_active_pool(&default_pool, &active_pool, 500_000).await;
-
-    let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
-    assert_eq!(asset_amount, 500_000);
-
-    println!("Asset amount: {}", asset_amount);
+#[tokio::test]
+async fn proper_adjust_asset_col() {
+    // TODO
 }
