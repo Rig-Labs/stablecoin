@@ -115,7 +115,7 @@ impl VestingContract for Contract {
     fn get_current_time() -> u64 {
         return timestamp();
     }
-
+ 
     // TODO waiting for Fuel to enable Vector outputs 
     // #[storage(read)]
     // fn get_vesting_addresses() -> Vec<Identity> {

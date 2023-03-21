@@ -849,12 +849,8 @@ fn require_valid_usdf_id() {
 #[storage(read)]
 fn calculate_delayed_base_rate() -> u64 {
     let minutes_passed = internal_minutes_passed_since_last_fee_op();
-    log(11);
-    log(minutes_passed);
     let decay_factor = dec_pow(MINUTE_DECAY_FACTOR, minutes_passed);
-    log(22);
-    log(decay_factor.as_u64().unwrap());
-    return ((storage.base_rate * decay_factor) / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
+    return (storage.base_rate.as_u64().unwrap() * decay_factor.as_u64().unwrap()) / DECIMAL_PRECISION;
 }
 
 #[storage(read)]
@@ -866,8 +862,6 @@ fn internal_minutes_passed_since_last_fee_op() -> u64 {
 #[storage(read, write)]
 fn update_last_fee_op_time() {
     let time_passed = timestamp() - storage.last_fee_operation_timestamp;
-    log(time_passed);
-    log(33);
     if (time_passed >= SECONDS_IN_ONE_MINUTE) {
         storage.last_fee_operation_timestamp = timestamp();
     }
