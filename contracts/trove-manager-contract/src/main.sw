@@ -765,10 +765,10 @@ fn internal_redeem_collateral_from_trove(
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
 
         // TODO Consider removing this check
-        // if (new_debt < MIN_NET_DEBT) {
-        //     single_redemption_values.cancelled_partial = true;
-        //     return single_redemption_values;
-        // }
+        if (new_debt < MIN_NET_DEBT) {
+            single_redemption_values.cancelled_partial = true;
+            return single_redemption_values;
+        }
         sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
