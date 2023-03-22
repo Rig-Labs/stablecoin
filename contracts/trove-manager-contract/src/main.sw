@@ -185,9 +185,10 @@ impl TroveManager for Contract {
         }
         require(totals.total_asset_drawn > 0, "No collateral to redeem");
 
-        internal_update_base_rate_from_redemption(0, 0, 0);
+        internal_update_base_rate_from_redemption(totals.total_asset_drawn, totals.price, totals.total_usdf_supply_at_start);
 
         totals.asset_fee = internal_get_redemption_fee(totals.total_asset_drawn);
+
         // Consider spliting fee with person being redeemed from
         // TODO require user accepts fee
         // TODO active pool send fee to stakers
@@ -797,14 +798,59 @@ fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
     active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset);
 }
 
+// ---- Redemption Fees ---- //
 #[storage(read, write)]
-fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {}
+fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
+    let decayed_base_rate = calculate_decayed_base_rate();
 
-    // TODO FEE
+    let redeemed_usdf_fraction = U128::from_u64(asset_drawn) * U128::from_u64(price) / U128::from_u64(total_usdf_supply);
+    let mut new_base_rate: U128 = U128::from_u64(decayed_base_rate) + (redeemed_usdf_fraction / U128::from_u64(BETA));
+
+    // Weird memory overflow error if this is included
+    // new_base_rate = fm_min_u128(new_base_rate, U128::from_u64(DECIMAL_PRECISION));
+
+    require(new_base_rate > U128::from_u64(0), "Base rate cannot be zero");
+
+    storage.base_rate = new_base_rate;
+
+    update_last_fee_op_time();
+}
+
+
+#[storage(read)]
+fn internal_get_redemption_rate() -> U128 {
+    return calc_redemption_rate(storage.base_rate);
+}
+
+#[storage(read)]
+fn internal_get_redemption_rate_with_decay() -> U128 {
+    return calc_redemption_rate(U128::from_u64(calculate_decayed_base_rate()));
+}
+
+#[storage(read)]
+fn calc_redemption_rate(base_rate: U128) -> U128 {
+    return fm_min_u128(base_rate + U128::from_u64(REDEMPTION_FEE_FLOOR), U128::from_u64(DECIMAL_PRECISION));
+}
+
 #[storage(read)]
 fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
-    return 0;
+    return calc_redemption_fee(asset_drawn,internal_get_redemption_rate());
 }
+
+#[storage(read)]
+fn internal_get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
+    return calc_redemption_fee(asset_drawn,internal_get_redemption_rate_with_decay());
+}
+
+#[storage(read)]
+fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
+    let redemption_fee = ((U128::from_u64(asset_drawn) * redemption_rate) / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
+
+    require(redemption_fee < asset_drawn, "Redemption fee cannot exceed asset drawn");
+    return redemption_fee;
+}
+
+// ----- Borrowing ----- //
 
 #[storage(read)]
 fn internal_get_borrowing_fee(usdf_debt: u64) -> u64 {
@@ -825,7 +871,7 @@ fn internal_get_borrowing_rate() -> u64 {
 
 #[storage(read)]
 fn internal_get_borrowing_rate_with_decay() -> u64 {
-    internal_calculate_borrowing_rate(calculate_delayed_base_rate())
+    internal_calculate_borrowing_rate(calculate_decayed_base_rate())
 }
 
 #[storage(read)]
@@ -838,7 +884,7 @@ fn require_valid_usdf_id() {
 }
 
 #[storage(read)]
-fn calculate_delayed_base_rate() -> u64 {
+fn calculate_decayed_base_rate() -> u64 {
     let minutes_passed = internal_minutes_passed_since_last_fee_op();
     let decay_factor = dec_pow(MINUTE_DECAY_FACTOR, minutes_passed);
     return (storage.base_rate.as_u64().unwrap() * decay_factor.as_u64().unwrap()) / DECIMAL_PRECISION;
