@@ -194,6 +194,8 @@ impl TroveManager for Contract {
         // TODO active pool send fee to stakers
         // TODO lqty staking increase f_asset
         totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
+        // TODO Change to stakers when implemented
+        active_pool_contract.send_asset(Identity::ContractId(storage.oracle_contract), totals.asset_fee);
 
         usdf_contract.burn {
             coins: totals.total_usdf_to_redeem,
@@ -217,14 +219,17 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_redemption_rate() -> u64 {
-        // TODO
-        return 0;
+        internal_get_redemption_rate().as_u64().unwrap()
     }
 
     #[storage(read)]
     fn get_redemption_rate_with_decay() -> u64 {
-        // TODO
-        return 0;
+        internal_get_redemption_rate_with_decay().as_u64().unwrap()
+    }
+
+    #[storage(read)]
+    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
+        internal_get_redemption_fee_with_decay(asset_drawn)
     }
 
     #[storage(read)]
@@ -235,6 +240,8 @@ impl TroveManager for Contract {
     #[storage(read, write)]
     fn decay_base_rate_from_borrowing() {
         require_caller_is_borrow_operations_contract();
+
+        // TODO Decay base rate but timestamp is not implemented properly
     }
 
         // TODO
@@ -808,14 +815,12 @@ fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total
 
     // Weird memory overflow error if this is included
     // new_base_rate = fm_min_u128(new_base_rate, U128::from_u64(DECIMAL_PRECISION));
-
     require(new_base_rate > U128::from_u64(0), "Base rate cannot be zero");
 
     storage.base_rate = new_base_rate;
 
     update_last_fee_op_time();
 }
-
 
 #[storage(read)]
 fn internal_get_redemption_rate() -> U128 {
@@ -826,7 +831,6 @@ fn internal_get_redemption_rate() -> U128 {
 fn internal_get_redemption_rate_with_decay() -> U128 {
     return calc_redemption_rate(U128::from_u64(calculate_decayed_base_rate()));
 }
-
 #[storage(read)]
 fn calc_redemption_rate(base_rate: U128) -> U128 {
     return fm_min_u128(base_rate + U128::from_u64(REDEMPTION_FEE_FLOOR), U128::from_u64(DECIMAL_PRECISION));
@@ -834,12 +838,11 @@ fn calc_redemption_rate(base_rate: U128) -> U128 {
 
 #[storage(read)]
 fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn,internal_get_redemption_rate());
+    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate());
 }
-
 #[storage(read)]
 fn internal_get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn,internal_get_redemption_rate_with_decay());
+    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate_with_decay());
 }
 
 #[storage(read)]
@@ -851,7 +854,6 @@ fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
 }
 
 // ----- Borrowing ----- //
-
 #[storage(read)]
 fn internal_get_borrowing_fee(usdf_debt: u64) -> u64 {
     return internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), usdf_debt);

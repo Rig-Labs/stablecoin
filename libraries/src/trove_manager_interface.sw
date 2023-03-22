@@ -75,6 +75,9 @@ abi TroveManager {
     fn get_borrowing_rate_with_decay() -> u64;
 
     #[storage(read)]
+    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64;
+
+    #[storage(read)]
     fn get_borrowing_fee(debt: u64) -> u64;
 
     #[storage(read)]
