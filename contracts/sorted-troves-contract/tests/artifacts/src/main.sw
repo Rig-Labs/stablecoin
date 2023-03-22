@@ -95,6 +95,11 @@ impl TroveManager for Contract {
     }
 
     #[storage(read)]
+    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
+        0
+    }
+
+    #[storage(read)]
     fn get_trove_status(id: Identity) -> Status {
         return Status::Active
     }

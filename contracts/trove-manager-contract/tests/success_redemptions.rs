@@ -148,9 +148,10 @@ async fn proper_redemption_from_partially_closed() {
         .value;
 
     assert_eq!(active_pool_asset, 24_000_000_000);
+
     assert_eq!(
         active_pool_debt,
-        pre_redemption_active_pool_debt - 3_000_000_000
+        pre_redemption_active_pool_debt - redemption_amount
     );
 
     let provider = healthy_wallet1.get_provider().unwrap();
@@ -162,7 +163,13 @@ async fn proper_redemption_from_partially_closed() {
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, 3_000_000_000);
+    // TODO Replace with staking contract when implemented
+    let oracle_balance = provider
+        .get_contract_asset_balance(contracts.oracle.contract_id(), fuel_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(fuel_balance, redemption_amount - oracle_balance);
 
     trove_manager_utils::assert_trove_coll(
         &contracts.trove_manager,
@@ -341,7 +348,13 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, 6_000_000_000);
+    // TODO change to Staking contract when implemented
+    let oracle_balance = provider
+        .get_contract_asset_balance(contracts.oracle.contract_id(), fuel_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(fuel_balance, 6_000_000_000 - oracle_balance);
 
     trove_manager_utils::assert_trove_status(
         &contracts.trove_manager,
