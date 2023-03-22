@@ -38,6 +38,7 @@ storage {
     stability_pool_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
+    is_initialized: bool = false,
 }
 
 impl BorrowOperations for Contract {
@@ -53,8 +54,7 @@ impl BorrowOperations for Contract {
         coll_surplus_pool_contract: ContractId,
         stability_pool_contract: ContractId,
     ) {
-        require(storage.trove_manager_contract == null_contract(), "BorrowOperations: contract is already initialized");
-
+        require(storage.is_initialized == false, "BorrowOperations: already initialized");
         storage.trove_manager_contract = trove_manager_contract;
         storage.sorted_troves_contract = sorted_troves_contract;
         storage.oracle_contract = oracle_contract;
@@ -64,8 +64,10 @@ impl BorrowOperations for Contract {
         storage.active_pool_contract = active_pool_contract;
         storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
         storage.stability_pool_contract = stability_pool_contract;
+        storage.is_initialized = true;
     }
 
+    // --- Borrower Trove Operations ---
     #[storage(read, write), payable]
     fn open_trove(
         _usdf_amount: u64,

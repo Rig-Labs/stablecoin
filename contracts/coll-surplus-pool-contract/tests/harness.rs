@@ -6,8 +6,6 @@ use test_utils::{
     setup::common::{deploy_coll_surplus_pool, deploy_token},
 };
 
-// TODO Test coll surplus pool contract instead of default pool
-
 async fn get_contract_instance() -> (CollSurplusPool, Token, WalletUnlocked) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(

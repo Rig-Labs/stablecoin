@@ -15,6 +15,13 @@ use std::{
     token::transfer,
 };
 
+/*
+ * The Active Pool holds the Asset collateral and USDF debt (but not USDF tokens) for all active troves.
+ *
+ * When a trove is liquidated, it's Asset and USDF debt are transferred from the Active Pool, to either the
+ * Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
+ *
+ */
 storage {
     borrow_operations_contract: Identity = null_identity_address(),
     trove_manager_contract: Identity = null_identity_address(),
@@ -23,6 +30,7 @@ storage {
     asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
+    is_initialized: bool = false,
 }
 
 impl ActivePool for Contract {
@@ -34,37 +42,22 @@ impl ActivePool for Contract {
         asset_id: ContractId,
         default_pool: ContractId,
     ) {
-        require(storage.borrow_operations_contract == null_identity_address(), "BorrowOperations contract is already set");
-        require(storage.trove_manager_contract == null_identity_address(), "TroveManager contract is already set");
-        require(storage.stability_pool_contract == null_identity_address(), "StabilityPool contract is already set");
-        require(storage.asset_id == null_contract(), "Asset ID is already set");
+        require(storage.is_initialized == false, "Already initialized");
 
         storage.borrow_operations_contract = borrow_operations;
         storage.trove_manager_contract = trove_manager;
         storage.stability_pool_contract = stability_pool;
         storage.asset_id = asset_id;
         storage.default_pool_contract = default_pool;
+        storage.is_initialized = true;
     }
 
-    #[storage(read, write)]
-    fn send_asset(address: Identity, amount: u64) {
-        require_caller_is_bo_or_tm_or_sp();
-        transfer(amount, storage.asset_id, address);
-        storage.asset_amount -= amount;
-    }
-
-    #[storage(read, write)]
-    fn send_asset_to_default_pool(amount: u64) {
-        require_caller_is_bo_or_tm_or_sp();
-        storage.asset_amount -= amount;
-        let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
-
-        dafault_pool.recieve {
-            coins: amount,
-            asset_id: storage.asset_id.value,
-        }();
-    }
-
+    // --- Getters for public variables. Required by Pool interface ---
+    /*
+    * Returns the Asset state variable.
+    *
+    * Not necessarily equal to the the contract's raw Asset balance - Assets can be forcibly sent to contracts.
+    */
     #[storage(read)]
     fn get_asset() -> u64 {
         return storage.asset_amount;
@@ -73,6 +66,14 @@ impl ActivePool for Contract {
     #[storage(read)]
     fn get_usdf_debt() -> u64 {
         return storage.usdf_debt_amount;
+    }
+
+    // --- Pool functionality ---
+    #[storage(read, write)]
+    fn send_asset(address: Identity, amount: u64) {
+        require_caller_is_bo_or_tm_or_sp();
+        transfer(amount, storage.asset_id, address);
+        storage.asset_amount -= amount;
     }
 
     #[storage(read, write)]
@@ -87,6 +88,20 @@ impl ActivePool for Contract {
         storage.usdf_debt_amount -= amount;
     }
 
+    #[storage(read, write)]
+    fn send_asset_to_default_pool(amount: u64) {
+        require_caller_is_bo_or_tm_or_sp();
+        storage.asset_amount -= amount;
+        let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
+
+        dafault_pool.recieve {
+            coins: amount,
+            asset_id: storage.asset_id.value,
+        }();
+    }
+
+    // --- Receive functionality ---
+    // Required to record the contract's raw Asset balance since there is no FallBack function
     #[storage(read, write), payable]
     fn recieve() {
         require_caller_is_borrow_operations_or_default_pool();
@@ -95,6 +110,7 @@ impl ActivePool for Contract {
     }
 }
 
+// --- Helper functions ---
 #[storage(read)]
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
