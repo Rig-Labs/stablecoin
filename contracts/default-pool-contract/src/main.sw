@@ -15,12 +15,20 @@ use std::{
     token::transfer,
 };
 
+/*
+ * The Default Pool holds the Asset and USDF debt (but not USDF tokens) from liquidations that have been redistributed
+ * to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
+ *
+ * When a trove makes an operation that applies its pending Asset and USDF debt, its pending Asset and USDF debt is moved
+ * from the Default Pool to the Active Pool.
+ */
 storage {
     trove_manager_contract: Identity = null_identity_address(),
     active_pool: ContractId = null_contract(),
     asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
+    is_initialized: bool = false,
 }
 
 impl DefaultPool for Contract {
@@ -30,12 +38,12 @@ impl DefaultPool for Contract {
         active_pool: ContractId,
         asset_id: ContractId,
     ) {
-        require(storage.trove_manager_contract == null_identity_address(), "TroveManager contract is already set");
-        require(storage.asset_id == null_contract(), "Asset ID is already set");
+        require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.trove_manager_contract = trove_manager;
         storage.active_pool = active_pool;
         storage.asset_id = asset_id;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]

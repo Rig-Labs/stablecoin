@@ -36,6 +36,7 @@ storage {
     head: Identity = null_identity_address(),
     tail: Identity = null_identity_address(),
     nodes: StorageMap<Identity, Node> = StorageMap {},
+    is_initialized: bool = false,
 }
 
 impl SortedTroves for Contract {
@@ -46,12 +47,12 @@ impl SortedTroves for Contract {
         borrower_operations_contract_id: ContractId,
     ) {
         require(size > 0, "size must be greater than 0");
-        require(storage.trove_manager_contract_id == null_contract(), "trove_manager_identity must not be set");
-        require(storage.borrower_operations_contract_id == null_contract(), "borrower_operations_contract_id must not be set");
+        require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.max_size = size;
         storage.trove_manager_contract_id = trove_manager_contract_id;
         storage.borrower_operations_contract_id = borrower_operations_contract_id;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]

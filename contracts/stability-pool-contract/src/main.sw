@@ -50,6 +50,7 @@ storage {
     community_issuance_address: ContractId = null_contract(),
     asset_address: ContractId = null_contract(),
     p: U128 = U128::from_u64(DECIMAL_PRECISION),
+    is_initialized: bool = false,
 }
 
 impl StabilityPool for Contract {
@@ -64,7 +65,7 @@ impl StabilityPool for Contract {
         community_issuance_address: ContractId,
         asset_address: ContractId,
     ) {
-        require(storage.borrow_operations_address == null_contract(), "Already initialized");
+        require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.borrow_operations_address = borrow_operations_address;
         storage.trove_manager_address = trove_manager_address;
@@ -74,6 +75,7 @@ impl StabilityPool for Contract {
         storage.oracle_address = oracle_address;
         storage.community_issuance_address = community_issuance_address;
         storage.asset_address = asset_address;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]

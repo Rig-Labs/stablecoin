@@ -74,6 +74,7 @@ storage {
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap {},
+    is_initialized: bool = false,
 }
 
 impl TroveManager for Contract {
@@ -88,7 +89,7 @@ impl TroveManager for Contract {
         coll_surplus_pool: ContractId,
         usdf_contract: ContractId,
     ) {
-        // TODO Require not already initialized
+        require(storage.is_initialized == false, "Contract is already initialized");
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
         storage.stability_pool_contract = stability_pool;
@@ -97,6 +98,7 @@ impl TroveManager for Contract {
         storage.active_pool_contract = active_pool;
         storage.coll_surplus_pool_contract = coll_surplus_pool;
         storage.usdf_contract = usdf_contract;
+        storage.is_initialized = true;
     }
 
     #[storage(read)]

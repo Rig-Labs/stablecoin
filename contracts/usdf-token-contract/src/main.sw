@@ -36,6 +36,7 @@ storage {
     stability_pool: Identity = null_identity_address(),
     borrower_operations: Identity = null_identity_address(),
     total_supply: u64 = 0,
+    is_initialized: bool = false,
 }
 
 enum Error {
@@ -53,14 +54,12 @@ impl USDFToken for Contract {//////////////////////////////////////
         stability_pool: Identity,
         borrower_operations: Identity,
     ) {
-        require(storage.trove_manager == null_identity_address(), Error::CannotReinitialize);
-        require(storage.stability_pool == null_identity_address(), Error::CannotReinitialize);
-        require(storage.borrower_operations == null_identity_address(), Error::CannotReinitialize);
-
+        require(storage.is_initialized == false, "Contract is already initialized");
         storage.trove_manager = trove_manager;
         storage.stability_pool = stability_pool;
         storage.borrower_operations = borrower_operations;
         storage.config = config;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]

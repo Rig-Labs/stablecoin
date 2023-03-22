@@ -22,6 +22,7 @@ storage {
     asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
     balances: StorageMap<Identity, u64> = StorageMap {},
+    is_initialized: bool = false,
 }
 
 impl CollSurplusPool for Contract {
@@ -32,13 +33,13 @@ impl CollSurplusPool for Contract {
         borrow_operations: ContractId,
         asset_id: ContractId,
     ) {
-        require(storage.trove_manager_contract == null_identity_address(), "TroveManager contract is already set");
-        require(storage.asset_id == null_contract(), "Asset ID is already set");
+        require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.trove_manager_contract = trove_manager;
         storage.borrow_operations = borrow_operations;
         storage.active_pool = active_pool;
         storage.asset_id = asset_id;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]
