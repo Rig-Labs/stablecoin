@@ -231,7 +231,7 @@ pub mod trove_manager_abi {
         oracle: &Oracle,
         default_pool: &DefaultPool,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(10_000_000), Some(0));
+        let tx_params = TxParameters::new(Some(1), Some(20_000_000), Some(0));
         let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
 
         let call_params: CallParameters = CallParameters {

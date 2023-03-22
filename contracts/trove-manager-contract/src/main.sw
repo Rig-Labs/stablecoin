@@ -170,26 +170,19 @@ impl TroveManager for Contract {
         }
 
         let mut remaining_itterations = max_itterations;
-
         while (current_borrower != null_identity_address() && totals.remaining_usdf > 0 && remaining_itterations > 0) {
             remaining_itterations -= 1;
-
             let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
             internal_apply_pending_rewards(current_borrower);
-
             let single_redemption = internal_redeem_collateral_from_trove(current_borrower, totals.remaining_usdf, totals.price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
-
             if (single_redemption.cancelled_partial) {
                 break;
             }
-
             totals.total_usdf_to_redeem += single_redemption.usdf_lot;
             totals.total_asset_drawn += single_redemption.asset_lot;
-
             totals.remaining_usdf -= single_redemption.usdf_lot;
             current_borrower = next_user_to_check;
         }
-
         require(totals.total_asset_drawn > 0, "No collateral to redeem");
 
         internal_update_base_rate_from_redemption(0, 0, 0);
@@ -371,7 +364,6 @@ impl TroveManager for Contract {
 
         internal_batch_liquidate_troves(borrowers);
     }
-
     #[storage(read, write)]
     fn liquidate_troves(num_troves: u64) {}
 
@@ -772,7 +764,6 @@ fn internal_redeem_collateral_from_trove(
     } else {
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
 
-
         // TODO Consider removing this check
         // if (new_debt < MIN_NET_DEBT) {
         //     single_redemption_values.cancelled_partial = true;
@@ -841,7 +832,6 @@ fn internal_get_borrowing_rate_with_decay() -> u64 {
 fn internal_calculate_borrowing_rate(base_rate: u64) -> u64 {
     return fm_min(BORROWING_FEE_FLOOR + base_rate, MAX_BORROWING_FEE);
 }
-
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
