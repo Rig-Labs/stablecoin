@@ -11,6 +11,7 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
+    utils::with_min_borrow_fee,
 };
 
 #[tokio::test]
@@ -358,7 +359,10 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         .value;
 
     assert_eq!(active_pool_asset, 40_000_000_000 + remaining_coll);
-    assert_eq!(active_pool_debt, 20_000_000_000 + remaining_debt);
+    assert_eq!(
+        active_pool_debt,
+        with_min_borrow_fee(20_000_000_000) + remaining_debt
+    );
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -375,7 +379,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     );
     assert_eq!(
         default_pool_debt,
-        starting_debt - remaining_debt - 500_000_000
+        with_min_borrow_fee(starting_debt) - remaining_debt - 500_000_000
     );
 
     let walet2_expected_asset_rewards: u128 = u128::from(default_pool_asset)
@@ -621,7 +625,10 @@ async fn proper_partial_liquidation_empty_sp() {
         .value;
 
     assert_eq!(active_pool_asset, 40_000_000_000 + remaining_coll);
-    assert_eq!(active_pool_debt, 20_000_000_000 + remaining_debt);
+    assert_eq!(
+        active_pool_debt,
+        with_min_borrow_fee(20_000_000_000) + remaining_debt
+    );
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -633,7 +640,10 @@ async fn proper_partial_liquidation_empty_sp() {
 
     // 1.05 * 500_000_000
     assert_eq!(default_pool_asset, starting_col - remaining_coll);
-    assert_eq!(default_pool_debt, starting_debt - remaining_debt);
+    assert_eq!(
+        default_pool_debt,
+        with_min_borrow_fee(starting_debt) - remaining_debt
+    );
 
     let walet2_expected_asset_rewards: u128 = u128::from(default_pool_asset)
         * u128::from(30_000_000_000 as u128)

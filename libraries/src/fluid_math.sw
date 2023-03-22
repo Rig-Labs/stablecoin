@@ -105,9 +105,37 @@ pub fn null_contract() -> ContractId {
 }
 
 #[test]
-fn test_dec_pow() {
+fn test_dec_pow_zero() {
     let base = 1_000_000_000;
-    let minutes = 525600000;
-    // let result = dec_pow(base, minutes);
-    // assert(result == U128::from_u64(1_000_000_000));
+    let exponent = 0;
+    let result = dec_pow(base, exponent);
+    assert(result == U256::from_u64(DECIMAL_PRECISION));
 }
+
+#[test]
+fn test_dec_pow_one() {
+    let base = 1_000_000_000;
+    let exponent = 1;
+    let result = dec_pow(base, exponent);
+    assert(base == result.as_u64().unwrap());
+
+    let base = 3_000_000_000;
+    let exponent = 1;
+    let result = dec_pow(base, exponent);
+    assert(base == result.as_u64().unwrap());
+}
+
+#[test]
+fn test_dec_pow_two() {
+    let base = 1_500_000_000;
+    let exponent = 2;
+    let result = dec_pow(base, exponent);
+    assert(2_250_000_000 == result.as_u64().unwrap());
+
+    let base = 3_000_000_000;
+    let exponent = 2;
+    let result = dec_pow(base, exponent);
+    assert(9_000_000_000 == result.as_u64().unwrap());
+}
+
+// TODO add more tests

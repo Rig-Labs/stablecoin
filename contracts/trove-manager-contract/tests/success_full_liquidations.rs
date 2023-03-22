@@ -11,9 +11,8 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
+    utils::{with_liquidation_penalty, with_min_borrow_fee},
 };
-
-
 
 #[tokio::test]
 async fn proper_full_liquidation_enough_usdf_in_sp() {
@@ -49,6 +48,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         healthy_wallet1.clone(),
     );
 
+    let usdf_deposit_to_be_liquidated = 1_000_000_000;
+    let asset_deposit_to_be_liquidated = 1_100_000_000;
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
         &contracts.oracle,
@@ -57,8 +58,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.sorted_troves,
         &contracts.trove_manager,
         &contracts.active_pool,
-        1_100_000_000,
-        1_000_000_000,
+        asset_deposit_to_be_liquidated,
+        usdf_deposit_to_be_liquidated,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -146,7 +147,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         .unwrap()
         .value;
 
-    assert_eq!(deposits, 4_000_000_000);
+    let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
+    assert_eq!(deposits, 5_000_000_000 - liquidated_net_debt);
 
     let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
         .await
@@ -154,7 +156,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         .value;
 
     // 5% Penalty on 1_000_000_000 of debt
-    assert_eq!(asset, 1_050_000_000);
+    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050_000_000);
+    assert_eq!(asset, asset_with_min_borrow_fee);
 
     let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -165,7 +168,9 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         .value;
 
     assert_eq!(active_pool_asset, 10_000_000_000);
-    assert_eq!(active_pool_debt, 5_000_000_000);
+
+    let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000_000_000);
+    assert_eq!(active_pool_debt, active_pool_debt_with_min_borrow_fee);
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -185,8 +190,10 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .await
     .value;
 
+    // Prices are the same
     assert_eq!(
-        liq_coll_surplus, 50_000_000,
+        liq_coll_surplus,
+        asset_deposit_to_be_liquidated - with_liquidation_penalty(liquidated_net_debt),
         "Liquidated wallet collateral surplus was not 50_000"
     );
 }
@@ -353,7 +360,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         .value;
 
     // 5% Penalty on 1_000_000_000 of debt
-    assert_eq!(asset, 525_000_000);
+    assert_eq!(
+        asset, 525_000_000,
+        "Incorrect asset amount in stability pool"
+    );
 
     let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -364,7 +374,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         .value;
 
     assert_eq!(active_pool_asset, 40_000_000_000);
-    assert_eq!(active_pool_debt, 20_000_000_000);
+    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -375,34 +385,39 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         .value;
 
     // 1.05 * 500_000_000
-    assert_eq!(default_pool_asset, 525_000_000);
-    assert_eq!(default_pool_debt, 500_000_000);
+    let debt_being_redistributed = with_min_borrow_fee(1_000_000_000) - 500_000_000;
+    let asset_being_redistributed = with_liquidation_penalty(debt_being_redistributed);
+    assert_eq!(
+        default_pool_asset, asset_being_redistributed,
+        "Incorrect asset amount in default pool"
+    );
+    assert_eq!(default_pool_debt, debt_being_redistributed);
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        525_000_000 / 4,
+        asset_being_redistributed / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        500_000_000 / 4,
+        debt_being_redistributed / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        525_000_000 * 3 / 4,
+        asset_being_redistributed * 3 / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        500_000_000 * 3 / 4,
+        debt_being_redistributed * 3 / 4,
     )
     .await;
 
@@ -414,8 +429,9 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .value;
 
     assert_eq!(
-        liq_coll_surplus, 50_000_000,
-        "Liquidated wallet collateral surplus was not 50_000"
+        liq_coll_surplus,
+        1_100_000_000 - with_liquidation_penalty(with_min_borrow_fee(1_000_000_000)),
+        "Liquidated wallet collateral surplus was not 50_000_000"
     );
 }
 
@@ -577,7 +593,7 @@ async fn proper_full_liquidation_empty_sp() {
         .value;
 
     assert_eq!(active_pool_asset, 40_000_000_000);
-    assert_eq!(active_pool_debt, 20_000_000_000);
+    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
 
     let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
         .await
@@ -588,34 +604,36 @@ async fn proper_full_liquidation_empty_sp() {
         .value;
 
     // 1.05 * 500_000_000
-    assert_eq!(default_pool_asset, 1_050_000_000);
-    assert_eq!(default_pool_debt, 1_000_000_000);
+    let expected_default_pool_asset = with_liquidation_penalty(with_min_borrow_fee(1_000_000_000));
+    let expected_default_pool_debt = with_min_borrow_fee(1_000_000_000);
+    assert_eq!(default_pool_asset, expected_default_pool_asset);
+    assert_eq!(default_pool_debt, expected_default_pool_debt);
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        1_050_000_000 / 4,
+        expected_default_pool_asset / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
-        1_000_000_000 / 4,
+        expected_default_pool_debt / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        1_050_000_000 * 3 / 4,
+        expected_default_pool_asset * 3 / 4,
     )
     .await;
 
     trove_manager_utils::assert_pending_usdf_rewards(
         &contracts.trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
-        1_000_000_000 * 3 / 4,
+        expected_default_pool_debt * 3 / 4,
     )
     .await;
 
@@ -627,7 +645,8 @@ async fn proper_full_liquidation_empty_sp() {
     .value;
 
     assert_eq!(
-        liq_coll_surplus, 50_000_000,
+        liq_coll_surplus,
+        1_100_000_000 - expected_default_pool_asset,
         "Liquidated wallet collateral surplus was not 50_000"
     );
 }
