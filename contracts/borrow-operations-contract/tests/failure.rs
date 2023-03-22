@@ -6,6 +6,7 @@ use test_utils::{
     interfaces::{active_pool::active_pool_abi, token::token_abi},
     interfaces::{trove_manager::trove_manager_abi, usdf_token::usdf_token_abi},
     setup::common::{deploy_token, deploy_usdf_token, setup_protocol},
+    utils::{calculate_icr, with_min_borrow_fee},
 };
 
 #[tokio::test]
@@ -84,7 +85,10 @@ async fn fails_open_two_troves() {
     assert_eq!(last, Identity::Address(admin.address().into()));
     assert_eq!(usdf_balance, 600_000_000);
 
-    assert_eq!(icr, 2_000_000_000, "ICR is wrong");
+    let expected_debt = with_min_borrow_fee(600_000_000);
+    let expected_icr = calculate_icr(1_200_000_000, expected_debt);
+
+    assert_eq!(icr, expected_icr, "ICR is wrong");
 
     let trove_col = trove_manager_abi::get_trove_coll(
         &contracts.trove_manager,
@@ -101,12 +105,12 @@ async fn fails_open_two_troves() {
     .value;
 
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await

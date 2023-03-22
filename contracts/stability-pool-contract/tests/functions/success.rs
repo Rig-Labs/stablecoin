@@ -9,6 +9,7 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils},
     },
     setup::common::setup_protocol,
+    utils::with_min_borrow_fee,
 };
 
 #[tokio::test]
@@ -197,11 +198,12 @@ async fn proper_one_sp_depositor_position() {
     .await
     .unwrap();
 
+    let init_stability_deposit = 1_500_000_000;
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.usdf,
         &contracts.fuel,
-        1_500_000_000,
+        init_stability_deposit,
     )
     .await
     .unwrap();
@@ -222,30 +224,42 @@ async fn proper_one_sp_depositor_position() {
     .await
     .unwrap();
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, 1_050_000_000).await;
+    // Since the entire debt is liquidated including the borrow fee,
+    // the asset recieved includes the 0.5% fee
+    let asset_with_fee_adjustment = with_min_borrow_fee(1_050_000_000);
+    let debt_with_fee_adjustment = with_min_borrow_fee(1_000_000_000);
 
-    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 500_000_000).await;
+    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, asset_with_fee_adjustment)
+        .await;
+
+    stability_pool_utils::assert_total_usdf_deposits(
+        &contracts.stability_pool,
+        init_stability_deposit - debt_with_fee_adjustment,
+    )
+    .await;
 
     stability_pool_utils::assert_depositor_asset_gain(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        1_050_000_000,
+        asset_with_fee_adjustment,
     )
     .await;
 
+    // 500 - 0.5% fee
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        500_000_000,
+        init_stability_deposit - debt_with_fee_adjustment,
     )
     .await;
 
     // Makes a 2nd deposit to the Stability Pool
+    let second_deposit = 1_000_000_000;
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.usdf,
         &contracts.fuel,
-        1_000_000_000,
+        second_deposit,
     )
     .await
     .unwrap();
@@ -253,7 +267,7 @@ async fn proper_one_sp_depositor_position() {
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        1_500_000_000,
+        init_stability_deposit - debt_with_fee_adjustment + second_deposit,
     )
     .await;
 
@@ -274,7 +288,7 @@ async fn proper_one_sp_depositor_position() {
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, 1_050_000_000);
+    assert_eq!(fuel_balance, asset_with_fee_adjustment);
 }
 
 #[tokio::test]
@@ -413,17 +427,24 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, 1_050_000_000).await;
+    let asset_with_fee_adjustment = with_min_borrow_fee(1_050_000_000);
+    let debt_paid_off = with_min_borrow_fee(1_000_000_000);
+
+    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, asset_with_fee_adjustment)
+        .await;
 
     // 3,000 initially deposited, 1000 used to pay off debt, 1,500 left in pool
-    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 2_000_000_000)
-        .await;
+    stability_pool_utils::assert_total_usdf_deposits(
+        &contracts.stability_pool,
+        3_000_000_000 - debt_paid_off,
+    )
+    .await;
 
     // Admin is 2/3 of the pool, depositor_2 is 1/6, depositor_3 is 1/6
     stability_pool_utils::assert_depositor_asset_gain(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        1_050_000_000 * 2 / 3,
+        asset_with_fee_adjustment * 2 / 3,
     )
     .await;
 
@@ -431,21 +452,21 @@ async fn proper_many_depositors_distribution() {
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        2_000_000_000 - 1_000_000_000 * 2 / 3,
+        2_000_000_000 - debt_paid_off * 2 / 3,
     )
     .await;
 
     stability_pool_utils::assert_depositor_asset_gain(
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
-        1_050_000_000 / 6,
+        asset_with_fee_adjustment / 6,
     )
     .await;
 
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
-        500_000_000 - 1_000_000_000 / 6,
+        500_000_000 - debt_paid_off / 6,
     )
     .await;
 }
@@ -659,10 +680,12 @@ async fn proper_depositor_move_gain_to_trove() {
     .await
     .unwrap();
 
+    let asset_with_fee = with_min_borrow_fee(1_050_000_000);
+
     stability_pool_utils::assert_depositor_asset_gain(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        1_050_000_000,
+        asset_with_fee,
     )
     .await;
 
@@ -691,7 +714,7 @@ async fn proper_depositor_move_gain_to_trove() {
     trove_manager_utils::assert_trove_coll(
         &contracts.trove_manager,
         Identity::Address(admin.address().into()),
-        6_000_000_000 + 1_050_000_000,
+        6_000_000_000 + asset_with_fee,
     )
     .await;
 }

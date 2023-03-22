@@ -8,6 +8,7 @@ use test_utils::{
     interfaces::trove_manager::trove_manager_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
     setup::common::setup_protocol,
+    utils::{calculate_icr, with_min_borrow_fee},
 };
 
 #[tokio::test]
@@ -67,9 +68,10 @@ async fn proper_creating_trove() {
     assert_eq!(last, Identity::Address(admin.address().into()));
     assert_eq!(usdf_balance, 600_000_000);
 
-    // println!("Admin USDF balance: {:?}", usdf_balance / 1_000_000);
-    // println!("ICR: {:?}", icr);
-    assert_eq!(icr, 2_000_000_000, "ICR is wrong");
+    let expected_net_debt: u64 = with_min_borrow_fee(usdf_balance);
+    let expected_icr = calculate_icr(1_200_000_000, expected_net_debt);
+
+    assert_eq!(icr, expected_icr, "ICR is wrong");
 
     let trove_col = trove_manager_abi::get_trove_coll(
         &contracts.trove_manager,
@@ -86,12 +88,15 @@ async fn proper_creating_trove() {
     .value;
 
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+    assert_eq!(
+        active_pool_debt, expected_net_debt,
+        "Active Pool Debt is wrong"
+    );
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -158,8 +163,10 @@ async fn proper_increase_collateral() {
     .await
     .value;
 
+    let expected_debt = with_min_borrow_fee(600_000_000);
+
     assert_eq!(trove_col, 2_400_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
         .await
@@ -181,12 +188,14 @@ async fn proper_increase_collateral() {
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    assert_eq!(icr, 4_000_000_000, "ICR is wrong");
+    let expected_nicr = calculate_icr(2_400_000_000, expected_debt);
+
+    assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -256,8 +265,10 @@ async fn proper_decrease_collateral() {
     .await
     .value;
 
+    let expected_debt = with_min_borrow_fee(600_000_000);
+
     assert_eq!(trove_col, 900_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
         .await
@@ -275,11 +286,13 @@ async fn proper_decrease_collateral() {
     .await
     .value;
 
+    let expected_nicr = calculate_icr(900_000_000, expected_debt);
+
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    assert_eq!(icr, 1_500_000_000, "ICR is wrong");
+    assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
         .get_asset_balance(admin.address().into(), fuel_asset_id)
@@ -291,7 +304,7 @@ async fn proper_decrease_collateral() {
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -363,8 +376,10 @@ async fn proper_increase_debt() {
     .await
     .value;
 
+    let expected_debt = with_min_borrow_fee(800_000_000);
+
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 800_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
         .await
@@ -382,11 +397,13 @@ async fn proper_increase_debt() {
     .await
     .value;
 
+    let expected_nicr = calculate_icr(1_200_000_000, expected_debt);
+
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    assert_eq!(icr, 1_500_000_000, "ICR is wrong");
+    assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
         .get_asset_balance(admin.address().into(), fuel_asset_id)
@@ -405,7 +422,7 @@ async fn proper_increase_debt() {
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 800_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -479,8 +496,10 @@ async fn proper_decrease_debt() {
     .await
     .value;
 
+    let expected_debt = with_min_borrow_fee(800_000_000) - 200_000_000;
+
     assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
-    assert_eq!(trove_debt, 600_000_000, "Trove Debt is wrong");
+    assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
         .await
@@ -502,7 +521,9 @@ async fn proper_decrease_debt() {
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    assert_eq!(icr, 2_000_000_000, "ICR is wrong");
+    let expected_nicr = calculate_icr(1_200_000_000, expected_debt);
+
+    assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
         .get_asset_balance(admin.address().into(), fuel_asset_id)
@@ -521,7 +542,7 @@ async fn proper_decrease_debt() {
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 600_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -614,7 +635,9 @@ async fn proper_open_multiple_troves() {
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 2_000_000_000, "Active Pool Debt is wrong");
+
+    let expected_debt = with_min_borrow_fee(2_000_000_000);
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
@@ -674,6 +697,15 @@ async fn proper_close_trove() {
     .await
     .unwrap();
 
+    let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
+    let amount = 1_000_000_000 / 200;
+    let tx_parms = TxParameters::new(None, None, None);
+
+    wallet1
+        .transfer(wallet2.address(), amount, usdf_asset_id, tx_parms)
+        .await
+        .unwrap();
+
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.oracle,
@@ -690,6 +722,8 @@ async fn proper_close_trove() {
     .await
     .unwrap();
 
+    let expected_debt = with_min_borrow_fee(1_000_000_000);
+
     borrow_operations_abi::close_trove(
         &borrow_operations_wallet2,
         &contracts.oracle,
@@ -698,7 +732,7 @@ async fn proper_close_trove() {
         &contracts.sorted_troves,
         &contracts.trove_manager,
         &contracts.active_pool,
-        1_000_000_000,
+        expected_debt,
     )
     .await;
 
@@ -729,7 +763,7 @@ async fn proper_close_trove() {
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
         .value;
-    assert_eq!(active_pool_debt, 1_000_000_000, "Active Pool Debt is wrong");
+    assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
         .await
