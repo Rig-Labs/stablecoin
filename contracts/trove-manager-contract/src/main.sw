@@ -70,7 +70,6 @@ storage {
     last_usdf_error_redistribution: u64 = 0,
     last_fee_operation_timestamp: u64 = 0,
     base_rate: U128 = U128::from_u64(0),
-    nominal_icr: StorageMap<Identity, u64> = StorageMap {},
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap {},
@@ -106,30 +105,6 @@ impl TroveManager for Contract {
         let trove = storage.troves.get(id);
 
         return fm_compute_nominal_cr(trove.coll, trove.debt);
-    }
-
-    #[storage(read, write)]
-    fn set_nominal_icr_and_insert(
-        id: Identity,
-        value: u64,
-        prev_id: Identity,
-        next_id: Identity,
-    ) {
-        // TODO Remove this function 
-        storage.nominal_icr.insert(id, value);
-        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
-        let _ = internal_increase_trove_coll(id, value);
-        let _ = internal_increase_trove_debt(id, 1);
-
-        sorted_troves_contract.insert(id, fm_compute_nominal_cr(value, 1), prev_id, next_id);
-    }
-
-    #[storage(read, write)]
-    fn remove(id: Identity) {
-        // TODO Remove this function
-        storage.nominal_icr.insert(id, 0);
-        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.remove(id);
     }
 
     #[storage(read, write)]
