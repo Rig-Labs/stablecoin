@@ -40,7 +40,7 @@ storage {
 }
 
 enum Error {
-    CannotReinitialize: (),
+
     NotAuthorized: (),
 }
 

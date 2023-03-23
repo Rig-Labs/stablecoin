@@ -12,6 +12,7 @@ pub fn calculate_liqudated_trove_values(
     debt: u64,
     price: u64,
 ) -> LiquidatedTroveValsInner {
+    // Debt * Post Collateral Ratio > Debt * Min Collateral Ratio > Coll * Price
     let trove_debt_numerator: U128 = U128::from_u64(debt) * U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(coll) * U128::from_u64(price);
     let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(ONE + STABILITY_POOL_FEE);
 
@@ -21,18 +22,22 @@ pub fn calculate_liqudated_trove_values(
 
     let remaining_debt = debt - trove_debt_to_repay;
 
+    // If the coll/debt required to liquidate back to PCR is more than the coll in the trove,
+    // liquidate the entire trove
+
     if remaining_debt < MIN_NET_DEBT {
         trove_coll_liquidated = debt * (ONE + STABILITY_POOL_FEE) / price;
         return LiquidatedTroveValsInner {
-            trove_coll_liquidated,
+            trove_coll_liquidated: fm_min(trove_coll_liquidated, coll),
             trove_debt_to_repay: debt,
             is_partial_liquidation: false,
         }
     }
 
+    // Min for bad debt
     return LiquidatedTroveValsInner {
-        trove_coll_liquidated,
-        trove_debt_to_repay,
+        trove_coll_liquidated: fm_min(trove_coll_liquidated, coll),
+        trove_debt_to_repay: fm_min(trove_debt_to_repay, debt),
         is_partial_liquidation: true,
     }
 }
@@ -117,6 +122,20 @@ fn test_calculate_liqudated_trove_values() {
     let pcr = fm_compute_cr(ending_coll, ending_debt, price);
     assert(pcr == POST_COLLATERAL_RATIO);
 }
+
+#[test]
+fn test_calculate_liqudated_trove_values_bad_debt() {
+    // Full liquidation bad debt
+    let starting_coll = 900_000_000;
+    let starting_debt = 1_000_000_000;
+    let liquidation_vals = calculate_liqudated_trove_values(1_100_000_000, 1_000_000_000, 1_000_000);
+
+    assert(liquidation_vals.trove_coll_liquidated == starting_coll);
+    assert(liquidation_vals.trove_debt_to_repay == starting_debt);
+    assert(liquidation_vals.is_partial_liquidation == false);
+}
+
+
 
 #[test]
 fn test_get_offset_and_redistribution_vals_full_liquidation_empty_pool() {

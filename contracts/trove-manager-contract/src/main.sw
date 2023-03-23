@@ -785,7 +785,7 @@ fn internal_redeem_collateral_from_trove(
         trove.coll = new_coll;
         storage.troves.insert(borrower, trove);
 
-        internal_update_stake_and_total_stakes(borrower);
+        let _ = internal_update_stake_and_total_stakes(borrower);
     }
 
     return single_redemption_values;
@@ -856,11 +856,6 @@ fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
 }
 
 // ----- Borrowing ----- //
-#[storage(read)]
-fn internal_get_borrowing_fee(usdf_debt: u64) -> u64 {
-    return internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), usdf_debt);
-}
-
 #[storage(read)]
 fn internal_calculate_borrowing_fee(borrowing_rate: u64, usdf_debt: u64) -> u64 {
     let numerator = U128::from_u64(borrowing_rate) * U128::from_u64(usdf_debt);

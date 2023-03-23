@@ -101,8 +101,8 @@ impl BorrowOperations for Contract {
         require_at_least_mcr(vars.icr);
 
         trove_manager.set_trove_status(sender, Status::Active);
-        trove_manager.increase_trove_coll(sender, msg_amount());
-        trove_manager.increase_trove_debt(sender, vars.net_debt);
+        let _ = trove_manager.increase_trove_coll(sender, msg_amount());
+        let _ = trove_manager.increase_trove_debt(sender, vars.net_debt);
 
         trove_manager.update_trove_reward_snapshots(sender);
         let _ = trove_manager.update_stake_and_total_stakes(sender);
@@ -117,7 +117,6 @@ impl BorrowOperations for Contract {
     #[storage(read, write), payable]
     fn add_coll(_upper_hint: Identity, _lower_hint: Identity) {
         require_valid_asset_id();
-
         internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, _upper_hint, _lower_hint);
     }
 
@@ -242,7 +241,6 @@ fn internal_adjust_trove(
     vars.is_coll_increase = pos_res.1;
 
     vars.net_debt_change = _usdf_change;
-
     if _is_debt_increase {
         vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, 0);
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
