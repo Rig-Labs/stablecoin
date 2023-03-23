@@ -44,7 +44,7 @@ Functionality
 - [x] Redeem Collateral w/ USDF
 - [x] Stability Pool
 - [ ] Multiple assets (Fuel, stFuel)
-- [ ] Fees
+- [x] Fees
 - [ ] Stake FPT
 
 License
