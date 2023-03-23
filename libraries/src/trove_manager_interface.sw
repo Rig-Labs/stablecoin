@@ -7,13 +7,6 @@ abi TroveManager {
     #[storage(read, write)]
     fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId);
 
-    // TODO REMOVE 
-    #[storage(read, write)]
-    fn set_nominal_icr_and_insert(id: Identity, value: u64, prev_id: Identity, next_id: Identity);
-
-    #[storage(read, write)]
-    fn remove(id: Identity);
-
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;
 

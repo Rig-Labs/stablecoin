@@ -1,9 +1,7 @@
 use fuels::prelude::*;
+use test_utils::interfaces::vesting::VestingContract;
 use test_utils::setup::common::deploy_vesting_contract;
 use test_utils::{interfaces::token::Token, setup::common::deploy_token};
-// TODO: do setup instead of copy/pasted code with minor adjustments
-use test_utils::interfaces::vesting::VestingContract;
-// Load abi from json
 
 pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
     let config = Config {

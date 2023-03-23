@@ -6,7 +6,6 @@ use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
 use test_utils::setup::common::{deploy_stability_pool, deploy_token};
-// TODO: do setup instead of copy/pasted code with minor adjustments
 
 abigen!(Contract(
     name = "MockTroveManagerContract",

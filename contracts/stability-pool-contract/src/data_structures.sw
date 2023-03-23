@@ -21,4 +21,3 @@ impl Snapshots {
         }
     }
 }
-// TODO Change to u128 when possible
