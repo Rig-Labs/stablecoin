@@ -184,6 +184,7 @@ impl BorrowOperations for Contract {
         lower_hint: Identity,
     ) {}
 
+        // TODO
         // Since you cannot attach two different assets to a single transaction, 
         // we need to check which asset is being used, probably will remove this function
     #[storage(read)]
@@ -212,13 +213,13 @@ fn internal_trigger_borrowing_fee(usdf_amount: u64, max_fee_percentage: u64) -> 
 
 #[storage(read)]
 fn internal_adjust_trove(
-    _borrower: Identity,
-    _asset_coll_added: u64,
-    _coll_withdrawal: u64,
-    _usdf_change: u64,
-    _is_debt_increase: bool,
-    _upper_hint: Identity,
-    _lower_hint: Identity,
+    borrower: Identity,
+    asset_coll_added: u64,
+    coll_withdrawal: u64,
+    usdf_change: u64,
+    is_debt_increase: bool,
+    upper_hint: Identity,
+    lower_hint: Identity,
 ) {
     let oracle = abi(MockOracle, storage.oracle_contract.value);
     let trove_manager = abi(TroveManager, storage.trove_manager_contract.value);
@@ -227,47 +228,47 @@ fn internal_adjust_trove(
 
     let mut vars = LocalVariables_AdjustTrove::new();
 
-    if _is_debt_increase {
-        require_non_zero_debt_change(_usdf_change);
+    if is_debt_increase {
+        require_non_zero_debt_change(usdf_change);
     }
 
-    require_singular_coll_change(_asset_coll_added, _coll_withdrawal);
-    require_non_zero_adjustment(_asset_coll_added, _coll_withdrawal, _usdf_change);
+    require_singular_coll_change(asset_coll_added, coll_withdrawal);
+    require_non_zero_adjustment(asset_coll_added, coll_withdrawal, usdf_change);
 
-    trove_manager.apply_pending_rewards(_borrower);
+    trove_manager.apply_pending_rewards(borrower);
 
-    let pos_res = internal_get_coll_change(_asset_coll_added, _coll_withdrawal);
+    let pos_res = internal_get_coll_change(asset_coll_added, coll_withdrawal);
     vars.coll_change = pos_res.0;
     vars.is_coll_increase = pos_res.1;
 
-    vars.net_debt_change = _usdf_change;
-    if _is_debt_increase {
+    vars.net_debt_change = usdf_change;
+    if is_debt_increase {
         vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, 0);
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
     }
 
-    vars.debt = trove_manager.get_trove_debt(_borrower);
-    vars.coll = trove_manager.get_trove_coll(_borrower);
+    vars.debt = trove_manager.get_trove_debt(borrower);
+    vars.coll = trove_manager.get_trove_coll(borrower);
 
     vars.old_icr = fm_compute_cr(vars.coll, vars.debt, price);
-    vars.new_icr = internal_get_new_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase, price);
+    vars.new_icr = internal_get_new_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase, price);
 
-    require(_coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
+    require(coll_withdrawal <= vars.coll, "Cannot withdraw more than the Trove's collateral");
 
     require_at_least_mcr(vars.new_icr);
 
         // TODO if debt increase and usdf change > 0 
-    if !_is_debt_increase {
+    if !is_debt_increase {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }
 
-    let new_position_res = internal_update_trove_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
+    let new_position_res = internal_update_trove_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
 
-    let _ = trove_manager.update_stake_and_total_stakes(_borrower);
-    let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, _is_debt_increase);
-    sorted_troves.re_insert(_borrower, new_nicr, _upper_hint, _lower_hint);
+    let _ = trove_manager.update_stake_and_total_stakes(borrower);
+    let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
+    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
 
-    internal_move_usdf_and_asset_from_adjustment(_borrower, vars.coll_change, vars.is_coll_increase, _usdf_change, _is_debt_increase, vars.net_debt_change);
+    internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change);
 }
 
 #[storage(read)]

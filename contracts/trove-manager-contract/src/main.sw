@@ -127,6 +127,7 @@ impl TroveManager for Contract {
         lower_partial_hint: Identity,
     ) {
         // TODO Require functions
+        // TODO Require bootstrap mode
         require_valid_usdf_id();
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
 
@@ -171,7 +172,7 @@ impl TroveManager for Contract {
         // TODO active pool send fee to stakers
         // TODO lqty staking increase f_asset
         totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
-        // TODO Change to stakers when implemented
+        // TODO Send to stakers instead of oracle when implemented
         active_pool_contract.send_asset(Identity::ContractId(storage.oracle_contract), totals.asset_fee);
 
         usdf_contract.burn {
@@ -190,8 +191,14 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_entire_debt_and_coll(id: Identity) -> (u64, u64, u64, u64) {
-        return (0, 0, 0, 0)
-        // TODO
+        let res = internal_get_entire_debt_and_coll(id);
+
+        return (
+            res.entire_trove_debt,
+            res.entire_trove_coll,
+            res.pending_debt_rewards,
+            res.pending_coll_rewards,
+        )
     }
 
     #[storage(read)]
@@ -221,7 +228,6 @@ impl TroveManager for Contract {
         // TODO Decay base rate but timestamp is not implemented properly
     }
 
-        // TODO
     #[storage(read)]
     fn get_trove_stake(id: Identity) -> u64 {
         internal_get_trove_stake(id)
@@ -402,16 +408,21 @@ fn internal_close_trove(id: Identity, close_status: Status) {
 
     let trove_owner_array_length = storage.trove_owners.len();
     require_more_than_one_trove_in_system(trove_owner_array_length);
-
+    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    
     let mut trove = storage.troves.get(id);
     trove.status = close_status;
     trove.coll = 0;
     trove.debt = 0;
     storage.troves.insert(id, trove);
 
-    // TODO Reward snapshot
+    let mut rewards_snapshot = storage.reward_snapshots.get(id);
+    rewards_snapshot.asset = 0;
+    rewards_snapshot.usdf_debt = 0;
+    storage.reward_snapshots.insert(id, rewards_snapshot);
+
     internal_remove_trove_owner(id, trove_owner_array_length);
-    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    
     sorted_troves_contract.remove(id);
 }
 
@@ -525,7 +536,7 @@ fn internal_get_totals_from_batch_liquidate(
         vars.icr = internal_get_current_icr(vars.borrower, price);
 
         if vars.icr < MCR {
-            let position = get_entire_debt_and_coll(vars.borrower);
+            let position = internal_get_entire_debt_and_coll(vars.borrower);
 
             internal_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
 
@@ -550,7 +561,7 @@ fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
 
 #[storage(read)]
 fn internal_get_current_icr(borrower: Identity, price: u64) -> u64 {
-    let position = get_entire_debt_and_coll(borrower);
+    let position = internal_get_entire_debt_and_coll(borrower);
 
     return fm_compute_cr(position.entire_trove_coll, position.entire_trove_debt, price);
 }
@@ -571,7 +582,7 @@ fn internal_remove_stake(borrower: Identity) {
 }
 
 #[storage(read)]
-fn get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndColl {
+fn internal_get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndColl {
     let trove = storage.troves.get(borrower);
     let coll = trove.coll;
     let debt = trove.debt;

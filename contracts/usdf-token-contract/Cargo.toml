@@ -10,7 +10,6 @@ fuels = { version = "0.35.1", features = ["fuel-core-lib"] }
 test-utils = { path = "../../test-utils" }
 tokio = { version = "1.12", features = ["rt", "macros"] }
 # Not the latest version because of indexer bug o.o 
-# TODO - update when fixed
 
 [[test]]
 harness = true
