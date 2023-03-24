@@ -11,7 +11,7 @@ pub mod default_pool_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::token::Token;
     use fuels::{
-        prelude::{AssetId, CallParameters, ContractId},
+        prelude::{AssetId, CallParameters, ContractId, TxParameters},
         types::Identity,
     };
 
@@ -70,18 +70,20 @@ pub mod default_pool_abi {
     ) -> FuelCallResponse<()> {
         let fuel_asset_id = AssetId::from(*token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: fuel_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(fuel_asset_id);
+
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         default_pool
             .methods()
             .recieve()
-            .call_params(call_params)
-            .set_contracts(&[token])
+            .tx_params(tx_params)
             .append_variable_outputs(1)
+            .call_params(call_params)
+            .unwrap()
+            .set_contracts(&[token])
             .call()
             .await
             .unwrap()

@@ -4,7 +4,7 @@ abi StabilityPool {
     #[storage(read, write)]
     fn initialize(borrow_operations_address: ContractId, trove_manager_address: ContractId, active_pool_address: ContractId, usdf_address: ContractId, sorted_troves_address: ContractId, oracle_address: ContractId, community_issuance_address: ContractId, asset_address: ContractId);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn provide_to_stability_pool();
 
     #[storage(read, write)]

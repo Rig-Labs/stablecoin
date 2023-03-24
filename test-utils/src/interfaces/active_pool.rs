@@ -72,16 +72,15 @@ pub mod active_pool_abi {
     ) -> FuelCallResponse<()> {
         let fuel_asset_id = AssetId::from(*token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: fuel_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(fuel_asset_id);
 
         active_pool
             .methods()
             .recieve()
             .call_params(call_params)
+            .unwrap()
             .set_contracts(&[token])
             .append_variable_outputs(1)
             .call()

@@ -48,19 +48,18 @@ pub mod usdf_token_abi {
     }
 
     pub async fn burn(usdf_token: &USDFToken, amount: u64) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: usdf_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(usdf_asset_id);
 
         usdf_token
             .methods()
             .burn()
             .call_params(call_params)
+            .unwrap()
             .tx_params(tx_params)
             .append_variable_outputs(1)
             .call()

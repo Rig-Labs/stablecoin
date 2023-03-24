@@ -10,7 +10,7 @@ use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocke
 pub mod common {
 
     use fuels::{
-        prelude::{launch_custom_provider_and_get_wallets, Salt, WalletsConfig},
+        prelude::{launch_custom_provider_and_get_wallets, DeployConfiguration, WalletsConfig},
         programs::call_response::FuelCallResponse,
         signers::fuel_crypto::rand::{self, Rng},
         types::Identity,
@@ -26,6 +26,7 @@ pub mod common {
             usdf_token::usdf_token_abi,
         },
         paths::*,
+        utils::resolve_relative_path,
     };
 
     pub struct ProtocolContracts {
@@ -185,13 +186,20 @@ pub mod common {
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
 
-        let id = Contract::deploy_with_parameters(
-            &TOKEN_CONTRACT_BINARY_PATH.to_string(),
+        let deploy_config =
+            DeployConfiguration::default()
+                .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                    resolve_relative_path(TOKEN_CONTRACT_STORAGE_PATH).to_string(),
+                ))
+                .set_salt(salt)
+                .set_tx_parameters(tx_parms);
+
+        let id = Contract::deploy(
+            &resolve_relative_path(TOKEN_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(TOKEN_CONTRACT_STORAGE_PATH.to_string())),
-            Salt::from(salt),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -200,13 +208,21 @@ pub mod common {
     }
 
     pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(SORTED_TROVES_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &SORTED_TROVES_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(SORTED_TROVES_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                SORTED_TROVES_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -215,13 +231,21 @@ pub mod common {
     }
 
     pub async fn deploy_trove_manager_contract(wallet: &WalletUnlocked) -> TroveManagerContract {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(TROVE_MANAGER_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &TROVE_MANAGER_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(TROVE_MANAGER_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                TROVE_MANAGER_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -230,13 +254,22 @@ pub mod common {
     }
 
     pub async fn deploy_vesting_contract(wallet: &WalletUnlocked) -> VestingContract {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config =
+            DeployConfiguration::default()
+                .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                    resolve_relative_path(VESTING_CONTRACT_STORAGE_PATH).to_string(),
+                ))
+                .set_salt(salt)
+                .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &VESTING_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(VESTING_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                VESTING_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -245,11 +278,22 @@ pub mod common {
     }
 
     pub async fn deploy_oracle(wallet: &WalletUnlocked) -> Oracle {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config =
+            DeployConfiguration::default()
+                .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                    resolve_relative_path(ORACLE_CONTRACT_STORAGE_PATH).to_string(),
+                ))
+                .set_salt(salt)
+                .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &ORACLE_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(ORACLE_CONTRACT_STORAGE_PATH.to_string())),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -258,13 +302,21 @@ pub mod common {
     }
 
     pub async fn deploy_borrow_operations(wallet: &WalletUnlocked) -> BorrowOperations {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(BORROW_OPERATIONS_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &BORROW_OPERATIONS_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(BORROW_OPERATIONS_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                BORROW_OPERATIONS_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -273,13 +325,21 @@ pub mod common {
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(ACTIVE_POOL_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &ACTIVE_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(ACTIVE_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                ACTIVE_POOL_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -288,13 +348,21 @@ pub mod common {
     }
 
     pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(STABILITY_POOL_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &STABILITY_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(STABILITY_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                STABILITY_POOL_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -303,13 +371,21 @@ pub mod common {
     }
 
     pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(DEFAULT_POOL_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &DEFAULT_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(DEFAULT_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                DEFAULT_POOL_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -318,13 +394,21 @@ pub mod common {
     }
 
     pub async fn deploy_coll_surplus_pool(wallet: &WalletUnlocked) -> CollSurplusPool {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
         let id = Contract::deploy(
-            &COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH.to_string(),
+            &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH.to_string(),
-            )),
+            deploy_config,
         )
         .await
         .unwrap();
@@ -335,15 +419,19 @@ pub mod common {
     pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
 
-        let id = Contract::deploy_with_parameters(
-            &USDF_TOKEN_CONTRACT_BINARY_PATH.to_string(),
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(USDF_TOKEN_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
+        let id = Contract::deploy(
+            &resolve_relative_path(USDF_TOKEN_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            TxParameters::default(),
-            StorageConfiguration::with_storage_path(Some(
-                USDF_TOKEN_CONTRACT_STORAGE_PATH.to_string(),
-            )),
-            Salt::from(salt),
+            deploy_config,
         )
         .await
         .unwrap();

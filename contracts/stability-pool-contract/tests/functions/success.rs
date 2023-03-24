@@ -361,7 +361,7 @@ async fn proper_many_depositors_distribution() {
     .unwrap();
 
     let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     admin
         .transfer(
@@ -540,7 +540,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .unwrap();
 
     let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
 
