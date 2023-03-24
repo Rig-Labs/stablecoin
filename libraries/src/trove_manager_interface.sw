@@ -22,7 +22,7 @@ abi TroveManager {
     #[storage(read, write)]
     fn batch_liquidate_troves(ids: Vec<Identity>);
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn redeem_collateral(max_itterations: u64, max_fee_percentage: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity);
 
     #[storage(read, write)]

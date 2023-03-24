@@ -118,7 +118,7 @@ impl TroveManager for Contract {
         internal_has_pending_rewards(id)
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn redeem_collateral(
         max_itterations: u64,
         max_fee_percentage: u64,
@@ -409,7 +409,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     let trove_owner_array_length = storage.trove_owners.len();
     require_more_than_one_trove_in_system(trove_owner_array_length);
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-    
+
     let mut trove = storage.troves.get(id);
     trove.status = close_status;
     trove.coll = 0;
@@ -422,7 +422,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     storage.reward_snapshots.insert(id, rewards_snapshot);
 
     internal_remove_trove_owner(id, trove_owner_array_length);
-    
+
     sorted_troves_contract.remove(id);
 }
 
