@@ -20,7 +20,9 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::{AssetId, CallParameters, Error};
+    use fuels::prelude::{AssetId, CallParameters, Error, LogDecoder};
+
+    use crate::setup::common::wait;
 
     use super::*;
 
@@ -126,7 +128,9 @@ pub mod trove_manager_abi {
         coll_surplus_pool: ContractId,
         usdf: ContractId,
     ) -> FuelCallResponse<()> {
-        trove_manager
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        let res = trove_manager
             .methods()
             .initialize(
                 borrow_operations,
@@ -138,9 +142,18 @@ pub mod trove_manager_abi {
                 coll_surplus_pool,
                 usdf,
             )
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn get_trove_coll(

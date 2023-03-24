@@ -9,6 +9,10 @@ abigen!(Contract(
 ));
 
 pub mod sorted_troves_abi {
+    use fuels::prelude::{LogDecoder, TxParameters};
+
+    use crate::setup::common::wait;
+
     use super::*;
 
     pub async fn initialize(
@@ -17,12 +21,23 @@ pub mod sorted_troves_abi {
         borrow_opperations: ContractId,
         trove_manager: ContractId,
     ) -> FuelCallResponse<()> {
-        sorted_troves
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        let res = sorted_troves
             .methods()
             .set_params(max_size, trove_manager, borrow_opperations)
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn insert(

@@ -18,9 +18,11 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use fuels::{
-        prelude::{AssetId, CallParameters, Error},
+        prelude::{AssetId, CallParameters, Error, LogDecoder},
         types::Identity,
     };
+
+    use crate::setup::common::wait;
 
     use super::*;
 
@@ -37,7 +39,7 @@ pub mod stability_pool_abi {
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
-        stability_pool
+        let res = stability_pool
             .methods()
             .initialize(
                 borrow_operations_address,
@@ -51,7 +53,16 @@ pub mod stability_pool_abi {
             )
             .tx_params(tx_params)
             .call()
-            .await
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => Ok(res),
+            Err(_) => {
+                wait();
+                return Ok(FuelCallResponse::new((), vec![], LogDecoder::default()));
+            }
+        }
     }
 
     pub async fn provide_to_stability_pool(

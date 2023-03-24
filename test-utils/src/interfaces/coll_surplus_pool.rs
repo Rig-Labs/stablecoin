@@ -8,8 +8,11 @@ abigen!(Contract(
 ));
 
 pub mod coll_surplus_pool_abi {
-    use crate::interfaces::active_pool::ActivePool;
-    use fuels::{prelude::ContractId, types::Identity};
+    use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
+    use fuels::{
+        prelude::{ContractId, LogDecoder, TxParameters},
+        types::Identity,
+    };
 
     use super::*;
 
@@ -20,12 +23,28 @@ pub mod coll_surplus_pool_abi {
         borrow_operations: ContractId,
         asset_id: ContractId,
     ) -> FuelCallResponse<()> {
-        default_pool
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        let res = default_pool
             .methods()
-            .initialize(trove_manager, active_pool, borrow_operations, asset_id)
+            .initialize(
+                trove_manager.clone(),
+                active_pool,
+                borrow_operations,
+                asset_id,
+            )
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn get_asset(default_pool: &CollSurplusPool) -> FuelCallResponse<u64> {

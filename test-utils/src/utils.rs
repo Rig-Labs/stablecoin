@@ -39,7 +39,7 @@ pub fn resolve_relative_path(path: &str) -> String {
     }
 
     // Return absolute path as a string
-    let mut resolved_str = String::new();
+    let mut resolved_str: String;
     if resolved.is_relative() {
         let mut abs_path = std::env::current_dir().unwrap();
         abs_path.push(resolved);
