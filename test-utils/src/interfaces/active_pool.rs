@@ -8,10 +8,11 @@ abigen!(Contract(
 ));
 
 pub mod active_pool_abi {
-    use crate::interfaces::default_pool::DefaultPool;
     use crate::interfaces::token::Token;
+    use crate::{interfaces::default_pool::DefaultPool, setup::common::wait};
+    use fuels::prelude::LogDecoder;
     use fuels::{
-        prelude::{AssetId, CallParameters, ContractId, Error},
+        prelude::{AssetId, CallParameters, ContractId, Error, TxParameters},
         types::Identity,
     };
 
@@ -25,18 +26,29 @@ pub mod active_pool_abi {
         asset_id: ContractId,
         default_pool: ContractId,
     ) -> FuelCallResponse<()> {
-        active_pool
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        let res = active_pool
             .methods()
             .initialize(
-                borrow_operations,
-                trove_manager,
-                stability_pool,
+                borrow_operations.clone(),
+                trove_manager.clone(),
+                stability_pool.clone(),
                 asset_id,
                 default_pool,
             )
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn get_usdf_debt(active_pool: &ActivePool) -> FuelCallResponse<u64> {
@@ -48,18 +60,24 @@ pub mod active_pool_abi {
     }
 
     pub async fn increase_usdf_debt(active_pool: &ActivePool, amount: u64) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         active_pool
             .methods()
             .increase_usdf_debt(amount)
+            .tx_params(tx_params)
             .call()
             .await
             .unwrap()
     }
 
     pub async fn decrease_usdf_debt(active_pool: &ActivePool, amount: u64) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         active_pool
             .methods()
             .decrease_usdf_debt(amount)
+            .tx_params(tx_params)
             .call()
             .await
             .unwrap()

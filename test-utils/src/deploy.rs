@@ -2,11 +2,7 @@ use dotenv::dotenv;
 use fuels::prelude::{Address, Provider, WalletUnlocked};
 use pbr::ProgressBar;
 
-use crate::setup::common::{
-    deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool, deploy_default_pool,
-    deploy_oracle, deploy_sorted_troves, deploy_token, deploy_trove_manager_contract,
-    deploy_usdf_token,
-};
+use crate::setup::common::deploy_and_initialize_all;
 
 const RPC: &str = "beta-3.fuel.network";
 
@@ -34,39 +30,22 @@ pub async fn deploy() {
     let address = Address::from(wallet.address());
     println!("🔑 Wallet address: {}", address);
 
-    let mut pb = ProgressBar::new(10);
-    let borrow_operations = deploy_borrow_operations(&wallet).await;
-    pb.inc();
-    let oracle_instance = deploy_oracle(&wallet).await;
-    pb.inc();
-    let sorted_troves = deploy_sorted_troves(&wallet).await;
-    pb.inc();
-    let trove_manger = deploy_trove_manager_contract(&wallet).await;
-    pb.inc();
-    let fuel = deploy_token(&wallet).await;
-    pb.inc();
-    let usdf = deploy_usdf_token(&wallet).await;
-    pb.inc();
-    let active_pool = deploy_active_pool(&wallet).await;
-    pb.inc();
-    let stability_pool = deploy_active_pool(&wallet).await;
-    pb.inc();
-    let default_pool = deploy_default_pool(&wallet).await;
-    pb.inc();
-    let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-    pb.finish();
+    let contracts = deploy_and_initialize_all(wallet, 100, true).await;
 
-    println!("Borrow operations: {}", borrow_operations.contract_id());
-    println!("Oracle: {}", oracle_instance.contract_id());
-    println!("Sorted Troves: {}", sorted_troves.contract_id());
-    println!("Trove Manager: {}", trove_manger.contract_id());
-    println!("Fuel: {}", fuel.contract_id());
-    println!("Usdf: {}", usdf.contract_id());
-    println!("Active Pool: {}", active_pool.contract_id());
-    println!("Stability Pool: {}", stability_pool.contract_id());
-    println!("Default Pool: {}", default_pool.contract_id());
+    println!(
+        "Borrow operations: {}",
+        contracts.borrow_operations.contract_id()
+    );
+    println!("Oracle: {}", contracts.oracle.contract_id());
+    println!("Sorted Troves: {}", contracts.sorted_troves.contract_id());
+    println!("Trove Manager: {}", contracts.trove_manager.contract_id());
+    println!("Fuel: {}", contracts.fuel.contract_id());
+    println!("Usdf: {}", contracts.usdf.contract_id());
+    println!("Active Pool: {}", contracts.active_pool.contract_id());
+    println!("Stability Pool: {}", contracts.stability_pool.contract_id());
+    println!("Default Pool: {}", contracts.default_pool.contract_id());
     println!(
         "Collateral Surplus Pool: {}",
-        coll_surplus_pool.contract_id()
+        contracts.coll_surplus_pool.contract_id()
     );
 }

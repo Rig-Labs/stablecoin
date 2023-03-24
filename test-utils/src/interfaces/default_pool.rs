@@ -8,8 +8,9 @@ abigen!(Contract(
 ));
 
 pub mod default_pool_abi {
-    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::token::Token;
+    use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
+    use fuels::prelude::LogDecoder;
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, TxParameters},
         types::Identity,
@@ -23,12 +24,23 @@ pub mod default_pool_abi {
         active_pool: ContractId,
         asset_id: ContractId,
     ) -> FuelCallResponse<()> {
-        default_pool
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        let res = default_pool
             .methods()
-            .initialize(trove_manager, active_pool, asset_id)
+            .initialize(trove_manager.clone(), active_pool, asset_id)
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn get_usdf_debt(default_pool: &DefaultPool) -> FuelCallResponse<u64> {

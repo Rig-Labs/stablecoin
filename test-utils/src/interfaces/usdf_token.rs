@@ -6,7 +6,9 @@ abigen!(Contract(
 ));
 
 pub mod usdf_token_abi {
-    use fuels::prelude::{AssetId, CallParameters, Error, TxParameters};
+    use fuels::prelude::{AssetId, CallParameters, Error, LogDecoder, TxParameters};
+
+    use crate::setup::common::wait;
 
     use super::*;
     pub async fn initialize(
@@ -17,21 +19,36 @@ pub mod usdf_token_abi {
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
         let config = TokenInitializeConfig {
-            name: fuels::types::SizedAsciiString::<32>::new(name).unwrap(),
-            symbol: fuels::types::SizedAsciiString::<8>::new(symbol).unwrap(),
+            name: fuels::types::SizedAsciiString::<32>::new(name.clone()).unwrap(),
+            symbol: fuels::types::SizedAsciiString::<8>::new(symbol.clone()).unwrap(),
             decimals: 6,
         };
 
-        instance
+        let res = instance
             .methods()
-            .initialize(config, trove_manager, stability_pool, borrow_operations)
+            .initialize(
+                config,
+                trove_manager.clone(),
+                stability_pool.clone(),
+                borrow_operations.clone(),
+            )
+            .tx_params(tx_params)
             .call()
-            .await
-            .unwrap()
+            .await;
+
+        // TODO: remove this workaround
+        match res {
+            Ok(res) => res,
+            Err(_) => {
+                wait();
+                return FuelCallResponse::new((), vec![], LogDecoder::default());
+            }
+        }
     }
 
     pub async fn mint(

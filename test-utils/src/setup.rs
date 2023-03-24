@@ -15,6 +15,7 @@ pub mod common {
         signers::fuel_crypto::rand::{self, Rng},
         types::Identity,
     };
+    use pbr::ProgressBar;
 
     use super::*;
     use crate::{
@@ -59,43 +60,95 @@ pub mod common {
         .await;
         let wallet = wallets.pop().unwrap();
 
-        let bo_instance = deploy_borrow_operations(&wallet).await;
-        let oracle_instance = deploy_oracle(&wallet).await;
-        let sorted_troves = deploy_sorted_troves(&wallet).await;
-        let trove_manger = deploy_trove_manager_contract(&wallet).await;
-        let fuel = deploy_token(&wallet).await;
-        let usdf = deploy_usdf_token(&wallet).await;
-        let active_pool = deploy_active_pool(&wallet).await;
-        let stability_pool = deploy_stability_pool(&wallet).await;
-        let default_pool = deploy_default_pool(&wallet).await;
-        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+        let contracts = deploy_and_initialize_all(wallet.clone(), max_size, false).await;
 
+        (contracts, wallet, wallets)
+    }
+
+    pub async fn deploy_and_initialize_all(
+        wallet: WalletUnlocked,
+        max_size: u64,
+        _is_testnet: bool,
+    ) -> ProtocolContracts {
+        println!("Deploying contracts...");
+        let mut pb = ProgressBar::new(10);
+
+        let borrow_operations = deploy_borrow_operations(&wallet).await;
+        pb.inc();
+
+        let oracle_instance = deploy_oracle(&wallet).await;
+        pb.inc();
+
+        let sorted_troves = deploy_sorted_troves(&wallet).await;
+        pb.inc();
+
+        let trove_manager = deploy_trove_manager_contract(&wallet).await;
+        pb.inc();
+
+        let fuel = deploy_token(&wallet).await;
+        pb.inc();
+
+        let usdf = deploy_usdf_token(&wallet).await;
+        pb.inc();
+
+        let active_pool = deploy_active_pool(&wallet).await;
+        pb.inc();
+
+        let stability_pool = deploy_stability_pool(&wallet).await;
+        pb.inc();
+
+        let default_pool = deploy_default_pool(&wallet).await;
+        pb.inc();
+
+        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+        pb.finish();
+
+        println!("Borrow operations: {}", borrow_operations.contract_id());
+        println!("Oracle: {}", oracle_instance.contract_id());
+        println!("Sorted Troves: {}", sorted_troves.contract_id());
+        println!("Trove Manager: {}", trove_manager.contract_id());
+        println!("Fuel: {}", fuel.contract_id());
+        println!("Usdf: {}", usdf.contract_id());
+        println!("Active Pool: {}", active_pool.contract_id());
+        println!("Stability Pool: {}", stability_pool.contract_id());
+        println!("Default Pool: {}", default_pool.contract_id());
+        println!(
+            "Collateral Surplus Pool: {}",
+            coll_surplus_pool.contract_id()
+        );
+
+        println!("Initializing contracts...");
+
+        let mut pb = ProgressBar::new(10);
         default_pool_abi::initialize(
             &default_pool,
-            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(trove_manager.contract_id().into()),
             active_pool.contract_id().into(),
             fuel.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         active_pool_abi::initialize(
             &active_pool,
-            Identity::ContractId(bo_instance.contract_id().into()),
-            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(borrow_operations.contract_id().into()),
+            Identity::ContractId(trove_manager.contract_id().into()),
             Identity::ContractId(stability_pool.contract_id().into()),
             fuel.contract_id().into(),
             default_pool.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         coll_surplus_pool_abi::initialize(
             &coll_surplus_pool,
-            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(trove_manager.contract_id().into()),
             active_pool.contract_id().into(),
-            bo_instance.contract_id().into(),
+            borrow_operations.contract_id().into(),
             fuel.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         token_abi::initialize(
             &fuel,
@@ -105,28 +158,31 @@ pub mod common {
             "FUEL".to_string(),
         )
         .await;
+        pb.inc();
 
         usdf_token_abi::initialize(
             &usdf,
             "USD Fuel".to_string(),
             "USDF".to_string(),
-            Identity::ContractId(trove_manger.contract_id().into()),
+            Identity::ContractId(trove_manager.contract_id().into()),
             Identity::ContractId(stability_pool.contract_id().into()),
-            Identity::ContractId(bo_instance.contract_id().into()),
+            Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
+        pb.inc();
 
         sorted_troves_abi::initialize(
             &sorted_troves,
             max_size,
-            bo_instance.contract_id().into(),
-            trove_manger.contract_id().into(),
+            borrow_operations.contract_id().into(),
+            trove_manager.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         trove_manager_abi::initialize(
-            &trove_manger,
-            bo_instance.contract_id().into(),
+            &trove_manager,
+            borrow_operations.contract_id().into(),
             sorted_troves.contract_id().into(),
             oracle_instance.contract_id().into(),
             stability_pool.contract_id().into(),
@@ -136,12 +192,14 @@ pub mod common {
             usdf.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         oracle_abi::set_price(&oracle_instance, 1_000_000).await;
+        pb.inc();
 
         borrow_operations_abi::initialize(
-            &bo_instance,
-            trove_manger.contract_id().into(),
+            &borrow_operations,
+            trove_manager.contract_id().into(),
             sorted_troves.contract_id().into(),
             oracle_instance.contract_id().into(),
             fuel.contract_id().into(),
@@ -152,11 +210,12 @@ pub mod common {
             stability_pool.contract_id().into(),
         )
         .await;
+        pb.inc();
 
         stability_pool_abi::initialize(
             &stability_pool,
-            bo_instance.contract_id().into(),
-            trove_manger.contract_id().into(),
+            borrow_operations.contract_id().into(),
+            trove_manager.contract_id().into(),
             active_pool.contract_id().into(),
             usdf.contract_id().into(),
             sorted_troves.contract_id().into(),
@@ -166,10 +225,11 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.finish();
 
         let contracts = ProtocolContracts {
-            borrow_operations: bo_instance,
-            trove_manager: trove_manger,
+            borrow_operations: borrow_operations,
+            trove_manager: trove_manager,
             oracle: oracle_instance,
             sorted_troves,
             fuel,
@@ -180,7 +240,7 @@ pub mod common {
             coll_surplus_pool,
         };
 
-        (contracts, wallet, wallets)
+        return contracts;
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token {
@@ -293,12 +353,25 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        Oracle::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return Oracle::new(id, wallet.clone());
+            }
+            Err(_) => {
+                let id = Contract::deploy(
+                    &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+                return Oracle::new(id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_borrow_operations(wallet: &WalletUnlocked) -> BorrowOperations {
@@ -316,12 +389,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(BORROW_OPERATIONS_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        BorrowOperations::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return BorrowOperations::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(BORROW_OPERATIONS_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return BorrowOperations::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool {
@@ -339,12 +427,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(ACTIVE_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        ActivePool::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return ActivePool::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(ACTIVE_POOL_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return ActivePool::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool {
@@ -362,12 +465,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(STABILITY_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        StabilityPool::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return StabilityPool::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(STABILITY_POOL_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return StabilityPool::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool {
@@ -385,12 +503,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(DEFAULT_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        DefaultPool::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return DefaultPool::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(DEFAULT_POOL_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return DefaultPool::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_coll_surplus_pool(wallet: &WalletUnlocked) -> CollSurplusPool {
@@ -408,12 +541,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        CollSurplusPool::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return CollSurplusPool::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return CollSurplusPool::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken {
@@ -431,12 +579,27 @@ pub mod common {
         let id = Contract::deploy(
             &resolve_relative_path(USDF_TOKEN_CONTRACT_BINARY_PATH).to_string(),
             &wallet,
-            deploy_config,
+            deploy_config.clone(),
         )
-        .await
-        .unwrap();
+        .await;
 
-        USDFToken::new(id, wallet.clone())
+        match id {
+            Ok(id) => {
+                return USDFToken::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let try_id = Contract::deploy(
+                    &resolve_relative_path(USDF_TOKEN_CONTRACT_BINARY_PATH).to_string(),
+                    &wallet,
+                    deploy_config,
+                )
+                .await
+                .unwrap();
+
+                return USDFToken::new(try_id, wallet.clone());
+            }
+        }
     }
 
     pub fn print_response<T>(response: FuelCallResponse<T>)
@@ -456,5 +619,9 @@ pub mod common {
             "{}",
             comment
         );
+    }
+
+    pub fn wait() {
+        std::thread::sleep(std::time::Duration::from_secs(12));
     }
 }
