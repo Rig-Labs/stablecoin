@@ -35,7 +35,7 @@ pub mod stability_pool_abi {
         community_issuance_address: ContractId,
         asset_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         stability_pool
             .methods()
@@ -60,21 +60,20 @@ pub mod stability_pool_abi {
         fuel_token: &Token,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: usdf_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(usdf_asset_id);
 
         stability_pool
             .methods()
             .provide_to_stability_pool()
             .tx_params(tx_params)
             .call_params(call_params)
+            .unwrap()
             .append_variable_outputs(2)
             .set_contracts(&[usdf_token, fuel_token])
             .call()
@@ -123,7 +122,7 @@ pub mod stability_pool_abi {
         fuel_token: &Token,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         stability_pool
             .methods()
@@ -147,7 +146,7 @@ pub mod stability_pool_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         stability_pool
             .methods()

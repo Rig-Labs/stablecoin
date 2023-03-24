@@ -47,7 +47,7 @@ pub mod trove_manager_abi {
         usdf: &USDFToken,
         id: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()
@@ -72,7 +72,7 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()
@@ -88,7 +88,7 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()
@@ -104,7 +104,7 @@ pub mod trove_manager_abi {
         id: Identity,
         status: Status,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()
@@ -214,14 +214,12 @@ pub mod trove_manager_abi {
         oracle: &Oracle,
         default_pool: &DefaultPool,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(20_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: usdf_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(usdf_asset_id);
 
         trove_manager
             .methods()
@@ -234,6 +232,7 @@ pub mod trove_manager_abi {
             )
             .tx_params(tx_params)
             .call_params(call_params)
+            .unwrap()
             .set_contracts(&[
                 sorted_troves,
                 active_pool,
@@ -261,7 +260,7 @@ pub mod trove_manager_abi {
     pub async fn get_borrowing_rate_with_decay(
         trove_manager: &TroveManagerContract,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::new(Some(1), Some(2_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()

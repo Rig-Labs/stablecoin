@@ -32,7 +32,7 @@ pub mod borrow_operations_abi {
         coll_surplus_pool_contract: ContractId,
         stability_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
@@ -66,19 +66,18 @@ pub mod borrow_operations_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount: fuel_amount_deposit,
-            asset_id: fuel_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(fuel_amount_deposit)
+            .set_asset_id(fuel_asset_id);
 
         borrow_operations
             .methods()
             .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
             .call_params(call_params)
+            .unwrap()
             .set_contracts(&[
                 oracle,
                 active_pool,
@@ -105,20 +104,19 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: fuel_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(fuel_asset_id);
 
         borrow_operations
             .methods()
             .add_coll(lower_hint, upper_hint)
             .call_params(call_params)
+            .unwrap()
             .set_contracts(&[
                 oracle,
                 fuel_token,
@@ -144,7 +142,7 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
@@ -174,7 +172,7 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
@@ -206,14 +204,12 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: usdf_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(usdf_asset_id);
 
         borrow_operations
             .methods()
@@ -229,6 +225,7 @@ pub mod borrow_operations_abi {
             .append_variable_outputs(1)
             .tx_params(tx_params)
             .call_params(call_params)
+            .unwrap()
             .call()
             .await
     }
@@ -243,14 +240,12 @@ pub mod borrow_operations_abi {
         active_pool: &ActivePool,
         amount: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+        let tx_params = TxParameters::default().set_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters {
-            amount,
-            asset_id: usdf_asset_id,
-            gas_forwarded: None,
-        };
+        let call_params: CallParameters = CallParameters::default()
+            .set_amount(amount)
+            .set_asset_id(usdf_asset_id);
 
         borrow_operations
             .methods()
@@ -266,6 +261,7 @@ pub mod borrow_operations_abi {
             .append_variable_outputs(1)
             .tx_params(tx_params)
             .call_params(call_params)
+            .unwrap()
             .call()
             .await
             .unwrap()

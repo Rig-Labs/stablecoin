@@ -1,6 +1,7 @@
 use fuels::prelude::*;
 
 use fuels::programs::call_response::FuelCallResponse;
+use fuels::signers::fuel_crypto::rand::{self, Rng};
 use fuels::types::Identity;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
@@ -26,13 +27,22 @@ pub fn get_relative_path(path: String) -> String {
 pub async fn deploy_mock_trove_manager_contract(
     wallet: &WalletUnlocked,
 ) -> MockTroveManagerContract {
+    let mut rng = rand::thread_rng();
+    let salt = rng.gen::<[u8; 32]>();
+    let tx_parms = TxParameters::default().set_gas_price(1);
+
+    let deploy_config = DeployConfiguration::default()
+        .set_storage_configuration(
+            StorageConfiguration::default()
+                .set_storage_path(MOCK_TROVE_MANAGER_CONTRACT_STORAGE_PATH.to_string()),
+        )
+        .set_salt(salt)
+        .set_tx_parameters(tx_parms);
+
     let id = Contract::deploy(
         &get_relative_path(MOCK_TROVE_MANAGER_BINARY_PATH.to_string()),
         &wallet,
-        TxParameters::default(),
-        StorageConfiguration::with_storage_path(Some(get_relative_path(
-            MOCK_TROVE_MANAGER_CONTRACT_STORAGE_PATH.to_string(),
-        ))),
+        deploy_config,
     )
     .await
     .unwrap();
@@ -48,7 +58,7 @@ pub async fn set_nominal_icr_and_insert(
     prev_id: Identity,
     next_id: Identity,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
@@ -80,7 +90,7 @@ pub async fn offset(
     coll_to_offset: u64,
     debt_to_offset: u64,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
@@ -98,7 +108,7 @@ pub async fn initialize(
     sorted_troves: ContractId,
     stability_pool: ContractId,
 ) -> Result<FuelCallResponse<()>> {
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
@@ -113,7 +123,7 @@ pub async fn remove(
     sorted_troves: &SortedTroves,
     id: Identity,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::new(Some(1), Some(100_000_000), Some(0));
+    let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()

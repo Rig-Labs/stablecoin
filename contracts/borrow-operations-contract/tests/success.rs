@@ -699,7 +699,7 @@ async fn proper_close_trove() {
 
     let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
     let amount = 1_000_000_000 / 200;
-    let tx_parms = TxParameters::new(None, None, None);
+    let tx_parms = TxParameters::default();
 
     wallet1
         .transfer(wallet2.address(), amount, usdf_asset_id, tx_parms)

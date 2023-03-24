@@ -78,7 +78,7 @@ impl StabilityPool for Contract {
         storage.is_initialized = true;
     }
 
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn provide_to_stability_pool() {
         require_usdf_is_valid_and_non_zero();
 
@@ -293,7 +293,7 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposit_snapshots.insert(depositor, snapshots);
 }
 
-#[storage(read, write)]
+#[storage(read, write), payable]
 fn send_asset_gain_to_depositor(depositor: Identity, gain: u64) {
     if (gain == 0) {
         return;
