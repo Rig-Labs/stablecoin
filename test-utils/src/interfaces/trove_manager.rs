@@ -127,6 +127,7 @@ pub mod trove_manager_abi {
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
         usdf: ContractId,
+        fuel: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -141,6 +142,7 @@ pub mod trove_manager_abi {
                 active_pool,
                 coll_surplus_pool,
                 usdf,
+                fuel,
             )
             .tx_params(tx_params)
             .call()

@@ -350,9 +350,10 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     assert_eq!(asset, 525_000_000);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
@@ -616,9 +617,10 @@ async fn proper_partial_liquidation_empty_sp() {
 
     assert_eq!(asset, 0);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await

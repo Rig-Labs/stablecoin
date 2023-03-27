@@ -5,7 +5,7 @@ use data_structures::{Status, Trove};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId, asset_contract: ContractId);
 
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;

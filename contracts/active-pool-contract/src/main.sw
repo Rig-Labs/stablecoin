@@ -12,9 +12,11 @@ use std::{
         msg_amount,
     },
     logging::log,
+    storage::{
+        StorageMap,
+    },
     token::transfer,
 };
-
 /*
  * The Active Pool holds the Asset collateral and USDF debt (but not USDF tokens) for all active troves.
  *
@@ -27,10 +29,10 @@ storage {
     trove_manager_contract: Identity = null_identity_address(),
     stability_pool_contract: Identity = null_identity_address(),
     default_pool_contract: ContractId = null_contract(),
-    asset_id: ContractId = null_contract(),
-    asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
     is_initialized: bool = false,
+    valid_assets: StorageMap<ContractId, bool> = StorageMap {},
+    asset_amounts: StorageMap<ContractId, u64> = StorageMap {},
 }
 
 impl ActivePool for Contract {
@@ -47,9 +49,10 @@ impl ActivePool for Contract {
         storage.borrow_operations_contract = borrow_operations;
         storage.trove_manager_contract = trove_manager;
         storage.stability_pool_contract = stability_pool;
-        storage.asset_id = asset_id;
         storage.default_pool_contract = default_pool;
+
         storage.is_initialized = true;
+        initialize_valid_asset(asset_id);
     }
 
     // --- Getters for public variables. Required by Pool interface ---
@@ -59,8 +62,8 @@ impl ActivePool for Contract {
     * Not necessarily equal to the the contract's raw Asset balance - Assets can be forcibly sent to contracts.
     */
     #[storage(read)]
-    fn get_asset() -> u64 {
-        return storage.asset_amount;
+    fn get_asset(asset: ContractId) -> u64 {
+        return storage.asset_amounts.get(asset);
     }
 
     #[storage(read)]
@@ -68,12 +71,15 @@ impl ActivePool for Contract {
         return storage.usdf_debt_amount;
     }
 
-    // --- Pool functionality ---
+    // --- Pool functionality ---    
     #[storage(read, write)]
-    fn send_asset(address: Identity, amount: u64) {
+    fn send_asset(address: Identity, asset: ContractId, amount: u64) {
         require_caller_is_bo_or_tm_or_sp();
-        transfer(amount, storage.asset_id, address);
-        storage.asset_amount -= amount;
+
+        transfer(amount, asset, address);
+        let mut current_amount = storage.asset_amounts.get(asset);
+        current_amount -= amount;
+        storage.asset_amounts.insert(asset, current_amount);
     }
 
     #[storage(read, write)]
@@ -81,7 +87,6 @@ impl ActivePool for Contract {
         require_caller_is_bo_or_tm();
         storage.usdf_debt_amount += amount;
     }
-
     #[storage(read, write)]
     fn decrease_usdf_debt(amount: u64) {
         require_caller_is_bo_or_tm_or_sp();
@@ -89,34 +94,46 @@ impl ActivePool for Contract {
     }
 
     #[storage(read, write)]
-    fn send_asset_to_default_pool(amount: u64) {
+    fn send_asset_to_default_pool(asset: ContractId, amount: u64) {
         require_caller_is_bo_or_tm_or_sp();
-        storage.asset_amount -= amount;
-        let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
 
+        let mut current_amount = storage.asset_amounts.get(asset);
+        current_amount -= amount;
+        storage.asset_amounts.insert(asset, current_amount);
+
+        let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
         dafault_pool.recieve {
             coins: amount,
-            asset_id: storage.asset_id.value,
+            asset_id: asset.value,
         }();
     }
 
     // --- Receive functionality ---
-    // Required to record the contract's raw Asset balance since there is no FallBack function
+    // Required to record the contract's raw Asset balance since there is no FallBack function    
     #[storage(read, write), payable]
     fn recieve() {
         require_caller_is_borrow_operations_or_default_pool();
         require_is_asset_id();
-        storage.asset_amount += msg_amount();
+
+        let mut current_amount = storage.asset_amounts.get(msg_asset_id());
+        current_amount += msg_amount();
+        storage.asset_amounts.insert(msg_asset_id(), current_amount);
     }
 }
 
 // --- Helper functions ---
+#[storage(read, write)]
+fn initialize_valid_asset(asset_id: ContractId) {
+    storage.valid_assets.insert(asset_id, true);
+    storage.asset_amounts.insert(asset_id, 0);
+}
+
 #[storage(read)]
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
-    require(asset_id == storage.asset_id, "Asset ID is not correct");
+    let is_valid_asset = storage.valid_assets.get(asset_id);
+    require(is_valid_asset == true, "Asset ID is not correct");
 }
-
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp() {
     let caller = msg_sender().unwrap();
@@ -125,7 +142,6 @@ fn require_caller_is_bo_or_tm_or_sp() {
     let stability_pool_contract = storage.stability_pool_contract;
     require(caller == borrow_operations_contract || caller == trove_manager_contract || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager or DefaultPool");
 }
-
 #[storage(read)]
 fn require_caller_is_bo_or_tm() {
     let caller = msg_sender().unwrap();

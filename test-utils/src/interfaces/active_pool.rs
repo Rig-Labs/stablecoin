@@ -55,8 +55,8 @@ pub mod active_pool_abi {
         active_pool.methods().get_usdf_debt().call().await.unwrap()
     }
 
-    pub async fn get_asset(active_pool: &ActivePool) -> FuelCallResponse<u64> {
-        active_pool.methods().get_asset().call().await.unwrap()
+    pub async fn get_asset(active_pool: &ActivePool, asset: ContractId) -> FuelCallResponse<u64> {
+        active_pool.methods().get_asset(asset).call().await.unwrap()
     }
 
     pub async fn increase_usdf_debt(active_pool: &ActivePool, amount: u64) -> FuelCallResponse<()> {
@@ -109,11 +109,13 @@ pub mod active_pool_abi {
     pub async fn send_asset(
         active_pool: &ActivePool,
         recipient: Identity,
+        asset: &Token,
         amount: u64,
     ) -> FuelCallResponse<()> {
         active_pool
             .methods()
-            .send_asset(recipient, amount)
+            .send_asset(recipient, asset.contract_id().into(), amount)
+            .set_contracts(&[asset])
             .append_variable_outputs(1)
             .call()
             .await
@@ -128,7 +130,7 @@ pub mod active_pool_abi {
     ) -> Result<FuelCallResponse<()>, Error> {
         active_pool
             .methods()
-            .send_asset_to_default_pool(amount)
+            .send_asset_to_default_pool(asset.contract_id().into(), amount)
             .set_contracts(&[default_pool, asset])
             .append_variable_outputs(1)
             .call()

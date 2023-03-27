@@ -159,9 +159,10 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     let asset_with_min_borrow_fee = with_min_borrow_fee(1_050_000_000);
     assert_eq!(asset, asset_with_min_borrow_fee);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
@@ -365,9 +366,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         "Incorrect asset amount in stability pool"
     );
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
@@ -584,9 +586,10 @@ async fn proper_full_liquidation_empty_sp() {
 
     assert_eq!(asset, 0);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await

@@ -98,9 +98,10 @@ async fn proper_creating_trove() {
         "Active Pool Debt is wrong"
     );
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
     assert_eq!(
         active_pool_col, 1_200_000_000,
         "Active Pool Collateral is wrong"
@@ -197,9 +198,10 @@ async fn proper_increase_collateral() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
     assert_eq!(
         active_pool_col, 2_400_000_000,
         "Active Pool Collateral is wrong"
@@ -306,9 +308,10 @@ async fn proper_decrease_collateral() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
     assert_eq!(
         active_pool_col, 900_000_000,
         "Active Pool Collateral is wrong"
@@ -424,9 +427,10 @@ async fn proper_increase_debt() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     assert_eq!(
         active_pool_col, 1_200_000_000,
@@ -544,9 +548,10 @@ async fn proper_decrease_debt() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     assert_eq!(
         active_pool_col, 1_200_000_000,
@@ -639,9 +644,10 @@ async fn proper_open_multiple_troves() {
     let expected_debt = with_min_borrow_fee(2_000_000_000);
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     assert_eq!(
         active_pool_col, 5_000_000_000,
@@ -765,9 +771,10 @@ async fn proper_close_trove() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     assert_eq!(
         active_pool_col, 3_000_000_000,
