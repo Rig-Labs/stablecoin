@@ -717,6 +717,7 @@ fn internal_has_pending_rewards(address: Identity) -> bool {
 
 #[storage(read)]
 fn internal_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
+    let asset = storage.asset_contract;
     if (coll == 0 && debt == 0) {
         return;
     }
@@ -726,7 +727,7 @@ fn internal_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
     default_pool.decrease_usdf_debt(debt);
     active_pool.increase_usdf_debt(debt);
 
-    default_pool.send_asset_to_active_pool(coll);
+    default_pool.send_asset_to_active_pool(coll, asset);
 }
 
 #[storage(read)]

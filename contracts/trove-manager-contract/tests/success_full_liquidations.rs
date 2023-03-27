@@ -173,9 +173,10 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000_000_000);
     assert_eq!(active_pool_debt, active_pool_debt_with_min_borrow_fee);
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await
@@ -378,9 +379,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     assert_eq!(active_pool_asset, 40_000_000_000);
     assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await
@@ -598,9 +600,10 @@ async fn proper_full_liquidation_empty_sp() {
     assert_eq!(active_pool_asset, 40_000_000_000);
     assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await

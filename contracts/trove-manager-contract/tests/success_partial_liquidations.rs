@@ -138,9 +138,10 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     let collateral_ratio = coll * 1_000_000 / debt;
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await
@@ -365,9 +366,10 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         with_min_borrow_fee(20_000_000_000) + remaining_debt
     );
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await
@@ -632,9 +634,10 @@ async fn proper_partial_liquidation_empty_sp() {
         with_min_borrow_fee(20_000_000_000) + remaining_debt
     );
 
-    let default_pool_asset = default_pool_abi::get_asset(&contracts.default_pool)
-        .await
-        .value;
+    let default_pool_asset =
+        default_pool_abi::get_asset(&contracts.default_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(&contracts.default_pool)
         .await
