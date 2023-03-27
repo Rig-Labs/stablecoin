@@ -139,9 +139,10 @@ async fn proper_redemption_from_partially_closed() {
     )
     .await;
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await
@@ -320,9 +321,10 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     println!("Collateral redeemed");
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_asset =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(&contracts.active_pool)
         .await

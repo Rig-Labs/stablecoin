@@ -112,9 +112,10 @@ async fn fails_open_two_troves() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
-        .await
-        .value;
+    let active_pool_col =
+        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
+            .await
+            .value;
     assert_eq!(
         active_pool_col, 1_200_000_000,
         "Active Pool Collateral is wrong"

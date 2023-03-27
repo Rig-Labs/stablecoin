@@ -59,6 +59,7 @@ storage {
     default_pool_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
     usdf_contract: ContractId = null_contract(),
+    asset_contract: ContractId = null_contract(),
     fpt_token: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
     total_stakes: u64 = 0,
@@ -87,6 +88,7 @@ impl TroveManager for Contract {
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
         usdf_contract: ContractId,
+        asset_contract: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
         storage.sorted_troves_contract = sorted_troves;
@@ -97,6 +99,7 @@ impl TroveManager for Contract {
         storage.active_pool_contract = active_pool;
         storage.coll_surplus_pool_contract = coll_surplus_pool;
         storage.usdf_contract = usdf_contract;
+        storage.asset_contract = asset_contract;
         storage.is_initialized = true;
     }
 
@@ -173,7 +176,7 @@ impl TroveManager for Contract {
         // TODO lqty staking increase f_asset
         totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
         // TODO Send to stakers instead of oracle when implemented
-        active_pool_contract.send_asset(Identity::ContractId(storage.oracle_contract), totals.asset_fee);
+        active_pool_contract.send_asset(Identity::ContractId(storage.oracle_contract), storage.asset_contract, totals.asset_fee);
 
         usdf_contract.burn {
             coins: totals.total_usdf_to_redeem,
@@ -181,7 +184,7 @@ impl TroveManager for Contract {
         }();
 
         active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
-        active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
+        active_pool_contract.send_asset(msg_sender().unwrap(), storage.asset_contract, totals.asset_to_send_to_redeemer);
     }
 
     #[storage(read)]
@@ -470,7 +473,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     if (totals.total_coll_surplus > 0) {
         // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus);
+        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), storage.asset_contract, totals.total_coll_surplus);
     }
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
@@ -642,7 +645,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 
     active_pool.decrease_usdf_debt(debt);
     default_pool.increase_usdf_debt(debt);
-    active_pool.send_asset_to_default_pool(coll);
+    active_pool.send_asset_to_default_pool(storage.asset_contract, coll);
 }
 
 #[storage(read, write)]
@@ -790,7 +793,7 @@ fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
 
     active_pool.decrease_usdf_debt(usdf);
     coll_surplus_pool.account_surplus(borrower, asset);
-    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset);
+    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), storage.asset_contract, asset);
 }
 
 // ---- Redemption Fees ---- //
