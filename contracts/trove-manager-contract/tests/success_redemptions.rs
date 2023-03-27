@@ -403,6 +403,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     let coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(healthy_wallet3.address().into()),
+        contracts.fuel.contract_id().into(),
     )
     .await
     .value;

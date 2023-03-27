@@ -616,9 +616,10 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
         sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address());
     } else {
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+        let asset = storage.asset_contract;
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
-        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
+        coll_surplus_contract.account_surplus(borrower, asset, liquidation_values.coll_surplus);
     }
 }
 
@@ -786,6 +787,7 @@ fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
     let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+    let asset_id = storage.asset_contract;
 
     usdf_contract.burn {
         coins: usdf,
@@ -793,8 +795,8 @@ fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
     }();
 
     active_pool.decrease_usdf_debt(usdf);
-    coll_surplus_pool.account_surplus(borrower, asset);
-    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), storage.asset_contract, asset);
+    coll_surplus_pool.account_surplus(borrower, asset_id, asset);
+    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset_id, asset);
 }
 
 // ---- Redemption Fees ---- //

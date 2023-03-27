@@ -191,7 +191,7 @@ impl BorrowOperations for Contract {
     #[storage(read)]
     fn claim_collateral() {
         let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
-        coll_surplus.claim_coll(msg_sender().unwrap());
+        coll_surplus.claim_coll(msg_sender().unwrap(), storage.asset_contract);
     }
 
     #[storage(read)]

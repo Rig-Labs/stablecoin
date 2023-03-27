@@ -188,6 +188,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        contracts.fuel.contract_id().into(),
     )
     .await
     .value;
@@ -428,6 +429,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        contracts.fuel.contract_id().into(),
     )
     .await
     .value;
@@ -646,6 +648,7 @@ async fn proper_full_liquidation_empty_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        contracts.fuel.contract_id().into(),
     )
     .await
     .value;
