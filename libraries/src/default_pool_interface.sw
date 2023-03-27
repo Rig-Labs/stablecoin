@@ -5,10 +5,10 @@ abi DefaultPool {
     fn initialize(trove_manager: Identity, active_pool: ContractId, asset_id: ContractId);
 
     #[storage(read, write)]
-    fn send_asset_to_active_pool(amount: u64);
+    fn send_asset_to_active_pool(amount: u64, asset_id: ContractId);
 
     #[storage(read)]
-    fn get_asset() -> u64;
+    fn get_asset(asset_id: ContractId) -> u64;
 
     #[storage(read)]
     fn get_usdf_debt() -> u64;
