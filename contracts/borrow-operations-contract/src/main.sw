@@ -107,7 +107,7 @@ impl BorrowOperations for Contract {
         trove_manager.update_trove_reward_snapshots(sender);
         let _ = trove_manager.update_stake_and_total_stakes(sender);
 
-        sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
+        sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint, storage.asset_contract);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
         internal_active_pool_add_coll(msg_amount());
@@ -267,7 +267,7 @@ fn internal_adjust_trove(
 
     let _ = trove_manager.update_stake_and_total_stakes(borrower);
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
-    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
+    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint, storage.asset_contract);
 
     internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change);
 }

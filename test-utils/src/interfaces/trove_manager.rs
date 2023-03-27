@@ -360,11 +360,12 @@ pub mod trove_manager_utils {
         debt: u64,
         prev_id: Identity,
         next_id: Identity,
+        asset: ContractId,
     ) {
         trove_manager_abi::increase_trove_coll(trove_manager, id.clone(), coll).await;
         trove_manager_abi::increase_trove_debt(trove_manager, id.clone(), debt).await;
         trove_manager_abi::set_trove_status(trove_manager, id.clone(), Status::Active).await;
-        sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id).await;
+        sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id, asset).await;
     }
 
     pub async fn assert_trove_coll(

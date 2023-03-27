@@ -64,12 +64,18 @@ async fn fails_open_two_troves() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
-        .await
-        .value;
-    let last = sorted_troves_abi::get_last(&contracts.sorted_troves)
-        .await
-        .value;
+    let first = sorted_troves_abi::get_first(
+        &contracts.sorted_troves,
+        contracts.fuel.contract_id().into(),
+    )
+    .await
+    .value;
+    let last = sorted_troves_abi::get_last(
+        &contracts.sorted_troves,
+        contracts.fuel.contract_id().into(),
+    )
+    .await
+    .value;
     let size = sorted_troves_abi::get_size(&contracts.sorted_troves)
         .await
         .value;

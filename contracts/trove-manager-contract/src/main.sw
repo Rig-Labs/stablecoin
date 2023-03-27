@@ -139,21 +139,22 @@ impl TroveManager for Contract {
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
         let active_pool_contract = abi(ActivePool, storage.active_pool_contract.into());
         let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
+        let asset_contract = storage.asset_contract;
 
         totals.remaining_usdf = msg_amount();
         totals.price = oracle_contract.get_price();
         totals.total_usdf_supply_at_start = internal_get_entire_system_debt();
 
-        let mut current_borrower = sorted_troves_contract.get_last();
+        let mut current_borrower = sorted_troves_contract.get_last(asset_contract);
 
         while (current_borrower != null_identity_address() && internal_get_current_icr(current_borrower, totals.price) < MCR) {
-            let current_trove = sorted_troves_contract.get_prev(current_borrower);
+            let current_trove = sorted_troves_contract.get_prev(current_borrower,asset_contract);
         }
 
         let mut remaining_itterations = max_itterations;
         while (current_borrower != null_identity_address() && totals.remaining_usdf > 0 && remaining_itterations > 0) {
             remaining_itterations -= 1;
-            let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
+            let next_user_to_check = sorted_troves_contract.get_prev(current_borrower,asset_contract);
             internal_apply_pending_rewards(current_borrower);
             let single_redemption = internal_redeem_collateral_from_trove(current_borrower, totals.remaining_usdf, totals.price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
             if (single_redemption.cancelled_partial) {
@@ -408,7 +409,7 @@ fn internal_apply_pending_rewards(borrower: Identity) {
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
     require(close_status != Status::NonExistent || close_status != Status::Active, "Invalid status");
-
+    let asset_contract = storage.asset_contract;
     let trove_owner_array_length = storage.trove_owners.len();
     require_more_than_one_trove_in_system(trove_owner_array_length);
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
@@ -426,7 +427,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
 
     internal_remove_trove_owner(id, trove_owner_array_length);
 
-    sorted_troves_contract.remove(id);
+    sorted_troves_contract.remove(id,asset_contract);
 }
 
 #[storage(read, write)]
@@ -613,7 +614,8 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address());
+        let asset_contract = storage.asset_contract;
+        sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address(),asset_contract);
     } else {
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         let asset = storage.asset_contract;
@@ -756,7 +758,7 @@ fn internal_redeem_collateral_from_trove(
     single_redemption_values.asset_lot = ((U128::from_u64(single_redemption_values.usdf_lot) * U128::from_u64(ORACLE_PRICE_PRECISION)) / U128::from_u64(price)).as_u64().unwrap();
     let new_debt = trove.debt - single_redemption_values.usdf_lot;
     let new_coll = trove.coll - single_redemption_values.asset_lot;
-
+    let asset_contract = storage.asset_contract;
     // If the Trove is now empty, close it
     if (new_debt == 0) {
         internal_remove_stake(borrower);
@@ -770,7 +772,7 @@ fn internal_redeem_collateral_from_trove(
             single_redemption_values.cancelled_partial = true;
             return single_redemption_values;
         }
-        sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
+        sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint, asset_contract);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
         trove.coll = new_coll;

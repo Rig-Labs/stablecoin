@@ -144,6 +144,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    asset_contract: ContractId = ContractId::from(ZERO_B256),
     nominal_icr: StorageMap<Identity, u64> = StorageMap {},
 }
 
@@ -157,10 +158,11 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus: ContractId,
-        usdf_contract: ContractId,
+        asset_contract: ContractId,
     ) {
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
+        storage.asset_contract = asset_contract;
     }
 
     #[storage(read)]
@@ -178,14 +180,14 @@ impl TroveManager for Contract {
         storage.nominal_icr.insert(id, value);
 
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
-        sorted_troves_contract.insert(id, value, prev_id, next_id);
+        sorted_troves_contract.insert(id, value, prev_id, next_id, storage.asset_contract);
     }
 
     #[storage(read, write)]
     fn remove(id: Identity) {
         storage.nominal_icr.insert(id, 0);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.remove(id);
+        sorted_troves_contract.remove(id, storage.asset_contract);
     }
 
     #[storage(read, write)]
@@ -347,7 +349,7 @@ impl TroveManager for Contract {
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-    sorted_troves_contract.remove(id);
+    sorted_troves_contract.remove(id, storage.asset_contract);
 }
 
 #[storage(read)]
