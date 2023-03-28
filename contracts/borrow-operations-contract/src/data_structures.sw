@@ -17,6 +17,14 @@ pub struct LocalVariables_OpenTrove {
     array_index: u64,
 }
 
+pub struct AssetContracts {
+    active_pool: ContractId,
+    coll_surplus_pool: ContractId,
+    sorted_troves: ContractId,
+    trove_manager: ContractId,
+    oracle: ContractId,
+}
+
 impl LocalVariables_OpenTrove {
     pub fn new() -> Self {
         LocalVariables_OpenTrove {

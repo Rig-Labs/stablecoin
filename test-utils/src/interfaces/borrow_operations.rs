@@ -75,7 +75,12 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
+            .open_trove(
+                usdf_amount_withdrawn,
+                upper_hint,
+                lower_hint,
+                fuel_token.contract_id().into(),
+            )
             .call_params(call_params)
             .unwrap()
             .set_contracts(&[
@@ -114,7 +119,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .add_coll(lower_hint, upper_hint)
+            .add_coll(lower_hint, upper_hint, fuel_token.contract_id().into())
             .call_params(call_params)
             .unwrap()
             .set_contracts(&[
@@ -146,7 +151,12 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .withdraw_coll(amount, lower_hint, upper_hint)
+            .withdraw_coll(
+                amount,
+                lower_hint,
+                upper_hint,
+                fuel_token.contract_id().into(),
+            )
             .set_contracts(&[
                 oracle,
                 fuel_token,
@@ -176,7 +186,12 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .withdraw_usdf(amount, lower_hint, upper_hint)
+            .withdraw_usdf(
+                amount,
+                lower_hint,
+                upper_hint,
+                fuel_token.contract_id().into(),
+            )
             .set_contracts(&[
                 oracle,
                 fuel_token,
@@ -213,7 +228,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .repay_usdf(lower_hint, upper_hint)
+            .repay_usdf(lower_hint, upper_hint, fuel_token.contract_id().into())
             .set_contracts(&[
                 oracle,
                 fuel_token,
@@ -249,7 +264,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .close_trove()
+            .close_trove(fuel_token.contract_id().into())
             .set_contracts(&[
                 oracle,
                 fuel_token,

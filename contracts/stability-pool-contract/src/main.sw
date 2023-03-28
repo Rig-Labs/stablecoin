@@ -134,7 +134,7 @@ impl StabilityPool for Contract {
         borrower_operations.move_asset_gain_to_trove {
             coins: depositor_asset_gain,
             asset_id: storage.asset_address.value,
-        }(sender, lower_hint, upper_hint);
+        }(sender, lower_hint, upper_hint, storage.asset_address);
     }
 
     #[storage(read, write)]
