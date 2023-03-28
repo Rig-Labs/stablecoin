@@ -24,7 +24,7 @@ async fn proper_creating_trove() {
 
     let provider = admin.get_provider().unwrap();
 
-    let _ = borrow_operations_abi::open_trove(
+    let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.oracle,
         &contracts.fuel,
@@ -38,6 +38,8 @@ async fn proper_creating_trove() {
         Identity::Address([0; 32].into()),
     )
     .await;
+
+    println!("{:?}", res);
 
     let usdf_balance = provider
         .get_asset_balance(
