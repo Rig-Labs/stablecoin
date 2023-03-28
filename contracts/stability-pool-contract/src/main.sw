@@ -399,7 +399,6 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
 
     let active_pool = abi(ActivePool, active_pool_address.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);
-    let asset_id = storage.asset_address;
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add);
     active_pool.decrease_usdf_debt(debt_to_offset);
@@ -409,6 +408,5 @@ fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
         asset_id: storage.usdf_address.value,
     }();
 
-    // TODO Change asset_id
-    active_pool.send_asset(Identity::ContractId(contract_id()), asset_id, coll_to_add);
+    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
 }

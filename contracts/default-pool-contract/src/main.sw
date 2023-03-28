@@ -12,9 +12,6 @@ use std::{
         msg_amount,
     },
     logging::log,
-    storage::{
-        StorageMap,
-    },
     token::transfer,
 };
 
@@ -28,10 +25,10 @@ use std::{
 storage {
     trove_manager_contract: Identity = null_identity_address(),
     active_pool: ContractId = null_contract(),
+    asset_id: ContractId = null_contract(),
+    asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
     is_initialized: bool = false,
-    valid_assets: StorageMap<ContractId, bool> = StorageMap {},
-    asset_amounts: StorageMap<ContractId, u64> = StorageMap {},
 }
 
 impl DefaultPool for Contract {
@@ -45,28 +42,24 @@ impl DefaultPool for Contract {
 
         storage.trove_manager_contract = trove_manager;
         storage.active_pool = active_pool;
+        storage.asset_id = asset_id;
         storage.is_initialized = true;
-
-        initialize_valid_asset(asset_id);
     }
 
     #[storage(read, write)]
-    fn send_asset_to_active_pool(amount: u64, asset_id: ContractId) {
+    fn send_asset_to_active_pool(amount: u64) {
         require_is_trove_manager();
-        let mut asset_amount = storage.asset_amounts.get(asset_id);
-        asset_amount -= amount;
-        storage.asset_amounts.insert(asset_id, asset_amount);
-
+        storage.asset_amount -= amount;
         let active_pool = abi(ActivePool, storage.active_pool.value);
         active_pool.recieve {
             coins: amount,
-            asset_id: asset_id.value,
+            asset_id: storage.asset_id.value,
         }();
     }
 
     #[storage(read)]
-    fn get_asset(asset_id: ContractId) -> u64 {
-        return storage.asset_amounts.get(asset_id);
+    fn get_asset() -> u64 {
+        return storage.asset_amount;
     }
 
     #[storage(read)]
@@ -90,26 +83,14 @@ impl DefaultPool for Contract {
     fn recieve() {
         require_is_active_pool();
         require_is_asset_id();
-
-        let asset_id = msg_asset_id();
-
-        let mut asset_amount = storage.asset_amounts.get(asset_id);
-        asset_amount += msg_amount();
-        storage.asset_amounts.insert(asset_id, asset_amount);
+        storage.asset_amount += msg_amount();
     }
-}
-
-#[storage(read, write)]
-fn initialize_valid_asset(asset_id: ContractId) {
-    storage.valid_assets.insert(asset_id, true);
-    storage.asset_amounts.insert(asset_id, 0);
 }
 
 #[storage(read)]
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
-    let is_valid_asset = storage.valid_assets.get(asset_id);
-    require(is_valid_asset == true, "Asset ID is not correct");
+    require(asset_id == storage.asset_id, "Asset ID is not correct");
 }
 
 #[storage(read)]

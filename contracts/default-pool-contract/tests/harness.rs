@@ -5,8 +5,6 @@ use test_utils::{
     setup::common::deploy_usdf_token,
 };
 
-// TODO Default pool tests
-
 async fn get_contract_instance() -> (USDFToken, WalletUnlocked, Vec<WalletUnlocked>) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(

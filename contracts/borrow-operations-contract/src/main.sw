@@ -107,7 +107,7 @@ impl BorrowOperations for Contract {
         trove_manager.update_trove_reward_snapshots(sender);
         let _ = trove_manager.update_stake_and_total_stakes(sender);
 
-        sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint, storage.asset_contract);
+        sorted_troves.insert(sender, vars.nicr, _upper_hint, _lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
         internal_active_pool_add_coll(msg_amount());
@@ -167,8 +167,7 @@ impl BorrowOperations for Contract {
         trove_manager.close_trove(borrower);
         trove_manager.remove_stake(borrower);
         internal_repay_usdf(debt);
-        // TODO asset id
-        active_pool.send_asset(borrower, storage.asset_contract, coll);
+        active_pool.send_asset(borrower, coll);
 
         if (debt < msg_amount()) {
             let usdf_to_send = msg_amount() - debt;
@@ -191,7 +190,7 @@ impl BorrowOperations for Contract {
     #[storage(read)]
     fn claim_collateral() {
         let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
-        coll_surplus.claim_coll(msg_sender().unwrap(), storage.asset_contract);
+        coll_surplus.claim_coll(msg_sender().unwrap());
     }
 
     #[storage(read)]
@@ -267,7 +266,7 @@ fn internal_adjust_trove(
 
     let _ = trove_manager.update_stake_and_total_stakes(borrower);
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
-    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint, storage.asset_contract);
+    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
 
     internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change);
 }
@@ -445,29 +444,29 @@ fn internal_repay_usdf(usdf_amount: u64) {
 
 #[storage(read)]
 fn internal_move_usdf_and_asset_from_adjustment(
-    borrower: Identity,
-    coll_change: u64,
-    is_coll_increase: bool,
-    usdf_change: u64,
-    is_debt_increase: bool,
-    net_debt_change: u64,
+    _borrower: Identity,
+    _coll_change: u64,
+    _is_coll_increase: bool,
+    _usdf_change: u64,
+    _is_debt_increase: bool,
+    _net_debt_change: u64,
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.value);
     let usdf = abi(Token, storage.usdf_contract.value);
 
-    if coll_change > 0 {
-        if is_coll_increase {
-            internal_active_pool_add_coll(coll_change);
+    if _coll_change > 0 {
+        if _is_coll_increase {
+            internal_active_pool_add_coll(_coll_change);
         } else {
-            active_pool.send_asset(borrower, storage.asset_contract, coll_change);
+            active_pool.send_asset(_borrower, _coll_change);
         }
     }
 
-    if usdf_change > 0 {
-        if is_debt_increase {
-            withdraw_usdf(borrower, usdf_change, net_debt_change);
+    if _usdf_change > 0 {
+        if _is_debt_increase {
+            withdraw_usdf(_borrower, _usdf_change, _net_debt_change);
         } else {
-            internal_repay_usdf(usdf_change);
+            internal_repay_usdf(_usdf_change);
         }
     }
 }

@@ -10,7 +10,6 @@ abigen!(Contract(
 pub mod default_pool_abi {
     use crate::interfaces::token::Token;
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
-    use fuels::client::schema::contract::Contract;
     use fuels::prelude::LogDecoder;
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, TxParameters},
@@ -48,13 +47,8 @@ pub mod default_pool_abi {
         default_pool.methods().get_usdf_debt().call().await.unwrap()
     }
 
-    pub async fn get_asset(default_pool: &DefaultPool, asset: ContractId) -> FuelCallResponse<u64> {
-        default_pool
-            .methods()
-            .get_asset(asset)
-            .call()
-            .await
-            .unwrap()
+    pub async fn get_asset(default_pool: &DefaultPool) -> FuelCallResponse<u64> {
+        default_pool.methods().get_asset().call().await.unwrap()
     }
 
     pub async fn increase_usdf_debt(
@@ -110,12 +104,11 @@ pub mod default_pool_abi {
     pub async fn send_asset_to_active_pool(
         default_pool: &DefaultPool,
         active_pool: &ActivePool,
-        asset: &Token,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
             .methods()
-            .send_asset_to_active_pool(amount, asset.contract_id().into())
+            .send_asset_to_active_pool(amount)
             .set_contracts(&[active_pool])
             .append_variable_outputs(1)
             .call()

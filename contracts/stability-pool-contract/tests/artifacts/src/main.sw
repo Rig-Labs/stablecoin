@@ -119,14 +119,14 @@ impl MockTroveManager for Contract {
         storage.nominal_icr.insert(id, value);
 
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
-        sorted_troves_contract.insert(id, value, prev_id, next_id, storage.sorted_troves_contract);
+        sorted_troves_contract.insert(id, value, prev_id, next_id);
     }
 
     #[storage(read, write)]
     fn remove(id: Identity) {
         storage.nominal_icr.insert(id, 0);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.remove(id, storage.sorted_troves_contract);
+        sorted_troves_contract.remove(id);
     }
 
     #[storage(read, write)]
@@ -197,7 +197,7 @@ impl MockTroveManager for Contract {
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-    sorted_troves_contract.remove(id, storage.sorted_troves_contract);
+    sorted_troves_contract.remove(id);
 }
 
 #[storage(read)]

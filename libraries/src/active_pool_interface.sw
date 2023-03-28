@@ -5,10 +5,10 @@ abi ActivePool {
     fn initialize(borrow_operations: Identity, trove_manager: Identity, stability_pool: Identity, asset_id: ContractId, default_pool: ContractId);
 
     #[storage(read, write)]
-    fn send_asset(address: Identity, asset: ContractId, amount: u64);
+    fn send_asset(address: Identity, amount: u64);
 
     #[storage(read)]
-    fn get_asset(asset: ContractId) -> u64;
+    fn get_asset() -> u64;
 
     #[storage(read)]
     fn get_usdf_debt() -> u64;
@@ -23,5 +23,5 @@ abi ActivePool {
     fn recieve();
 
     #[storage(read, write)]
-    fn send_asset_to_default_pool(asset: ContractId,amount: u64);
+    fn send_asset_to_default_pool(amount: u64);
 }

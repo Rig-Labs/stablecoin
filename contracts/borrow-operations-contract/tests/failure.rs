@@ -64,18 +64,12 @@ async fn fails_open_two_troves() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(
-        &contracts.sorted_troves,
-        contracts.fuel.contract_id().into(),
-    )
-    .await
-    .value;
-    let last = sorted_troves_abi::get_last(
-        &contracts.sorted_troves,
-        contracts.fuel.contract_id().into(),
-    )
-    .await
-    .value;
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves)
+        .await
+        .value;
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves)
+        .await
+        .value;
     let size = sorted_troves_abi::get_size(&contracts.sorted_troves)
         .await
         .value;
@@ -118,10 +112,9 @@ async fn fails_open_two_troves() {
         .value;
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
-    let active_pool_col =
-        active_pool_abi::get_asset(&contracts.active_pool, contracts.fuel.contract_id().into())
-            .await
-            .value;
+    let active_pool_col = active_pool_abi::get_asset(&contracts.active_pool)
+        .await
+        .value;
     assert_eq!(
         active_pool_col, 1_200_000_000,
         "Active Pool Collateral is wrong"
