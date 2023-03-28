@@ -33,9 +33,9 @@ storage {
     max_size: u64 = 0,
     trove_manager_contract_id: ContractId = null_contract(),
     borrower_operations_contract_id: ContractId = null_contract(),
-    head: StorageMap<ContractId, Identity> = StorageMap {},
-    tail: StorageMap<ContractId, Identity> = StorageMap {},
-    nodes: StorageMap<(Identity, ContractId), Node> = StorageMap {},
+    head: Identity = null_identity_address(),
+    tail: Identity = null_identity_address(),
+    nodes: StorageMap<Identity, Node> = StorageMap {},
     is_initialized: bool = false,
 }
 
@@ -57,22 +57,21 @@ impl SortedTroves for Contract {
 
     #[storage(read, write)]
     fn insert(
-        id: Identity,
-        nicr: u64,
-        prev_id: Identity,
-        next_id: Identity,
-        asset: ContractId,
+        _id: Identity,
+        _nicr: u64,
+        _prev_id: Identity,
+        _next_id: Identity,
     ) {
         require_is_bo_or_tm();
 
-        internal_insert(id, nicr, prev_id, next_id, asset);
+        internal_insert(_id, _nicr, _prev_id, _next_id);
     }
 
     #[storage(read, write)]
-    fn remove(id: Identity, asset: ContractId) {
+    fn remove(id: Identity) {
         require_is_trove_manager();
 
-        internal_remove(id, asset);
+        internal_remove(id);
     }
 
     #[storage(read, write)]
@@ -81,20 +80,19 @@ impl SortedTroves for Contract {
         nicr: u64,
         prev_id: Identity,
         next_id: Identity,
-        asset: ContractId,
     ) {
         require_is_bo_or_tm();
 
-        require(internal_contains(id, asset), "id must exist");
+        require(internal_contains(id), "id must exist");
         require(nicr > 0, "nicr must be greater than 0");
 
-        internal_remove(id, asset);
-        internal_insert(id, nicr, prev_id, next_id, asset);
+        internal_remove(id);
+        internal_insert(id, nicr, prev_id, next_id);
     }
 
     #[storage(read)]
-    fn contains(id: Identity, asset: ContractId) -> bool {
-        return internal_contains(id, asset);
+    fn contains(id: Identity) -> bool {
+        return internal_contains(id);
     }
 
     #[storage(read)]
@@ -118,64 +116,54 @@ impl SortedTroves for Contract {
     }
 
     #[storage(read)]
-    fn get_first(asset: ContractId) -> Identity {
-        return internal_get_first(asset);
+    fn get_first() -> Identity {
+        return internal_get_first();
     }
 
     #[storage(read)]
-    fn get_last(asset: ContractId) -> Identity {
-        return internal_get_last(asset);
+    fn get_last() -> Identity {
+        return internal_get_last();
     }
 
     #[storage(read)]
-    fn get_next(id: Identity, asset: ContractId) -> Identity {
-        return internal_get_next(id, asset);
+    fn get_next(id: Identity) -> Identity {
+        return internal_get_next(id);
     }
 
     #[storage(read)]
-    fn get_prev(id: Identity, asset: ContractId) -> Identity {
-        return internal_get_prev(id, asset);
+    fn get_prev(id: Identity) -> Identity {
+        return internal_get_prev(id);
     }
 
     #[storage(read)]
-    fn valid_insert_position(
-        icr: u64,
-        next_id: Identity,
-        prev_id: Identity,
-        asset: ContractId,
-    ) -> bool {
-        return internal_valid_insert_position(icr, next_id, prev_id, asset);
+    fn valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
+        return internal_valid_insert_position(icr, next_id, prev_id);
     }
 
     #[storage(read)]
-    fn find_insert_position(
-        icr: u64,
-        next_id: Identity,
-        prev_id: Identity,
-        asset: ContractId,
-    ) -> (Identity, Identity) {
-        return internal_find_insert_position(icr, next_id, prev_id, asset);
+    fn find_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> (Identity, Identity) {
+        return internal_find_insert_position(icr, next_id, prev_id);
     }
 }
 
 #[storage(read)]
-fn internal_get_first(asset: ContractId) -> Identity {
-    return storage.head.get(asset);
+fn internal_get_first() -> Identity {
+    return storage.head;
 }
 
 #[storage(read)]
-fn internal_get_last(asset: ContractId) -> Identity {
-    return storage.tail.get(asset);
+fn internal_get_last() -> Identity {
+    return storage.tail;
 }
 
 #[storage(read)]
-fn internal_get_next(id: Identity, asset: ContractId) -> Identity {
-    return storage.nodes.get((id, asset)).next_id;
+fn internal_get_next(id: Identity) -> Identity {
+    return storage.nodes.get(id).next_id;
 }
 
 #[storage(read)]
-fn internal_get_prev(id: Identity, asset: ContractId) -> Identity {
-    return storage.nodes.get((id, asset)).prev_id;
+fn internal_get_prev(id: Identity) -> Identity {
+    return storage.nodes.get(id).prev_id;
 }
 
 #[storage(read)]
@@ -199,17 +187,12 @@ fn internal_is_empty() -> bool {
 }
 
 #[storage(read)]
-fn internal_contains(id: Identity, asset: ContractId) -> bool {
-    return storage.nodes.get((id, asset)).exists;
+fn internal_contains(id: Identity) -> bool {
+    return storage.nodes.get(id).exists;
 }
 
 #[storage(read)]
-fn internal_valid_insert_position(
-    icr: u64,
-    next_id: Identity,
-    prev_id: Identity,
-    asset: ContractId,
-) -> bool {
+fn internal_valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
     if (next_id == null_identity_address()
@@ -217,11 +200,11 @@ fn internal_valid_insert_position(
     {
         return internal_is_empty();
     } else if (prev_id == null_identity_address()) {
-        return storage.head.get(asset) == next_id && icr >= trove_manager_contract.get_nominal_icr(next_id);
+        return storage.head == next_id && icr >= trove_manager_contract.get_nominal_icr(next_id);
     } else if (next_id == null_identity_address()) {
-        return storage.tail.get(asset) == prev_id && icr <= trove_manager_contract.get_nominal_icr(prev_id);
+        return storage.tail == prev_id && icr <= trove_manager_contract.get_nominal_icr(prev_id);
     } else {
-        return storage.nodes.get((prev_id, asset)).next_id == next_id && trove_manager_contract.get_nominal_icr(prev_id) >= icr && icr >= trove_manager_contract.get_nominal_icr(next_id);
+        return storage.nodes.get(prev_id).next_id == next_id && trove_manager_contract.get_nominal_icr(prev_id) >= icr && icr >= trove_manager_contract.get_nominal_icr(next_id);
     }
 
     return true;
@@ -244,7 +227,6 @@ fn internal_find_insert_position(
     icr: u64,
     _next_id: Identity,
     _prev_id: Identity,
-    asset: ContractId,
 ) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
@@ -252,7 +234,7 @@ fn internal_find_insert_position(
     let mut prev_id: Identity = _prev_id;
 
     if (prev_id != null_identity_address()) {
-        if (!internal_contains(prev_id, asset)
+        if (!internal_contains(prev_id)
             || icr > trove_manager_contract.get_nominal_icr(prev_id))
         {
             prev_id = null_identity_address()
@@ -260,7 +242,7 @@ fn internal_find_insert_position(
     }
 
     if (next_id != null_identity_address()) {
-        if (!internal_contains(next_id, asset)
+        if (!internal_contains(next_id)
             || icr < trove_manager_contract.get_nominal_icr(prev_id))
         {
             next_id = null_identity_address()
@@ -270,53 +252,53 @@ fn internal_find_insert_position(
     if (prev_id == null_identity_address()
         && next_id == null_identity_address())
     {
-        return internal_descend_list(icr, storage.head.get(asset), asset);
+        return internal_descend_list(icr, storage.head);
     } else if (prev_id == null_identity_address()) {
-        return internal_ascend_list(icr, next_id, asset);
+        return internal_ascend_list(icr, next_id);
     } else if (next_id == null_identity_address()) {
-        return internal_descend_list(icr, prev_id, asset);
+        return internal_descend_list(icr, prev_id);
     } else {
-        return internal_descend_list(icr, prev_id, asset);
+        return internal_descend_list(icr, prev_id);
     }
 }
 
 #[storage(read)]
-fn internal_descend_list(nicr: u64, start_id: Identity, asset: ContractId) -> (Identity, Identity) {
+fn internal_descend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
-    if (storage.head.get(asset) == start_id
+    if (storage.head == start_id
         && nicr >= trove_manager_contract.get_nominal_icr(start_id))
     {
         return (null_identity_address(), start_id);
     }
 
     let mut prev_id = start_id;
-    let mut next_id = storage.nodes.get((prev_id, asset)).next_id;
+    let mut next_id = storage.nodes.get(prev_id).next_id;
 
-    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id, asset)) {
-        prev_id = storage.nodes.get((prev_id, asset)).next_id;
-        next_id = storage.nodes.get((prev_id, asset)).next_id;
+    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+        prev_id = storage.nodes.get(prev_id).next_id;
+        next_id = storage.nodes.get(prev_id).next_id;
     }
 
     return (prev_id, next_id);
 }
 
 #[storage(read)]
-fn internal_ascend_list(nicr: u64, start_id: Identity, asset: ContractId) -> (Identity, Identity) {
+fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
-    if (storage.tail.get(asset) == start_id
+    if (storage.tail == start_id
         && nicr <= trove_manager_contract.get_nominal_icr(start_id))
     {
         return (start_id, null_identity_address());
     }
 
     let mut next_id = start_id;
-    let mut prev_id = storage.nodes.get((next_id, asset)).prev_id;
+    let mut prev_id = storage.nodes.get(next_id).prev_id;
 
-    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id, asset)) {
-        next_id = storage.nodes.get((next_id, asset)).prev_id;
-        prev_id = storage.nodes.get((next_id, asset)).prev_id;
+    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+        next_id = storage.nodes.get(next_id).prev_id;
+        prev_id = storage.nodes.get(next_id).prev_id;
     }
 
     return (prev_id, next_id);
@@ -328,20 +310,19 @@ fn internal_insert(
     nicr: u64,
     _prev_id: Identity,
     _next_id: Identity,
-    asset: ContractId,
 ) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.into());
     require(!internal_is_full(), "list is full");
-    require(!internal_contains(id, asset), "id already exists");
+    require(!internal_contains(id), "id already exists");
     require(null_identity_address() != id, "id must not be zero");
     require(nicr > 0, "icr must be greater than 0");
 
     let mut next_id: Identity = _next_id;
     let mut prev_id: Identity = _prev_id;
 
-    if (!internal_valid_insert_position(nicr, prev_id, next_id, asset))
+    if (!internal_valid_insert_position(nicr, prev_id, next_id))
     {
-        let res = internal_find_insert_position(nicr, prev_id, next_id, asset);
+        let res = internal_find_insert_position(nicr, prev_id, next_id);
         prev_id = res.0;
         next_id = res.1;
     }
@@ -355,30 +336,30 @@ fn internal_insert(
     if (prev_id == null_identity_address()
         && next_id == null_identity_address())
     {
-        storage.head.insert(asset, id);
-        storage.tail.insert(asset, id);
+        storage.head = id;
+        storage.tail = id;
     } else if (prev_id == null_identity_address()) {
-        new_node.next_id = storage.head.get(asset);
+        new_node.next_id = storage.head;
 
-        edit_node_neighbors(storage.head.get(asset), Option::Some(id), Option::None, asset);
+        edit_node_neighbors(storage.head, Option::Some(id), Option::None);
 
-        storage.head.insert(asset, id);
+        storage.head = id;
     } else if (next_id == null_identity_address()) {
-        new_node.prev_id = storage.tail.get(asset);
+        new_node.prev_id = storage.tail;
 
-        edit_node_neighbors(storage.tail.get(asset), Option::None, Option::Some(id), asset);
+        edit_node_neighbors(storage.tail, Option::None, Option::Some(id));
 
-        storage.tail.insert(asset, id);
+        storage.tail = id;
     } else {
         new_node.prev_id = prev_id;
         new_node.next_id = next_id;
 
-        edit_node_neighbors(prev_id, Option::None, Option::Some(id), asset);
+        edit_node_neighbors(prev_id, Option::None, Option::Some(id));
 
-        edit_node_neighbors(next_id, Option::Some(id), Option::None, asset);
+        edit_node_neighbors(next_id, Option::Some(id), Option::None);
     }
 
-    storage.nodes.insert((id, asset), new_node);
+    storage.nodes.insert(id, new_node);
     storage.size += 1;
 }
 
@@ -387,10 +368,9 @@ fn edit_node_neighbors(
     id: Identity,
     prev_id: Option<Identity>,
     next_id: Option<Identity>,
-    asset: ContractId,
 ) {
     // TODO Update when StorageMap supports updating values
-    let mut node = storage.nodes.get((id, asset));
+    let mut node = storage.nodes.get(id);
 
     if (prev_id.is_some()) {
         node.prev_id = prev_id.unwrap();
@@ -400,39 +380,39 @@ fn edit_node_neighbors(
         node.next_id = next_id.unwrap();
     }
 
-    storage.nodes.insert((id, asset), node);
+    storage.nodes.insert(id, node);
 }
 
 #[storage(read, write)]
-fn internal_remove(id: Identity, asset: ContractId) {
-    require(internal_contains(id, asset), "id does not exist");
+fn internal_remove(id: Identity) {
+    require(internal_contains(id), "id does not exist");
 
-    let mut node = storage.nodes.get((id, asset));
+    let mut node = storage.nodes.get(id);
 
     if (storage.size > 1) {
-        if (id == storage.head.get(asset)) {
-            storage.head.insert(asset, node.next_id);
+        if (id == storage.head) {
+            storage.head = node.next_id;
 
-            edit_node_neighbors(node.next_id, Option::Some(null_identity_address()), Option::None, asset);
-        } else if (id == storage.tail.get(asset)) {
-            storage.tail.insert(asset, node.prev_id);
+            edit_node_neighbors(node.next_id, Option::Some(null_identity_address()), Option::None);
+        } else if (id == storage.tail) {
+            storage.tail = node.prev_id;
 
-            edit_node_neighbors(node.prev_id, Option::None, Option::Some(null_identity_address()), asset);
+            edit_node_neighbors(node.prev_id, Option::None, Option::Some(null_identity_address()));
         } else {
-            edit_node_neighbors(node.prev_id, Option::None, Option::Some(node.next_id), asset);
+            edit_node_neighbors(node.prev_id, Option::None, Option::Some(node.next_id));
 
-            edit_node_neighbors(node.next_id, Option::Some(node.prev_id), Option::None, asset);
+            edit_node_neighbors(node.next_id, Option::Some(node.prev_id), Option::None);
         }
     } else {
-        storage.head.insert(asset, null_identity_address());
-        storage.tail.insert(asset, null_identity_address());
+        storage.head = null_identity_address();
+        storage.tail = null_identity_address();
     }
 
     // TODO use storage.nodes.remove(id) when available
     node.exists = false;
     node.prev_id = null_identity_address();
     node.next_id = null_identity_address();
-    storage.nodes.insert((id, asset), node);
+    storage.nodes.insert(id, node);
 
     storage.size -= 1;
 }

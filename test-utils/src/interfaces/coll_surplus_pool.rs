@@ -47,27 +47,18 @@ pub mod coll_surplus_pool_abi {
         }
     }
 
-    pub async fn get_asset(
-        default_pool: &CollSurplusPool,
-        asset: ContractId,
-    ) -> FuelCallResponse<u64> {
-        default_pool
-            .methods()
-            .get_asset(asset)
-            .call()
-            .await
-            .unwrap()
+    pub async fn get_asset(default_pool: &CollSurplusPool) -> FuelCallResponse<u64> {
+        default_pool.methods().get_asset().call().await.unwrap()
     }
 
     pub async fn claim_coll(
         default_pool: &CollSurplusPool,
         acount: Identity,
         active_pool: &ActivePool,
-        asset: ContractId,
     ) -> FuelCallResponse<()> {
         default_pool
             .methods()
-            .claim_coll(acount, asset)
+            .claim_coll(acount)
             .set_contracts(&[active_pool])
             .append_variable_outputs(1)
             .call()
@@ -78,11 +69,10 @@ pub mod coll_surplus_pool_abi {
     pub async fn get_collateral(
         default_pool: &CollSurplusPool,
         acount: Identity,
-        asset: ContractId,
     ) -> FuelCallResponse<u64> {
         default_pool
             .methods()
-            .get_collateral(acount, asset)
+            .get_collateral(acount)
             .call()
             .await
             .unwrap()

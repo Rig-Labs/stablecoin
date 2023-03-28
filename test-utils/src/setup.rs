@@ -68,11 +68,9 @@ pub mod common {
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
         max_size: u64,
-        is_testnet: bool,
+        _is_testnet: bool,
     ) -> ProtocolContracts {
         println!("Deploying contracts...");
-
-        if is_testnet {}
         let mut pb = ProgressBar::new(10);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
@@ -105,22 +103,21 @@ pub mod common {
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
         pb.finish();
 
-        if is_testnet {
-            println!("Borrow operations: {}", borrow_operations.contract_id());
-            println!("Oracle: {}", oracle_instance.contract_id());
-            println!("Sorted Troves: {}", sorted_troves.contract_id());
-            println!("Trove Manager: {}", trove_manager.contract_id());
-            println!("Fuel: {}", fuel.contract_id());
-            println!("Usdf: {}", usdf.contract_id());
-            println!("Active Pool: {}", active_pool.contract_id());
-            println!("Stability Pool: {}", stability_pool.contract_id());
-            println!("Default Pool: {}", default_pool.contract_id());
-            println!(
-                "Collateral Surplus Pool: {}",
-                coll_surplus_pool.contract_id()
-            );
-            println!("Initializing contracts...");
-        }
+        println!("Borrow operations: {}", borrow_operations.contract_id());
+        println!("Oracle: {}", oracle_instance.contract_id());
+        println!("Sorted Troves: {}", sorted_troves.contract_id());
+        println!("Trove Manager: {}", trove_manager.contract_id());
+        println!("Fuel: {}", fuel.contract_id());
+        println!("Usdf: {}", usdf.contract_id());
+        println!("Active Pool: {}", active_pool.contract_id());
+        println!("Stability Pool: {}", stability_pool.contract_id());
+        println!("Default Pool: {}", default_pool.contract_id());
+        println!(
+            "Collateral Surplus Pool: {}",
+            coll_surplus_pool.contract_id()
+        );
+
+        println!("Initializing contracts...");
 
         let mut pb = ProgressBar::new(10);
         default_pool_abi::initialize(
@@ -193,7 +190,6 @@ pub mod common {
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
-            fuel.contract_id().into(),
         )
         .await;
         pb.inc();

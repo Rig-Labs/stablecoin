@@ -5,10 +5,7 @@ use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod sorted_troves_utils {
-    use fuels::{
-        signers::fuel_crypto::rand::{self, Rng},
-        types::ContractId,
-    };
+    use fuels::signers::fuel_crypto::rand::{self, Rng};
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
 
@@ -19,28 +16,24 @@ pub mod sorted_troves_utils {
         current: Identity,
         prev_id: Identity,
         next_id: Identity,
-        asset: ContractId,
     ) {
-        let next = sorted_troves_abi::get_next(&sorted_troves, current.clone(), asset).await;
+        let next = sorted_troves_abi::get_next(&sorted_troves, current.clone()).await;
         assert_eq!(next.value, next_id);
 
-        let prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset).await;
+        let prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone()).await;
         assert_eq!(prev.value, prev_id);
     }
 
     pub async fn assert_in_order_from_head(
         sorted_troves: &SortedTroves,
         trove_manager: &MockTroveManagerContract,
-        asset: ContractId,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
 
-        let mut current = sorted_troves_abi::get_first(sorted_troves, asset)
-            .await
-            .value;
+        let mut current = sorted_troves_abi::get_first(sorted_troves).await.value;
 
-        let mut next = sorted_troves_abi::get_next(sorted_troves, current.clone(), asset)
+        let mut next = sorted_troves_abi::get_next(sorted_troves, current.clone())
             .await
             .value;
 
@@ -52,7 +45,7 @@ pub mod sorted_troves_utils {
             assert!(current_icr >= next_icr);
 
             current = next.clone();
-            next = sorted_troves_abi::get_next(&sorted_troves, current.clone(), asset)
+            next = sorted_troves_abi::get_next(&sorted_troves, current.clone())
                 .await
                 .value
                 .clone();
@@ -66,16 +59,13 @@ pub mod sorted_troves_utils {
     pub async fn assert_in_order_from_tail(
         sorted_troves: &SortedTroves,
         trove_manager: &MockTroveManagerContract,
-        asset: ContractId,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
 
-        let mut current = sorted_troves_abi::get_last(&sorted_troves, asset)
-            .await
-            .value;
+        let mut current = sorted_troves_abi::get_last(&sorted_troves).await.value;
 
-        let mut prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset)
+        let mut prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
             .await
             .value;
 
@@ -87,7 +77,7 @@ pub mod sorted_troves_utils {
             assert!(current_icr <= prev_icr);
 
             current = prev.clone();
-            prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset)
+            prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
                 .await
                 .value
                 .clone();

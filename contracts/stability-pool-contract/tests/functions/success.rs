@@ -544,8 +544,6 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
     oracle_abi::set_price(&contracts.oracle, 1_000_000).await;
 
-    println!("Liquidating trove");
-
     trove_manager_abi::liquidate(
         &contracts.trove_manager,
         &contracts.stability_pool,
@@ -559,8 +557,6 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     )
     .await
     .unwrap();
-
-    println!("Liquidation complete");
 
     admin
         .transfer(

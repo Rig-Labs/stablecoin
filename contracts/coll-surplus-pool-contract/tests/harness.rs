@@ -47,9 +47,9 @@ async fn get_contract_instance() -> (CollSurplusPool, Token, WalletUnlocked) {
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (coll_surplus_pool, mock_fuel, admin) = get_contract_instance().await;
+    let (coll_surplus_pool, _mock_fuel, admin) = get_contract_instance().await;
 
-    let coll = coll_surplus_pool_abi::get_asset(&coll_surplus_pool, mock_fuel.contract_id().into())
+    let coll = coll_surplus_pool_abi::get_asset(&coll_surplus_pool)
         .await
         .value;
     assert_eq!(coll, 0);
@@ -57,7 +57,6 @@ async fn proper_intialize() {
     let balance = coll_surplus_pool_abi::get_collateral(
         &coll_surplus_pool,
         Identity::Address(admin.address().into()),
-        mock_fuel.contract_id().into(),
     )
     .await;
 
