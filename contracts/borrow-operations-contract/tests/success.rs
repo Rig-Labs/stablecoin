@@ -804,7 +804,9 @@ async fn proper_close_trove() {
 
 #[tokio::test]
 async fn proper_creating_trove_with_2nd_asset() {
-    let (contracts, admin, _) = setup_protocol(100, 2, true).await;
+    let (contracts, admin, mut wallets) = setup_protocol(100, 2, true).await;
+
+    let wallet2 = wallets.pop().unwrap();
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -909,6 +911,32 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
 
+    let _ = token_abi::mint_to_id(
+        &contracts.asset_contracts[1].asset,
+        5_000_000_000,
+        Identity::Address(wallet2.address().into()),
+    )
+    .await;
+
+    let borrow_operations_wallet2 =
+        BorrowOperations::new(contracts.borrow_operations.contract_id().clone(), wallet2);
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_wallet2,
+        &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.asset_contracts[1].trove_manager,
+        &contracts.asset_contracts[1].active_pool,
+        1_200_000_000,
+        600_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
     let provider = admin.get_provider().unwrap();
 
     borrow_operations_abi::open_trove(
@@ -935,12 +963,6 @@ async fn proper_creating_trove_with_2nd_asset() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[1].sorted_troves)
-        .await
-        .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[1].sorted_troves)
-        .await
-        .value;
     let size = sorted_troves_abi::get_size(&contracts.asset_contracts[1].sorted_troves)
         .await
         .value;
@@ -951,7 +973,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .value;
 
-    assert_eq!(size, 1);
+    assert_eq!(size, 2);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
     assert_eq!(usdf_balance, 2 * 600_000_000);
@@ -983,7 +1005,8 @@ async fn proper_creating_trove_with_2nd_asset() {
             .await
             .value;
     assert_eq!(
-        active_pool_debt, expected_net_debt,
+        active_pool_debt,
+        2 * expected_net_debt,
         "Active Pool Debt is wrong"
     );
 
@@ -991,7 +1014,20 @@ async fn proper_creating_trove_with_2nd_asset() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col,
+        2 * 1_200_000_000,
         "Active Pool Collateral is wrong"
     );
+
+    borrow_operations_abi::close_trove(
+        &contracts.borrow_operations,
+        &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.asset_contracts[1].trove_manager,
+        &contracts.asset_contracts[1].active_pool,
+        with_min_borrow_fee(600_000_000),
+    )
+    .await;
 }

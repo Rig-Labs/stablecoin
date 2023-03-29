@@ -40,7 +40,6 @@ storage {
 }
 
 enum Error {
-
     NotAuthorized: (),
 }
 
