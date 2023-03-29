@@ -22,31 +22,15 @@ pub mod borrow_operations_abi {
 
     pub async fn initialize(
         borrow_operations: &BorrowOperations,
-        trove_manager_contract: ContractId,
-        sorted_troves_contract: ContractId,
-        oracle_contract: ContractId,
-        asset_contract: ContractId,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
-        active_pool_contract: ContractId,
-        coll_surplus_pool_contract: ContractId,
         stability_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
-            .initialize(
-                trove_manager_contract,
-                sorted_troves_contract,
-                oracle_contract,
-                asset_contract,
-                usdf_contract,
-                fpt_staking_contract,
-                active_pool_contract,
-                coll_surplus_pool_contract,
-                stability_pool_contract,
-            )
+            .initialize(usdf_contract, fpt_staking_contract, stability_pool_contract)
             .tx_params(tx_params)
             .call()
             .await
@@ -280,5 +264,31 @@ pub mod borrow_operations_abi {
             .call()
             .await
             .unwrap()
+    }
+
+    pub async fn add_asset(
+        borrow_operations: &BorrowOperations,
+        oracle: ContractId,
+        sorted_troves: ContractId,
+        trove_manager: ContractId,
+        active_pool: ContractId,
+        asset: ContractId,
+        coll_surplus_pool_contract: ContractId,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        borrow_operations
+            .methods()
+            .add_asset(
+                asset,
+                trove_manager,
+                sorted_troves,
+                oracle,
+                active_pool,
+                coll_surplus_pool_contract,
+            )
+            .tx_params(tx_params)
+            .call()
+            .await
     }
 }
