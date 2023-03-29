@@ -43,14 +43,8 @@ storage {
 impl BorrowOperations for Contract {
     #[storage(read, write)]
     fn initialize(
-        trove_manager_contract: ContractId,
-        sorted_troves_contract: ContractId,
-        oracle_contract: ContractId,
-        asset_contract: ContractId,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
-        active_pool_contract: ContractId,
-        coll_surplus_pool_contract: ContractId,
         stability_pool_contract: ContractId,
     ) {
         require(!storage.is_initialized, "BorrowOperations: already initialized");
@@ -59,10 +53,21 @@ impl BorrowOperations for Contract {
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.stability_pool_contract = stability_pool_contract;
         storage.is_initialized = true;
+    }
 
+    #[storage(read, write)]
+    fn add_asset(
+        asset_contract: ContractId,
+        trove_manager_contract: ContractId,
+        sorted_troves_contract: ContractId,
+        oracle_contract: ContractId,
+        active_pool: ContractId,
+        coll_surplus_pool: ContractId,
+    ) {
+        // TODO Require caller is protocol owner
         let asset_contracts = AssetContracts {
-            active_pool: active_pool_contract,
-            coll_surplus_pool: coll_surplus_pool_contract,
+            active_pool: active_pool,
+            coll_surplus_pool: coll_surplus_pool,
             sorted_troves: sorted_troves_contract,
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,

@@ -32,13 +32,17 @@ pub mod common {
 
     pub struct ProtocolContracts {
         pub borrow_operations: BorrowOperations,
-        pub trove_manager: TroveManagerContract,
-        pub oracle: Oracle,
-        pub sorted_troves: SortedTroves,
-        pub fuel: Token,
         pub usdf: USDFToken,
-        pub active_pool: ActivePool,
         pub stability_pool: StabilityPool,
+        pub asset_contracts: Vec<AssetContracts>,
+    }
+
+    pub struct AssetContracts {
+        pub asset: Token,
+        pub oracle: Oracle,
+        pub active_pool: ActivePool,
+        pub trove_manager: TroveManagerContract,
+        pub sorted_troves: SortedTroves,
         pub default_pool: DefaultPool,
         pub coll_surplus_pool: CollSurplusPool,
     }
@@ -200,18 +204,24 @@ pub mod common {
 
         borrow_operations_abi::initialize(
             &borrow_operations,
-            trove_manager.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            oracle_instance.contract_id().into(),
-            fuel.contract_id().into(),
             usdf.contract_id().into(),
             usdf.contract_id().into(),
-            active_pool.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
             stability_pool.contract_id().into(),
         )
         .await;
         pb.inc();
+
+        borrow_operations_abi::add_asset(
+            &borrow_operations,
+            oracle_instance.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            trove_manager.contract_id().into(),
+            active_pool.contract_id().into(),
+            fuel.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+        )
+        .await
+        .unwrap();
 
         stability_pool_abi::initialize(
             &stability_pool,
@@ -228,17 +238,24 @@ pub mod common {
         .unwrap();
         pb.finish();
 
+        let mut asset_contracts: Vec<AssetContracts> = vec![];
+
+        let fuel_asset_contracts: AssetContracts = AssetContracts {
+            asset: fuel,
+            oracle: oracle_instance,
+            trove_manager: trove_manager,
+            sorted_troves: sorted_troves,
+            active_pool: active_pool,
+            default_pool: default_pool,
+            coll_surplus_pool: coll_surplus_pool,
+        };
+        asset_contracts.push(fuel_asset_contracts);
+
         let contracts = ProtocolContracts {
             borrow_operations: borrow_operations,
-            trove_manager: trove_manager,
-            oracle: oracle_instance,
-            sorted_troves,
-            fuel,
             usdf,
-            active_pool,
             stability_pool,
-            default_pool,
-            coll_surplus_pool,
+            asset_contracts: asset_contracts,
         };
 
         return contracts;

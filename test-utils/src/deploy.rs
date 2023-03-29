@@ -1,6 +1,5 @@
 use dotenv::dotenv;
 use fuels::prelude::{Address, Provider, WalletUnlocked};
-use pbr::ProgressBar;
 
 use crate::setup::common::deploy_and_initialize_all;
 
@@ -36,16 +35,31 @@ pub async fn deploy() {
         "Borrow operations: {}",
         contracts.borrow_operations.contract_id()
     );
-    println!("Oracle: {}", contracts.oracle.contract_id());
-    println!("Sorted Troves: {}", contracts.sorted_troves.contract_id());
-    println!("Trove Manager: {}", contracts.trove_manager.contract_id());
-    println!("Fuel: {}", contracts.fuel.contract_id());
+    println!(
+        "Oracle: {}",
+        contracts.asset_contracts[0].oracle.contract_id()
+    );
+    println!(
+        "Sorted Troves: {}",
+        contracts.asset_contracts[0].sorted_troves.contract_id()
+    );
+    println!(
+        "Trove Manager: {}",
+        contracts.asset_contracts[0].trove_manager.contract_id()
+    );
+    println!("Fuel: {}", contracts.asset_contracts[0].asset.contract_id());
     println!("Usdf: {}", contracts.usdf.contract_id());
-    println!("Active Pool: {}", contracts.active_pool.contract_id());
+    println!(
+        "Active Pool: {}",
+        contracts.asset_contracts[0].active_pool.contract_id()
+    );
     println!("Stability Pool: {}", contracts.stability_pool.contract_id());
-    println!("Default Pool: {}", contracts.default_pool.contract_id());
+    println!(
+        "Default Pool: {}",
+        contracts.asset_contracts[0].default_pool.contract_id()
+    );
     println!(
         "Collateral Surplus Pool: {}",
-        contracts.coll_surplus_pool.contract_id()
+        contracts.asset_contracts[0].coll_surplus_pool.contract_id()
     );
 }
