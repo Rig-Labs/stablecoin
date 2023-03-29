@@ -11,7 +11,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_to_liquidate_trove_not_under_mcr() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 

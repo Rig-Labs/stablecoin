@@ -29,7 +29,7 @@ pub async fn deploy() {
     let address = Address::from(wallet.address());
     println!("🔑 Wallet address: {}", address);
 
-    let contracts = deploy_and_initialize_all(wallet, 100, true).await;
+    let contracts = deploy_and_initialize_all(wallet, 100, true, false).await;
 
     println!(
         "Borrow operations: {}",

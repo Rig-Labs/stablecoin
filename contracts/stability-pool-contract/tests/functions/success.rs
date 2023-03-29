@@ -23,7 +23,7 @@ async fn proper_initialization() {
 
 #[tokio::test]
 async fn proper_stability_deposit() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -78,7 +78,7 @@ async fn proper_stability_deposit() {
 
 #[tokio::test]
 async fn proper_stability_widthdrawl() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -142,7 +142,7 @@ async fn proper_stability_widthdrawl() {
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
@@ -294,7 +294,7 @@ async fn proper_one_sp_depositor_position() {
 
 #[tokio::test]
 async fn proper_many_depositors_distribution() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
@@ -474,7 +474,7 @@ async fn proper_many_depositors_distribution() {
 
 #[tokio::test]
 async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
@@ -600,7 +600,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
 #[tokio::test]
 async fn proper_depositor_move_gain_to_trove() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
     let liquidated_wallet = wallets.pop().unwrap();

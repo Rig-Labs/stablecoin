@@ -11,7 +11,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_open_two_troves() {
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -125,7 +125,7 @@ async fn fails_open_two_troves() {
 #[tokio::test]
 async fn fails_open_trove_under_minimum_collateral_ratio() {
     // MCR = 1_200_000
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -159,7 +159,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 #[tokio::test]
 async fn fails_open_trove_under_min_usdf_required() {
     // MCR = 1_200_000
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -193,7 +193,7 @@ async fn fails_open_trove_under_min_usdf_required() {
 #[tokio::test]
 async fn fails_reduce_debt_under_min_usdf_required() {
     // MCR = 1_200_000
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -242,7 +242,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 #[tokio::test]
 async fn fails_decrease_collateral_under_mcr() {
     // MCR = 1_200_000
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -290,7 +290,7 @@ async fn fails_decrease_collateral_under_mcr() {
 #[tokio::test]
 async fn fails_incorrect_token_as_collateral_or_repayment() {
     // MCR = 1_200_000
-    let (contracts, admin, _) = setup_protocol(100, 2).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     let mock_fake_token = deploy_token(&admin).await;
 

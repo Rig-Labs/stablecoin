@@ -16,7 +16,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_full_liquidation_enough_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -203,7 +203,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_full_liquidation_partial_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -443,7 +443,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_full_liquidation_empty_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
