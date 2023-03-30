@@ -381,7 +381,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &fake_usdf_token,
         "Fake USDF".to_string(),
         "FUSDF".to_string(),
-        Identity::Address(admin.address().into()),
+        fake_usdf_token.contract_id().into(),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )

@@ -4,6 +4,7 @@ use libraries::fluid_math::{null_contract, null_identity_address};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::protocol_manager_interface::{ProtocolManager};
+use libraries::usdf_token_interface::{USDFToken};
 
 use std::{
     auth::msg_sender,
@@ -20,6 +21,7 @@ use std::{
 storage {
     admin: Identity = null_identity_address(),
     borrow_operations_contract: ContractId = null_contract(),
+    usdf_token_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
     is_initialized: bool = false,
 }
@@ -29,6 +31,7 @@ impl ProtocolManager for Contract {
     fn initialize(
         borrow_operations: ContractId,
         stability_pool: ContractId,
+        usdf_token: ContractId,
         admin: Identity,
     ) {
         require(storage.is_initialized == false, "Already initialized");
@@ -36,6 +39,7 @@ impl ProtocolManager for Contract {
         storage.admin = admin;
         storage.borrow_operations_contract = borrow_operations;
         storage.stability_pool_contract = stability_pool;
+        storage.usdf_token_contract = usdf_token;
         storage.is_initialized = true;
     }
 
@@ -51,9 +55,11 @@ impl ProtocolManager for Contract {
         require_is_admin();
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.value);
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.value);
+        let usdf_token = abi(USDFToken, storage.usdf_token_contract.value);
 
         borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle, active_pool, coll_surplus_pool);
         stability_pool.add_asset(trove_manager, active_pool, sorted_troves, asset_address, oracle);
+        usdf_token.add_trove_manager(trove_manager);
     }
 
     #[storage(read, write)]

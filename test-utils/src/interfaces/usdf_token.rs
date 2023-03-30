@@ -6,7 +6,10 @@ abigen!(Contract(
 ));
 
 pub mod usdf_token_abi {
-    use fuels::prelude::{AssetId, CallParameters, Error, LogDecoder, TxParameters};
+    use fuels::{
+        prelude::{AssetId, CallParameters, Error, LogDecoder, TxParameters},
+        types::ContractId,
+    };
 
     use crate::setup::common::wait;
 
@@ -15,7 +18,7 @@ pub mod usdf_token_abi {
         instance: &USDFToken,
         mut name: String,
         mut symbol: String,
-        trove_manager: Identity,
+        protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> FuelCallResponse<()> {
@@ -33,7 +36,7 @@ pub mod usdf_token_abi {
             .methods()
             .initialize(
                 config,
-                trove_manager.clone(),
+                protocol_manager,
                 stability_pool.clone(),
                 borrow_operations.clone(),
             )
