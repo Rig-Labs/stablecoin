@@ -29,13 +29,8 @@ pub mod stability_pool_abi {
     pub async fn initialize(
         stability_pool: &StabilityPool,
         borrow_operations_address: ContractId,
-        trove_manager_address: ContractId,
-        active_pool_address: ContractId,
         usdf_address: ContractId,
-        sorted_troves_address: ContractId,
-        oracle_address: ContractId,
         community_issuance_address: ContractId,
-        asset_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -43,13 +38,8 @@ pub mod stability_pool_abi {
             .methods()
             .initialize(
                 borrow_operations_address,
-                trove_manager_address,
-                active_pool_address,
                 usdf_address,
-                sorted_troves_address,
-                oracle_address,
                 community_issuance_address,
-                asset_address,
             )
             .tx_params(tx_params)
             .call()
@@ -63,6 +53,30 @@ pub mod stability_pool_abi {
                 return Ok(FuelCallResponse::new((), vec![], LogDecoder::default()));
             }
         }
+    }
+
+    pub async fn add_asset(
+        stability_pool: &StabilityPool,
+        trove_manager: ContractId,
+        active_pool: ContractId,
+        sorted_troves: ContractId,
+        asset_address: ContractId,
+        oracle_address: ContractId,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        stability_pool
+            .methods()
+            .add_asset(
+                trove_manager,
+                active_pool,
+                sorted_troves,
+                asset_address,
+                oracle_address,
+            )
+            .tx_params(tx_params)
+            .call()
+            .await
     }
 
     pub async fn provide_to_stability_pool(

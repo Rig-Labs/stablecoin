@@ -134,13 +134,8 @@ pub mod common {
         stability_pool_abi::initialize(
             &stability_pool,
             borrow_operations.contract_id().into(),
-            fuel_asset_contracts.trove_manager.contract_id().into(),
-            fuel_asset_contracts.active_pool.contract_id().into(),
             usdf.contract_id().into(),
-            fuel_asset_contracts.sorted_troves.contract_id().into(),
-            fuel_asset_contracts.oracle.contract_id().into(),
-            fuel_asset_contracts.oracle.contract_id().into(),
-            fuel_asset_contracts.asset.contract_id().into(),
+            fuel_asset_contracts.active_pool.contract_id().into(),
         )
         .await
         .unwrap();
@@ -425,6 +420,17 @@ pub mod common {
             active_pool.contract_id().into(),
             asset.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
+        stability_pool_abi::add_asset(
+            stability_pool,
+            trove_manager.contract_id().into(),
+            active_pool.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            asset.contract_id().into(),
+            oracle.contract_id().into(),
         )
         .await
         .unwrap();

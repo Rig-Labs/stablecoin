@@ -1,7 +1,7 @@
 contract;
 
 dep data_structures;
-use data_structures::{Snapshots};
+use data_structures::{AssetContracts, Snapshots};
 
 use libraries::data_structures::{Status};
 use libraries::stability_pool_interface::{StabilityPool};
@@ -50,12 +50,12 @@ storage {
     current_scale: u64 = 0,
     // With each offset that fully empties the Pool, the epoch is incremented by 1
     current_epoch: u64 = 0,
-    /* Asset Gain sum 'S': During its lifetime, each deposit d_t earns an Asset gain of ( d_t * [S - S_t] )/P_t, where S_t
-    * is the depositor's snapshot of S taken at the time t when the deposit was made.
+    /* Asset Gain sum 'S(asset)': During its lifetime, each deposit d_t earns an Asset gain of ( d_t * [S(asset) - S_t(asset)] )/P_t, 
+    * where S_t(asset) is the depositor's snapshot of S(asset) taken at the time t when the deposit was made.
     *
-    * The 'S' sums are stored in a nested mapping (epoch => scale => sum):
+    * The 'S(asset)' sums are stored in a nested mapping (epoch => scale => asset => sum):
     *
-    * - The inner mapping records the sum S at different scales
+    * - The inner mapping records the sum S(asset) at different scales
     * - The outer mapping records the (scale => sum) mappings, for different epochs.
     */
     epoch_to_scale_to_sum: StorageMap<(u64, u64, ContractId), U128> = StorageMap {},
@@ -67,43 +67,43 @@ storage {
     *  In each case, the FPT reward is issued (i.e. G is updated), before other state changes are made.
     */
     epoch_to_scale_to_gain: StorageMap<(u64, u64), U128> = StorageMap {},
+    p: U128 = U128::from_u64(DECIMAL_PRECISION),
     last_fpt_error: U128 = U128::from_u64(0),
-    last_asset_error_offset: U128 = U128::from_u64(0),
+    last_asset_error_offset: StorageMap<ContractId, U128> = StorageMap {},
     last_usdf_error_offset: U128 = U128::from_u64(0),
     borrow_operations_address: ContractId = null_contract(),
-    trove_manager_address: ContractId = null_contract(),
-    active_pool_address: ContractId = null_contract(),
     usdf_address: ContractId = null_contract(),
-    sorted_troves_address: ContractId = null_contract(),
-    oracle_address: ContractId = null_contract(),
     community_issuance_address: ContractId = null_contract(),
-    p: U128 = U128::from_u64(DECIMAL_PRECISION),
     is_initialized: bool = false,
+    // Asset specific addresses
+    asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
 }
 
 impl StabilityPool for Contract {
     #[storage(read, write)]
     fn initialize(
         borrow_operations_address: ContractId,
-        trove_manager_address: ContractId,
-        active_pool_address: ContractId,
         usdf_address: ContractId,
-        sorted_troves_address: ContractId,
-        oracle_address: ContractId,
         community_issuance_address: ContractId,
-        asset_address: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.borrow_operations_address = borrow_operations_address;
-        storage.trove_manager_address = trove_manager_address;
-        storage.active_pool_address = active_pool_address;
         storage.usdf_address = usdf_address;
-        storage.sorted_troves_address = sorted_troves_address;
-        storage.oracle_address = oracle_address;
         storage.community_issuance_address = community_issuance_address;
         storage.is_initialized = true;
+    }
+
+    #[storage(read, write)]
+    fn add_asset(trove_manager_address: ContractId, active_pool_address: ContractId, sorted_troves_address: ContractId, asset_address: ContractId, oracle_address:ContractId){
         storage.valid_assets.push(asset_address);
+        storage.last_asset_error_offset.insert(asset_address, U128::from_u64(0));
+        storage.asset_contracts.insert(asset_address, AssetContracts {
+            trove_manager: trove_manager_address,
+            active_pool: active_pool_address,
+            sorted_troves: sorted_troves_address,
+            oracle: oracle_address,
+        });
     }
 
     #[storage(read, write), payable]
@@ -127,7 +127,6 @@ impl StabilityPool for Contract {
 
         storage.total_usdf_deposits += msg_amount();
         // Pay out FPT gains
-        
     }
 
     #[storage(read, write)]
@@ -162,9 +161,10 @@ impl StabilityPool for Contract {
         let sender = msg_sender().unwrap();
         let initial_deposit = storage.deposits.get(sender);
         let borrower_operations = abi(BorrowOperations, storage.borrow_operations_address.value);
+        let asset_contracts = storage.asset_contracts.get(asset_address);
         require_user_has_initial_deposit(initial_deposit);
         require_user_has_asset_gain(sender, asset_address);
-        require_user_has_trove(sender);
+        require_user_has_trove(sender, asset_contracts.trove_manager);
 
         // TODO Trigger FPT issuance
         let depositor_asset_gain = internal_get_depositor_asset_gain(sender, asset_address);
@@ -196,11 +196,13 @@ impl StabilityPool for Contract {
             return;
         }
 
-        let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf);
+        let asset_addresses_cache = storage.asset_contracts.get(asset_address);
+
+        let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_address);
 
         update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1, asset_address);
 
-        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_address);
+        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_address, asset_addresses_cache);
     }
 
     #[storage(read)]
@@ -231,8 +233,8 @@ fn require_usdf_is_valid_and_non_zero() {
 }
 
 #[storage(read)]
-fn require_user_has_trove(address: Identity) {
-    let trove_manager = abi(TroveManager, storage.trove_manager_address.value);
+fn require_user_has_trove(address: Identity, trove_manager_address: ContractId) {
+    let trove_manager = abi(TroveManager, trove_manager_address.value);
     let status = trove_manager.get_trove_status(address);
     require(status == Status::Active, "User does not have an active trove");
 }
@@ -393,8 +395,16 @@ fn require_user_has_asset_gain(depositor: Identity, asset_address: ContractId) {
 
 #[storage(read)]
 fn require_caller_is_trove_manager() {
-    let trove_manager_address = Identity::ContractId(storage.trove_manager_address);
-    require(msg_sender().unwrap() == trove_manager_address, "Caller is not the TroveManager");
+    let mut i = 0;
+    while i < storage.valid_assets.len() {
+        let asset = storage.valid_assets.get(i).unwrap();
+        let trove_manager_address = Identity::ContractId(storage.asset_contracts.get(asset).trove_manager);
+        if (msg_sender().unwrap() == trove_manager_address) {
+            return;
+        }
+        i += 1;
+    }
+    require(false, "Caller is not a trove manager");
 }
 
 fn require_user_has_initial_deposit(deposit: u64) {
@@ -406,8 +416,9 @@ fn compute_rewards_per_unit_staked(
     coll_to_add: u64,
     debt_to_offset: u64,
     total_usdf_deposits: u64,
+    asset_address: ContractId,
 ) -> (U128, U128) {
-    let asset_numerator: U128 = U128::from_u64(coll_to_add) * U128::from_u64(DECIMAL_PRECISION) + storage.last_asset_error_offset;
+    let asset_numerator: U128 = U128::from_u64(coll_to_add) * U128::from_u64(DECIMAL_PRECISION) + storage.last_asset_error_offset.get(asset_address);
 
     require(debt_to_offset <= total_usdf_deposits, "Debt offset exceeds total USDF deposits");
 
@@ -424,7 +435,7 @@ fn compute_rewards_per_unit_staked(
 
     let asset_gain_per_unit_staked = asset_numerator / U128::from_u64(total_usdf_deposits);
 
-    storage.last_asset_error_offset = asset_numerator - (asset_gain_per_unit_staked * U128::from_u64(total_usdf_deposits));
+    storage.last_asset_error_offset.insert(asset_address, asset_numerator - (asset_gain_per_unit_staked * U128::from_u64(total_usdf_deposits)));
 
     return (asset_gain_per_unit_staked, usdf_loss_per_unit_staked);
 }
@@ -468,10 +479,9 @@ fn internal_move_offset_coll_and_debt(
     coll_to_add: u64,
     debt_to_offset: u64,
     asset_address: ContractId,
+    asset_addresses_cache: AssetContracts
 ) {
-    let active_pool_address = storage.active_pool_address;
-
-    let active_pool = abi(ActivePool, active_pool_address.value);
+    let active_pool = abi(ActivePool, asset_addresses_cache.active_pool.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_address);
