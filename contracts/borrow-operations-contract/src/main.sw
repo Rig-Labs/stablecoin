@@ -37,6 +37,7 @@ storage {
     usdf_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
+    protocol_manager_contract: ContractId = null_contract(),
     is_initialized: bool = false,
 }
 
@@ -46,12 +47,14 @@ impl BorrowOperations for Contract {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         stability_pool_contract: ContractId,
+        protocol_manager: ContractId,
     ) {
         require(!storage.is_initialized, "BorrowOperations: already initialized");
 
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.stability_pool_contract = stability_pool_contract;
+        storage.protocol_manager_contract = protocol_manager;
         storage.is_initialized = true;
     }
 
@@ -64,7 +67,7 @@ impl BorrowOperations for Contract {
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
     ) {
-        // TODO Require caller is protocol owner
+        require_is_protocol_manager();
         let asset_contracts = AssetContracts {
             active_pool: active_pool,
             coll_surplus_pool: coll_surplus_pool,
@@ -314,6 +317,12 @@ fn internal_adjust_trove(
     sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
 
     internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change, asset, asset_contracts.active_pool);
+}
+
+#[storage(read)]
+fn require_is_protocol_manager() {
+    let protocol_manager = Identity::ContractId(storage.protocol_manager_contract);
+    require(msg_sender().unwrap() == protocol_manager, "Caller is not the protocol manager");
 }
 
 #[storage(read)]

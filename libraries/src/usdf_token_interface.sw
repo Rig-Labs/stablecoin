@@ -9,7 +9,10 @@ pub struct TokenInitializeConfig {
 abi USDFToken {
     // Initialize contract
     #[storage(read, write)]
-    fn initialize(config: TokenInitializeConfig, trove_manager: Identity, stability_pool: Identity, borrower_operations: Identity);
+    fn initialize(config: TokenInitializeConfig, protocol_manager: ContractId, stability_pool: Identity, borrower_operations: Identity);
+
+    #[storage(read, write)]
+    fn add_trove_manager(trove_manager: ContractId);
 
     // Mint token coins to a given address
     #[storage(read, write)]

@@ -10,6 +10,7 @@ abigen!(Contract(
 pub mod protocol_manager_abi {
     use crate::interfaces::borrow_operations::BorrowOperations;
     use crate::interfaces::stability_pool::StabilityPool;
+    use crate::interfaces::usdf_token::USDFToken;
     use crate::setup::common::wait;
     use fuels::prelude::LogDecoder;
     use fuels::{
@@ -23,13 +24,14 @@ pub mod protocol_manager_abi {
         protocol_manager: &ProtocolManager,
         borrow_operations: ContractId,
         stability_pool: ContractId,
+        usdf: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         let res = protocol_manager
             .methods()
-            .initialize(borrow_operations, stability_pool, admin)
+            .initialize(borrow_operations, stability_pool, usdf, admin)
             .tx_params(tx_params)
             .call()
             .await;
@@ -54,6 +56,7 @@ pub mod protocol_manager_abi {
         sorted_troves: ContractId,
         borrow_operations: &BorrowOperations,
         stability_pool: &StabilityPool,
+        usdf: &USDFToken,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -68,7 +71,7 @@ pub mod protocol_manager_abi {
                 sorted_troves,
             )
             .tx_params(tx_params)
-            .set_contracts(&[borrow_operations, stability_pool])
+            .set_contracts(&[borrow_operations, stability_pool, usdf])
             .call()
             .await
             .unwrap()

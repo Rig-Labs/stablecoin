@@ -86,17 +86,20 @@ impl StabilityPool for Contract {
         borrow_operations_address: ContractId,
         usdf_address: ContractId,
         community_issuance_address: ContractId,
+        protocol_manager: ContractId
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.borrow_operations_address = borrow_operations_address;
         storage.usdf_address = usdf_address;
         storage.community_issuance_address = community_issuance_address;
+        storage.protocol_manager_address = protocol_manager;
         storage.is_initialized = true;
     }
 
     #[storage(read, write)]
     fn add_asset(trove_manager_address: ContractId, active_pool_address: ContractId, sorted_troves_address: ContractId, asset_address: ContractId, oracle_address:ContractId){
+        require_is_protocol_manager();
         storage.valid_assets.push(asset_address);
         storage.last_asset_error_offset.insert(asset_address, U128::from_u64(0));
         storage.asset_contracts.insert(asset_address, AssetContracts {
@@ -225,6 +228,12 @@ impl StabilityPool for Contract {
     fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
         return internal_get_compounded_usdf_deposit(depositor);
     }
+}
+
+#[storage(read)]
+fn require_is_protocol_manager() {
+    let protocol_manager = Identity::ContractId(storage.protocol_manager_address);
+    require(msg_sender().unwrap() == protocol_manager , "Caller is not the protocol manager");
 }
 
 #[storage(read)]

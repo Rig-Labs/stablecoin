@@ -31,6 +31,7 @@ pub mod stability_pool_abi {
         borrow_operations_address: ContractId,
         usdf_address: ContractId,
         community_issuance_address: ContractId,
+        protocol_manager_contract: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -40,6 +41,7 @@ pub mod stability_pool_abi {
                 borrow_operations_address,
                 usdf_address,
                 community_issuance_address,
+                protocol_manager_contract,
             )
             .tx_params(tx_params)
             .call()

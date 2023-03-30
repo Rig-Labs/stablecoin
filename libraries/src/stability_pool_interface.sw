@@ -2,7 +2,7 @@ library stability_pool_interface;
 
 abi StabilityPool {
     #[storage(read, write)]
-    fn initialize(borrow_operations_address: ContractId, usdf_address: ContractId, community_issuance_address: ContractId);
+    fn initialize(borrow_operations_address: ContractId, usdf_address: ContractId, community_issuance_address: ContractId, protocol_manager: ContractId);
 
     #[storage(read, write)]
     fn add_asset(trove_manager_address: ContractId, active_pool_address: ContractId, sorted_troves_address: ContractId, asset_address: ContractId, oracle_address: ContractId);

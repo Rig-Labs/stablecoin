@@ -104,10 +104,44 @@ pub mod common {
 
         let mut asset_contracts: Vec<AssetContracts> = vec![];
 
+        usdf_token_abi::initialize(
+            &usdf,
+            "USD Fuel".to_string(),
+            "USDF".to_string(),
+            protocol_manager.contract_id().into(),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            Identity::ContractId(borrow_operations.contract_id().into()),
+        )
+        .await;
+        pb.inc();
+
+        // TODO Change usdf to fpt staking
+        borrow_operations_abi::initialize(
+            &borrow_operations,
+            usdf.contract_id().into(),
+            usdf.contract_id().into(),
+            stability_pool.contract_id().into(),
+            protocol_manager.contract_id().into(),
+        )
+        .await;
+        pb.inc();
+
+        // TODO Change usdf to fpt community issuance
+        stability_pool_abi::initialize(
+            &stability_pool,
+            borrow_operations.contract_id().into(),
+            usdf.contract_id().into(),
+            usdf.contract_id().into(),
+            protocol_manager.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
         protocol_manager_abi::initialize(
             &protocol_manager,
             borrow_operations.contract_id().into(),
             stability_pool.contract_id().into(),
+            usdf.contract_id().into(),
             Identity::Address(wallet.address().into()),
         )
         .await;
@@ -122,36 +156,6 @@ pub mod common {
             "FUEL".to_string(),
         )
         .await;
-        pb.finish();
-
-        usdf_token_abi::initialize(
-            &usdf,
-            "USD Fuel".to_string(),
-            "USDF".to_string(),
-            Identity::ContractId(fuel_asset_contracts.trove_manager.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            Identity::ContractId(borrow_operations.contract_id().into()),
-        )
-        .await;
-        pb.inc();
-
-        borrow_operations_abi::initialize(
-            &borrow_operations,
-            usdf.contract_id().into(),
-            usdf.contract_id().into(),
-            stability_pool.contract_id().into(),
-        )
-        .await;
-        pb.inc();
-
-        stability_pool_abi::initialize(
-            &stability_pool,
-            borrow_operations.contract_id().into(),
-            usdf.contract_id().into(),
-            fuel_asset_contracts.active_pool.contract_id().into(),
-        )
-        .await
-        .unwrap();
 
         if deploy_2nd_asset {
             let usdf_asset_contracts = add_asset(
@@ -168,14 +172,15 @@ pub mod common {
 
             asset_contracts.push(usdf_asset_contracts);
         }
+        pb.finish();
 
         asset_contracts.push(fuel_asset_contracts);
 
         let contracts = ProtocolContracts {
-            borrow_operations: borrow_operations,
+            borrow_operations,
             usdf,
             stability_pool,
-            asset_contracts: asset_contracts,
+            asset_contracts,
             protocol_manager,
         };
 
@@ -461,6 +466,7 @@ pub mod common {
             sorted_troves.contract_id().into(),
             borrow_operations,
             stability_pool,
+            usdf,
         )
         .await;
 

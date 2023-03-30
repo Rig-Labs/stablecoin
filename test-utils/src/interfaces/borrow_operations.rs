@@ -25,12 +25,18 @@ pub mod borrow_operations_abi {
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         stability_pool_contract: ContractId,
+        protocol_manager_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
-            .initialize(usdf_contract, fpt_staking_contract, stability_pool_contract)
+            .initialize(
+                usdf_contract,
+                fpt_staking_contract,
+                stability_pool_contract,
+                protocol_manager_contract,
+            )
             .tx_params(tx_params)
             .call()
             .await

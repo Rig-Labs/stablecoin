@@ -25,7 +25,7 @@ async fn get_contract_instance() -> (USDFToken, WalletUnlocked, Vec<WalletUnlock
         &asset,
         "Fuel".to_string(),
         "FUEL".to_string(),
-        Identity::Address(wallet.address().into()),
+        asset.contract_id().into(),
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
     )
