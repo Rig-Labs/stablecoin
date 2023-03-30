@@ -11,6 +11,7 @@ directory.
 | Name                                               | Description                            | Status |
 | -------------------------------------------------- | -------------------------------------- | ------- |
 | [`mock-oracle`](contracts/mock-oracle-contract)       | Oracle for on-chain data | $$\color{green}{90/100}$$
+| [`protocol-manager`](contracts/protocol-manager-contract)       | Proxy for adding new assets as collateral, ownership to be renounced after milestones reached | $$\color{green}{85/100}$$
 | [`active-pool`](contracts/active-pool-contract)       | Central place for holding collateral from Active Troves | $$\color{green}{90/100}$$
 | [`default-pool`](contracts/default-pool-contract)       | Central place for holding 'unapplied' rewards from liquidation redistributions | $$\color{green}{90/100}$$
 | [`coll-surplus-pool`](contracts/coll-surplus-pool-contract)       | Central place for holding exess assets from either a redemption or a full liquidation | $$\color{orange}{80/100}$$
