@@ -1,8 +1,9 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
-    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
+    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
+    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
+    vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
@@ -22,9 +23,9 @@ pub mod common {
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            oracle::oracle_abi, sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
+            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
         },
         paths::*,
         utils::resolve_relative_path,
@@ -34,6 +35,7 @@ pub mod common {
         pub borrow_operations: BorrowOperations,
         pub usdf: USDFToken,
         pub stability_pool: StabilityPool,
+        pub protocol_manager: ProtocolManager,
         pub asset_contracts: Vec<AssetContracts>,
     }
 
@@ -89,6 +91,8 @@ pub mod common {
         let stability_pool = deploy_stability_pool(&wallet).await;
         pb.inc();
 
+        let protocol_manager = deploy_protocol_manager(&wallet).await;
+
         if is_testnet {
             println!("Borrow operations: {}", borrow_operations.contract_id());
             println!("Usdf: {}", usdf.contract_id());
@@ -100,9 +104,18 @@ pub mod common {
 
         let mut asset_contracts: Vec<AssetContracts> = vec![];
 
+        protocol_manager_abi::initialize(
+            &protocol_manager,
+            borrow_operations.contract_id().into(),
+            stability_pool.contract_id().into(),
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+
         let fuel_asset_contracts = add_asset(
             &borrow_operations,
             &stability_pool,
+            &protocol_manager,
             &usdf,
             wallet.clone(),
             "Fuel".to_string(),
@@ -144,6 +157,7 @@ pub mod common {
             let usdf_asset_contracts = add_asset(
                 &borrow_operations,
                 &stability_pool,
+                &protocol_manager,
                 &usdf,
                 wallet,
                 "stFuel".to_string(),
@@ -162,6 +176,7 @@ pub mod common {
             usdf,
             stability_pool,
             asset_contracts: asset_contracts,
+            protocol_manager,
         };
 
         return contracts;
@@ -298,6 +313,29 @@ pub mod common {
         }
     }
 
+    pub async fn deploy_protocol_manager(wallet: &WalletUnlocked) -> ProtocolManager {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let deploy_config = DeployConfiguration::default()
+            .set_storage_configuration(StorageConfiguration::default().set_storage_path(
+                resolve_relative_path(PROTCOL_MANAGER_CONTRACT_STORAGE_PATH).to_string(),
+            ))
+            .set_salt(salt)
+            .set_tx_parameters(tx_parms);
+
+        let id = Contract::deploy(
+            &resolve_relative_path(PROTCOL_MANAGER_CONTRACT_BINARY_PATH).to_string(),
+            &wallet,
+            deploy_config,
+        )
+        .await
+        .unwrap();
+
+        ProtocolManager::new(id, wallet.clone())
+    }
+
     pub async fn deploy_borrow_operations(wallet: &WalletUnlocked) -> BorrowOperations {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -339,6 +377,7 @@ pub mod common {
     pub async fn add_asset(
         borrow_operations: &BorrowOperations,
         stability_pool: &StabilityPool,
+        protocol_manager: &ProtocolManager,
         usdf: &USDFToken,
         wallet: WalletUnlocked,
         name: String,
@@ -412,28 +451,18 @@ pub mod common {
 
         oracle_abi::set_price(&oracle, 1_000_000).await;
 
-        borrow_operations_abi::add_asset(
-            &borrow_operations,
-            oracle.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            trove_manager.contract_id().into(),
-            active_pool.contract_id().into(),
+        protocol_manager_abi::register_asset(
+            &protocol_manager,
             asset.contract_id().into(),
+            active_pool.contract_id().into(),
+            trove_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
-        )
-        .await
-        .unwrap();
-
-        stability_pool_abi::add_asset(
-            stability_pool,
-            trove_manager.contract_id().into(),
-            active_pool.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            asset.contract_id().into(),
             oracle.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            borrow_operations,
+            stability_pool,
         )
-        .await
-        .unwrap();
+        .await;
 
         return AssetContracts {
             oracle,

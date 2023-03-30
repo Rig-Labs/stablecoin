@@ -72,6 +72,7 @@ storage {
     last_asset_error_offset: StorageMap<ContractId, U128> = StorageMap {},
     last_usdf_error_offset: U128 = U128::from_u64(0),
     borrow_operations_address: ContractId = null_contract(),
+    protocol_manager_address: ContractId = null_contract(),
     usdf_address: ContractId = null_contract(),
     community_issuance_address: ContractId = null_contract(),
     is_initialized: bool = false,

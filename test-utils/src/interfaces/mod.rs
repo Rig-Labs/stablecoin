@@ -3,6 +3,7 @@ pub mod borrow_operations;
 pub mod coll_surplus_pool;
 pub mod default_pool;
 pub mod oracle;
+pub mod protocol_manager;
 pub mod sorted_troves;
 pub mod stability_pool;
 pub mod token;

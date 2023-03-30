@@ -1,0 +1,8 @@
+[project]
+authors = ["hydrogen-labs"]
+entry = "main.sw"
+license = "Apache-2.0"
+name = "protocol-manager-contract"
+
+[dependencies]
+libraries = { path = "../../libraries" }

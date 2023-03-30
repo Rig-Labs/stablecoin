@@ -12,6 +12,7 @@ dep stability_pool_interface;
 dep default_pool_interface;
 dep coll_surplus_pool_interface;
 dep usdf_token_interface;
+dep protocol_manager_interface;
 
 use data_structures::{Trove};
 
