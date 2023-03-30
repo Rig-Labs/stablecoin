@@ -22,6 +22,10 @@ use std::{
         msg_amount,
     },
     logging::log,
+    storage::{
+        StorageMap,
+        StorageVec,
+    },
     token::transfer,
     u128::U128,
 };
@@ -30,17 +34,22 @@ const SCALE_FACTOR = 1_000_000_000;
 const DECIMAL_PRECISION = 1_000_000;
 
 storage {
+    // List of assets tracked by the Stability Pool
+    valid_assets: StorageVec<ContractId> = StorageVec {},
+    // Asset amounts held by the Stability Pool to be claimed
     asset: StorageMap<ContractId, u64> = StorageMap {},
+    // Total amount of USDF held by the Stability Pool
     total_usdf_deposits: u64 = 0,
+    // Amount of USDF deposited by each user
     deposits: StorageMap<Identity, u64> = StorageMap {},
+    // Starting S for each asset when deposited by each user
+    deposit_snapshot_s_per_asset: StorageMap<(Identity, ContractId), U128> = StorageMap {},
+    // Snapshot of P, G, epoch and scale when each deposit was made
     deposit_snapshots: StorageMap<Identity, Snapshots> = StorageMap {},
-    
     // Each time the scale of P shifts by SCALE_FACTOR, the scale is incremented by 1
     current_scale: u64 = 0,
-    
     // With each offset that fully empties the Pool, the epoch is incremented by 1
     current_epoch: u64 = 0,
-    
     /* Asset Gain sum 'S': During its lifetime, each deposit d_t earns an Asset gain of ( d_t * [S - S_t] )/P_t, where S_t
     * is the depositor's snapshot of S taken at the time t when the deposit was made.
     *
@@ -68,7 +77,6 @@ storage {
     sorted_troves_address: ContractId = null_contract(),
     oracle_address: ContractId = null_contract(),
     community_issuance_address: ContractId = null_contract(),
-    asset_address: ContractId = null_contract(),
     p: U128 = U128::from_u64(DECIMAL_PRECISION),
     is_initialized: bool = false,
 }
@@ -94,8 +102,8 @@ impl StabilityPool for Contract {
         storage.sorted_troves_address = sorted_troves_address;
         storage.oracle_address = oracle_address;
         storage.community_issuance_address = community_issuance_address;
-        storage.asset_address = asset_address;
         storage.is_initialized = true;
+        storage.valid_assets.push(asset_address);
     }
 
     #[storage(read, write), payable]
@@ -104,16 +112,22 @@ impl StabilityPool for Contract {
 
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
         // TODO Trigger FPT issuance
-        let depositor_asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), storage.asset_address);
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
+        let mut i = 0;
+        while i < storage.valid_assets.len() {
+            let asset_address = storage.valid_assets.get(i).unwrap();
+            let asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), asset_address);
+            send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_address);
+            i += 1;
+        }
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
 
         storage.total_usdf_deposits += msg_amount();
         // Pay out FPT gains
-        send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
+        
     }
 
     #[storage(read, write)]
@@ -122,45 +136,59 @@ impl StabilityPool for Contract {
 
         require_user_has_initial_deposit(initial_deposit);
         // TODO Trigger FPT issuance
-        let depositor_asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), storage.asset_address);
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
 
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
 
+        let mut i = 0;
+        while i < storage.valid_assets.len() {
+            let asset_address = storage.valid_assets.get(i).unwrap();
+            let asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), asset_address);
+            send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_address);
+            i += 1;
+        }
+
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
-        send_asset_gain_to_depositor(msg_sender().unwrap(), depositor_asset_gain);
     }
 
     #[storage(read, write)]
-    fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity) {
+    fn withdraw_gain_to_trove(
+        lower_hint: Identity,
+        upper_hint: Identity,
+        asset_address: ContractId,
+    ) {
         let sender = msg_sender().unwrap();
         let initial_deposit = storage.deposits.get(sender);
         let borrower_operations = abi(BorrowOperations, storage.borrow_operations_address.value);
         require_user_has_initial_deposit(initial_deposit);
-        require_user_has_asset_gain(sender);
+        require_user_has_asset_gain(sender, asset_address);
         require_user_has_trove(sender);
 
         // TODO Trigger FPT issuance
-        let depositor_asset_gain = internal_get_depositor_asset_gain(sender, storage.asset_address);
+        let depositor_asset_gain = internal_get_depositor_asset_gain(sender, asset_address);
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(sender);
 
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
         internal_update_deposits_and_snapshots(sender, compounded_usdf_deposit);
 
-        let mut current_asset_amount = storage.asset.get(storage.asset_address);
+        let mut current_asset_amount = storage.asset.get(asset_address);
         current_asset_amount -= depositor_asset_gain;
-        storage.asset.insert(storage.asset_address, current_asset_amount);
+        storage.asset.insert(asset_address, current_asset_amount);
 
         borrower_operations.move_asset_gain_to_trove {
             coins: depositor_asset_gain,
-            asset_id: storage.asset_address.value,
-        }(sender, lower_hint, upper_hint, storage.asset_address);
+            asset_id: asset_address.value,
+        }(sender, lower_hint, upper_hint, asset_address);
     }
 
     #[storage(read, write)]
-    fn offset(debt_to_offset: u64, coll_to_offset: u64) {
+    fn offset(
+        debt_to_offset: u64,
+        coll_to_offset: u64,
+        asset_address: ContractId,
+    ) {
         require_caller_is_trove_manager();
         let total_usdf = storage.total_usdf_deposits;
 
@@ -170,14 +198,14 @@ impl StabilityPool for Contract {
 
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf);
 
-        update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1, storage.asset_address);
+        update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1, asset_address);
 
-        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset);
+        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_address);
     }
 
     #[storage(read)]
-    fn get_asset() -> u64 {
-        return storage.asset.get(storage.asset_address);
+    fn get_asset(asset_address: ContractId) -> u64 {
+        return storage.asset.get(asset_address);
     }
 
     #[storage(read)]
@@ -186,8 +214,8 @@ impl StabilityPool for Contract {
     }
 
     #[storage(read)]
-    fn get_depositor_asset_gain(depositor: Identity) -> u64 {
-        return internal_get_depositor_asset_gain(depositor, storage.asset_address);
+    fn get_depositor_asset_gain(depositor: Identity, asset_address: ContractId) -> u64 {
+        return internal_get_depositor_asset_gain(depositor, asset_address);
     }
 
     #[storage(read)]
@@ -223,20 +251,22 @@ fn internal_get_depositor_asset_gain(depositor: Identity, asset: ContractId) -> 
         return 0;
     }
 
+    let s_snapshot = storage.deposit_snapshot_s_per_asset.get((depositor, asset));
     let mut snapshots = storage.deposit_snapshots.get(depositor);
 
-    return internal_get_asset_gain_from_snapshots(initial_deposit, snapshots, asset);
+    return internal_get_asset_gain_from_snapshots(initial_deposit, snapshots, s_snapshot, asset);
 }
 
 #[storage(read)]
 fn internal_get_asset_gain_from_snapshots(
     initial_deposit: u64,
     snapshots: Snapshots,
+    s_snapshot: U128,
     asset: ContractId,
 ) -> u64 {
     let epoch_snapshot = snapshots.epoch;
     let scale_snapshot = snapshots.scale;
-    let s_snapshot = snapshots.S;
+
     let p_snapshot = snapshots.P;
 
     let first_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot, asset)) - s_snapshot;
@@ -288,17 +318,16 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
 
     return compounded_stake.as_u64().unwrap();
 }
-
 #[storage(read, write)]
 fn internal_decrease_usdf(total_usdf_to_decrease: u64) {
     storage.total_usdf_deposits -= total_usdf_to_decrease;
 }
 
 #[storage(read, write)]
-fn internal_increase_asset(total_asset_to_increase: u64) {
-    let mut asset_amount = storage.asset.get(storage.asset_address);
+fn internal_increase_asset(total_asset_to_increase: u64, asset_address: ContractId) {
+    let mut asset_amount = storage.asset.get(asset_address);
     asset_amount += total_asset_to_increase;
-    storage.asset.insert(storage.asset_address, asset_amount);
+    storage.asset.insert(asset_address, asset_amount);
 }
 
 #[storage(read, write)]
@@ -314,30 +343,35 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let current_scale = storage.current_scale;
     let current_p = storage.p;
 
-    let current_s = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, storage.asset_address));
     let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale));
 
     let snapshots = Snapshots {
         epoch: current_epoch,
         scale: current_scale,
-        S: current_s,
         P: current_p,
         G: current_g,
     };
+
+    // TODO use itterator when available
+    let mut i = 0;
+    while i < storage.valid_assets.len() {
+        let asset = storage.valid_assets.get(i).unwrap();
+        let current_s: U128 = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset));
+        storage.deposit_snapshot_s_per_asset.insert((depositor, asset), current_s);
+        i += 1;
+    }
 
     storage.deposit_snapshots.insert(depositor, snapshots);
 }
 
 #[storage(read, write), payable]
-fn send_asset_gain_to_depositor(depositor: Identity, gain: u64) {
+fn send_asset_gain_to_depositor(depositor: Identity, gain: u64, asset_address: ContractId) {
     if (gain == 0) {
         return;
     }
-    let mut asset_amount = storage.asset.get(storage.asset_address);
+    let mut asset_amount = storage.asset.get(asset_address);
     asset_amount -= gain;
-    storage.asset.insert(storage.asset_address, asset_amount);
-    let asset_address = storage.asset_address;
-
+    storage.asset.insert(asset_address, asset_amount);
     transfer(gain, asset_address, depositor);
 }
 
@@ -352,8 +386,8 @@ fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
 }
 
 #[storage(read)]
-fn require_user_has_asset_gain(depositor: Identity) {
-    let gain = internal_get_depositor_asset_gain(depositor, storage.asset_address);
+fn require_user_has_asset_gain(depositor: Identity, asset_address: ContractId) {
+    let gain = internal_get_depositor_asset_gain(depositor, asset_address);
     require(gain > 0, "User has no asset gain");
 }
 
@@ -394,7 +428,6 @@ fn compute_rewards_per_unit_staked(
 
     return (asset_gain_per_unit_staked, usdf_loss_per_unit_staked);
 }
-
 #[storage(read, write)]
 fn update_reward_sum_and_product(
     asset_gain_per_unit_staked: U128,
@@ -431,13 +464,17 @@ fn update_reward_sum_and_product(
 }
 
 #[storage(read, write)]
-fn internal_move_offset_coll_and_debt(coll_to_add: u64, debt_to_offset: u64) {
+fn internal_move_offset_coll_and_debt(
+    coll_to_add: u64,
+    debt_to_offset: u64,
+    asset_address: ContractId,
+) {
     let active_pool_address = storage.active_pool_address;
 
     let active_pool = abi(ActivePool, active_pool_address.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);
     internal_decrease_usdf(debt_to_offset);
-    internal_increase_asset(coll_to_add);
+    internal_increase_asset(coll_to_add, asset_address);
     active_pool.decrease_usdf_debt(debt_to_offset);
 
     usdf_contract.burn {

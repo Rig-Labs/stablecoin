@@ -411,6 +411,7 @@ pub mod common {
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
+            asset.contract_id().into(),
         )
         .await;
 

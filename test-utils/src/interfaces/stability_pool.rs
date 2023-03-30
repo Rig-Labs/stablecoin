@@ -71,7 +71,9 @@ pub mod stability_pool_abi {
         fuel_token: &Token,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default()
+            .set_gas_price(1)
+            .set_gas_limit(2_000_000);
 
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
@@ -91,8 +93,15 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_asset(stability_pool: &StabilityPool) -> Result<FuelCallResponse<u64>, Error> {
-        stability_pool.methods().get_asset().call().await
+    pub async fn get_asset(
+        stability_pool: &StabilityPool,
+        asset_address: ContractId,
+    ) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool
+            .methods()
+            .get_asset(asset_address)
+            .call()
+            .await
     }
 
     pub async fn get_total_usdf_deposits(
@@ -108,10 +117,11 @@ pub mod stability_pool_abi {
     pub async fn get_depositor_asset_gain(
         stability_pool: &StabilityPool,
         depositor: Identity,
+        asset_address: ContractId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
-            .get_depositor_asset_gain(depositor)
+            .get_depositor_asset_gain(depositor, asset_address)
             .call()
             .await
     }
@@ -161,7 +171,7 @@ pub mod stability_pool_abi {
 
         stability_pool
             .methods()
-            .withdraw_gain_to_trove(lower_hint, upper_hint)
+            .withdraw_gain_to_trove(lower_hint, upper_hint, fuel_token.contract_id().into())
             .tx_params(tx_params)
             .append_variable_outputs(2)
             .set_contracts(&[
@@ -185,8 +195,12 @@ pub mod stability_pool_utils {
 
     use super::*;
 
-    pub async fn assert_pool_asset(stability_pool: &StabilityPool, expected_asset_amount: u64) {
-        let pool_asset = super::stability_pool_abi::get_asset(stability_pool)
+    pub async fn assert_pool_asset(
+        stability_pool: &StabilityPool,
+        expected_asset_amount: u64,
+        asset_address: ContractId,
+    ) {
+        let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address)
             .await
             .unwrap()
             .value;
@@ -211,12 +225,16 @@ pub mod stability_pool_utils {
         stability_pool: &StabilityPool,
         depositor: Identity,
         expected_asset_gain: u64,
+        asset_address: ContractId,
     ) {
-        let depositor_asset_gain =
-            super::stability_pool_abi::get_depositor_asset_gain(stability_pool, depositor)
-                .await
-                .unwrap()
-                .value;
+        let depositor_asset_gain = super::stability_pool_abi::get_depositor_asset_gain(
+            stability_pool,
+            depositor,
+            asset_address,
+        )
+        .await
+        .unwrap()
+        .value;
 
         assert_within_threshold(
             expected_asset_gain,

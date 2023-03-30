@@ -150,10 +150,13 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
     assert_eq!(deposits, 5_000_000_000 - liquidated_net_debt);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     // 5% Penalty on 1_000_000_000 of debt
     let asset_with_min_borrow_fee = with_min_borrow_fee(1_050_000_000);
@@ -357,10 +360,13 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     // 5% Penalty on 1_000_000_000 of debt
     assert_eq!(
@@ -583,10 +589,13 @@ async fn proper_full_liquidation_empty_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     assert_eq!(asset, 0);
 

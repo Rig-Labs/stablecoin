@@ -8,15 +8,15 @@ use test_utils::{
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils},
     },
-    setup::common::setup_protocol,
+    setup::common::{print_response, setup_protocol},
     utils::with_min_borrow_fee,
 };
 
 #[tokio::test]
 async fn proper_initialization() {
-    let (stability_pool, _, _, _, _) = setup(Some(4)).await;
+    let (stability_pool, _, fuel, _, _, _) = setup(Some(4)).await;
 
-    stability_pool_utils::assert_pool_asset(&stability_pool, 0).await;
+    stability_pool_utils::assert_pool_asset(&stability_pool, 0, fuel.contract_id().into()).await;
 
     stability_pool_utils::assert_total_usdf_deposits(&stability_pool, 0).await;
 }
@@ -57,7 +57,12 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, 0).await;
+    stability_pool_utils::assert_pool_asset(
+        &contracts.stability_pool,
+        0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
 
     stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 600_000_000).await;
 
@@ -72,6 +77,7 @@ async fn proper_stability_deposit() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 }
@@ -121,7 +127,12 @@ async fn proper_stability_widthdrawl() {
     .await
     .unwrap();
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, 0).await;
+    stability_pool_utils::assert_pool_asset(
+        &contracts.stability_pool,
+        0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
 
     stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 300_000_000).await;
 
@@ -136,6 +147,7 @@ async fn proper_stability_widthdrawl() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 }
@@ -229,8 +241,12 @@ async fn proper_one_sp_depositor_position() {
     let asset_with_fee_adjustment = with_min_borrow_fee(1_050_000_000);
     let debt_with_fee_adjustment = with_min_borrow_fee(1_000_000_000);
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, asset_with_fee_adjustment)
-        .await;
+    stability_pool_utils::assert_pool_asset(
+        &contracts.stability_pool,
+        asset_with_fee_adjustment,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
 
     stability_pool_utils::assert_total_usdf_deposits(
         &contracts.stability_pool,
@@ -242,6 +258,7 @@ async fn proper_one_sp_depositor_position() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         asset_with_fee_adjustment,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -255,7 +272,9 @@ async fn proper_one_sp_depositor_position() {
 
     // Makes a 2nd deposit to the Stability Pool
     let second_deposit = 1_000_000_000;
-    stability_pool_abi::provide_to_stability_pool(
+    println!("second deposit: {}", second_deposit);
+
+    let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
@@ -263,6 +282,8 @@ async fn proper_one_sp_depositor_position() {
     )
     .await
     .unwrap();
+
+    println!("res: {:?}", res);
 
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
@@ -276,6 +297,7 @@ async fn proper_one_sp_depositor_position() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -431,8 +453,12 @@ async fn proper_many_depositors_distribution() {
     let asset_with_fee_adjustment = with_min_borrow_fee(1_050_000_000);
     let debt_paid_off = with_min_borrow_fee(1_000_000_000);
 
-    stability_pool_utils::assert_pool_asset(&contracts.stability_pool, asset_with_fee_adjustment)
-        .await;
+    stability_pool_utils::assert_pool_asset(
+        &contracts.stability_pool,
+        asset_with_fee_adjustment,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
 
     // 3,000 initially deposited, 1000 used to pay off debt, 1,500 left in pool
     stability_pool_utils::assert_total_usdf_deposits(
@@ -446,6 +472,7 @@ async fn proper_many_depositors_distribution() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         asset_with_fee_adjustment * 2 / 3,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -461,6 +488,7 @@ async fn proper_many_depositors_distribution() {
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
         asset_with_fee_adjustment / 6,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -587,6 +615,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
         0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -687,6 +716,7 @@ async fn proper_depositor_move_gain_to_trove() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         asset_with_fee,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 
@@ -709,6 +739,7 @@ async fn proper_depositor_move_gain_to_trove() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
 

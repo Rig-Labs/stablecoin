@@ -59,6 +59,7 @@ storage {
     default_pool_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
     usdf_contract: ContractId = null_contract(),
+    asset_contract: ContractId = null_contract(),
     fpt_token: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
     total_stakes: u64 = 0,
@@ -87,6 +88,7 @@ impl TroveManager for Contract {
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
         usdf_contract: ContractId,
+        asset_contract: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
         storage.sorted_troves_contract = sorted_troves;
@@ -97,6 +99,7 @@ impl TroveManager for Contract {
         storage.active_pool_contract = active_pool;
         storage.coll_surplus_pool_contract = coll_surplus_pool;
         storage.usdf_contract = usdf_contract;
+        storage.asset_contract = asset_contract;
         storage.is_initialized = true;
     }
 
@@ -465,7 +468,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers);
 
     require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
-    stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp);
+    stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
 
     if (totals.total_coll_surplus > 0) {
         // TODO Change add to coll_surplus_pool and also 

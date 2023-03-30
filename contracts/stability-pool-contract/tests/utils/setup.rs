@@ -140,6 +140,7 @@ pub async fn setup(
 ) -> (
     StabilityPool,
     MockTroveManagerContract,
+    Token,
     WalletUnlocked,
     WalletUnlocked,
     Vec<WalletUnlocked>,
@@ -213,5 +214,12 @@ pub async fn setup(
     .await
     .unwrap();
 
-    (stability_pool, trove_instance, wallet3, wallet4, wallets)
+    (
+        stability_pool,
+        trove_instance,
+        fuel_token,
+        wallet3,
+        wallet4,
+        wallets,
+    )
 }

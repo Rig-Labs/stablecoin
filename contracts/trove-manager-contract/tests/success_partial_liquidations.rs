@@ -345,10 +345,13 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     assert_eq!(asset, 525_000_000);
 
@@ -614,10 +617,13 @@ async fn proper_partial_liquidation_empty_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     assert_eq!(asset, 0);
 
