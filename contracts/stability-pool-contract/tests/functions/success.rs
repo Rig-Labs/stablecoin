@@ -8,7 +8,7 @@ use test_utils::{
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils},
     },
-    setup::common::{print_response, setup_protocol},
+    setup::common::{assert_within_threshold, print_response, setup_protocol},
     utils::with_min_borrow_fee,
 };
 
@@ -272,9 +272,8 @@ async fn proper_one_sp_depositor_position() {
 
     // Makes a 2nd deposit to the Stability Pool
     let second_deposit = 1_000_000_000;
-    println!("second deposit: {}", second_deposit);
 
-    let res = stability_pool_abi::provide_to_stability_pool(
+    stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
@@ -282,8 +281,6 @@ async fn proper_one_sp_depositor_position() {
     )
     .await
     .unwrap();
-
-    println!("res: {:?}", res);
 
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
@@ -749,4 +746,257 @@ async fn proper_depositor_move_gain_to_trove() {
         6_000_000_000 + asset_with_fee,
     )
     .await;
+}
+
+#[tokio::test]
+async fn proper_one_sp_depositor_position_multiple_assets() {
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, true).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10_000_000).await;
+
+    let liquidated_wallet = wallets.pop().unwrap();
+
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        6_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000_000_000,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[1].asset,
+        6_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[1].asset,
+        5_000_000_000,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await;
+
+    borrow_operations_abi::open_trove(
+        &contracts.borrow_operations,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        6_000_000_000,
+        3_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    let liq_borrow_operations = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        liquidated_wallet.clone(),
+    );
+
+    borrow_operations_abi::open_trove(
+        &liq_borrow_operations,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        1_100_000_000,
+        1_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    borrow_operations_abi::open_trove(
+        &contracts.borrow_operations,
+        &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.asset_contracts[1].trove_manager,
+        &contracts.asset_contracts[1].active_pool,
+        6_000_000_000,
+        3_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    borrow_operations_abi::open_trove(
+        &liq_borrow_operations,
+        &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].asset,
+        &contracts.usdf,
+        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.asset_contracts[1].trove_manager,
+        &contracts.asset_contracts[1].active_pool,
+        1_100_000_000,
+        1_000_000_000,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    let init_stability_deposit = 3_000_000_000;
+    stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        init_stability_deposit,
+    )
+    .await
+    .unwrap();
+
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1_000_000).await;
+
+    trove_manager_abi::liquidate(
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.stability_pool,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].active_pool,
+        &contracts.asset_contracts[0].default_pool,
+        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.usdf,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .unwrap();
+
+    trove_manager_abi::liquidate(
+        &contracts.asset_contracts[1].trove_manager,
+        &contracts.stability_pool,
+        &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.asset_contracts[1].active_pool,
+        &contracts.asset_contracts[1].default_pool,
+        &contracts.asset_contracts[1].coll_surplus_pool,
+        &contracts.usdf,
+        Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await
+    .unwrap();
+
+    // Since the entire debt is liquidated including the borrow fee,
+    // the asset recieved includes the 0.5% fee
+    let asset_with_fee_adjustment = with_min_borrow_fee(1_050_000_000);
+    let debt_with_fee_adjustment = with_min_borrow_fee(1_000_000_000);
+
+    stability_pool_utils::assert_pool_asset(
+        &contracts.stability_pool,
+        asset_with_fee_adjustment,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
+
+    stability_pool_utils::assert_total_usdf_deposits(
+        &contracts.stability_pool,
+        init_stability_deposit - 2 * debt_with_fee_adjustment,
+    )
+    .await;
+
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        asset_with_fee_adjustment,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
+
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        asset_with_fee_adjustment,
+        contracts.asset_contracts[1].asset.contract_id().into(),
+    )
+    .await;
+
+    // 500 - 0.5% fee
+    stability_pool_utils::assert_compounded_usdf_deposit(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        init_stability_deposit - 2 * debt_with_fee_adjustment,
+    )
+    .await;
+
+    // Makes a 2nd deposit to the Stability Pool
+    let second_deposit = 1_000_000_000;
+
+    stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        second_deposit,
+    )
+    .await
+    .unwrap();
+
+    stability_pool_utils::assert_compounded_usdf_deposit(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        init_stability_deposit - 2 * debt_with_fee_adjustment + second_deposit,
+    )
+    .await;
+
+    // Gain has been withdrawn and resset
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        0,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await;
+
+    stability_pool_utils::assert_depositor_asset_gain(
+        &contracts.stability_pool,
+        Identity::Address(admin.address().into()),
+        0,
+        contracts.asset_contracts[1].asset.contract_id().into(),
+    )
+    .await;
+
+    let provider = admin.get_provider().unwrap();
+
+    let fuel_asset_id: AssetId =
+        AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+
+    let fuel_balance = provider
+        .get_asset_balance(admin.address(), fuel_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(fuel_balance, asset_with_fee_adjustment);
+
+    let provider = admin.get_provider().unwrap();
+
+    let st_fuel_asset_id: AssetId =
+        AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());
+
+    let st_fuel_balance = provider
+        .get_asset_balance(admin.address(), st_fuel_asset_id)
+        .await
+        .unwrap();
+
+    assert_within_threshold(
+        st_fuel_balance,
+        asset_with_fee_adjustment,
+        "st_fuel_balance not currect",
+    );
 }
