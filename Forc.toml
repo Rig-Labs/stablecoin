@@ -6,6 +6,7 @@ members = [
   "./contracts/vesting-contract",
   "./contracts/sorted-troves-contract",
   "./contracts/borrow-operations-contract",
+  "./contracts/protocol-manager-contract",
   "./contracts/active-pool-contract",
   "./contracts/default-pool-contract",
    "./contracts/coll-surplus-pool-contract",
