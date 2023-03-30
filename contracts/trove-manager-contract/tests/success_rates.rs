@@ -2,7 +2,7 @@ use test_utils::{interfaces::trove_manager::trove_manager_abi, setup::common::se
 
 #[tokio::test]
 async fn proper_borrow_rates() {
-    let (contracts, _admin, mut _wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut _wallets) = setup_protocol(10, 5, false).await;
 
     let borrow_rate =
         trove_manager_abi::get_borrowing_rate(&contracts.asset_contracts[0].trove_manager)
@@ -35,7 +35,7 @@ async fn proper_borrow_rates() {
 
 #[tokio::test]
 async fn proper_redemption_rates() {
-    let (contracts, _admin, mut _wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut _wallets) = setup_protocol(10, 5, false).await;
 
     let redemption_rate =
         trove_manager_abi::get_redemption_rate(&contracts.asset_contracts[0].trove_manager)

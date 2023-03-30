@@ -133,7 +133,7 @@ impl MockTroveManager for Contract {
     fn offset(debt: u64, coll: u64) {
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
 
-        stability_pool.offset(debt, coll);
+        stability_pool.offset(debt, coll, storage.sorted_troves_contract);
     }
 
     #[storage(read, write)]

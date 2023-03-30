@@ -50,6 +50,7 @@ pub mod common {
     pub async fn setup_protocol(
         max_size: u64,
         num_wallets: u64,
+        deploy_2nd_asset: bool,
     ) -> (ProtocolContracts, WalletUnlocked, Vec<WalletUnlocked>) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
@@ -64,15 +65,17 @@ pub mod common {
         .await;
         let wallet = wallets.pop().unwrap();
 
-        let contracts = deploy_and_initialize_all(wallet.clone(), max_size, false).await;
+        let contracts =
+            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset).await;
 
         (contracts, wallet, wallets)
     }
 
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
-        max_size: u64,
+        _max_size: u64,
         is_testnet: bool,
+        deploy_2nd_asset: bool,
     ) -> ProtocolContracts {
         println!("Deploying contracts...");
         let mut pb = ProgressBar::new(10);
@@ -80,126 +83,43 @@ pub mod common {
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
 
-        let oracle_instance = deploy_oracle(&wallet).await;
-        pb.inc();
-
-        let sorted_troves = deploy_sorted_troves(&wallet).await;
-        pb.inc();
-
-        let trove_manager = deploy_trove_manager_contract(&wallet).await;
-        pb.inc();
-
-        let fuel = deploy_token(&wallet).await;
-        pb.inc();
-
         let usdf = deploy_usdf_token(&wallet).await;
-        pb.inc();
-
-        let active_pool = deploy_active_pool(&wallet).await;
         pb.inc();
 
         let stability_pool = deploy_stability_pool(&wallet).await;
         pb.inc();
 
-        let default_pool = deploy_default_pool(&wallet).await;
-        pb.inc();
-
-        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-        pb.finish();
-
         if is_testnet {
             println!("Borrow operations: {}", borrow_operations.contract_id());
-            println!("Oracle: {}", oracle_instance.contract_id());
-            println!("Sorted Troves: {}", sorted_troves.contract_id());
-            println!("Trove Manager: {}", trove_manager.contract_id());
-            println!("Fuel: {}", fuel.contract_id());
             println!("Usdf: {}", usdf.contract_id());
-            println!("Active Pool: {}", active_pool.contract_id());
             println!("Stability Pool: {}", stability_pool.contract_id());
-            println!("Default Pool: {}", default_pool.contract_id());
-            println!(
-                "Collateral Surplus Pool: {}",
-                coll_surplus_pool.contract_id()
-            );
             println!("Initializing contracts...");
         }
 
         let mut pb = ProgressBar::new(10);
-        default_pool_abi::initialize(
-            &default_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            fuel.contract_id().into(),
-        )
-        .await;
-        pb.inc();
 
-        active_pool_abi::initialize(
-            &active_pool,
-            Identity::ContractId(borrow_operations.contract_id().into()),
-            Identity::ContractId(trove_manager.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            fuel.contract_id().into(),
-            default_pool.contract_id().into(),
-        )
-        .await;
-        pb.inc();
+        let mut asset_contracts: Vec<AssetContracts> = vec![];
 
-        coll_surplus_pool_abi::initialize(
-            &coll_surplus_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            borrow_operations.contract_id().into(),
-            fuel.contract_id().into(),
-        )
-        .await;
-        pb.inc();
-
-        token_abi::initialize(
-            &fuel,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
+        let fuel_asset_contracts = add_asset(
+            &borrow_operations,
+            &stability_pool,
+            &usdf,
+            wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
         )
         .await;
-        pb.inc();
+        pb.finish();
 
         usdf_token_abi::initialize(
             &usdf,
             "USD Fuel".to_string(),
             "USDF".to_string(),
-            Identity::ContractId(trove_manager.contract_id().into()),
+            Identity::ContractId(fuel_asset_contracts.trove_manager.contract_id().into()),
             Identity::ContractId(stability_pool.contract_id().into()),
             Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
-        pb.inc();
-
-        sorted_troves_abi::initialize(
-            &sorted_troves,
-            max_size,
-            borrow_operations.contract_id().into(),
-            trove_manager.contract_id().into(),
-        )
-        .await;
-        pb.inc();
-
-        trove_manager_abi::initialize(
-            &trove_manager,
-            borrow_operations.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            oracle_instance.contract_id().into(),
-            stability_pool.contract_id().into(),
-            default_pool.contract_id().into(),
-            active_pool.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
-            usdf.contract_id().into(),
-        )
-        .await;
-        pb.inc();
-
-        oracle_abi::set_price(&oracle_instance, 1_000_000).await;
         pb.inc();
 
         borrow_operations_abi::initialize(
@@ -211,44 +131,35 @@ pub mod common {
         .await;
         pb.inc();
 
-        borrow_operations_abi::add_asset(
-            &borrow_operations,
-            oracle_instance.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            trove_manager.contract_id().into(),
-            active_pool.contract_id().into(),
-            fuel.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
-        )
-        .await
-        .unwrap();
-
         stability_pool_abi::initialize(
             &stability_pool,
             borrow_operations.contract_id().into(),
-            trove_manager.contract_id().into(),
-            active_pool.contract_id().into(),
+            fuel_asset_contracts.trove_manager.contract_id().into(),
+            fuel_asset_contracts.active_pool.contract_id().into(),
             usdf.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            oracle_instance.contract_id().into(),
-            oracle_instance.contract_id().into(),
-            fuel.contract_id().into(),
+            fuel_asset_contracts.sorted_troves.contract_id().into(),
+            fuel_asset_contracts.oracle.contract_id().into(),
+            fuel_asset_contracts.oracle.contract_id().into(),
+            fuel_asset_contracts.asset.contract_id().into(),
         )
         .await
         .unwrap();
-        pb.finish();
 
-        let mut asset_contracts: Vec<AssetContracts> = vec![];
+        if deploy_2nd_asset {
+            let usdf_asset_contracts = add_asset(
+                &borrow_operations,
+                &stability_pool,
+                &usdf,
+                wallet,
+                "stFuel".to_string(),
+                "stFUEL".to_string(),
+            )
+            .await;
+            pb.finish();
 
-        let fuel_asset_contracts: AssetContracts = AssetContracts {
-            asset: fuel,
-            oracle: oracle_instance,
-            trove_manager: trove_manager,
-            sorted_troves: sorted_troves,
-            active_pool: active_pool,
-            default_pool: default_pool,
-            coll_surplus_pool: coll_surplus_pool,
-        };
+            asset_contracts.push(usdf_asset_contracts);
+        }
+
         asset_contracts.push(fuel_asset_contracts);
 
         let contracts = ProtocolContracts {
@@ -428,6 +339,105 @@ pub mod common {
                 return BorrowOperations::new(try_id, wallet.clone());
             }
         }
+    }
+
+    pub async fn add_asset(
+        borrow_operations: &BorrowOperations,
+        stability_pool: &StabilityPool,
+        usdf: &USDFToken,
+        wallet: WalletUnlocked,
+        name: String,
+        symbol: String,
+    ) -> AssetContracts {
+        let oracle = deploy_oracle(&wallet).await;
+        let sorted_troves = deploy_sorted_troves(&wallet).await;
+        let trove_manager = deploy_trove_manager_contract(&wallet).await;
+        let asset = deploy_token(&wallet).await;
+        let active_pool = deploy_active_pool(&wallet).await;
+        let default_pool = deploy_default_pool(&wallet).await;
+        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+
+        default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(trove_manager.contract_id().into()),
+            active_pool.contract_id().into(),
+            asset.contract_id().into(),
+        )
+        .await;
+
+        active_pool_abi::initialize(
+            &active_pool,
+            Identity::ContractId(borrow_operations.contract_id().into()),
+            Identity::ContractId(trove_manager.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            asset.contract_id().into(),
+            default_pool.contract_id().into(),
+        )
+        .await;
+
+        coll_surplus_pool_abi::initialize(
+            &coll_surplus_pool,
+            Identity::ContractId(trove_manager.contract_id().into()),
+            active_pool.contract_id().into(),
+            borrow_operations.contract_id().into(),
+            asset.contract_id().into(),
+        )
+        .await;
+
+        token_abi::initialize(
+            &asset,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            name.to_string(),
+            symbol.to_string(),
+        )
+        .await;
+
+        sorted_troves_abi::initialize(
+            &sorted_troves,
+            100,
+            borrow_operations.contract_id().into(),
+            trove_manager.contract_id().into(),
+        )
+        .await;
+
+        trove_manager_abi::initialize(
+            &trove_manager,
+            borrow_operations.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            oracle.contract_id().into(),
+            stability_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+            usdf.contract_id().into(),
+            asset.contract_id().into(),
+        )
+        .await;
+
+        oracle_abi::set_price(&oracle, 1_000_000).await;
+
+        borrow_operations_abi::add_asset(
+            &borrow_operations,
+            oracle.contract_id().into(),
+            sorted_troves.contract_id().into(),
+            trove_manager.contract_id().into(),
+            active_pool.contract_id().into(),
+            asset.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
+        return AssetContracts {
+            oracle,
+            sorted_troves,
+            trove_manager,
+            asset,
+            active_pool,
+            default_pool,
+            coll_surplus_pool,
+        };
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool {

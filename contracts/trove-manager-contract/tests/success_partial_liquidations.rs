@@ -16,7 +16,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_partial_liquidation_enough_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -184,7 +184,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_partial_liquidation_partial_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -345,10 +345,13 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     assert_eq!(asset, 525_000_000);
 
@@ -467,7 +470,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_partial_liquidation_empty_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -614,10 +617,13 @@ async fn proper_partial_liquidation_empty_sp() {
 
     assert_eq!(deposits, 0);
 
-    let asset = stability_pool_abi::get_asset(&contracts.stability_pool)
-        .await
-        .unwrap()
-        .value;
+    let asset = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
 
     assert_eq!(asset, 0);
 

@@ -3,7 +3,6 @@ use libraries::numbers::*;
 use std::{u128::U128};
 
 pub struct Snapshots {
-    S: U128,
     P: U128,
     G: U128,
     scale: u64,
@@ -13,7 +12,6 @@ pub struct Snapshots {
 impl Snapshots {
     pub fn default() -> Self {
         Snapshots {
-            S: U128::from_u64(0),
             P: U128::from_u64(0),
             G: U128::from_u64(0),
             scale: 0,
