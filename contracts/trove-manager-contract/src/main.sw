@@ -12,7 +12,6 @@ use data_structures::{
     LocalVariablesOuterLiquidationFunction,
     RedemptionTotals,
     RewardSnapshot,
-    SingleRedemptionValues,
     Trove,
 };
 use libraries::numbers::*;
@@ -24,7 +23,7 @@ use libraries::default_pool_interface::{DefaultPool};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::coll_surplus_pool_interface::{CollSurplusPool};
 use libraries::{MockOracle};
-use libraries::data_structures::{Status};
+use libraries::data_structures::{SingleRedemptionValues, Status};
 use libraries::fluid_math::*;
 
 use std::{
@@ -51,6 +50,7 @@ use std::{
 };
 
 storage {
+    protocol_manager_contract: ContractId = null_contract(),
     sorted_troves_contract: ContractId = null_contract(),
     borrow_operations_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
@@ -89,6 +89,7 @@ impl TroveManager for Contract {
         coll_surplus_pool: ContractId,
         usdf_contract: ContractId,
         asset_contract: ContractId,
+        protocol_manager: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
         storage.sorted_troves_contract = sorted_troves;
@@ -100,6 +101,7 @@ impl TroveManager for Contract {
         storage.coll_surplus_pool_contract = coll_surplus_pool;
         storage.usdf_contract = usdf_contract;
         storage.asset_contract = asset_contract;
+        storage.protocol_manager_contract = protocol_manager;
         storage.is_initialized = true;
     }
 
@@ -112,7 +114,7 @@ impl TroveManager for Contract {
 
     #[storage(read, write)]
     fn apply_pending_rewards(id: Identity) {
-        require_caller_is_borrow_operations_contract();
+        require_caller_is_borrow_operations_contract_or_protocol_manager();
         internal_apply_pending_rewards(id);
     }
 
@@ -187,9 +189,27 @@ impl TroveManager for Contract {
         active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
     }
 
+    #[storage(read, write)]
+    fn redeem_collateral_from_trove(
+        borrower: Identity,
+        max_usdf_amount: u64,
+        price: u64,
+        partial_redemption_hint: u64,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    ) -> SingleRedemptionValues {
+        require_caller_is_protocol_manager_contract();
+        internal_redeem_collateral_from_trove(borrower, max_usdf_amount, price, partial_redemption_hint, upper_partial_hint, lower_partial_hint)
+    }
+
     #[storage(read)]
     fn get_current_icr(id: Identity, price: u64) -> u64 {
         internal_get_current_icr(id, price)
+    }
+
+    #[storage(read)]
+    fn get_entire_system_debt() -> u64 {
+        internal_get_entire_system_debt()
     }
 
     #[storage(read)]
@@ -204,6 +224,12 @@ impl TroveManager for Contract {
         )
     }
 
+    #[storage(read, write)]
+    fn update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
+        require_caller_is_protocol_manager_contract();
+        internal_update_base_rate_from_redemption(asset_drawn, price, total_usdf_supply)
+    }
+
     #[storage(read)]
     fn get_redemption_rate() -> u64 {
         internal_get_redemption_rate().as_u64().unwrap()
@@ -212,6 +238,11 @@ impl TroveManager for Contract {
     #[storage(read)]
     fn get_redemption_rate_with_decay() -> u64 {
         internal_get_redemption_rate_with_decay().as_u64().unwrap()
+    }
+
+    #[storage(read)]
+    fn get_redemption_fee(asset_drawn: u64) -> u64 {
+        internal_get_redemption_fee(asset_drawn)
     }
 
     #[storage(read)]
@@ -486,6 +517,21 @@ fn require_caller_is_borrow_operations_contract() {
     require(caller == borrow_operations_contract, "Caller is not the Borrow Operations contract");
 }
 
+#[storage(read)]
+fn require_caller_is_protocol_manager_contract() {
+    let caller = msg_sender().unwrap();
+    let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
+    require(caller == protocol_manager_contract, "Caller is not the Protocol Manager contract");
+}
+
+#[storage(read)]
+fn require_caller_is_borrow_operations_contract_or_protocol_manager() {
+    let caller = msg_sender().unwrap();
+    let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
+    let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
+    require(caller == borrow_operations_contract || caller == protocol_manager_contract, "Caller is not the Borrow Operations or Protocol Manager contract");
+}
+
 #[storage(read, write)]
 fn internal_increase_trove_coll(id: Identity, coll: u64) -> u64 {
     let mut trove = storage.troves.get(id);
@@ -728,7 +774,6 @@ fn internal_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
 
     default_pool.send_asset_to_active_pool(coll);
 }
-
 #[storage(read)]
 fn internal_get_entire_system_debt() -> u64 {
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());

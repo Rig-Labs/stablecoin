@@ -56,7 +56,9 @@ pub mod borrow_operations_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default()
+            .set_gas_price(1)
+            .set_gas_limit(2000000);
         let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
 
         let call_params: CallParameters = CallParameters::default()

@@ -27,6 +27,7 @@ storage {
     trove_manager_contract: Identity = null_identity_address(),
     stability_pool_contract: Identity = null_identity_address(),
     default_pool_contract: ContractId = null_contract(),
+    protocol_manager_contract: ContractId = null_contract(),
     asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
     usdf_debt_amount: u64 = 0,
@@ -41,6 +42,7 @@ impl ActivePool for Contract {
         stability_pool: Identity,
         asset_id: ContractId,
         default_pool: ContractId,
+        protocol_manager: ContractId,
     ) {
         require(storage.is_initialized == false, "Already initialized");
 
@@ -49,6 +51,7 @@ impl ActivePool for Contract {
         storage.stability_pool_contract = stability_pool;
         storage.asset_id = asset_id;
         storage.default_pool_contract = default_pool;
+        storage.protocol_manager_contract = protocol_manager;
         storage.is_initialized = true;
     }
 
@@ -71,7 +74,7 @@ impl ActivePool for Contract {
     // --- Pool functionality ---
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64) {
-        require_caller_is_bo_or_tm_or_sp();
+        require_caller_is_bo_or_tm_or_sp_pm();
         transfer(amount, storage.asset_id, address);
         storage.asset_amount -= amount;
     }
@@ -84,13 +87,13 @@ impl ActivePool for Contract {
 
     #[storage(read, write)]
     fn decrease_usdf_debt(amount: u64) {
-        require_caller_is_bo_or_tm_or_sp();
+        require_caller_is_bo_or_tm_or_sp_pm();
         storage.usdf_debt_amount -= amount;
     }
 
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64) {
-        require_caller_is_bo_or_tm_or_sp();
+        require_caller_is_bo_or_tm_or_sp_pm();
         storage.asset_amount -= amount;
         let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
 
@@ -118,12 +121,13 @@ fn require_is_asset_id() {
 }
 
 #[storage(read)]
-fn require_caller_is_bo_or_tm_or_sp() {
+fn require_caller_is_bo_or_tm_or_sp_pm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract;
     let trove_manager_contract = storage.trove_manager_contract;
     let stability_pool_contract = storage.stability_pool_contract;
-    require(caller == borrow_operations_contract || caller == trove_manager_contract || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager or DefaultPool");
+    let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
+    require(caller == protocol_manager_contract || caller == borrow_operations_contract || caller == trove_manager_contract || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager or DefaultPool");
 }
 
 #[storage(read)]
@@ -131,6 +135,7 @@ fn require_caller_is_bo_or_tm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract;
     let trove_manager_contract = storage.trove_manager_contract;
+
     require(caller == borrow_operations_contract || caller == trove_manager_contract, "Caller is not BorrowOperations or TroveManager");
 }
 

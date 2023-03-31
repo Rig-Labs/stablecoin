@@ -128,6 +128,7 @@ pub mod trove_manager_abi {
         coll_surplus_pool: ContractId,
         usdf: ContractId,
         asset: ContractId,
+        protocol_manager: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -143,6 +144,7 @@ pub mod trove_manager_abi {
                 coll_surplus_pool,
                 usdf,
                 asset,
+                protocol_manager,
             )
             .tx_params(tx_params)
             .call()
@@ -229,7 +231,9 @@ pub mod trove_manager_abi {
         oracle: &Oracle,
         default_pool: &DefaultPool,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default()
+            .set_gas_price(1)
+            .set_gas_limit(2000000);
         let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
 
         let call_params: CallParameters = CallParameters::default()
