@@ -3,7 +3,8 @@ use fuels::prelude::{Address, Provider, WalletUnlocked};
 
 use crate::setup::common::deploy_and_initialize_all;
 
-const RPC: &str = "beta-3.fuel.network";
+// const RPC: &str = "beta-3.fuel.network";
+const RPC: &str = "http://localhost:4000";
 
 // #[tokio::test]
 pub async fn deploy() {

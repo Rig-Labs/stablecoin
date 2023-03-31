@@ -411,6 +411,7 @@ pub mod common {
             Identity::ContractId(stability_pool.contract_id().into()),
             asset.contract_id().into(),
             default_pool.contract_id().into(),
+            protocol_manager.contract_id().into(),
         )
         .await;
 
@@ -451,6 +452,7 @@ pub mod common {
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
             asset.contract_id().into(),
+            protocol_manager.contract_id().into(),
         )
         .await;
 

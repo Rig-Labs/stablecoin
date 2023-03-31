@@ -25,6 +25,7 @@ pub mod active_pool_abi {
         stability_pool: Identity,
         asset_id: ContractId,
         default_pool: ContractId,
+        protocol_manager: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -36,6 +37,7 @@ pub mod active_pool_abi {
                 stability_pool.clone(),
                 asset_id,
                 default_pool,
+                protocol_manager,
             )
             .tx_params(tx_params)
             .call()

@@ -1,11 +1,17 @@
 library trove_manager_interface;
 
 dep data_structures;
-use data_structures::{Status, Trove};
+use data_structures::{SingleRedemptionValues, Status, Trove};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId,asset_contract: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId, asset_contract: ContractId, protocol_manager: ContractId);
+
+    #[storage(read, write)]
+    fn redeem_collateral_from_trove(borrower: Identity, max_usdf_amount: u64, price: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity) -> SingleRedemptionValues;
+
+    #[storage(read)]
+    fn get_entire_system_debt() -> u64;
 
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;
@@ -27,6 +33,9 @@ abi TroveManager {
 
     #[storage(read, write)]
     fn update_stake_and_total_stakes(id: Identity) -> u64;
+
+    #[storage(read, write)]
+    fn update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64);
 
     #[storage(read, write)]
     fn update_trove_reward_snapshots(id: Identity);
@@ -66,6 +75,9 @@ abi TroveManager {
 
     #[storage(read)]
     fn get_borrowing_rate_with_decay() -> u64;
+
+    #[storage(read)]
+    fn get_redemption_fee(asset_drawn: u64) -> u64;
 
     #[storage(read)]
     fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64;

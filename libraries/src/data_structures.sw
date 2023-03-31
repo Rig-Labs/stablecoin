@@ -1,5 +1,21 @@
 library data_structures;
 
+pub struct SingleRedemptionValues {
+    usdf_lot: u64,
+    asset_lot: u64,
+    cancelled_partial: bool,
+}
+
+impl SingleRedemptionValues {
+    pub fn default() -> Self {
+        SingleRedemptionValues {
+            usdf_lot: 0,
+            asset_lot: 0,
+            cancelled_partial: false,
+        }
+    }
+}
+
 pub struct Trove {
     usdf_borrowed: u64,
     fuel_deposited: u64,

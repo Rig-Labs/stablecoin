@@ -52,6 +52,7 @@ async fn get_contract_instance() -> (DefaultPool, Token, WalletUnlocked, ActiveP
         Identity::Address(wallet.address().into()),
         asset.contract_id().into(),
         instance.contract_id().into(),
+        instance.contract_id().into(),
     )
     .await;
 
