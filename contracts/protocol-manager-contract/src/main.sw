@@ -1,7 +1,7 @@
 contract;
 
 dep data_structures;
-use data_structures::{RedemptionTotals, SingleRedemptionValues};
+use data_structures::{RedemptionTotals, SingleRedemptionValues, AssetInfo};
 use libraries::fluid_math::{null_contract, null_identity_address};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::trove_manager_interface::{TroveManager};
@@ -208,16 +208,6 @@ fn get_entire_system_debt_all_assets(contracts: Vec<AssetContracts>) -> u64 {
         i += 1;
     }
     total_debt
-}
-
-pub struct AssetInfo {
-    assets: Vec<ContractId>,
-    asset_contracts: Vec<AssetContracts>,
-    prices: Vec<u64>,
-    system_debts: Vec<u64>,
-    redemption_totals: Vec<RedemptionTotals>,
-    current_borrowers: Vec<Identity>,
-    current_crs: Vec<u64>,
 }
 
 #[storage(read)]
