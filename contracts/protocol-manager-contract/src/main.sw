@@ -130,6 +130,7 @@ impl ProtocolManager for Contract {
             
             let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
             trove_manager_contract.apply_pending_rewards(current_borrower);
+            
             let single_redemption = trove_manager_contract.redeem_collateral_from_trove(current_borrower, remaining_usdf, price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
             if (single_redemption.cancelled_partial) {
                 break;
