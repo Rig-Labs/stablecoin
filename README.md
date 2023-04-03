@@ -47,7 +47,7 @@ Functionality
 - [x] Stability Pool
 - [x] Multiple assets (Fuel, stFuel)
 - [x] Fees
-- [ ] Redeem Collateral w/ USDF
+- [x] Redeem Collateral w/ USDF
 - [ ] Stake FPT
 
 ![Screen Shot 2023-03-30 at 14 45 14](https://user-images.githubusercontent.com/32445955/228947561-0c6b46c9-93bc-4409-a8c6-90199ce46c4f.png)
