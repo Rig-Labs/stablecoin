@@ -71,7 +71,7 @@ impl USDFToken for Contract {//////////////////////////////////////
 
     #[storage(read, write), payable]
     fn burn() {
-        require_caller_is_bo_or_tm_or_sp();
+        require_caller_is_bo_or_tm_or_sp_or_pm();
         let burn_amount = msg_amount();
         burn(burn_amount);
         storage.total_supply -= burn_amount;
@@ -108,7 +108,7 @@ fn require_caller_is_borrower_operations() {
 }
 
 #[storage(read)]
-fn require_caller_is_bo_or_tm_or_sp() {
+fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let sender = msg_sender().unwrap();
 
     let mut is_trove_manager = false;
@@ -121,5 +121,5 @@ fn require_caller_is_bo_or_tm_or_sp() {
         }
         i += 1;
     }
-    require(sender == storage.borrower_operations || is_trove_manager || sender == storage.stability_pool, Error::NotAuthorized);
+    require(sender == storage.borrower_operations || is_trove_manager || sender == storage.stability_pool || sender == Identity::ContractId(storage.protocol_manager), Error::NotAuthorized);
 }

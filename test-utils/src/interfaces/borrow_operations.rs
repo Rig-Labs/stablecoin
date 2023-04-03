@@ -300,3 +300,46 @@ pub mod borrow_operations_abi {
             .await
     }
 }
+
+pub mod borrow_operations_utils {
+    use fuels::signers::{fuel_crypto::coins_bip32::ecdsa::recoverable::Id, WalletUnlocked};
+
+    use super::*;
+    use crate::interfaces::usdf_token::USDFToken;
+    use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
+
+    pub async fn mint_token_and_open_trove(
+        wallet: WalletUnlocked,
+        asset_contracts: &AssetContracts,
+        borrow_operations: &BorrowOperations,
+        usdf: &USDFToken,
+        amount: u64,
+        usdf_amount: u64,
+    ) {
+        token_abi::mint_to_id(
+            &asset_contracts.asset,
+            amount,
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+
+        let borrow_operations_healthy_wallet1 =
+            BorrowOperations::new(borrow_operations.contract_id().clone(), wallet.clone());
+
+        borrow_operations_abi::open_trove(
+            &borrow_operations_healthy_wallet1,
+            &asset_contracts.oracle,
+            &asset_contracts.asset,
+            &usdf,
+            &asset_contracts.sorted_troves,
+            &asset_contracts.trove_manager,
+            &asset_contracts.active_pool,
+            amount,
+            usdf_amount,
+            Identity::Address([0; 32].into()),
+            Identity::Address([0; 32].into()),
+        )
+        .await
+        .unwrap();
+    }
+}

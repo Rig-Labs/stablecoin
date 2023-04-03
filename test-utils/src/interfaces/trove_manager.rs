@@ -215,57 +215,57 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn redeem_collateral(
-        trove_manager: &TroveManagerContract,
-        amount: u64,
-        max_iterations: u64,
-        max_fee_percentage: u64,
-        partial_redemption_hint: u64,
-        upper_partial_hint: Option<Identity>,
-        lower_partial_hint: Option<Identity>,
-        usdf: &USDFToken,
-        fuel: &Token,
-        sorted_troves: &SortedTroves,
-        active_pool: &ActivePool,
-        coll_surplus_pool: &CollSurplusPool,
-        oracle: &Oracle,
-        default_pool: &DefaultPool,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default()
-            .set_gas_price(1)
-            .set_gas_limit(2000000);
-        let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
+    // pub async fn redeem_collateral(
+    //     trove_manager: &TroveManagerContract,
+    //     amount: u64,
+    //     max_iterations: u64,
+    //     max_fee_percentage: u64,
+    //     partial_redemption_hint: u64,
+    //     upper_partial_hint: Option<Identity>,
+    //     lower_partial_hint: Option<Identity>,
+    //     usdf: &USDFToken,
+    //     fuel: &Token,
+    //     sorted_troves: &SortedTroves,
+    //     active_pool: &ActivePool,
+    //     coll_surplus_pool: &CollSurplusPool,
+    //     oracle: &Oracle,
+    //     default_pool: &DefaultPool,
+    // ) -> FuelCallResponse<()> {
+    //     let tx_params = TxParameters::default()
+    //         .set_gas_price(1)
+    //         .set_gas_limit(2000000);
+    //     let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
 
-        let call_params: CallParameters = CallParameters::default()
-            .set_amount(amount)
-            .set_asset_id(usdf_asset_id);
+    //     let call_params: CallParameters = CallParameters::default()
+    //         .set_amount(amount)
+    //         .set_asset_id(usdf_asset_id);
 
-        trove_manager
-            .methods()
-            .redeem_collateral(
-                max_iterations,
-                max_fee_percentage,
-                partial_redemption_hint,
-                upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-                lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-            )
-            .tx_params(tx_params)
-            .call_params(call_params)
-            .unwrap()
-            .set_contracts(&[
-                sorted_troves,
-                active_pool,
-                fuel,
-                usdf,
-                coll_surplus_pool,
-                oracle,
-                default_pool,
-            ])
-            .append_variable_outputs(10)
-            .call()
-            .await
-            .unwrap()
-    }
+    //     trove_manager
+    //         .methods()
+    //         .redeem_collateral(
+    //             max_iterations,
+    //             max_fee_percentage,
+    //             partial_redemption_hint,
+    //             upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+    //             lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+    //         )
+    //         .tx_params(tx_params)
+    //         .call_params(call_params)
+    //         .unwrap()
+    //         .set_contracts(&[
+    //             sorted_troves,
+    //             active_pool,
+    //             fuel,
+    //             usdf,
+    //             coll_surplus_pool,
+    //             oracle,
+    //             default_pool,
+    //         ])
+    //         .append_variable_outputs(10)
+    //         .call()
+    //         .await
+    //         .unwrap()
+    // }
 
     pub async fn get_borrowing_rate(trove_manager: &TroveManagerContract) -> FuelCallResponse<u64> {
         trove_manager

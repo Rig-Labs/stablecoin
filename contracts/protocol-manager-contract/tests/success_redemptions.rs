@@ -1,12 +1,14 @@
 use fuels::{prelude::AssetId, types::Identity};
+use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::coll_surplus_pool_abi,
         oracle::oracle_abi,
+        protocol_manager::protocol_manager_abi,
         token::token_abi,
-        trove_manager::{trove_manager_abi, trove_manager_utils, Status, TroveManagerContract},
+        trove_manager::{trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
     utils::with_min_borrow_fee,
@@ -14,7 +16,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -112,11 +114,8 @@ async fn proper_redemption_from_partially_closed() {
 
     let redemption_amount: u64 = 3_000_000_000;
 
-    let trove_manager_health1 = TroveManagerContract::new(
-        contracts.asset_contracts[0]
-            .trove_manager
-            .contract_id()
-            .clone(),
+    let protocol_manager_health1 = ProtocolManager::new(
+        contracts.protocol_manager.contract_id().clone(),
         healthy_wallet1.clone(),
     );
 
@@ -125,8 +124,8 @@ async fn proper_redemption_from_partially_closed() {
             .await
             .value;
 
-    trove_manager_abi::redeem_collateral(
-        &trove_manager_health1,
+    protocol_manager_abi::redeem_collateral(
+        &protocol_manager_health1,
         redemption_amount,
         10,
         0,
@@ -134,12 +133,7 @@ async fn proper_redemption_from_partially_closed() {
         None,
         None,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].default_pool,
+        &contracts.asset_contracts,
     )
     .await;
 
@@ -196,7 +190,7 @@ async fn proper_redemption_from_partially_closed() {
 
 #[tokio::test]
 async fn proper_redemption_with_a_trove_closed_fully() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -303,16 +297,13 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let redemption_amount: u64 = 6_000_000_000;
 
-    let trove_manager_health1 = TroveManagerContract::new(
-        contracts.asset_contracts[0]
-            .trove_manager
-            .contract_id()
-            .clone(),
+    let protocol_manager_health1 = ProtocolManager::new(
+        contracts.protocol_manager.contract_id().clone(),
         healthy_wallet1.clone(),
     );
 
-    trove_manager_abi::redeem_collateral(
-        &trove_manager_health1,
+    protocol_manager_abi::redeem_collateral(
+        &protocol_manager_health1,
         redemption_amount,
         3,
         0,
@@ -320,12 +311,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         None,
         None,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].default_pool,
+        &contracts.asset_contracts,
     )
     .await;
 

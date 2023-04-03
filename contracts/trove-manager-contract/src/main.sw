@@ -149,7 +149,7 @@ impl TroveManager for Contract {
         let mut current_borrower = sorted_troves_contract.get_last();
 
         while (current_borrower != null_identity_address() && internal_get_current_icr(current_borrower, totals.price) < MCR) {
-            let current_trove = sorted_troves_contract.get_prev(current_borrower);
+            current_borrower = sorted_troves_contract.get_prev(current_borrower);
         }
 
         let mut remaining_itterations = max_itterations;

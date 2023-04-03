@@ -41,3 +41,14 @@ impl SingleRedemptionValues {
         }
     }
 }
+
+
+pub struct AssetInfo {
+    assets: Vec<ContractId>,
+    asset_contracts: Vec<AssetContracts>,
+    prices: Vec<u64>,
+    system_debts: Vec<u64>,
+    redemption_totals: Vec<RedemptionTotals>,
+    current_borrowers: Vec<Identity>,
+    current_crs: Vec<u64>,
+}
