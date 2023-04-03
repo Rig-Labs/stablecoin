@@ -18,13 +18,25 @@ pub mod protocol_manager_abi {
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::setup::common::wait;
-    use fuels::prelude::{CallParameters, LogDecoder};
+    use crate::setup::common::{wait, AssetContracts};
+    use fuels::prelude::{CallParameters, LogDecoder, SettableContract};
     use fuels::types::AssetId;
     use fuels::{
         prelude::{ContractId, TxParameters},
         types::Identity,
     };
+
+    enum Contract<'a> {
+        ActivePool(&'a ActivePool),
+        TroveManager(&'a TroveManagerContract),
+        CollSurplusPool(&'a CollSurplusPool),
+        Oracle(&'a Oracle),
+        SortedTroves(&'a SortedTroves),
+        BorrowOperations(&'a BorrowOperations),
+        StabilityPool(&'a StabilityPool),
+        USDFToken(&'a USDFToken),
+        DefaultPool(&'a DefaultPool),
+    }
 
     use super::*;
 
@@ -94,13 +106,7 @@ pub mod protocol_manager_abi {
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
         usdf: &USDFToken,
-        fuel: &Token,
-        sorted_troves: &SortedTroves,
-        active_pool: &ActivePool,
-        coll_surplus_pool: &CollSurplusPool,
-        oracle: &Oracle,
-        default_pool: &DefaultPool,
-        trove_manager: &TroveManagerContract,
+        asset_contracts: &Vec<AssetContracts>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default()
             .set_gas_price(1)
@@ -110,6 +116,19 @@ pub mod protocol_manager_abi {
         let call_params: CallParameters = CallParameters::default()
             .set_amount(amount)
             .set_asset_id(usdf_asset_id);
+
+        let mut set_contracts: Vec<&dyn SettableContract> = Vec::new();
+
+        for contracts in asset_contracts.iter() {
+            set_contracts.push(&contracts.active_pool);
+            set_contracts.push(&contracts.trove_manager);
+            set_contracts.push(&contracts.coll_surplus_pool);
+            set_contracts.push(&contracts.oracle);
+            set_contracts.push(&contracts.sorted_troves);
+            set_contracts.push(&contracts.default_pool)
+        }
+
+        set_contracts.push(usdf);
 
         protocol_manager
             .methods()
@@ -123,16 +142,7 @@ pub mod protocol_manager_abi {
             .tx_params(tx_params)
             .call_params(call_params)
             .unwrap()
-            .set_contracts(&[
-                sorted_troves,
-                active_pool,
-                fuel,
-                usdf,
-                coll_surplus_pool,
-                oracle,
-                default_pool,
-                trove_manager,
-            ])
+            .set_contracts(&set_contracts)
             .append_variable_outputs(10)
             .call()
             .await

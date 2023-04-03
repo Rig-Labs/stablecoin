@@ -16,7 +16,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -133,13 +133,7 @@ async fn proper_redemption_from_partially_closed() {
         None,
         None,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts,
     )
     .await;
 
@@ -196,7 +190,7 @@ async fn proper_redemption_from_partially_closed() {
 
 #[tokio::test]
 async fn proper_redemption_with_a_trove_closed_fully() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
 
@@ -317,13 +311,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         None,
         None,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts,
     )
     .await;
 
