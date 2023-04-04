@@ -10,7 +10,6 @@ use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
-use crate::interfaces::token::Token;
 use crate::interfaces::usdf_token::USDFToken;
 
 abigen!(Contract(
@@ -20,7 +19,7 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::{AssetId, CallParameters, Error, LogDecoder};
+    use fuels::prelude::{Error, LogDecoder};
 
     use crate::setup::common::wait;
 

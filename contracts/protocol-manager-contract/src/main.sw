@@ -1,7 +1,7 @@
 contract;
 
 dep data_structures;
-use data_structures::{RedemptionTotals, SingleRedemptionValues, AssetInfo, AssetContracts};
+use data_structures::{AssetContracts, AssetInfo, RedemptionTotals, SingleRedemptionValues};
 use libraries::fluid_math::{null_contract, null_identity_address};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::trove_manager_interface::{TroveManager};
@@ -28,8 +28,6 @@ use std::{
     },
     token::transfer,
 };
-
-
 
 storage {
     admin: Identity = null_identity_address(),
@@ -104,7 +102,8 @@ impl ProtocolManager for Contract {
         // TODO Require bootstrap mode
         require_valid_usdf_id();
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
-        let usdf_contract = abi(USDFToken, storage.usdf_token_contract.value);
+        let usdf_address = storage.usdf_token_contract;
+        let usdf_contract = abi(USDFToken, usdf_address.value);
 
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
@@ -121,28 +120,29 @@ impl ProtocolManager for Contract {
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
 
             remaining_itterations -= 1;
-            
+
             let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
             trove_manager_contract.apply_pending_rewards(current_borrower);
-            
+
             let single_redemption = trove_manager_contract.redeem_collateral_from_trove(current_borrower, remaining_usdf, price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
             if (single_redemption.cancelled_partial) {
                 break;
             }
+
             totals.total_usdf_to_redeem += single_redemption.usdf_lot;
             totals.total_asset_drawn += single_redemption.asset_lot;
             remaining_usdf -= single_redemption.usdf_lot;
-            
+
             let next_cr = trove_manager_contract.get_current_icr(next_user_to_check, price);
             assets_info.current_crs.set(index, next_cr);
             assets_info.current_borrowers.set(index, next_user_to_check);
             assets_info.redemption_totals.set(index, totals);
-            
+
             let next_borrower = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
             current_borrower = next_borrower.0;
             index = next_borrower.1;
         }
-
+        let mut total_usdf_redeemed = 0;
         let mut i = 0;
         while (i < assets_info.assets.len()) {
             let contracts_cache = assets_info.asset_contracts.get(i).unwrap();
@@ -167,14 +167,19 @@ impl ProtocolManager for Contract {
             // TODO Send to stakers instead of oracle when implemented
             active_pool_contract.send_asset(Identity::ContractId(contracts_cache.oracle), totals.asset_fee);
 
-            usdf_contract.burn {
-                coins: totals.total_usdf_to_redeem,
-                asset_id: storage.usdf_token_contract.value,
-            }();
-
+            total_usdf_redeemed += totals.total_usdf_to_redeem;
             active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
             active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
             i += 1;
+        }
+
+        usdf_contract.burn {
+            coins: total_usdf_redeemed,
+            asset_id: storage.usdf_token_contract.value,
+        }();
+
+        if (remaining_usdf > 0) {
+            transfer(remaining_usdf, usdf_address, msg_sender().unwrap());
         }
     }
 }
@@ -193,18 +198,6 @@ fn require_valid_usdf_id() {
 }
 
 #[storage(read)]
-fn get_entire_system_debt_all_assets(contracts: Vec<AssetContracts>) -> u64 {
-    let mut total_debt: u64 = 0;
-    let mut i = 0;
-    while (i < contracts.len()) {
-        let trove_manager_contract = abi(TroveManager, contracts.get(i).unwrap().trove_manager.into());
-        total_debt += trove_manager_contract.get_entire_system_debt();
-        i += 1;
-    }
-    total_debt
-}
-
-#[storage(read)]
 fn get_all_assets_info() -> AssetInfo {
     let mut assets: Vec<ContractId> = Vec::new();
     let mut asset_contracts: Vec<AssetContracts> = Vec::new();
@@ -213,9 +206,9 @@ fn get_all_assets_info() -> AssetInfo {
     let mut redemption_totals: Vec<RedemptionTotals> = Vec::new();
     let mut current_borrowers: Vec<Identity> = Vec::new();
     let mut current_crs: Vec<u64> = Vec::new();
-    let mut i = 0;
     let length = storage.assets.len();
 
+    let mut i = 0;
     while (i < length) {
         assets.push(storage.assets.get(i).unwrap());
         asset_contracts.push(storage.asset_contracts.get(assets.get(i).unwrap()));
@@ -225,15 +218,16 @@ fn get_all_assets_info() -> AssetInfo {
     i = 0;
     while (i < length) {
         let oracle_contract = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
-        let price = oracle_contract.get_price();
-        prices.push(price);
         let trove_manager_contract = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
-        system_debt.push(trove_manager_contract.get_entire_system_debt());
-        redemption_totals.push(RedemptionTotals::default());
         let sorted_troves_contract = abi(SortedTroves, asset_contracts.get(i).unwrap().sorted_troves.into());
 
+        let price = oracle_contract.get_price();
         let mut current_borrower = sorted_troves_contract.get_last();
         let mut current_cr = trove_manager_contract.get_current_icr(current_borrower, price);
+
+        prices.push(price);
+        system_debt.push(trove_manager_contract.get_entire_system_debt());
+        redemption_totals.push(RedemptionTotals::default());
 
         while (current_borrower != null_identity_address() && current_cr < MCR) {
             current_borrower = sorted_troves_contract.get_prev(current_borrower);
@@ -256,18 +250,18 @@ fn get_all_assets_info() -> AssetInfo {
     }
 }
 
-fn find_min_borrower(current_borrowers: Vec<Identity> , current_crs:  Vec<u64>) -> (Identity, u64) {
+fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) -> (Identity, u64) {
     let mut min_borrower = current_borrowers.get(0).unwrap();
     let mut min_cr = current_crs.get(0).unwrap();
-    let mut index = 0;
+    let mut min_index = 0;
     let mut i = 1;
     while (i < current_borrowers.len()) {
         if (current_crs.get(i).unwrap() < min_cr) {
             min_borrower = current_borrowers.get(i).unwrap();
             min_cr = current_crs.get(i).unwrap();
-            index = i;
+            min_index = i;
         }
         i += 1;
     }
-    (min_borrower, index)
+    (min_borrower, min_index)
 }

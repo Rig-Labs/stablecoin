@@ -3,7 +3,6 @@ contract;
 use libraries::fluid_math::*;
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::stability_pool_interface::{StabilityPool};
-use libraries::trove_manager_interface::{TroveManager};
 use libraries::data_structures::{Status};
 
 use std::{

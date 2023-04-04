@@ -8,7 +8,7 @@ use test_utils::{
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils},
     },
-    setup::common::{assert_within_threshold, print_response, setup_protocol},
+    setup::common::{assert_within_threshold, setup_protocol},
     utils::with_min_borrow_fee,
 };
 
