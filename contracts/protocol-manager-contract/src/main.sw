@@ -179,6 +179,7 @@ impl ProtocolManager for Contract {
         }();
 
         if (remaining_usdf > 0) {
+            // Return remaining usdf to redeemer
             transfer(remaining_usdf, usdf_address, msg_sender().unwrap());
         }
     }

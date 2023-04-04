@@ -90,6 +90,7 @@ impl BorrowOperations for Contract {
     ) {
         require_valid_asset_id();
         let asset_contracts = storage.asset_contracts.get(asset);
+        let usdf_contract = storage.usdf_contract;
 
         let oracle = abi(MockOracle, asset_contracts.oracle.value);
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
@@ -102,7 +103,7 @@ impl BorrowOperations for Contract {
         vars.price = oracle.get_price();
 
         require_trove_is_not_active(sender, asset_contracts.trove_manager);
-        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, 0, asset_contracts.trove_manager);
+        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, 0, asset_contracts.trove_manager, usdf_contract);
         vars.net_debt = vars.net_debt + vars.usdf_fee;
 
         require_at_least_min_net_debt(vars.net_debt);
@@ -126,7 +127,7 @@ impl BorrowOperations for Contract {
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
         internal_active_pool_add_coll(msg_amount(), asset, asset_contracts.active_pool);
-        internal_withdraw_usdf(sender, usdf_amount, vars.net_debt, asset_contracts.active_pool);
+        internal_withdraw_usdf(sender, usdf_amount, vars.net_debt, asset_contracts.active_pool, usdf_contract);
     }
 
     #[storage(read, write), payable]
@@ -187,6 +188,7 @@ impl BorrowOperations for Contract {
     fn close_trove(asset: ContractId) {
         let asset_contracts = storage.asset_contracts.get(asset);
 
+        let usdf_contract = storage.usdf_contract;
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
         let active_pool = abi(ActivePool, asset_contracts.active_pool.value);
         let oracle = abi(MockOracle, asset_contracts.oracle.value);
@@ -206,12 +208,12 @@ impl BorrowOperations for Contract {
 
         trove_manager.close_trove(borrower);
         trove_manager.remove_stake(borrower);
-        internal_repay_usdf(debt, asset_contracts.active_pool);
+        internal_repay_usdf(debt, asset_contracts.active_pool, usdf_contract);
         active_pool.send_asset(borrower, coll);
 
         if (debt < msg_amount()) {
             let usdf_to_send = msg_amount() - debt;
-            transfer(usdf_to_send, storage.usdf_contract, borrower);
+            transfer(usdf_to_send, usdf_contract, borrower);
         }
     }
 
@@ -245,10 +247,11 @@ impl BorrowOperations for Contract {
 fn internal_trigger_borrowing_fee(
     usdf_amount: u64,
     max_fee_percentage: u64,
-    trove_manager: ContractId,
+    trove_manager_contract: ContractId,
+    usdf_contract: ContractId,
 ) -> u64 {
-    let trove_manager = abi(TroveManager, trove_manager.value);
-    let usdf = abi(USDFToken, storage.usdf_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let usdf = abi(USDFToken, usdf_contract.value);
     trove_manager.decay_base_rate_from_borrowing();
     let usdf_fee = trove_manager.get_borrowing_fee(usdf_amount);
     // TODO require user accepts fee
@@ -269,11 +272,13 @@ fn internal_adjust_trove(
     asset: ContractId,
 ) {
     let asset_contracts = storage.asset_contracts.get(asset);
+    let usdf_contract = storage.usdf_contract;
+
     let oracle = abi(MockOracle, asset_contracts.oracle.value);
     let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
     let sorted_troves = abi(SortedTroves, asset_contracts.sorted_troves.value);
-    let price = oracle.get_price();
 
+    let price = oracle.get_price();
     let mut vars = LocalVariables_AdjustTrove::new();
 
     if is_debt_increase {
@@ -291,7 +296,7 @@ fn internal_adjust_trove(
 
     vars.net_debt_change = usdf_change;
     if is_debt_increase {
-        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, 0, asset_contracts.trove_manager);
+        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, 0, asset_contracts.trove_manager, usdf_contract);
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
     }
 
@@ -316,7 +321,7 @@ fn internal_adjust_trove(
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
     sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
 
-    internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change, asset, asset_contracts.active_pool);
+    internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change, asset, asset_contracts.active_pool, usdf_contract);
 }
 
 #[storage(read)]
@@ -381,10 +386,11 @@ fn internal_withdraw_usdf(
     recipient: Identity,
     amount: u64,
     net_debt_increase: u64,
-    active_pool: ContractId,
+    active_pool_contract: ContractId,
+    usdf_contract: ContractId,
 ) {
-    let active_pool = abi(ActivePool, active_pool.value);
-    let usdf = abi(USDFToken, storage.usdf_contract.value);
+    let active_pool = abi(ActivePool, active_pool_contract.value);
+    let usdf = abi(USDFToken, usdf_contract.value);
 
     active_pool.increase_usdf_debt(net_debt_increase);
     usdf.mint(amount, recipient);
@@ -490,13 +496,17 @@ fn internal_active_pool_add_coll(coll_change: u64, asset: ContractId, active_poo
 }
 
 #[storage(read)]
-fn internal_repay_usdf(usdf_amount: u64, active_pool: ContractId) {
-    let active_pool = abi(ActivePool, active_pool.value);
-    let usdf = abi(USDFToken, storage.usdf_contract.value);
+fn internal_repay_usdf(
+    usdf_amount: u64,
+    active_pool_contract: ContractId,
+    usdf_contract: ContractId,
+) {
+    let active_pool = abi(ActivePool, active_pool_contract.value);
+    let usdf = abi(USDFToken, usdf_contract.value);
 
     usdf.burn {
         coins: usdf_amount,
-        asset_id: storage.usdf_contract.value,
+        asset_id: usdf_contract.value,
     }();
 
     active_pool.decrease_usdf_debt(usdf_amount);
@@ -511,14 +521,14 @@ fn internal_move_usdf_and_asset_from_adjustment(
     is_debt_increase: bool,
     net_debt_change: u64,
     asset: ContractId,
-    active_pool: ContractId,
+    active_pool_contract: ContractId,
+    usdf_contract: ContractId,
 ) {
-    let active_pool_abi = abi(ActivePool, active_pool.value);
-    let usdf = abi(Token, storage.usdf_contract.value);
+    let active_pool_abi = abi(ActivePool, active_pool_contract.value);
 
     if coll_change > 0 {
         if is_coll_increase {
-            internal_active_pool_add_coll(coll_change, asset, active_pool);
+            internal_active_pool_add_coll(coll_change, asset, active_pool_contract);
         } else {
             active_pool_abi.send_asset(borrower, coll_change);
         }
@@ -526,9 +536,9 @@ fn internal_move_usdf_and_asset_from_adjustment(
 
     if usdf_change > 0 {
         if is_debt_increase {
-            internal_withdraw_usdf(borrower, usdf_change, net_debt_change, active_pool);
+            internal_withdraw_usdf(borrower, usdf_change, net_debt_change, active_pool_contract, usdf_contract);
         } else {
-            internal_repay_usdf(usdf_change, active_pool);
+            internal_repay_usdf(usdf_change, active_pool_contract, usdf_contract);
         }
     }
 }
