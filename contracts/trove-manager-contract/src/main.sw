@@ -123,72 +123,6 @@ impl TroveManager for Contract {
         internal_has_pending_rewards(id)
     }
 
-    #[storage(read, write), payable]
-    fn redeem_collateral(
-        max_itterations: u64,
-        max_fee_percentage: u64,
-        partial_redemption_hint: u64,
-        upper_partial_hint: Identity,
-        lower_partial_hint: Identity,
-    ) {
-        // TODO Require functions
-        // TODO Require bootstrap mode
-        require_valid_usdf_id();
-        require(msg_amount() > 0, "Redemption amount must be greater than 0");
-
-        let mut totals: RedemptionTotals = RedemptionTotals::default();
-        let oracle_contract = abi(MockOracle, storage.oracle_contract.into());
-        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        let active_pool_contract = abi(ActivePool, storage.active_pool_contract.into());
-        let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
-
-        totals.remaining_usdf = msg_amount();
-        totals.price = oracle_contract.get_price();
-        totals.total_usdf_supply_at_start = internal_get_entire_system_debt();
-
-        let mut current_borrower = sorted_troves_contract.get_last();
-
-        while (current_borrower != null_identity_address() && internal_get_current_icr(current_borrower, totals.price) < MCR) {
-            current_borrower = sorted_troves_contract.get_prev(current_borrower);
-        }
-
-        let mut remaining_itterations = max_itterations;
-        while (current_borrower != null_identity_address() && totals.remaining_usdf > 0 && remaining_itterations > 0) {
-            remaining_itterations -= 1;
-            let next_user_to_check = sorted_troves_contract.get_prev(current_borrower);
-            internal_apply_pending_rewards(current_borrower);
-            let single_redemption = internal_redeem_collateral_from_trove(current_borrower, totals.remaining_usdf, totals.price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
-            if (single_redemption.cancelled_partial) {
-                break;
-            }
-            totals.total_usdf_to_redeem += single_redemption.usdf_lot;
-            totals.total_asset_drawn += single_redemption.asset_lot;
-            totals.remaining_usdf -= single_redemption.usdf_lot;
-            current_borrower = next_user_to_check;
-        }
-        require(totals.total_asset_drawn > 0, "No collateral to redeem");
-
-        internal_update_base_rate_from_redemption(totals.total_asset_drawn, totals.price, totals.total_usdf_supply_at_start);
-
-        totals.asset_fee = internal_get_redemption_fee(totals.total_asset_drawn);
-
-        // Consider spliting fee with person being redeemed from
-        // TODO require user accepts fee
-        // TODO active pool send fee to stakers
-        // TODO lqty staking increase f_asset
-        totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
-        // TODO Send to stakers instead of oracle when implemented
-        active_pool_contract.send_asset(Identity::ContractId(storage.oracle_contract), totals.asset_fee);
-
-        usdf_contract.burn {
-            coins: totals.total_usdf_to_redeem,
-            asset_id: storage.usdf_contract.value,
-        }();
-
-        active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
-        active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
-    }
-
     #[storage(read, write)]
     fn redeem_collateral_from_trove(
         borrower: Identity,
@@ -419,7 +353,6 @@ fn internal_update_trove_reward_snapshots(id: Identity) {
 
     storage.reward_snapshots.insert(id, reward_snapshot);
 }
-
 #[storage(read, write)]
 fn internal_apply_pending_rewards(borrower: Identity) {
     if (internal_has_pending_rewards(borrower)) {

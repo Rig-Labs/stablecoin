@@ -302,7 +302,7 @@ pub mod borrow_operations_abi {
 }
 
 pub mod borrow_operations_utils {
-    use fuels::signers::{fuel_crypto::coins_bip32::ecdsa::recoverable::Id, WalletUnlocked};
+    use fuels::signers::WalletUnlocked;
 
     use super::*;
     use crate::interfaces::usdf_token::USDFToken;

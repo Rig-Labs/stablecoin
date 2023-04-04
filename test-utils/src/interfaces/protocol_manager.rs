@@ -8,15 +8,8 @@ abigen!(Contract(
 ));
 
 pub mod protocol_manager_abi {
-    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
-    use crate::interfaces::coll_surplus_pool::CollSurplusPool;
-    use crate::interfaces::default_pool::DefaultPool;
-    use crate::interfaces::oracle::Oracle;
-    use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::stability_pool::StabilityPool;
-    use crate::interfaces::token::Token;
-    use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::setup::common::{wait, AssetContracts};
     use fuels::prelude::{CallParameters, LogDecoder, SettableContract};
@@ -25,18 +18,6 @@ pub mod protocol_manager_abi {
         prelude::{ContractId, TxParameters},
         types::Identity,
     };
-
-    enum Contract<'a> {
-        ActivePool(&'a ActivePool),
-        TroveManager(&'a TroveManagerContract),
-        CollSurplusPool(&'a CollSurplusPool),
-        Oracle(&'a Oracle),
-        SortedTroves(&'a SortedTroves),
-        BorrowOperations(&'a BorrowOperations),
-        StabilityPool(&'a StabilityPool),
-        USDFToken(&'a USDFToken),
-        DefaultPool(&'a DefaultPool),
-    }
 
     use super::*;
 
