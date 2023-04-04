@@ -9,7 +9,7 @@ members = [
   "./contracts/protocol-manager-contract",
   "./contracts/active-pool-contract",
   "./contracts/default-pool-contract",
-   "./contracts/coll-surplus-pool-contract",
+  "./contracts/coll-surplus-pool-contract",
   "./contracts/token-contract",
   "./contracts/usdf-token-contract",
   "./contracts/fpt-staking-contract",

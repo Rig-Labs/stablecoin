@@ -86,7 +86,7 @@ impl StabilityPool for Contract {
         borrow_operations_address: ContractId,
         usdf_address: ContractId,
         community_issuance_address: ContractId,
-        protocol_manager: ContractId
+        protocol_manager: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
@@ -98,7 +98,13 @@ impl StabilityPool for Contract {
     }
 
     #[storage(read, write)]
-    fn add_asset(trove_manager_address: ContractId, active_pool_address: ContractId, sorted_troves_address: ContractId, asset_address: ContractId, oracle_address:ContractId){
+    fn add_asset(
+        trove_manager_address: ContractId,
+        active_pool_address: ContractId,
+        sorted_troves_address: ContractId,
+        asset_address: ContractId,
+        oracle_address: ContractId,
+    ) {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_address);
         storage.last_asset_error_offset.insert(asset_address, U128::from_u64(0));
@@ -110,6 +116,12 @@ impl StabilityPool for Contract {
         });
     }
 
+    /*
+    * - Triggers a FPT issuance, based on time passed since the last issuance. The FPT issuance is shared between *all* depositors
+    * - Sends depositor's accumulated gains (FPT, Asset1, Asset2...) to depositor
+    * - Sends the tagged front end's accumulated FPT gains to the tagged front end
+    * - Increases deposit stake, and takes new snapshots for each.
+    */
     #[storage(read, write), payable]
     fn provide_to_stability_pool() {
         require_usdf_is_valid_and_non_zero();
@@ -133,6 +145,13 @@ impl StabilityPool for Contract {
         // Pay out FPT gains
     }
 
+     /*
+    * - Triggers a FPT issuance, based on time passed since the last issuance. The FPT issuance is shared between *all* depositors
+    * - Sends all depositor's accumulated gains (FPT, Asset1, Asset2...) to depositor
+    * - Decreases deposit stake, and takes new snapshots for each.
+    *
+    * If amount > userDeposit, the user withdraws all of their compounded deposit.
+    */
     #[storage(read, write)]
     fn withdraw_from_stability_pool(amount: u64) {
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
@@ -156,6 +175,12 @@ impl StabilityPool for Contract {
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
     }
 
+     /* 
+    * - Triggers a FPT issuance, based on time passed since the last issuance. The FPT issuance is shared between *all* depositors
+    * - Sends all depositor's FPT gain to depositor
+    * - Transfers the depositor's entire Asset gain from the Stability Pool to the caller's trove
+    * - Leaves their compounded deposit in the Stability Pool
+    * - Updates snapshots for deposit and tagged front end stake */
     #[storage(read, write)]
     fn withdraw_gain_to_trove(
         lower_hint: Identity,
@@ -233,7 +258,7 @@ impl StabilityPool for Contract {
 #[storage(read)]
 fn require_is_protocol_manager() {
     let protocol_manager = Identity::ContractId(storage.protocol_manager_address);
-    require(msg_sender().unwrap() == protocol_manager , "Caller is not the protocol manager");
+    require(msg_sender().unwrap() == protocol_manager, "Caller is not the protocol manager");
 }
 
 #[storage(read)]
@@ -489,7 +514,7 @@ fn internal_move_offset_coll_and_debt(
     coll_to_add: u64,
     debt_to_offset: u64,
     asset_address: ContractId,
-    asset_addresses_cache: AssetContracts
+    asset_addresses_cache: AssetContracts,
 ) {
     let active_pool = abi(ActivePool, asset_addresses_cache.active_pool.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);

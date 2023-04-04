@@ -4,7 +4,30 @@ use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::data_structures::Node;
 use libraries::fluid_math::{null_contract, null_identity_address};
-
+/*
+* A sorted doubly linked list with nodes sorted in descending order.
+*
+* Nodes map to active Troves in the system - the ID property is the address of a Trove owner.
+* Nodes are ordered according to their current nominal individual collateral ratio (NICR),
+* which is like the ICR but without the price, i.e., just collateral / debt.
+*
+* The list optionally accepts insert position hints.
+*
+* NICRs are computed dynamically at runtime, and not stored on the Node. This is because NICRs of active Troves
+* change dynamically as liquidation events occur.
+*
+* The list relies on the fact that liquidation events preserve ordering: a liquidation decreases the NICRs of all active Troves,
+* but maintains their order. A node inserted based on current NICR will maintain the correct position,
+* relative to it's peers, as rewards accumulate, as long as it's raw collateral and debt have not changed.
+* Thus, Nodes remain sorted by current NICR.
+*
+* Nodes need only be re-inserted upon a Trove operation - when the owner adds or removes collateral or debt
+* to their position.
+*
+* Ordering checks for insertion are performed by comparing an NICR argument to the current NICR, calculated at runtime.
+* The list relies on the property that ordering by ICR is maintained as the ASSET:USD price varies.
+*
+*/
 use std::{
     address::Address,
     auth::msg_sender,
@@ -55,16 +78,23 @@ impl SortedTroves for Contract {
         storage.is_initialized = true;
     }
 
+    /*
+     * @dev Add a node to the list
+     * @param _id Node's id
+     * @param _NICR Node's NICR
+     * @param _prevId Id of previous node for the insert position
+     * @param _nextId Id of next node for the insert position
+     */
     #[storage(read, write)]
     fn insert(
-        _id: Identity,
-        _nicr: u64,
-        _prev_id: Identity,
-        _next_id: Identity,
+        id: Identity,
+        nicr: u64,
+        prev_id: Identity,
+        next_id: Identity,
     ) {
         require_is_bo_or_tm();
 
-        internal_insert(_id, _nicr, _prev_id, _next_id);
+        internal_insert(id, nicr, prev_id, next_id);
     }
 
     #[storage(read, write)]
@@ -225,13 +255,13 @@ fn require_is_bo_or_tm() {
 #[storage(read)]
 fn internal_find_insert_position(
     icr: u64,
-    _next_id: Identity,
-    _prev_id: Identity,
+    next_id: Identity,
+    prev_id: Identity,
 ) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
-    let mut next_id: Identity = _next_id;
-    let mut prev_id: Identity = _prev_id;
+    let mut next_id: Identity = next_id;
+    let mut prev_id: Identity = prev_id;
 
     if (prev_id != null_identity_address()) {
         if (!internal_contains(prev_id)
@@ -308,8 +338,8 @@ fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
 fn internal_insert(
     id: Identity,
     nicr: u64,
-    _prev_id: Identity,
-    _next_id: Identity,
+    prev_id: Identity,
+    next_id: Identity,
 ) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.into());
     require(!internal_is_full(), "list is full");
@@ -317,11 +347,13 @@ fn internal_insert(
     require(null_identity_address() != id, "id must not be zero");
     require(nicr > 0, "icr must be greater than 0");
 
-    let mut next_id: Identity = _next_id;
-    let mut prev_id: Identity = _prev_id;
+    let mut next_id: Identity = next_id;
+    let mut prev_id: Identity = prev_id;
 
     if (!internal_valid_insert_position(nicr, prev_id, next_id))
     {
+        // Sender's hint was not a valid insert position
+        // Use sender's hint to find a valid insert position
         let res = internal_find_insert_position(nicr, prev_id, next_id);
         prev_id = res.0;
         next_id = res.1;
@@ -336,21 +368,25 @@ fn internal_insert(
     if (prev_id == null_identity_address()
         && next_id == null_identity_address())
     {
+        // Insert as head and tail
         storage.head = id;
         storage.tail = id;
     } else if (prev_id == null_identity_address()) {
+        // Insert before `prev_id` as the head
         new_node.next_id = storage.head;
 
         edit_node_neighbors(storage.head, Option::Some(id), Option::None);
 
         storage.head = id;
     } else if (next_id == null_identity_address()) {
+         // Insert after `next_id` as the tail
         new_node.prev_id = storage.tail;
 
         edit_node_neighbors(storage.tail, Option::None, Option::Some(id));
 
         storage.tail = id;
     } else {
+        // Insert at insert position between `prev_id` and `next_id`
         new_node.prev_id = prev_id;
         new_node.next_id = next_id;
 
@@ -391,19 +427,27 @@ fn internal_remove(id: Identity) {
 
     if (storage.size > 1) {
         if (id == storage.head) {
+            // The removed node is the head
+            // Set head to next node
             storage.head = node.next_id;
-
+            // Set prev pointer of new head to null
             edit_node_neighbors(node.next_id, Option::Some(null_identity_address()), Option::None);
         } else if (id == storage.tail) {
+            // The removed node is the tail
+            // Set tail to previous node
             storage.tail = node.prev_id;
-
+            // Set next pointer of new tail to null
             edit_node_neighbors(node.prev_id, Option::None, Option::Some(null_identity_address()));
         } else {
+            // The removed node is neither the head nor the tail
+            // Set next pointer of previous node to the next node
             edit_node_neighbors(node.prev_id, Option::None, Option::Some(node.next_id));
-
+            // Set prev pointer of next node to the previous node
             edit_node_neighbors(node.next_id, Option::Some(node.prev_id), Option::None);
         }
     } else {
+        // List contains a single node
+        // Set the head and tail to null
         storage.head = null_identity_address();
         storage.tail = null_identity_address();
     }
