@@ -1,7 +1,7 @@
 contract;
 
 dep data_structures;
-use data_structures::{RedemptionTotals, SingleRedemptionValues, AssetInfo};
+use data_structures::{RedemptionTotals, SingleRedemptionValues, AssetInfo, AssetContracts};
 use libraries::fluid_math::{null_contract, null_identity_address};
 use libraries::stability_pool_interface::{StabilityPool};
 use libraries::trove_manager_interface::{TroveManager};
@@ -29,13 +29,7 @@ use std::{
     token::transfer,
 };
 
-pub struct AssetContracts {
-    trove_manager: ContractId,
-    active_pool: ContractId,
-    coll_surplus_pool: ContractId,
-    oracle: ContractId,
-    sorted_troves: ContractId,
-}
+
 
 storage {
     admin: Identity = null_identity_address(),
@@ -245,6 +239,7 @@ fn get_all_assets_info() -> AssetInfo {
             current_borrower = sorted_troves_contract.get_prev(current_borrower);
             current_cr = trove_manager_contract.get_current_icr(current_borrower, price);
         }
+
         current_borrowers.push(current_borrower);
         current_crs.push(current_cr);
         i += 1;
