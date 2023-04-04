@@ -64,13 +64,13 @@ impl BorrowOperations for Contract {
         trove_manager_contract: ContractId,
         sorted_troves_contract: ContractId,
         oracle_contract: ContractId,
-        active_pool: ContractId,
-        coll_surplus_pool: ContractId,
+        active_pool_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) {
         require_is_protocol_manager();
         let asset_contracts = AssetContracts {
-            active_pool: active_pool,
-            coll_surplus_pool: coll_surplus_pool,
+            active_pool: active_pool_contract,
+            coll_surplus_pool: coll_surplus_pool_contract,
             sorted_troves: sorted_troves_contract,
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,
@@ -86,10 +86,10 @@ impl BorrowOperations for Contract {
         usdf_amount: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
         require_valid_asset_id();
-        let asset_contracts = storage.asset_contracts.get(asset);
+        let asset_contracts = storage.asset_contracts.get(asset_contract);
         let usdf_contract = storage.usdf_contract;
 
         let oracle = abi(MockOracle, asset_contracts.oracle.value);
@@ -105,10 +105,10 @@ impl BorrowOperations for Contract {
         require_trove_is_not_active(sender, asset_contracts.trove_manager);
         vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, 0, asset_contracts.trove_manager, usdf_contract);
         vars.net_debt = vars.net_debt + vars.usdf_fee;
-
+        // TODO Trigger borrowing fee
         require_at_least_min_net_debt(vars.net_debt);
 
-        // ICR is based on the composite debt, i.e. the requested usdf amount + usdf borrowing fee + usdf gas comp.
+        // ICR is based on the composite debt, i.e. the requested usdf amount
         require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
 
         vars.icr = fm_compute_cr(msg_amount(), vars.net_debt, vars.price);
@@ -116,6 +116,7 @@ impl BorrowOperations for Contract {
 
         require_at_least_mcr(vars.icr);
 
+        // Set the trove struct's properties
         trove_manager.set_trove_status(sender, Status::Active);
         let _ = trove_manager.increase_trove_coll(sender, msg_amount());
         let _ = trove_manager.increase_trove_debt(sender, vars.net_debt);
@@ -126,7 +127,8 @@ impl BorrowOperations for Contract {
         sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
-        internal_active_pool_add_coll(msg_amount(), asset, asset_contracts.active_pool);
+        // Move the ether to the Active Pool, and mint the LUSDAmount to the borrower
+        internal_active_pool_add_coll(msg_amount(), asset_contract, asset_contracts.active_pool);
         internal_withdraw_usdf(sender, usdf_amount, vars.net_debt, asset_contracts.active_pool, usdf_contract);
     }
 
@@ -134,10 +136,10 @@ impl BorrowOperations for Contract {
     fn add_coll(
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
         require_valid_asset_id();
-        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, upper_hint, lower_hint, asset);
+        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write)]
@@ -145,9 +147,9 @@ impl BorrowOperations for Contract {
         amount: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
-        internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, asset);
+        internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write), payable]
@@ -155,12 +157,12 @@ impl BorrowOperations for Contract {
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
         require_caller_is_stability_pool();
         require_valid_asset_id();
 
-        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, asset);
+        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write)]
@@ -168,25 +170,25 @@ impl BorrowOperations for Contract {
         amount: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
-        internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint, asset);
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, amount, true, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write), payable]
     fn repay_usdf(
         upper_hint: Identity,
         lower_hint: Identity,
-        asset: ContractId,
+        asset_contract: ContractId,
     ) {
         require_valid_usdf_id();
 
-        internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint, asset);
+        internal_adjust_trove(msg_sender().unwrap(), 0, 0, msg_amount(), false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write), payable]
-    fn close_trove(asset: ContractId) {
-        let asset_contracts = storage.asset_contracts.get(asset);
+    fn close_trove(asset_contract: ContractId) {
+        let asset_contracts = storage.asset_contracts.get(asset_contract);
 
         let usdf_contract = storage.usdf_contract;
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);

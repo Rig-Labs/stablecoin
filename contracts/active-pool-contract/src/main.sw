@@ -74,7 +74,7 @@ impl ActivePool for Contract {
     // --- Pool functionality ---
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64) {
-        require_caller_is_bo_or_tm_or_sp_pm();
+        require_caller_is_bo_or_tm_or_sp_or_pm();
         transfer(amount, storage.asset_id, address);
         storage.asset_amount -= amount;
     }
@@ -87,13 +87,13 @@ impl ActivePool for Contract {
 
     #[storage(read, write)]
     fn decrease_usdf_debt(amount: u64) {
-        require_caller_is_bo_or_tm_or_sp_pm();
+        require_caller_is_bo_or_tm_or_sp_or_pm();
         storage.usdf_debt_amount -= amount;
     }
 
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64) {
-        require_caller_is_bo_or_tm_or_sp_pm();
+        require_caller_is_bo_or_tm_or_sp_or_pm();
         storage.asset_amount -= amount;
         let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
 
@@ -121,13 +121,13 @@ fn require_is_asset_id() {
 }
 
 #[storage(read)]
-fn require_caller_is_bo_or_tm_or_sp_pm() {
+fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract;
     let trove_manager_contract = storage.trove_manager_contract;
     let stability_pool_contract = storage.stability_pool_contract;
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
-    require(caller == protocol_manager_contract || caller == borrow_operations_contract || caller == trove_manager_contract || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager or DefaultPool");
+    require(caller == protocol_manager_contract || caller == borrow_operations_contract || caller == trove_manager_contract || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager, ProtocolManager, or DefaultPool");
 }
 
 #[storage(read)]
