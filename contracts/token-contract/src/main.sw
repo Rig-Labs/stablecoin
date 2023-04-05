@@ -67,7 +67,6 @@ impl Token for Contract {
 
     #[storage(read)]
     fn mint_to_id(amount: u64, address: Identity){
-        validate_owner();
         mint_to(amount, address);
     }
 

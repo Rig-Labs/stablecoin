@@ -143,6 +143,6 @@ fn require_caller_is_bo_or_tm() {
 fn require_caller_is_borrow_operations_or_default_pool() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract;
-    let default_pool_contract = storage.default_pool_contract;
-    require(caller == borrow_operations_contract || caller == Identity::ContractId(default_pool_contract), "Caller is not BorrowOperations or DefaultPool");
+    let default_pool_contract = Identity::ContractId(storage.default_pool_contract);
+    require(caller == borrow_operations_contract || caller == default_pool_contract, "Caller is not BorrowOperations or DefaultPool");
 }

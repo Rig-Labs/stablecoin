@@ -103,6 +103,6 @@ fn require_is_trove_manager() {
 #[storage(read)]
 fn require_is_active_pool() {
     let caller = msg_sender().unwrap();
-    let active_pool_contract = storage.active_pool;
-    require(caller == Identity::ContractId(active_pool_contract), "Caller is not ActivePool");
+    let active_pool_contract = Identity::ContractId(storage.active_pool);
+    require(caller == active_pool_contract, "Caller is not ActivePool");
 }
