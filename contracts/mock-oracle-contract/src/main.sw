@@ -7,6 +7,8 @@ storage {
     precision: u64 = 6,
 }
 
+// TODO Add migration ability
+// TODO Add renounce ownership ability
 impl MockOracle for Contract {
     #[storage(read)]
     fn get_price() -> u64 {

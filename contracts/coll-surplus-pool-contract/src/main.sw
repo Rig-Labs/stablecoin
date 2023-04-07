@@ -17,7 +17,6 @@ use std::{
 
 storage {
     trove_manager_contract: Identity = null_identity_address(),
-    active_pool: ContractId = null_contract(),
     borrow_operations: ContractId = null_contract(),
     asset_id: ContractId = null_contract(),
     asset_amount: u64 = 0,
@@ -37,7 +36,6 @@ impl CollSurplusPool for Contract {
 
         storage.trove_manager_contract = trove_manager;
         storage.borrow_operations = borrow_operations;
-        storage.active_pool = active_pool;
         storage.asset_id = asset_id;
         storage.is_initialized = true;
     }

@@ -110,16 +110,15 @@ fn require_caller_is_borrower_operations() {
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let sender = msg_sender().unwrap();
-
-    let mut is_trove_manager = false;
+    let protocol_manager_id = Identity::ContractId(storage.protocol_manager);
+    
     let mut i = 0;
     while i < storage.trove_managers.len() {
         let manager = Identity::ContractId(storage.trove_managers.get(i).unwrap());
         if manager == sender {
-            is_trove_manager = true;
-            break;
+            return
         }
         i += 1;
     }
-    require(sender == storage.borrower_operations || is_trove_manager || sender == storage.stability_pool || sender == Identity::ContractId(storage.protocol_manager), Error::NotAuthorized);
+    require(sender == storage.borrower_operations || sender == storage.stability_pool || sender == protocol_manager_id, Error::NotAuthorized);
 }

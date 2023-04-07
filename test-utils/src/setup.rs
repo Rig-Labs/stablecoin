@@ -136,6 +136,7 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.inc();
 
         protocol_manager_abi::initialize(
             &protocol_manager,
@@ -145,6 +146,7 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
+        pb.inc();
 
         let fuel_asset_contracts = add_asset(
             &borrow_operations,
@@ -154,6 +156,7 @@ pub mod common {
             wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
+            is_testnet,
         )
         .await;
 
@@ -166,6 +169,7 @@ pub mod common {
                 wallet,
                 "stFuel".to_string(),
                 "stFUEL".to_string(),
+                is_testnet,
             )
             .await;
             pb.finish();
@@ -387,6 +391,7 @@ pub mod common {
         wallet: WalletUnlocked,
         name: String,
         symbol: String,
+        is_testnet: bool,
     ) -> AssetContracts {
         let oracle = deploy_oracle(&wallet).await;
         let sorted_troves = deploy_sorted_troves(&wallet).await;
@@ -395,6 +400,19 @@ pub mod common {
         let active_pool = deploy_active_pool(&wallet).await;
         let default_pool = deploy_default_pool(&wallet).await;
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+
+        if is_testnet {
+            println!("Deployed asset: {}", asset.contract_id());
+            println!("Deployed active pool: {}", active_pool.contract_id());
+            println!("Deployed default pool: {}", default_pool.contract_id());
+            println!(
+                "Deployed coll surplus pool: {}",
+                coll_surplus_pool.contract_id()
+            );
+            println!("Deployed trove manager: {}", trove_manager.contract_id());
+            println!("Deployed sorted troves: {}", sorted_troves.contract_id());
+            println!("Deployed oracle: {}", oracle.contract_id());
+        }
 
         default_pool_abi::initialize(
             &default_pool,

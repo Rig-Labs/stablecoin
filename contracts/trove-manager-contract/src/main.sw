@@ -310,22 +310,35 @@ impl TroveManager for Contract {
         return trove.status;
     }
     #[storage(read, write)]
-    fn batch_liquidate_troves(borrowers: Vec<Identity>) {
-        internal_batch_liquidate_troves(borrowers);
+    fn batch_liquidate_troves(
+        borrowers: Vec<Identity>,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    ) {
+        internal_batch_liquidate_troves(borrowers, upper_partial_hint, lower_partial_hint);
     }
 
     #[storage(read, write)]
-    fn liquidate(id: Identity) {
+    fn liquidate(
+        id: Identity,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    ) {
         require_trove_is_active(id);
 
         let mut borrowers: Vec<Identity> = Vec::new();
         borrowers.push(id);
 
-        internal_batch_liquidate_troves(borrowers);
+        internal_batch_liquidate_troves(borrowers, upper_partial_hint, lower_partial_hint);
     }
     #[storage(read, write)]
-    fn liquidate_troves(num_troves: u64) {}
+    fn liquidate_troves(
+        num_troves: u64,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    ) {}
 
+        // TODO
     #[storage(read, write)]
     fn update_trove_reward_snapshots(id: Identity) {
         require_caller_is_borrow_operations_contract();
@@ -365,7 +378,7 @@ fn internal_apply_pending_rewards(borrower: Identity) {
         storage.troves.insert(borrower, trove);
 
         internal_update_trove_reward_snapshots(borrower);
-        internal_pending_trove_rewards_to_active_pool(pending_asset, pending_usdf);
+        internal_move_pending_trove_rewards_to_active_pool(pending_asset, pending_usdf);
     }
 }
 
@@ -419,7 +432,11 @@ fn require_trove_is_active(id: Identity) {
 }
 
 #[storage(read, write)]
-fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
+fn internal_batch_liquidate_troves(
+    borrowers: Vec<Identity>,
+    upper_partial_hint: Identity,
+    lower_partial_hint: Identity,
+) {
     require(borrowers.len() > 0, "No borrowers to liquidate");
 
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
@@ -429,7 +446,7 @@ fn internal_batch_liquidate_troves(borrowers: Vec<Identity>) {
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
     let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
 
-    let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers);
+    let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers, upper_partial_hint, lower_partial_hint);
 
     require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
@@ -506,6 +523,8 @@ fn internal_get_totals_from_batch_liquidate(
     price: u64,
     usdf_in_stability_pool: u64,
     borrowers: Vec<Identity>,
+    upper_partial_hint: Identity,
+    lower_partial_hint: Identity,
 ) -> LiquidationTotals {
     let mut vars = LocalVariablesLiquidationSequence::default();
     vars.remaining_usdf_in_stability_pool = usdf_in_stability_pool;
@@ -520,16 +539,18 @@ fn internal_get_totals_from_batch_liquidate(
         if vars.icr < MCR {
             let position = internal_get_entire_debt_and_coll(vars.borrower);
 
-            internal_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
+            internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
 
             single_liquidation = get_offset_and_redistribution_vals(position.entire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
 
-            internal_apply_liquidation(vars.borrower, single_liquidation);
+            internal_apply_liquidation(vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
         } else {
             break;
         }
+
+        i += 1;
     }
     return totals;
 }
@@ -581,7 +602,12 @@ fn internal_get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndCo
 }
 
 #[storage(read, write)]
-fn internal_apply_liquidation(borrower: Identity, liquidation_values: LiquidationValues) {
+fn internal_apply_liquidation(
+    borrower: Identity,
+    liquidation_values: LiquidationValues,
+    upper_partial_hint: Identity,
+    lower_partial_hint: Identity,
+) {
     if (liquidation_values.is_partial_liquidation) {
         let mut trove = storage.troves.get(borrower);
         trove.coll = liquidation_values.remaining_trove_coll;
@@ -592,7 +618,7 @@ fn internal_apply_liquidation(borrower: Identity, liquidation_values: Liquidatio
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.re_insert(borrower, new_ncr, null_identity_address(), null_identity_address());
+        sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint);
     } else {
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         internal_remove_stake(borrower);
@@ -695,7 +721,7 @@ fn internal_has_pending_rewards(address: Identity) -> bool {
 }
 
 #[storage(read)]
-fn internal_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
+fn internal_move_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
     if (coll == 0 && debt == 0) {
         return;
     }

@@ -249,7 +249,9 @@ fn require_is_trove_manager() {
 #[storage(read)]
 fn require_is_bo_or_tm() {
     let sender = msg_sender().unwrap();
-    require(Identity::ContractId(storage.borrower_operations_contract_id) == sender || Identity::ContractId(storage.trove_manager_contract_id) == sender, "Access denied");
+    let borrow_operations = Identity::ContractId(storage.borrower_operations_contract_id);
+    let trove_manager = Identity::ContractId(storage.trove_manager_contract_id);
+    require(borrow_operations == sender || trove_manager == sender, "Access denied");
 }
 
 #[storage(read)]

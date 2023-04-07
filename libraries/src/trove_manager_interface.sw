@@ -20,13 +20,13 @@ abi TroveManager {
     fn get_current_icr(id: Identity, price: u64) -> u64;
 
     #[storage(read, write)]
-    fn liquidate(id: Identity);
+    fn liquidate(id: Identity, upper_partial_hint: Identity, lower_partial_hint: Identity);
 
     #[storage(read, write)]
-    fn liquidate_troves(num_troves: u64);
+    fn liquidate_troves(num_troves: u64, upper_partial_hint: Identity, lower_partial_hint: Identity);
 
     #[storage(read, write)]
-    fn batch_liquidate_troves(ids: Vec<Identity>);
+    fn batch_liquidate_troves(ids: Vec<Identity>, upper_partial_hint: Identity, lower_partial_hint: Identity);
 
     #[storage(read, write)]
     fn update_stake_and_total_stakes(id: Identity) -> u64;
