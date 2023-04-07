@@ -232,6 +232,8 @@ async fn proper_one_sp_depositor_position() {
         &contracts.asset_contracts[0].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
@@ -443,6 +445,8 @@ async fn proper_many_depositors_distribution() {
         &contracts.asset_contracts[0].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
@@ -580,6 +584,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.asset_contracts[0].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
@@ -703,6 +709,8 @@ async fn proper_depositor_move_gain_to_trove() {
         &contracts.asset_contracts[0].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
@@ -876,6 +884,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.asset_contracts[0].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
@@ -890,6 +900,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.asset_contracts[1].coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();

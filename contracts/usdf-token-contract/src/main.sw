@@ -111,7 +111,7 @@ fn require_caller_is_borrower_operations() {
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let sender = msg_sender().unwrap();
     let protocol_manager_id = Identity::ContractId(storage.protocol_manager);
-
+    
     let mut i = 0;
     while i < storage.trove_managers.len() {
         let manager = Identity::ContractId(storage.trove_managers.get(i).unwrap());

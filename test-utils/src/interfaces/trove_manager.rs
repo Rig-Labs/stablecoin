@@ -37,6 +37,39 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
+    pub async fn batch_liquidate_troves(
+        trove_manager: &TroveManagerContract,
+        stability_pool: &StabilityPool,
+        oracle: &Oracle,
+        sorted_troves: &SortedTroves,
+        active_pool: &ActivePool,
+        default_pool: &DefaultPool,
+        coll_surplus_pool: &CollSurplusPool,
+        usdf: &USDFToken,
+        ids: Vec<Identity>,
+        upper_hint: Identity,
+        lower_hint: Identity,
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        trove_manager
+            .methods()
+            .batch_liquidate_troves(ids, upper_hint, lower_hint)
+            .tx_params(tx_params)
+            .set_contracts(&[
+                stability_pool,
+                oracle,
+                sorted_troves,
+                active_pool,
+                default_pool,
+                coll_surplus_pool,
+                usdf,
+            ])
+            .append_variable_outputs(3)
+            .call()
+            .await
+    }
+
     pub async fn liquidate(
         trove_manager: &TroveManagerContract,
         stability_pool: &StabilityPool,
@@ -47,12 +80,14 @@ pub mod trove_manager_abi {
         coll_surplus_pool: &CollSurplusPool,
         usdf: &USDFToken,
         id: Identity,
+        upper_hint: Identity,
+        lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         trove_manager
             .methods()
-            .liquidate(id)
+            .liquidate(id, upper_hint, lower_hint)
             .tx_params(tx_params)
             .set_contracts(&[
                 stability_pool,
