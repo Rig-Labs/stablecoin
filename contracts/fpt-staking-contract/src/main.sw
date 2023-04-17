@@ -9,7 +9,7 @@ use std::{storage::{StorageMap}};
 storage {
     stakes: StorageMap<Identity, u64> = StorageMap {},
     snapshots: StorageMap<Identity, Snapshot> = StorageMap {},
-    f_fuel: u64 = 0,
+    f_asset: StorageMap<ContractId, u64> = StorageMap {},
     f_usdf: u64 = 0,
     total_fpt_staked: u64 = 0,
 }
@@ -48,8 +48,8 @@ impl FPTStaking for Contract {
 // doesn't really look like in Sway we need to have a public wrapper of a private function for these 
 #[storage(read)]
 fn get_pending_fuel_gain(id: Identity) -> u64 {
-    let f_fuel_snapshot = storage.snapshots.get(id).f_fuel_snapshot;
-    let fuel_gain = (storage.stakes.get(id) * (storage.f_fuel - f_fuel_snapshot)) / DECIMAL_PRECISION;
+    let f_asset_snapshot = storage.snapshots.get(id).f_asset_snapshot;
+    let fuel_gain = (storage.stakes.get(id) * (storage.f_asset - f_asset_snapshot)) / DECIMAL_PRECISION;
     fuel_gain
 }
 
@@ -65,7 +65,7 @@ fn get_pending_usdf_gain(id: Identity) -> u64 {
 fn update_user_snapshots(id: Identity) {
     let mut user_snapshot = storage.snapshots.get(id);
     user_snapshot.f_usdf_snapshot = storage.f_usdf;
-    user_snapshot.f_fuel_snapshot = storage.f_fuel;
+    user_snapshot.f_asset_snapshot = storage.f_asset;
     storage.snapshots.insert(id, user_snapshot);
 }
 
