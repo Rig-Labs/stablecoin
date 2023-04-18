@@ -9,13 +9,13 @@ abigen!(Contract(
 
 pub mod oracle_abi {
 
-    use fuels::prelude::{LogDecoder, TxParameters};
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
 
     use super::*;
 
-    pub async fn set_price(oracle: &Oracle, price: u64) -> FuelCallResponse<()> {
+    pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         let res = oracle
@@ -35,7 +35,7 @@ pub mod oracle_abi {
         }
     }
 
-    pub async fn get_price(oracle: &Oracle) -> FuelCallResponse<u64> {
+    pub async fn get_price<T: Account>(oracle: Oracle<T>) -> FuelCallResponse<u64> {
         oracle.methods().get_price().call().await.unwrap()
     }
 }

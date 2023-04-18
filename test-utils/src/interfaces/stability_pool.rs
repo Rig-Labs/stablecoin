@@ -18,7 +18,7 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use fuels::{
-        prelude::{AssetId, CallParameters, Error, LogDecoder},
+        prelude::{Account, AssetId, CallParameters, Error, LogDecoder},
         types::Identity,
     };
 
@@ -26,8 +26,8 @@ pub mod stability_pool_abi {
 
     use super::*;
 
-    pub async fn initialize(
-        stability_pool: &StabilityPool,
+    pub async fn initialize<T: Account>(
+        stability_pool: &StabilityPool<T>,
         borrow_operations_address: ContractId,
         usdf_address: ContractId,
         community_issuance_address: ContractId,
@@ -57,8 +57,8 @@ pub mod stability_pool_abi {
         }
     }
 
-    pub async fn add_asset(
-        stability_pool: &StabilityPool,
+    pub async fn add_asset<T: Account>(
+        stability_pool: &StabilityPool<T>,
         trove_manager: ContractId,
         active_pool: ContractId,
         sorted_troves: ContractId,
@@ -81,10 +81,10 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn provide_to_stability_pool(
-        stability_pool: &StabilityPool,
-        usdf_token: &USDFToken,
-        fuel_token: &Token,
+    pub async fn provide_to_stability_pool<T: Account>(
+        stability_pool: &StabilityPool<T>,
+        usdf_token: &USDFToken<T>,
+        fuel_token: &Token<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default()
@@ -109,8 +109,8 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_asset(
-        stability_pool: &StabilityPool,
+    pub async fn get_asset<T: Account>(
+        stability_pool: &StabilityPool<T>,
         asset_address: ContractId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
@@ -120,8 +120,8 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_total_usdf_deposits(
-        stability_pool: &StabilityPool,
+    pub async fn get_total_usdf_deposits<T: Account>(
+        stability_pool: &StabilityPool<T>,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
@@ -130,8 +130,8 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_depositor_asset_gain(
-        stability_pool: &StabilityPool,
+    pub async fn get_depositor_asset_gain<T: Account>(
+        stability_pool: &StabilityPool<T>,
         depositor: Identity,
         asset_address: ContractId,
     ) -> Result<FuelCallResponse<u64>, Error> {
@@ -142,8 +142,8 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_compounded_usdf_deposit(
-        stability_pool: &StabilityPool,
+    pub async fn get_compounded_usdf_deposit<T: Account>(
+        stability_pool: &StabilityPool<T>,
         depositor: Identity,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
@@ -153,10 +153,10 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn withdraw_from_stability_pool(
-        stability_pool: &StabilityPool,
-        usdf_token: &USDFToken,
-        fuel_token: &Token,
+    pub async fn withdraw_from_stability_pool<T: Account>(
+        stability_pool: &StabilityPool<T>,
+        usdf_token: &USDFToken<T>,
+        fuel_token: &Token<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
@@ -171,15 +171,15 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn withdraw_gain_to_trove(
-        stability_pool: &StabilityPool,
-        usdf_token: &USDFToken,
-        fuel_token: &Token,
-        trove_manager: &TroveManagerContract,
-        borrow_operations: &BorrowOperations,
-        sorted_troves: &SortedTroves,
-        active_pool: &ActivePool,
-        oracle: &Oracle,
+    pub async fn withdraw_gain_to_trove<T: Account>(
+        stability_pool: &StabilityPool<T>,
+        usdf_token: &USDFToken<T>,
+        fuel_token: &Token<T>,
+        trove_manager: &TroveManagerContract<T>,
+        borrow_operations: &BorrowOperations<T>,
+        sorted_troves: &SortedTroves<T>,
+        active_pool: &ActivePool<T>,
+        oracle: &Oracle<T>,
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
@@ -205,14 +205,14 @@ pub mod stability_pool_abi {
 }
 
 pub mod stability_pool_utils {
-    use fuels::types::Identity;
+    use fuels::{prelude::Account, types::Identity};
 
     use crate::setup::common::assert_within_threshold;
 
     use super::*;
 
-    pub async fn assert_pool_asset(
-        stability_pool: &StabilityPool,
+    pub async fn assert_pool_asset<T: Account>(
+        stability_pool: &StabilityPool<T>,
         expected_asset_amount: u64,
         asset_address: ContractId,
     ) {
@@ -224,8 +224,8 @@ pub mod stability_pool_utils {
         assert_eq!(pool_asset, expected_asset_amount);
     }
 
-    pub async fn assert_total_usdf_deposits(
-        stability_pool: &StabilityPool,
+    pub async fn assert_total_usdf_deposits<T: Account>(
+        stability_pool: &StabilityPool<T>,
         expected_usdf_amount: u64,
     ) {
         let total_usdf_deposits =
@@ -237,8 +237,8 @@ pub mod stability_pool_utils {
         assert_eq!(total_usdf_deposits, expected_usdf_amount);
     }
 
-    pub async fn assert_depositor_asset_gain(
-        stability_pool: &StabilityPool,
+    pub async fn assert_depositor_asset_gain<T: Account>(
+        stability_pool: &StabilityPool<T>,
         depositor: Identity,
         expected_asset_gain: u64,
         asset_address: ContractId,
@@ -262,8 +262,8 @@ pub mod stability_pool_utils {
         );
     }
 
-    pub async fn assert_compounded_usdf_deposit(
-        stability_pool: &StabilityPool,
+    pub async fn assert_compounded_usdf_deposit<T: Account>(
+        stability_pool: &StabilityPool<T>,
         depositor: Identity,
         expected_compounded_usdf_deposit: u64,
     ) {

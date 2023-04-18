@@ -7,22 +7,24 @@ abigen!(Contract(
 
 pub mod usdf_token_abi {
     use fuels::{
-        prelude::{AssetId, CallParameters, Error, LogDecoder, TxParameters},
+        prelude::{Account, AssetId, CallParameters, Error, LogDecoder, TxParameters},
         types::ContractId,
     };
 
     use crate::setup::common::wait;
 
     use super::*;
-    pub async fn initialize(
-        instance: &USDFToken,
+    pub async fn initialize<T: Account>(
+        instance: &USDFToken<T>,
         mut name: String,
         mut symbol: String,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default()
+            .set_gas_price(1)
+            .set_gas_limit(2_000_000_000);
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
@@ -54,8 +56,8 @@ pub mod usdf_token_abi {
         }
     }
 
-    pub async fn mint(
-        instance: &USDFToken,
+    pub async fn mint<T: Account>(
+        instance: &USDFToken<T>,
         amount: u64,
         address: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
@@ -67,7 +69,10 @@ pub mod usdf_token_abi {
             .await
     }
 
-    pub async fn burn(usdf_token: &USDFToken, amount: u64) -> Result<FuelCallResponse<()>, Error> {
+    pub async fn burn<T: Account>(
+        usdf_token: &USDFToken<T>,
+        amount: u64,
+    ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
@@ -86,7 +91,7 @@ pub mod usdf_token_abi {
             .await
     }
 
-    pub async fn total_supply(instance: &USDFToken) -> FuelCallResponse<u64> {
+    pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> FuelCallResponse<u64> {
         instance.methods().total_supply().call().await.unwrap()
     }
 }

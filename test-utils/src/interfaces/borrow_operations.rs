@@ -10,7 +10,7 @@ abigen!(Contract(
 ));
 
 pub mod borrow_operations_abi {
-    use fuels::prelude::{AssetId, CallParameters, Error};
+    use fuels::prelude::{Account, AssetId, CallParameters, Error};
 
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
@@ -20,8 +20,8 @@ pub mod borrow_operations_abi {
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
 
-    pub async fn initialize(
-        borrow_operations: &BorrowOperations,
+    pub async fn initialize<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         stability_pool_contract: ContractId,
@@ -43,14 +43,14 @@ pub mod borrow_operations_abi {
             .unwrap()
     }
 
-    pub async fn open_trove(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        usdf_token: &USDFToken,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn open_trove<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        usdf_token: &USDFToken<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         fuel_amount_deposit: u64,
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
@@ -89,14 +89,14 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn add_coll(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        usdf_token: &USDFToken,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn add_coll<T: Account>(
+        borrow_operations: BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        usdf_token: &USDFToken<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -128,13 +128,13 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn withdraw_coll(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn withdraw_coll<T: Account>(
+        borrow_operations: BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -162,14 +162,14 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn withdraw_usdf(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        usdf_token: &USDFToken,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn withdraw_usdf<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        usdf_token: &USDFToken<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -199,14 +199,14 @@ pub mod borrow_operations_abi {
             .unwrap()
     }
 
-    pub async fn repay_usdf(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        usdf_token: &USDFToken,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn repay_usdf<T: Account>(
+        borrow_operations: BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        usdf_token: &USDFToken<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -237,14 +237,14 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn close_trove(
-        borrow_operations: &BorrowOperations,
-        oracle: &Oracle,
-        fuel_token: &Token,
-        usdf_token: &USDFToken,
-        sorted_troves: &SortedTroves,
-        trove_manager: &TroveManagerContract,
-        active_pool: &ActivePool,
+    pub async fn close_trove<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        oracle: &Oracle<T>,
+        fuel_token: &Token<T>,
+        usdf_token: &USDFToken<T>,
+        sorted_troves: &SortedTroves<T>,
+        trove_manager: &TroveManagerContract<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
@@ -274,8 +274,8 @@ pub mod borrow_operations_abi {
             .unwrap()
     }
 
-    pub async fn add_asset(
-        borrow_operations: &BorrowOperations,
+    pub async fn add_asset<T: Account>(
+        borrow_operations: BorrowOperations<T>,
         oracle: ContractId,
         sorted_troves: ContractId,
         trove_manager: ContractId,
@@ -302,17 +302,17 @@ pub mod borrow_operations_abi {
 }
 
 pub mod borrow_operations_utils {
-    use fuels::signers::WalletUnlocked;
+    use fuels::prelude::{Account, WalletUnlocked};
 
     use super::*;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
 
-    pub async fn mint_token_and_open_trove(
+    pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,
-        asset_contracts: &AssetContracts,
-        borrow_operations: &BorrowOperations,
-        usdf: &USDFToken,
+        asset_contracts: &AssetContracts<WalletUnlocked>,
+        borrow_operations: BorrowOperations<T>,
+        usdf: USDFToken<WalletUnlocked>,
         amount: u64,
         usdf_amount: u64,
     ) {

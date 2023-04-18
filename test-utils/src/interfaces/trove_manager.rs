@@ -19,14 +19,14 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::{Error, LogDecoder};
+    use fuels::prelude::{Account, Error, LogDecoder};
 
     use crate::setup::common::wait;
 
     use super::*;
 
-    pub async fn get_nominal_icr(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_nominal_icr<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -37,15 +37,15 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn batch_liquidate_troves(
-        trove_manager: &TroveManagerContract,
-        stability_pool: &StabilityPool,
-        oracle: &Oracle,
-        sorted_troves: &SortedTroves,
-        active_pool: &ActivePool,
-        default_pool: &DefaultPool,
-        coll_surplus_pool: &CollSurplusPool,
-        usdf: &USDFToken,
+    pub async fn batch_liquidate_troves<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+        stability_pool: &StabilityPool<T>,
+        oracle: &Oracle<T>,
+        sorted_troves: &SortedTroves<T>,
+        active_pool: &ActivePool<T>,
+        default_pool: &DefaultPool<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
+        usdf: &USDFToken<T>,
         ids: Vec<Identity>,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -70,15 +70,15 @@ pub mod trove_manager_abi {
             .await
     }
 
-    pub async fn liquidate(
-        trove_manager: &TroveManagerContract,
-        stability_pool: &StabilityPool,
-        oracle: &Oracle,
-        sorted_troves: &SortedTroves,
-        active_pool: &ActivePool,
-        default_pool: &DefaultPool,
-        coll_surplus_pool: &CollSurplusPool,
-        usdf: &USDFToken,
+    pub async fn liquidate<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+        stability_pool: &StabilityPool<T>,
+        oracle: &Oracle<T>,
+        sorted_troves: &SortedTroves<T>,
+        active_pool: &ActivePool<T>,
+        default_pool: &DefaultPool<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
+        usdf: &USDFToken<T>,
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -103,8 +103,8 @@ pub mod trove_manager_abi {
             .await
     }
 
-    pub async fn increase_trove_coll(
-        trove_manager: &TroveManagerContract,
+    pub async fn increase_trove_coll<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
@@ -119,8 +119,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn increase_trove_debt(
-        trove_manager: &TroveManagerContract,
+    pub async fn increase_trove_debt<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
@@ -135,8 +135,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn set_trove_status(
-        trove_manager: &TroveManagerContract,
+    pub async fn set_trove_status<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         status: Status,
     ) -> FuelCallResponse<()> {
@@ -151,8 +151,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn initialize(
-        trove_manager: &TroveManagerContract,
+    pub async fn initialize<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         borrow_operations: ContractId,
         sorted_troves_id: ContractId,
         oracle_id: ContractId,
@@ -194,8 +194,8 @@ pub mod trove_manager_abi {
         }
     }
 
-    pub async fn get_trove_coll(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_trove_coll<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -206,8 +206,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_trove_debt(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_trove_debt<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -218,15 +218,15 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_trove_status(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_trove_status<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> Result<FuelCallResponse<Status>, Error> {
         trove_manager.methods().get_trove_status(id).call().await
     }
 
-    pub async fn get_pending_asset_reward(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_pending_asset_reward<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -237,8 +237,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdf_reward(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_pending_usdf_reward<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -250,20 +250,20 @@ pub mod trove_manager_abi {
     }
 
     // pub async fn redeem_collateral(
-    //     trove_manager: &TroveManagerContract,
+    //     trove_manager: &TroveManagerContract<T>,
     //     amount: u64,
     //     max_iterations: u64,
     //     max_fee_percentage: u64,
     //     partial_redemption_hint: u64,
     //     upper_partial_hint: Option<Identity>,
     //     lower_partial_hint: Option<Identity>,
-    //     usdf: &USDFToken,
+    //     usdf: &USDFToken<T>,
     //     fuel: &Token,
-    //     sorted_troves: &SortedTroves,
-    //     active_pool: &ActivePool,
-    //     coll_surplus_pool: &CollSurplusPool,
-    //     oracle: &Oracle,
-    //     default_pool: &DefaultPool,
+    //     sorted_troves: &SortedTroves<T>,
+    //     active_pool: &ActivePool<T>,
+    //     coll_surplus_pool: &CollSurplusPool<T>,
+    //     oracle: &Oracle<T>,
+    //     default_pool: &DefaultPool<T>,
     // ) -> FuelCallResponse<()> {
     //     let tx_params = TxParameters::default()
     //         .set_gas_price(1)
@@ -301,7 +301,9 @@ pub mod trove_manager_abi {
     //         .unwrap()
     // }
 
-    pub async fn get_borrowing_rate(trove_manager: &TroveManagerContract) -> FuelCallResponse<u64> {
+    pub async fn get_borrowing_rate<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+    ) -> FuelCallResponse<u64> {
         trove_manager
             .methods()
             .get_borrowing_rate()
@@ -310,8 +312,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_borrowing_rate_with_decay(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_borrowing_rate_with_decay<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
     ) -> FuelCallResponse<u64> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -324,8 +326,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_borrowing_fee(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_borrowing_fee<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         usdf_borrowed: u64,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -336,8 +338,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_borrowing_fee_with_decay(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_borrowing_fee_with_decay<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         usdf_borrowed: u64,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -348,8 +350,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_redemption_rate(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_redemption_rate<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
     ) -> FuelCallResponse<u64> {
         trove_manager
             .methods()
@@ -359,8 +361,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_redemption_rate_with_decay(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_redemption_rate_with_decay<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
     ) -> FuelCallResponse<u64> {
         trove_manager
             .methods()
@@ -370,8 +372,8 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_redemption_fee_with_decay(
-        trove_manager: &TroveManagerContract,
+    pub async fn get_redemption_fee_with_decay<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         asset_drawn: u64,
     ) -> FuelCallResponse<u64> {
         trove_manager
@@ -384,15 +386,17 @@ pub mod trove_manager_abi {
 }
 
 pub mod trove_manager_utils {
+    use fuels::prelude::Account;
+
     use crate::{
         interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
     };
 
     use super::*;
 
-    pub async fn set_coll_and_debt_insert(
-        trove_manager: &TroveManagerContract,
-        sorted_troves: &SortedTroves,
+    pub async fn set_coll_and_debt_insert<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+        sorted_troves: &SortedTroves<T>,
         id: Identity,
         coll: u64,
         debt: u64,
@@ -405,8 +409,8 @@ pub mod trove_manager_utils {
         sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id).await;
     }
 
-    pub async fn assert_trove_coll(
-        trove_manager: &TroveManagerContract,
+    pub async fn assert_trove_coll<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         expected_coll: u64,
     ) {
@@ -417,8 +421,8 @@ pub mod trove_manager_utils {
         assert_eq!(real_coll, expected_coll);
     }
 
-    pub async fn assert_trove_debt(
-        trove_manager: &TroveManagerContract,
+    pub async fn assert_trove_debt<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         expected_debt: u64,
     ) {
@@ -429,8 +433,8 @@ pub mod trove_manager_utils {
         assert_eq!(real_debt, expected_debt, "Incorrect trove debt");
     }
 
-    pub async fn assert_trove_status(
-        trove_manager: &TroveManagerContract,
+    pub async fn assert_trove_status<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         expected_status: Status,
     ) {
@@ -442,8 +446,8 @@ pub mod trove_manager_utils {
         assert_eq!(real_status, expected_status, "Incorrect trove status");
     }
 
-    pub async fn assert_pending_asset_rewards(
-        trove_manager: &TroveManagerContract,
+    pub async fn assert_pending_asset_rewards<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         expected_rewards: u64,
     ) {
@@ -461,8 +465,8 @@ pub mod trove_manager_utils {
         );
     }
 
-    pub async fn assert_pending_usdf_rewards(
-        trove_manager: &TroveManagerContract,
+    pub async fn assert_pending_usdf_rewards<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
         id: Identity,
         expected_rewards: u64,
     ) {

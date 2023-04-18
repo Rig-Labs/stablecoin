@@ -16,7 +16,7 @@ dependencies = [
 name = "active-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -402,7 +402,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 name = "borrow-operations-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -602,7 +602,7 @@ dependencies = [
 name = "coll-surplus-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -950,7 +950,7 @@ dependencies = [
 name = "default-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -1235,7 +1235,7 @@ dependencies = [
 name = "fpt-staking-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -1603,12 +1603,57 @@ dependencies = [
  "fuel-core",
  "fuel-core-client",
  "fuel-tx",
- "fuels-core",
- "fuels-macros",
- "fuels-programs",
+ "fuels-core 0.38.1",
+ "fuels-macros 0.38.1",
+ "fuels-programs 0.38.1",
  "fuels-signers",
- "fuels-test-helpers",
- "fuels-types",
+ "fuels-test-helpers 0.38.1",
+ "fuels-types 0.38.1",
+]
+
+[[package]]
+name = "fuels"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c50be8902e21d9f6d4f711cfe6409b0bf8f7d7b480fd419f0587fdafe9c7afc"
+dependencies = [
+ "fuel-core",
+ "fuel-core-client",
+ "fuel-tx",
+ "fuels-accounts",
+ "fuels-core 0.41.0",
+ "fuels-macros 0.41.0",
+ "fuels-programs 0.41.0",
+ "fuels-test-helpers 0.41.0",
+ "fuels-types 0.41.0",
+]
+
+[[package]]
+name = "fuels-accounts"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3013bd63e8f1d7e76cd755eada352961e34aa13e8fc593a74949fa050b4db26"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "chrono",
+ "elliptic-curve 0.11.12",
+ "eth-keystore",
+ "fuel-core-client",
+ "fuel-crypto",
+ "fuel-tx",
+ "fuel-types",
+ "fuel-vm",
+ "fuels-core 0.41.0",
+ "fuels-types 0.41.0",
+ "hex",
+ "itertools",
+ "rand",
+ "serde",
+ "sha2 0.9.9",
+ "tai64",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1616,6 +1661,23 @@ name = "fuels-code-gen"
 version = "0.38.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96d03eee7fa041bb4da8cdecc84b81f1ab8e5810d67bcec0c090bdd58f07e955"
+dependencies = [
+ "Inflector",
+ "fuel-abi-types",
+ "itertools",
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
+name = "fuels-code-gen"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04d7fd915aff47f7115028045faea2ec2d6f36ce888436bcb1fe978d4307b033"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
@@ -1637,7 +1699,22 @@ dependencies = [
  "fuel-tx",
  "fuel-types",
  "fuel-vm",
- "fuels-types",
+ "fuels-types 0.38.1",
+ "hex",
+ "itertools",
+ "sha2 0.9.9",
+]
+
+[[package]]
+name = "fuels-core"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72c6733285c70df69f164489e333f2f885f7204119b57722590a0b129b32392a"
+dependencies = [
+ "fuel-tx",
+ "fuel-types",
+ "fuel-vm",
+ "fuels-types 0.41.0",
  "hex",
  "itertools",
  "sha2 0.9.9",
@@ -1651,7 +1728,26 @@ checksum = "6107ffb7dda1051d1db5d1bc209a66d3c2911a8fc844cf3662ca4b705556b57a"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
- "fuels-code-gen",
+ "fuels-code-gen 0.38.1",
+ "itertools",
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "rand",
+ "regex",
+ "serde_json",
+ "syn",
+]
+
+[[package]]
+name = "fuels-macros"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bee12007d881133ca2515bcf37f6b2fc22f71a5a6e5095f5146c847b51681a2d"
+dependencies = [
+ "Inflector",
+ "fuel-abi-types",
+ "fuels-code-gen 0.41.0",
  "itertools",
  "lazy_static",
  "proc-macro2",
@@ -1673,9 +1769,39 @@ dependencies = [
  "fuel-tx",
  "fuel-types",
  "fuel-vm",
- "fuels-core",
+ "fuels-core 0.38.1",
  "fuels-signers",
- "fuels-types",
+ "fuels-types 0.38.1",
+ "futures",
+ "hex",
+ "itertools",
+ "proc-macro2",
+ "rand",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2 0.9.9",
+ "strum 0.21.0",
+ "strum_macros 0.21.1",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fuels-programs"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c095b969b3cef1aa554e773ede87cef722b028578961e19f768f88c794d050b"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "fuel-abi-types",
+ "fuel-tx",
+ "fuel-types",
+ "fuel-vm",
+ "fuels-accounts",
+ "fuels-core 0.41.0",
+ "fuels-types 0.41.0",
  "futures",
  "hex",
  "itertools",
@@ -1707,8 +1833,8 @@ dependencies = [
  "fuel-tx",
  "fuel-types",
  "fuel-vm",
- "fuels-core",
- "fuels-types",
+ "fuels-core 0.38.1",
+ "fuels-types 0.38.1",
  "hex",
  "itertools",
  "rand",
@@ -1733,7 +1859,34 @@ dependencies = [
  "fuel-types",
  "fuel-vm",
  "fuels-signers",
- "fuels-types",
+ "fuels-types 0.38.1",
+ "futures",
+ "hex",
+ "portpicker",
+ "rand",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "tempfile",
+ "tokio",
+ "which",
+]
+
+[[package]]
+name = "fuels-test-helpers"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2955a03fd9be90982e3e42c3485517766bc1b8426cf88d4eb96ecb545b549ff"
+dependencies = [
+ "fuel-core",
+ "fuel-core-chain-config",
+ "fuel-core-client",
+ "fuel-core-types",
+ "fuel-tx",
+ "fuel-types",
+ "fuel-vm",
+ "fuels-accounts",
+ "fuels-types 0.41.0",
  "futures",
  "hex",
  "portpicker",
@@ -1760,7 +1913,34 @@ dependencies = [
  "fuel-core-client",
  "fuel-tx",
  "fuel-types",
- "fuels-macros",
+ "fuels-macros 0.38.1",
+ "hex",
+ "itertools",
+ "lazy_static",
+ "proc-macro2",
+ "regex",
+ "serde",
+ "serde_json",
+ "strum 0.21.0",
+ "strum_macros 0.21.1",
+ "thiserror",
+]
+
+[[package]]
+name = "fuels-types"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbbe53d12644471c990b7460109d4f4400a1cdcfc70ce3108b323f44d70a03d1"
+dependencies = [
+ "bech32 0.9.1",
+ "chrono",
+ "fuel-abi-types",
+ "fuel-asm",
+ "fuel-core-chain-config",
+ "fuel-core-client",
+ "fuel-tx",
+ "fuel-types",
+ "fuels-macros 0.41.0",
  "hex",
  "itertools",
  "lazy_static",
@@ -2393,7 +2573,7 @@ dependencies = [
 name = "mock-oracle-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -2402,7 +2582,7 @@ dependencies = [
 name = "mock-trove-manager-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "tokio",
 ]
 
@@ -2410,7 +2590,7 @@ dependencies = [
 name = "mock-trove-manager-sp-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "tokio",
 ]
 
@@ -2772,7 +2952,7 @@ dependencies = [
 name = "protocol-manager-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -3339,7 +3519,7 @@ dependencies = [
 name = "sorted-troves-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -3373,7 +3553,7 @@ dependencies = [
 name = "stability-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -3510,7 +3690,7 @@ name = "test-utils"
 version = "0.0.0"
 dependencies = [
  "dotenv",
- "fuels",
+ "fuels 0.41.0",
  "futures",
  "pbr",
  "tokio",
@@ -3593,7 +3773,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "tokio",
 ]
 
@@ -3800,7 +3980,7 @@ dependencies = [
 name = "trove-manager-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -3904,7 +4084,7 @@ dependencies = [
 name = "usdf-token-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
@@ -3938,7 +4118,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vesting-contract"
 version = "0.1.0"
 dependencies = [
- "fuels",
+ "fuels 0.38.1",
  "test-utils",
  "tokio",
 ]
