@@ -16,7 +16,7 @@ dependencies = [
 name = "active-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]

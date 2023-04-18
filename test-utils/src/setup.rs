@@ -212,11 +212,14 @@ pub mod common {
         //         .set_salt(salt)
         //         .set_tx_parameters(tx_parms);
 
-        let id = Contract::load_from(TOKEN_CONTRACT_BINARY_PATH, LoadConfiguration::default())
-            .unwrap()
-            .deploy(&wallet.clone(), TxParameters::default())
-            .await
-            .unwrap();
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await
+        .unwrap();
 
         // let id = Contract::deploy(
         //     &resolve_relative_path(TOKEN_CONTRACT_BINARY_PATH).to_string(),
@@ -242,11 +245,11 @@ pub mod common {
         //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
-            SORTED_TROVES_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await
         .unwrap();
 
@@ -275,11 +278,11 @@ pub mod common {
         //     .set_salt(salt)
         //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
-            TROVE_MANAGER_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await
         .unwrap();
 
@@ -331,10 +334,13 @@ pub mod common {
         //         .set_salt(salt)
         //         .set_tx_parameters(tx_parms);
 
-        let id = Contract::load_from(ORACLE_CONTRACT_BINARY_PATH, LoadConfiguration::default())
-            .unwrap()
-            .deploy(&wallet.clone(), TxParameters::default())
-            .await;
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
 
         // let id = Contract::deploy(
         //     &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
@@ -348,12 +354,14 @@ pub mod common {
                 return Oracle::new(id, wallet.clone());
             }
             Err(_) => {
-                let id =
-                    Contract::load_from(ORACLE_CONTRACT_BINARY_PATH, LoadConfiguration::default())
-                        .unwrap()
-                        .deploy(&wallet.clone(), TxParameters::default())
-                        .await
-                        .unwrap();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
                 // let id = Contract::deploy(
                 //     &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
                 //     &wallet,
@@ -380,11 +388,14 @@ pub mod common {
         //     .set_salt(salt)
         //     .set_tx_parameters(tx_parms);
 
-        let id = Contract::load_from(ORACLE_CONTRACT_BINARY_PATH, LoadConfiguration::default())
-            .unwrap()
-            .deploy(&wallet.clone(), TxParameters::default())
-            .await
-            .unwrap();
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await
+        .unwrap();
         // let id = Contract::deploy(
         //     &resolve_relative_path(PROTCOL_MANAGER_CONTRACT_BINARY_PATH).to_string(),
         //     &wallet,
@@ -452,15 +463,29 @@ pub mod common {
 
     fn get_absolute_path_from_relative(relative_path: &str) -> String {
         let mut path = env::current_dir().unwrap();
-        // handle the case when the path is a relative path of more than one level '../'
-        for part in relative_path.split('/') {
-            if part == ".." {
-                path.pop();
-            } else {
-                path.push(part);
-            }
-        }
-        path.to_str().unwrap().to_string()
+        let fluid_protocol_index = path
+            .to_str()
+            .unwrap()
+            .find("fluid-protocol/")
+            .unwrap_or_else(|| path.to_str().unwrap().len());
+
+        path.push("fluid-protocol/");
+        // length of fluid procol
+        let len = "fluid-protocol/".len();
+
+        // for part in relative_path.split('/') {
+        //     if part == ".." {
+        //         path.pop();
+        //     } else {
+        //         path.push(part);
+        //     }
+        // }
+        let mut result =
+            path.to_str().unwrap().to_string()[..fluid_protocol_index + len].to_string();
+
+        result.push_str(relative_path);
+
+        result
     }
 
     pub async fn add_asset(
@@ -594,11 +619,11 @@ pub mod common {
         //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
-            ACTIVE_POOL_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await;
 
         // let id = Contract::deploy(
@@ -649,11 +674,11 @@ pub mod common {
         //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
-            STABILITY_POOL_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await;
 
         // let id = Contract::deploy(
@@ -702,11 +727,11 @@ pub mod common {
         //     .set_salt(salt)
         //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
-            DEFAULT_POOL_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await;
 
         // let id = Contract::deploy(
@@ -724,10 +749,10 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     DEFAULT_POOL_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), TxParameters::default())
+                .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
                 // .await;
@@ -758,11 +783,11 @@ pub mod common {
         //     .set_salt(salt)
         //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
-            COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await;
         // let id = Contract::deploy(
         //     &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
@@ -812,11 +837,11 @@ pub mod common {
         //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
-            USDF_TOKEN_CONTRACT_BINARY_PATH,
-            LoadConfiguration::default(),
+            &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default())
+        .deploy(&wallet.clone(), tx_parms)
         .await;
 
         // let id = Contract::deploy(
@@ -833,11 +858,11 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    USDF_TOKEN_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), TxParameters::default())
+                .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
                 // let try_id = Contract::deploy(

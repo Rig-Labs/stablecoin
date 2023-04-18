@@ -138,7 +138,6 @@ pub mod deployment {
         let mut pb = ProgressBar::new(4);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
-        println!("Borrow operations: {}", borrow_operations.contract_id());
         pb.inc();
 
         let usdf = deploy_usdf_token(&wallet).await;
@@ -170,7 +169,6 @@ pub mod deployment {
             Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
-        wait();
         pb.inc();
 
         let _ = borrow_operations_abi::initialize(
