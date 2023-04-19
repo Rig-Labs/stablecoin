@@ -265,10 +265,23 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
-        .await
-        .unwrap();
+        .await;
 
-        VestingContract::new(id, wallet.clone())
+        match id {
+            Ok(id) => return VestingContract::new(id, wallet.clone()),
+            Err(_) => {
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return VestingContract::new(id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_oracle(wallet: &WalletUnlocked) -> Oracle<WalletUnlocked> {
@@ -522,21 +535,13 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    ACTIVE_POOL_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), TxParameters::default())
+                .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(ACTIVE_POOL_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
 
                 return ActivePool::new(id, wallet.clone());
             }
@@ -563,20 +568,13 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    STABILITY_POOL_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), TxParameters::default())
+                .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(STABILITY_POOL_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
 
                 return StabilityPool::new(id, wallet.clone());
             }
@@ -638,11 +636,11 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), TxParameters::default())
+                .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
 
