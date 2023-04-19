@@ -14,14 +14,6 @@ abigen!(Contract(
 
 const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
     "contracts/sorted-troves-contract/tests/artifacts/out/debug/mock-trove-manager-contract.bin";
-const MOCK_TROVE_MANAGER_CONTRACT_STORAGE_PATH: &str =
-    "contracts/sorted-troves-contract/tests/artifacts/out/debug/mock-trove-manager-contract-storage_slots.json";
-
-pub fn get_relative_path(path: String) -> String {
-    let current_dir = std::env::current_dir().unwrap();
-    let path = current_dir.join(path);
-    return path.to_str().unwrap().to_string();
-}
 
 pub async fn deploy_mock_trove_manager_contract(
     wallet: &WalletUnlocked,

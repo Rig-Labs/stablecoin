@@ -18,7 +18,7 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, LogDecoder},
+        prelude::{Account, AssetId, CallParameters, Error, LogDecoder, WalletUnlocked},
         types::Identity,
     };
 
@@ -142,10 +142,11 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_compounded_usdf_deposit<T: Account>(
-        stability_pool: &StabilityPool<T>,
+    pub async fn get_compounded_usdf_deposit(
+        stability_pool: &StabilityPool<WalletUnlocked>,
         depositor: Identity,
     ) -> Result<FuelCallResponse<u64>, Error> {
+        println!("5");
         stability_pool
             .methods()
             .get_compounded_usdf_deposit(depositor)
@@ -205,7 +206,10 @@ pub mod stability_pool_abi {
 }
 
 pub mod stability_pool_utils {
-    use fuels::{prelude::Account, types::Identity};
+    use fuels::{
+        prelude::{Account, WalletUnlocked},
+        types::Identity,
+    };
 
     use crate::setup::common::assert_within_threshold;
 
@@ -262,13 +266,14 @@ pub mod stability_pool_utils {
         );
     }
 
-    pub async fn assert_compounded_usdf_deposit<T: Account>(
-        stability_pool: &StabilityPool<T>,
+    pub async fn assert_compounded_usdf_deposit(
+        stability_pool: &StabilityPool<WalletUnlocked>,
         depositor: Identity,
         expected_compounded_usdf_deposit: u64,
     ) {
+        println!("3");
         let compounded_usdf_deposit =
-            super::stability_pool_abi::get_compounded_usdf_deposit(stability_pool, depositor)
+            stability_pool_abi::get_compounded_usdf_deposit(stability_pool, depositor)
                 .await
                 .unwrap()
                 .value;

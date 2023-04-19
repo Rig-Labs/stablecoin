@@ -24,7 +24,7 @@ async fn proper_creating_trove() {
 
     let provider = admin.provider().unwrap();
 
-    let res = borrow_operations_abi::open_trove(
+    let _res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,

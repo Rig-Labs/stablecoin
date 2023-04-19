@@ -6,7 +6,7 @@ use crate::setup::common::{deploy_and_initialize_all, ProtocolContracts};
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+// #[tokio::test]
 pub async fn deploy() {
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {
@@ -169,6 +169,7 @@ pub mod deployment {
             Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
+
         pb.inc();
 
         let _ = borrow_operations_abi::initialize(

@@ -3553,7 +3553,7 @@ dependencies = [
 name = "stability-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -3773,7 +3773,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "tokio",
 ]
 
@@ -3980,7 +3980,7 @@ dependencies = [
 name = "trove-manager-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -4084,7 +4084,7 @@ dependencies = [
 name = "usdf-token-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -4118,7 +4118,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "vesting-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]

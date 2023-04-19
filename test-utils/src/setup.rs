@@ -6,11 +6,11 @@ use super::interfaces::{
     vesting::VestingContract,
 };
 
-use fuels::prelude::{Contract, StorageConfiguration, TxParameters, WalletUnlocked};
+use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
 
 pub mod common {
 
-    use std::{env, path::Path};
+    use std::env;
 
     use fuels::{
         accounts::fuel_crypto::rand::{self, Rng},
@@ -32,7 +32,6 @@ pub mod common {
             trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
         },
         paths::*,
-        utils::resolve_relative_path,
     };
 
     pub struct ProtocolContracts<T: Account> {
@@ -205,14 +204,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config =
-        //     DeployConfiguration::default()
-        //         .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //             resolve_relative_path(TOKEN_CONTRACT_STORAGE_PATH).to_string(),
-        //         ))
-        //         .set_salt(salt)
-        //         .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -222,14 +213,6 @@ pub mod common {
         .await
         .unwrap();
 
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(TOKEN_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms,
-        // )
-        // .await
-        // .unwrap();
-
         Token::new(id, wallet.clone())
     }
 
@@ -237,13 +220,6 @@ pub mod common {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
-
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(SORTED_TROVES_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
@@ -253,14 +229,6 @@ pub mod common {
         .deploy(&wallet.clone(), tx_parms)
         .await
         .unwrap();
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(SORTED_TROVES_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms,
-        // )
-        // .await
-        // .unwrap();
 
         SortedTroves::new(id, wallet.clone())
     }
@@ -272,12 +240,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(TROVE_MANAGER_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -290,34 +252,21 @@ pub mod common {
         TroveManagerContract::new(id, wallet.clone())
     }
 
-    pub async fn deploy_vesting_contract<T: Account>(
+    pub async fn deploy_vesting_contract(
         wallet: &WalletUnlocked,
     ) -> VestingContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config =
-        //     DeployConfiguration::default()
-        //         .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //             resolve_relative_path(VESTING_CONTRACT_STORAGE_PATH).to_string(),
-        //         ))
-        //         .set_salt(salt)
-        //         .set_tx_parameters(tx_parms);
-
-        let id = Contract::load_from(VESTING_CONTRACT_BINARY_PATH, LoadConfiguration::default())
-            .unwrap()
-            .deploy(&wallet.clone(), TxParameters::default())
-            .await
-            .unwrap();
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(VESTING_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms,
-        // )
-        // .await
-        // .unwrap();
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await
+        .unwrap();
 
         VestingContract::new(id, wallet.clone())
     }
@@ -327,14 +276,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config =
-        //     DeployConfiguration::default()
-        //         .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //             resolve_relative_path(ORACLE_CONTRACT_STORAGE_PATH).to_string(),
-        //         ))
-        //         .set_salt(salt)
-        //         .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -342,13 +283,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -363,13 +297,7 @@ pub mod common {
                 .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-                // let id = Contract::deploy(
-                //     &resolve_relative_path(ORACLE_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
+
                 return Oracle::new(id, wallet.clone());
             }
         }
@@ -382,13 +310,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(PROTCOL_MANAGER_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -397,13 +318,6 @@ pub mod common {
         .deploy(&wallet.clone(), tx_parms)
         .await
         .unwrap();
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(PROTCOL_MANAGER_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms,
-        // )
-        // .await
-        // .unwrap();
 
         ProtocolManager::new(id, wallet.clone())
     }
@@ -415,12 +329,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(BORROW_OPERATIONS_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
             &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -428,12 +336,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(BORROW_OPERATIONS_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -442,20 +344,13 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    BORROW_OPERATIONS_CONTRACT_BINARY_PATH,
-                    LoadConfiguration::default(),
+                    &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(BORROW_OPERATIONS_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
 
                 return BorrowOperations::new(id, wallet.clone());
             }
@@ -612,13 +507,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(ACTIVE_POOL_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -626,13 +514,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(ACTIVE_POOL_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -667,13 +548,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(STABILITY_POOL_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -681,13 +555,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(STABILITY_POOL_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -721,12 +588,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(DEFAULT_POOL_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
             &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -734,13 +595,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(DEFAULT_POOL_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -756,14 +610,6 @@ pub mod common {
                 .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-                // .await;
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(DEFAULT_POOL_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
 
                 return DefaultPool::new(id, wallet.clone());
             }
@@ -777,12 +623,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -790,12 +630,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -812,14 +646,6 @@ pub mod common {
                 .await
                 .unwrap();
 
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
-
                 return CollSurplusPool::new(id, wallet.clone());
             }
         }
@@ -830,13 +656,6 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
 
-        // let deploy_config = DeployConfiguration::default()
-        //     .set_storage_configuration(StorageConfiguration::default().set_storage_path(
-        //         resolve_relative_path(USDF_TOKEN_CONTRACT_STORAGE_PATH).to_string(),
-        //     ))
-        //     .set_salt(salt)
-        //     .set_tx_parameters(tx_parms);
-
         let id = Contract::load_from(
             &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
@@ -844,13 +663,6 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
         .await;
-
-        // let id = Contract::deploy(
-        //     &resolve_relative_path(USDF_TOKEN_CONTRACT_BINARY_PATH).to_string(),
-        //     &wallet,
-        //     tx_parms.clone(),
-        // )
-        // .await;
 
         match id {
             Ok(id) => {
@@ -866,13 +678,6 @@ pub mod common {
                 .deploy(&wallet.clone(), tx_parms)
                 .await
                 .unwrap();
-                // let try_id = Contract::deploy(
-                //     &resolve_relative_path(USDF_TOKEN_CONTRACT_BINARY_PATH).to_string(),
-                //     &wallet,
-                //     tx_parms,
-                // )
-                // .await
-                // .unwrap();
 
                 return USDFToken::new(id, wallet.clone());
             }

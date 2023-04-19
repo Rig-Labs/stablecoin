@@ -43,16 +43,16 @@ pub mod default_pool_abi {
         }
     }
 
-    pub async fn get_usdf_debt<T: Account>(default_pool: DefaultPool<T>) -> FuelCallResponse<u64> {
+    pub async fn get_usdf_debt<T: Account>(default_pool: &DefaultPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_usdf_debt().call().await.unwrap()
     }
 
-    pub async fn get_asset<T: Account>(default_pool: DefaultPool<T>) -> FuelCallResponse<u64> {
+    pub async fn get_asset<T: Account>(default_pool: &DefaultPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_asset().call().await.unwrap()
     }
 
     pub async fn increase_usdf_debt<T: Account>(
-        default_pool: DefaultPool<T>,
+        default_pool: &DefaultPool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
@@ -64,7 +64,7 @@ pub mod default_pool_abi {
     }
 
     pub async fn decrease_usdf_debt<T: Account>(
-        default_pool: DefaultPool<T>,
+        default_pool: &DefaultPool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
