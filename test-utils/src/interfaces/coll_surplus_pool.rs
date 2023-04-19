@@ -10,7 +10,7 @@ abigen!(Contract(
 pub mod coll_surplus_pool_abi {
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
     use fuels::{
-        prelude::{Account, ContractId, LogDecoder, TxParameters},
+        prelude::{Account, ContractId, LogDecoder, TxParameters, WalletUnlocked},
         types::Identity,
     };
 
@@ -47,7 +47,7 @@ pub mod coll_surplus_pool_abi {
         }
     }
 
-    pub async fn get_asset<T: Account>(default_pool: CollSurplusPool<T>) -> FuelCallResponse<u64> {
+    pub async fn get_asset<T: Account>(default_pool: &CollSurplusPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_asset().call().await.unwrap()
     }
 
@@ -66,8 +66,8 @@ pub mod coll_surplus_pool_abi {
             .unwrap()
     }
 
-    pub async fn get_collateral<T: Account>(
-        default_pool: CollSurplusPool<T>,
+    pub async fn get_collateral(
+        default_pool: &CollSurplusPool<WalletUnlocked>,
         acount: Identity,
     ) -> FuelCallResponse<u64> {
         default_pool

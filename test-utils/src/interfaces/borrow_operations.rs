@@ -90,7 +90,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn add_coll<T: Account>(
-        borrow_operations: BorrowOperations<T>,
+        borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
@@ -129,7 +129,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn withdraw_coll<T: Account>(
-        borrow_operations: BorrowOperations<T>,
+        borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
         fuel_token: &Token<T>,
         sorted_troves: &SortedTroves<T>,
@@ -200,7 +200,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn repay_usdf<T: Account>(
-        borrow_operations: BorrowOperations<T>,
+        borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
@@ -311,8 +311,8 @@ pub mod borrow_operations_utils {
     pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,
         asset_contracts: &AssetContracts<WalletUnlocked>,
-        borrow_operations: BorrowOperations<T>,
-        usdf: USDFToken<WalletUnlocked>,
+        borrow_operations: &BorrowOperations<T>,
+        usdf: &USDFToken<WalletUnlocked>,
         amount: u64,
         usdf_amount: u64,
     ) {

@@ -87,8 +87,8 @@ pub mod common {
         is_testnet: bool,
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
-        println!("Deploying contracts...");
-        let mut pb = ProgressBar::new(10);
+        println!("Deploying parent contracts...");
+        let mut pb = ProgressBar::new(4);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -100,15 +100,16 @@ pub mod common {
         pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
+        pb.finish_println("Parent Contracts deployed");
 
         if is_testnet {
             println!("Borrow operations: {}", borrow_operations.contract_id());
             println!("Usdf: {}", usdf.contract_id());
             println!("Stability Pool: {}", stability_pool.contract_id());
-            println!("Initializing contracts...");
+            println!("Protocol Manager: {}", protocol_manager.contract_id());
         }
 
-        let mut pb = ProgressBar::new(10);
+        let mut pb = ProgressBar::new(4);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
@@ -389,7 +390,7 @@ pub mod common {
         //     .set_tx_parameters(tx_parms);
 
         let id = Contract::load_from(
-            &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+            &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().set_salt(salt),
         )
         .unwrap()
@@ -461,7 +462,7 @@ pub mod common {
         }
     }
 
-    fn get_absolute_path_from_relative(relative_path: &str) -> String {
+    pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
         let mut path = env::current_dir().unwrap();
         let fluid_protocol_index = path
             .to_str()

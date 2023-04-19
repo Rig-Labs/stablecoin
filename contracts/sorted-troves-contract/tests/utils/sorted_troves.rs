@@ -5,14 +5,17 @@ use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod sorted_troves_utils {
-    use fuels::signers::fuel_crypto::rand::{self, Rng};
+    use fuels::{
+        accounts::fuel_crypto::rand::{self, Rng},
+        prelude::WalletUnlocked,
+    };
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
 
     use super::*;
 
     pub async fn assert_neighbors(
-        sorted_troves: &SortedTroves,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
         current: Identity,
         prev_id: Identity,
         next_id: Identity,
@@ -25,8 +28,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_head(
-        sorted_troves: &SortedTroves,
-        trove_manager: &MockTroveManagerContract,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
+        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
@@ -57,8 +60,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_tail(
-        sorted_troves: &SortedTroves,
-        trove_manager: &MockTroveManagerContract,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
+        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     ) {
         let mut count = 0;
         let size = sorted_troves_abi::get_size(sorted_troves).await.value;
@@ -88,8 +91,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn generate_random_nodes(
-        trove_manager: &MockTroveManagerContract,
-        sorted_troves: &SortedTroves,
+        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
         max_size: u64,
     ) -> Vec<(Identity, u64)> {
         let mut count = 0;

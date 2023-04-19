@@ -131,7 +131,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         pre_redemption_active_pool_debt - redemption_amount + with_min_borrow_fee(5_000_000_000)
     );
 
-    let provider = healthy_wallet1.get_provider().unwrap();
+    let provider = healthy_wallet1.provider().unwrap();
 
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let st_fuel_asset_id = AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());

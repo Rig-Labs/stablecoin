@@ -22,7 +22,7 @@ async fn proper_creating_trove() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -38,8 +38,6 @@ async fn proper_creating_trove() {
         Identity::Address([0; 32].into()),
     )
     .await;
-
-    println!("{:?}", res);
 
     let usdf_balance = provider
         .get_asset_balance(
@@ -222,7 +220,7 @@ async fn proper_decrease_collateral() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
 
@@ -332,7 +330,7 @@ async fn proper_increase_debt() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
@@ -452,7 +450,7 @@ async fn proper_decrease_debt() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
@@ -744,7 +742,7 @@ async fn proper_close_trove() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
     let fuel_asset_id: AssetId =
         AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
 
@@ -815,7 +813,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -937,7 +935,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .unwrap();
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,

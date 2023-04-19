@@ -22,9 +22,7 @@ pub mod usdf_token_abi {
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default()
-            .set_gas_price(1)
-            .set_gas_limit(2_000_000_000);
+        let tx_params = TxParameters::default().set_gas_price(1);
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
@@ -45,6 +43,8 @@ pub mod usdf_token_abi {
             .tx_params(tx_params)
             .call()
             .await;
+
+        return res.unwrap();
 
         // TODO: remove this workaround
         match res {

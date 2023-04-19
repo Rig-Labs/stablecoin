@@ -402,7 +402,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 name = "borrow-operations-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -602,7 +602,7 @@ dependencies = [
 name = "coll-surplus-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -950,7 +950,7 @@ dependencies = [
 name = "default-pool-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -1235,7 +1235,7 @@ dependencies = [
 name = "fpt-staking-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -2573,7 +2573,7 @@ dependencies = [
 name = "mock-oracle-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -2952,7 +2952,7 @@ dependencies = [
 name = "protocol-manager-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]
@@ -3519,7 +3519,7 @@ dependencies = [
 name = "sorted-troves-contract"
 version = "0.1.0"
 dependencies = [
- "fuels 0.38.1",
+ "fuels 0.41.0",
  "test-utils",
  "tokio",
 ]

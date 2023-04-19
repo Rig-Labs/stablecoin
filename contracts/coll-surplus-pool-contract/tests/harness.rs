@@ -6,7 +6,11 @@ use test_utils::{
     setup::common::{deploy_coll_surplus_pool, deploy_token},
 };
 
-async fn get_contract_instance() -> (CollSurplusPool, Token, WalletUnlocked) {
+async fn get_contract_instance() -> (
+    CollSurplusPool<WalletUnlocked>,
+    Token<WalletUnlocked>,
+    WalletUnlocked,
+) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

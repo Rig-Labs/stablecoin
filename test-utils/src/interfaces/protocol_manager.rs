@@ -35,16 +35,19 @@ pub mod protocol_manager_abi {
             .initialize(borrow_operations, stability_pool, usdf, admin)
             .tx_params(tx_params)
             .call()
-            .await;
+            .await
+            .unwrap();
+
+        return res;
 
         // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        // match res {
+        //     Ok(res) => res,
+        //     Err(_) => {
+        //         wait();
+        //         return FuelCallResponse::new((), vec![], LogDecoder::default());
+        //     }
+        // }
     }
 
     pub async fn register_asset<T: Account>(

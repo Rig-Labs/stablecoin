@@ -35,7 +35,7 @@ pub mod oracle_abi {
         }
     }
 
-    pub async fn get_price<T: Account>(oracle: Oracle<T>) -> FuelCallResponse<u64> {
+    pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> FuelCallResponse<u64> {
         oracle.methods().get_price().call().await.unwrap()
     }
 }
