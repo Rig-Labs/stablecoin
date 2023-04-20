@@ -9,14 +9,14 @@ abigen!(Contract(
 ));
 
 pub mod sorted_troves_abi {
-    use fuels::prelude::{LogDecoder, TxParameters};
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
 
     use super::*;
 
-    pub async fn initialize(
-        sorted_troves: &SortedTroves,
+    pub async fn initialize<T: Account>(
+        sorted_troves: &SortedTroves<T>,
         max_size: u64,
         borrow_opperations: ContractId,
         trove_manager: ContractId,
@@ -40,8 +40,8 @@ pub mod sorted_troves_abi {
         }
     }
 
-    pub async fn insert(
-        sorted_troves: &SortedTroves,
+    pub async fn insert<T: Account>(
+        sorted_troves: &SortedTroves<T>,
         id: Identity,
         icr: u64,
         prev_id: Identity,
@@ -55,27 +55,31 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_first(sorted_troves: &SortedTroves) -> FuelCallResponse<Identity> {
+    pub async fn get_first<T: Account>(
+        sorted_troves: &SortedTroves<T>,
+    ) -> FuelCallResponse<Identity> {
         sorted_troves.methods().get_first().call().await.unwrap()
     }
 
-    pub async fn get_last(sorted_troves: &SortedTroves) -> FuelCallResponse<Identity> {
+    pub async fn get_last<T: Account>(
+        sorted_troves: &SortedTroves<T>,
+    ) -> FuelCallResponse<Identity> {
         sorted_troves.methods().get_last().call().await.unwrap()
     }
 
-    pub async fn get_size(sorted_troves: &SortedTroves) -> FuelCallResponse<u64> {
+    pub async fn get_size<T: Account>(sorted_troves: &SortedTroves<T>) -> FuelCallResponse<u64> {
         sorted_troves.methods().get_size().call().await.unwrap()
     }
 
-    pub async fn get_next(
-        sorted_troves: &SortedTroves,
+    pub async fn get_next<T: Account>(
+        sorted_troves: &SortedTroves<T>,
         id: Identity,
     ) -> FuelCallResponse<Identity> {
         sorted_troves.methods().get_next(id).call().await.unwrap()
     }
 
-    pub async fn get_prev(
-        sorted_troves: &SortedTroves,
+    pub async fn get_prev<T: Account>(
+        sorted_troves: &SortedTroves<T>,
         id: Identity,
     ) -> FuelCallResponse<Identity> {
         sorted_troves.methods().get_prev(id).call().await.unwrap()

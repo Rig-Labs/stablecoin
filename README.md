@@ -113,20 +113,20 @@ Visit [Fluid.org](https://www.Fluid.org) to find out more and join the discussio
 - [Deployment to a Development Blockchain](#deployment-to-a-development-blockchain)
 - [Running Tests](#running-tests)
   - [Brownie Tests](#brownie-tests)
-  - [OpenAsseteum](#openAsseteum)
+  - [OpenFuel](#openFuel)
   - [Coverage](#coverage)
 - [System Quantities - Units and Representation](#system-quantities---units-and-representation)
   - [Integer representations of decimals](#integer-representations-of-decimals)
 - [Public Data](#public-data)
 - [Public User-Facing Functions](#public-user-facing-functions)
-  - [Borrower (Trove) Operations - `BorrowerOperations.sol`](#borrower-trove-operations---borroweroperationssol)
-  - [TroveManager Functions - `TroveManager.sol`](#trovemanager-functions---trovemanagersol)
+  - [Borrower (Trove) Operations - `borrow-operations-contract`](#borrower-trove-operations---borroweroperationssol)
+  - [TroveManager Functions - `trove-manager-contract`](#trovemanager-functions---trovemanagersol)
   - [Hint Helper Functions - `HintHelpers.sol`](#hint-helper-functions---hinthelperssol)
-  - [Stability Pool Functions - `StabilityPool.sol`](#stability-pool-functions---stabilitypoolsol)
-  - [FPT Staking Functions `FPTStaking.sol`](#FPT-staking-functions--FPTstakingsol)
+  - [Stability Pool Functions - `stability-pool-contract`](#stability-pool-functions---stabilitypoolsol)
+  - [FPT Staking Functions `fpt-staking-contract`](#FPT-staking-functions--FPTstakingsol)
   - [Lockup Contract Factory `LockupContractFactory.sol`](#lockup-contract-factory-lockupcontractfactorysol)
   - [Lockup contract - `LockupContract.sol`](#lockup-contract---lockupcontractsol)
-  - [USDF token `USDFToken.sol` and FPT token `FPTToken.sol`](#USDF-token-USDFtokensol-and-FPT-token-FPTtokensol)
+  - [USDF token `usdf-token-contract` and FPT token `fpt-token-contract`](#USDF-token-USDFtokensol-and-FPT-token-FPTtokensol)
 - [Supplying Hints to Trove operations](#supplying-hints-to-trove-operations)
   - [Hints for `redeemCollateral`](#hints-for-redeemcollateral)
     - [First redemption hint](#first-redemption-hint)
@@ -166,30 +166,11 @@ Visit [Fluid.org](https://www.Fluid.org) to find out more and join the discussio
   - [Top-level scripts](#top-level-scripts)
     - [Run all tests](#run-all-tests)
     - [Deploy contracts to a testnet](#deploy-contracts-to-a-testnet)
-    - [Start a local blockchain and deploy the contracts](#start-a-local-blockchain-and-deploy-the-contracts)
-    - [Start dev-frontend in development mode](#start-dev-frontend-in-development-mode)
-    - [Start dev-frontend in demo mode](#start-dev-frontend-in-demo-mode)
-    - [Start dev-frontend against a mainnet fork RPC node](#start-dev-frontend-against-a-mainnet-fork-rpc-node)
-    - [Build dev-frontend for production](#build-dev-frontend-for-production)
-  - [Configuring your custom frontend](#configuring-your-custom-dev-ui)
-- [Running a frontend with Docker](#running-dev-ui-with-docker)
-  - [Prerequisites](#prerequisites-1)
-  - [Running with `docker`](#running-with-docker)
-  - [Configuring a public frontend](#configuring-a-public-dev-ui)
-    - [FRONTEND_TAG](#frontend_tag)
-    - [INFURA_API_KEY](#infura_api_key)
-  - [Setting a kickback rate](#setting-a-kickback-rate)
-  - [Setting a kickback rate with Gnosis Safe](#setting-a-kickback-rate-with-gnosis-safe)
-  - [Next steps for hosting a frontend](#next-steps-for-hosting-dev-ui)
-    - [Example 1: using static website hosting](#example-1-using-static-website-hosting)
-    - [Example 2: wrapping the frontend container in HTTPS](#example-2-wrapping-the-dev-ui-container-in-https)
-- [Known Issues](#known-issues)
-  - [Front-running issues](#front-running-issues)
 - [Disclaimer](#disclaimer)
 
 ## Fluid Overview
 
-Fluid is a collateralized debt platform. Users can lock up Asset, and issue stablecoin tokens (USDF) to their own Asseteum address, and subsequently transfer those tokens to any other Asseteum address. The individual collateralized debt positions are called Troves.
+Fluid is a collateralized debt platform. Users can lock up Asset, and issue stablecoin tokens (USDF) to their own Fuel address, and subsequently transfer those tokens to any other Fuel address. The individual collateralized debt positions are called Troves.
 
 The stablecoin tokens are economically geared towards maintaining value of 1 USDF = \$1 USD, due to the following properties:
 
@@ -199,11 +180,11 @@ The stablecoin tokens are economically geared towards maintaining value of 1 USD
 
 3. The system algorithmically controls the generation of USDF through a variable issuance fee.
 
-After opening a Trove with some Asset, users may issue ("borrow") tokens such that the collateralization ratio of their Trove remains above 130%. A user with $1000 worth of Assets in a Trove can issue up to 909.09 USDF.
+After opening a Trove with some Asset, users may issue ("borrow") tokens such that the collateralization ratio of their Trove remains above 130%. A user with $1000 worth of Assets in a Trove can issue up to 769.23 USDF.
 
-The tokens are freely exchangeable - anyone with an Asseteum address can send or receive USDF tokens, whAsset they have an open Trove or not. The tokens are burned upon repayment of a Trove's debt.
+The tokens are freely exchangeable - anyone with an Fuel address can send or receive USDF tokens, whether they have an open Trove or not. The tokens are burned upon repayment of a Trove's debt.
 
-The Fluid system regularly updates the ETH:USD price via a decentralized data feed. When a Trove falls below a minimum collateralization ratio (MCR) of 130%, it is considered under-collateralized, and is vulnerable to liquidation.
+The Fluid system regularly updates the ASSET:USD price via a decentralized data feed. When a Trove falls below a minimum collateralization ratio (MCR) of 130%, it is considered under-collateralized, and is vulnerable to liquidation.
 
 ## Liquidation and the Stability Pool
 
@@ -221,19 +202,9 @@ Stability Pool depositors can expect to earn net gains from liquidations, as in 
 
 If the liquidated debt is higher than the amount of USDF in the Stability Pool, the system tries to cancel as much debt as possible with the tokens in the Stability Pool, and then redistributes the remaining liquidated collateral and debt across all active Troves.
 
-Anyone may call the public `liquidateTroves()` function, which will check for under-collateralized Troves, and liquidate them. Alternatively they can call `batchLiquidateTroves()` with a custom list of trove addresses to attempt to liquidate.
+Anyone may call the public `liquidate_troves()` function, which will check for under-collateralized Troves, and liquidate them. Alternatively they can call `batch_liquidate_troves()` with a custom list of trove addresses to attempt to liquidate.
 
-### Liquidation gas costs
-
-Currently, mass liquidations performed via the above functions cost 60-65k gas per trove. Thus the system can liquidate up to a maximum of 95-105 troves in a single transaction.
-
-### Liquidation Logic
-
-The precise behavior of liquidations depends on the ICR of the Trove being liquidated and global system conditions: the total collateralization ratio (TCR) of the system, the size of the Stability Pool, etc.
-
-Here is the liquidation logic for a single Trove.
-
-#### Liquidations
+#### Liquidation Logic
 
 | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Condition | Liquidation behavior                                                                                                                                                                                                                                                                                                  |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -250,9 +221,9 @@ Similarly, a Trove's accumulated gains from liquidations are automatically appli
 
 ## USDF Token Redemption
 
-Any USDF holder (whAsset or not they have an active Trove) may redeem their USDF directly with the system. Their USDF is exchanged for ETH, at face value: redeeming x USDF tokens returns \$x worth of Assets (minus a [redemption fee](#redemption-fee)).
+Any USDF holder (whether or not they have an active Trove) may redeem their USDF directly with the system. Their USDF is exchanged for Collateral Assets, at face value: redeeming x USDF tokens returns \$x worth of the Assets (minus a [redemption fee](#redemption-fee)). The exact composition of Assets is determined by where the risk is in the system in order from their collateral ratio.
 
-When USDF is redeemed for ETH, the system cancels the USDF with debt from Troves, and the Assets is drawn from their collateral.
+When USDF is redeemed for Assets, the system cancels the USDF with debt from Troves, and the Assets is drawn from their collateral.
 
 In order to fulfill the redemption request, Troves are redeemed from in ascending order of their collateralization ratio.
 
@@ -318,11 +289,11 @@ Fluid also issues FPT to Stability Providers, in a continous time-based manner.
 
 The FPT contracts consist of:
 
-`FPTStaking.sol` - the staking contract, containing stake and unstake functionality for FPT holders. This contract receives Assets fees from redemptions, and USDF fees from new debt issuance.
+`fpt-staking-contract` - the staking contract, containing stake and unstake functionality for FPT holders. This contract receives Assets fees from redemptions, and USDF fees from new debt issuance.
 
-`CommunityIssuance.sol` - This contract handles the issuance of FPT tokens to Stability Providers as a function of time. It is controlled by the `StabilityPool`. Upon system launch, the `CommunityIssuance` automatically receives 32 million FPT - the “community issuance” supply. The contract steadily issues these FPT tokens to the Stability Providers over time.
+`community-issuance-contract` - This contract handles the issuance of FPT tokens to Stability Providers as a function of time. It is controlled by the `StabilityPool`. Upon system launch, the `CommunityIssuance` automatically receives 32 million FPT - the “community issuance” supply. The contract steadily issues these FPT tokens to the Stability Providers over time.
 
-`FPTToken.sol` - This is the FPT ERC20 contract. It has a hard cap supply of 100 million, and during the first year, restricts transfers from the Fluid admin address, a regular Asseteum address controlled by the project company Fluid AG. **Note that the Fluid admin address has no extra privileges and does not retain any control over the Fluid protocol once deployed.**
+`fpt-token-contract` - This is the FPT ERC20 contract. It has a hard cap supply of 100 million, and during the first year, restricts transfers from the Fluid admin address, a regular Fuel address controlled by the project company Fluid AG. **Note that the Fluid admin address has no extra privileges and does not retain any control over the Fluid protocol once deployed.**
 
 ### FPT Lockup contracts and token vesting
 
@@ -391,27 +362,27 @@ _Additionally, a LP staking contract will receive the initial LP staking reward 
 
 ## Core System Architecture
 
-The core Fluid system consists of several smart contracts, which are deployable to the Asseteum blockchain.
+The core Fluid system consists of several smart contracts, which are deployable to the Fuel blockchain.
 
-All application logic and data is contained in these contracts - there is no need for a separate database or back end logic running on a web server. In effect, the Asseteum network is itself the Fluid back end. As such, all balances and contract data are public.
+All application logic and data is contained in these contracts - there is no need for a separate database or back end logic running on a web server. In effect, the Fuel network is itself the Fluid back end. As such, all balances and contract data are public.
 
 The system has no admin key or human governance. Once deployed, it is fully automated, decentralized and no user holds any special privileges in or control over the system.
 
-The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `StabilityPool.sol` - hold the user-facing public functions, and contain most of the internal system logic. TogAsset they control Trove state updates and movements of Asset and USDF tokens around the system.
+The three main contracts - `borrow-operations-contract`, `trove-manager-contract` and `stability-pool-contract` - hold the user-facing public functions, and contain most of the internal system logic. TogAsset they control Trove state updates and movements of Asset and USDF tokens around the system.
 
 ### Core Smart Contracts
 
-`BorrowerOperations.sol` - contains the basic operations by which borrowers interact with their Trove: Trove creation, Assets top-up / withdrawal, stablecoin issuance and repayment. It also sends issuance fees to the `FPTStaking` contract. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move Asset/Tokens between Pools or between Pool <> user, where necessary.
+`borrow-operations-contract` - contains the basic operations by which borrowers interact with their Trove: Trove creation, Assets top-up / withdrawal, stablecoin issuance and repayment. It also sends issuance fees to the `FPTStaking` contract. BorrowerOperations functions call in to TroveManager, telling it to update Trove state, where necessary. BorrowerOperations functions also call in to the various Pools, telling them to move Asset/Tokens between Pools or between Pool <> user, where necessary.
 
-`TroveManager.sol` - contains functionality for liquidations and redemptions. It sends redemption fees to the `FPTStaking` contract. Also contains the state of each Trove - i.e. a record of the Trove’s collateral and debt. TroveManager does not hold value (i.e. Asset / other tokens). TroveManager functions call in to the various Pools to tell them to move Asset/tokens between Pools, where necessary.
+`trove-manager-contract` - contains functionality for liquidations and redemptions. It sends redemption fees to the `FPTStaking` contract. Also contains the state of each Trove - i.e. a record of the Trove’s collateral and debt. TroveManager does not hold value (i.e. Asset / other tokens). TroveManager functions call in to the various Pools to tell them to move Asset/tokens between Pools, where necessary.
 
 `FluidBase.sol` - Both TroveManager and BorrowerOperations inherit from the parent contract FluidBase, which contains global constants and some common functions.
 
-`StabilityPool.sol` - contains functionality for Stability Pool operations: making deposits, and withdrawing compounded deposits and accumulated Assets and FPT gains. Holds the USDF Stability Pool deposits, and the Assets gains for depositors, from liquidations.
+`stability-pool-contract` - contains functionality for Stability Pool operations: making deposits, and withdrawing compounded deposits and accumulated Assets and FPT gains. Holds the USDF Stability Pool deposits, and the Assets gains for depositors, from liquidations.
 
-`USDFToken.sol` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers USDF tokens.
+`usdf-token-contract` - the stablecoin token contract, which implements the ERC20 fungible token standard in conjunction with EIP-2612 and a mechanism that blocks (accidental) transfers to addresses like the StabilityPool and address(0) that are not supposed to receive funds through direct transfers. The contract mints, burns and transfers USDF tokens.
 
-`SortedTroves.sol` - a doubly linked list that stores addresses of Trove owners, sorted by their individual collateralization ratio (ICR). It inserts and re-inserts Troves at the correct position, based on their ICR.
+`sorted-troves-contract` - a doubly linked list that stores addresses of Trove owners, sorted by their individual collateralization ratio (ICR). It inserts and re-inserts Troves at the correct position, based on their ICR.
 
 `PriceFeed.sol` - Contains functionality for obtaining the current ETH:USD price, which the system uses for calculating collateralization ratios.
 
@@ -419,19 +390,17 @@ The three main contracts - `BorrowerOperations.sol`, `TroveManager.sol` and `Sta
 
 ### Data and Value Silo Contracts
 
-Along with `StabilityPool.sol`, these contracts hold Asset and/or tokens for their respective parts of the system, and contain minimal logic:
+Along with `stability-pool-contract`, these contracts hold Asset and/or tokens for their respective parts of the system, and contain minimal logic:
 
-`ActivePool.sol` - holds the total Asset balance and records the total stablecoin debt of the active Troves.
+`active-pool-contract` - holds the total Asset balance and records the total stablecoin debt of the active Troves.
 
-`DefaultPool.sol` - holds the total Asset balance and records the total stablecoin debt of the liquidated Troves that are pending redistribution to active Troves. If a Trove has pending Asset/debt “rewards” in the DefaultPool, then they will be applied to the Trove when it next undergoes a borrower operation, a redemption, or a liquidation.
+`default-pool-contract` - holds the total Asset balance and records the total stablecoin debt of the liquidated Troves that are pending redistribution to active Troves. If a Trove has pending Asset/debt “rewards” in the DefaultPool, then they will be applied to the Trove when it next undergoes a borrower operation, a redemption, or a liquidation.
 
-`CollSurplusPool.sol` - holds the Assets surplus from Troves that have been fully redeemed from as well as from Troves with an ICR > MCR that were liquidated in Recovery Mode. Sends the surplus back to the owning borrower, when told to do so by `BorrowerOperations.sol`.
-
-`GasPool.sol` - holds the total USDF liquidation reserves. USDF is moved into the `GasPool` when a Trove is opened, and moved out when a Trove is liquidated or closed.
+`coll-surplus-pool-contract` - holds the Assets surplus from Troves that have been fully redeemed from as well as from Troves with an ICR > MCR that were liquidated in Recovery Mode. Sends the surplus back to the owning borrower, when told to do so by `borrow-operations-contract`.
 
 ### Contract Interfaces
 
-`ITroveManager.sol`, `IPool.sol` etc. These provide specification for a contract’s functions, without implementation. They are similar to interfaces in Java or C#.
+`Itrove-manager-contract`, `IPool.sol` etc. These provide specification for a contract’s functions, without implementation. They are similar to interfaces in Java or C#.
 
 ### PriceFeed and Oracle
 
@@ -479,7 +448,7 @@ We believe the benefit of the fallback logic is worth the complexity, given that
 
 **Chainlink Decimals**: the `PriceFeed` checks for and uses the latest `decimals` value reported by the Chainlink aggregator in order to calculate the Chainlink price at 18-digit precision, as needed by Fluid. `PriceFeed` does not assume a value for decimals and can handle the case where Chainlink change their decimal value.
 
-However, the check `chainlinkIsBroken` uses both the current response from the latest round and the response previous round. Since `decimals` is not attached to round data, Fluid has no way of knowing whAsset decimals has changed between the current round and the previous round, so we assume it is the same. Fluid assumes the current return value of decimals() applies to both current round `i` and previous round `i-1`.
+However, the check `chainlinkIsBroken` uses both the current response from the latest round and the response previous round. Since `decimals` is not attached to round data, Fluid has no way of knowing whether decimals has changed between the current round and the previous round, so we assume it is the same. Fluid assumes the current return value of decimals() applies to both current round `i` and previous round `i-1`.
 
 This means that a decimal change that coincides with a Fluid price fetch could cause Fluid to assert that the Chainlink price has deviated too much, and fall back to Tellor. There is nothing we can do about this. We hope/expect Chainlink to never change their `decimals()` return value (currently 8), and if a hack/technical error causes Chainlink's decimals to change, Fluid may fall back to Tellor.
 
@@ -497,7 +466,7 @@ Fluid relies on a particular data structure: a sorted doubly-linked list of Trov
 
 This ordered list is critical for gas-efficient redemption sequences and for the `liquidateTroves` sequence, both of which target Troves in ascending order of ICR.
 
-The sorted doubly-linked list is found in `SortedTroves.sol`.
+The sorted doubly-linked list is found in `sorted-troves-contract`.
 
 Nodes map to active Troves in the system - the ID property is the address of a trove owner. The list accepts positional hints for efficient O(1) insertion - please see the [hints](#supplying-hints-to-cdp-operations) section for more details.
 
@@ -624,18 +593,15 @@ The only time USDF is transferred to/from a Fluid contract, is when a user depos
 
 ![Flow of FPT](images/FPT_flows.svg)
 
-Stability Providers and Frontend Operators receive FPT gains according to their share of the total USDF deposits, and the FPT community issuance schedule. Once obtained, FPT can be staked and unstaked with the `FPTStaking` contract.
+Stability Providers receive FPT gains according to their share of the total USDF deposits, and the FPT community issuance schedule. Once obtained, FPT can be staked and unstaked with the `FPTStaking` contract.
 
 **Stability Pool**
 
 | Function               | FPT Quantity       | ERC20 Operation                                                     |
 | ---------------------- | ------------------ | ------------------------------------------------------------------- |
 | provideToSP            | depositor FPT gain | FPT.\_transfer(stabilityPoolAddress, msg.sender, depositorFPTGain); |
-|                        | front end FPT gain | FPT.\_transfer(stabilityPoolAddress, \_frontEnd, frontEndFPTGain);  |
 | withdrawFromSP         | depositor FPT gain | FPT.\_transfer(stabilityPoolAddress, msg.sender, depositorFPTGain); |
-|                        | front end FPT gain | FPT.\_transfer(stabilityPoolAddress, \_frontEnd, frontEndFPTGain);  |
 | withdrawETHGainToTrove | depositor FPT gain | FPT.\_transfer(stabilityPoolAddress, msg.sender, depositorFPTGain); |
-|                        | front end FPT gain | FPT.\_transfer(stabilityPoolAddress, \_frontEnd, frontEndFPTGain);  |
 
 **FPT Staking Contract**
 
@@ -703,15 +669,15 @@ Run, from `packages/contracts/`:
 brownie test -s
 ```
 
-### OpenAsseteum
+### OpenFuel
 
 Add the local node as a `live` network at `~/.brownie/network-config.yaml`:
 
 ```
 (...)
-      - name: Local OpenAsseteum
+      - name: Local OpenFuel
         chainid: 17
-        id: openAsseteum
+        id: openFuel
         host: http://localhost:8545
 ```
 
@@ -724,16 +690,16 @@ rm -Rf build/deployments/*
 Start Openthereum node from this repo’s root with:
 
 ```
-yarn start-dev-chain:openAsseteum
+yarn start-dev-chain:openFuel
 ```
 
 Then, again from `packages/contracts/`, run it with:
 
 ```
-brownie test -s --network openAsseteum
+brownie test -s --network openFuel
 ```
 
-To stop the OpenAsseteum node, you can do it with:
+To stop the OpenFuel node, you can do it with:
 
 ```
 yarn stop-dev-chain
@@ -777,7 +743,7 @@ All data structures with the ‘public’ visibility specifier are ‘gettable�
 
 ## Public User-Facing Functions
 
-### Borrower (Trove) Operations - `BorrowerOperations.sol`
+### Borrower (Trove) Operations - `borrow-operations-contract`
 
 `openTrove(uint _maxFeePercentage, uint _USDFAmount, address _upperHint, address _lowerHint)`: payable function that creates a Trove for the caller with the requested debt, and the Asset received as collateral. Successful execution is conditional mainly on the resulting collateralization ratio which must exceed the minimum (130% in Normal Mode, 150% in Recovery Mode). In addition to the requested debt, extra debt is issued to pay the issuance fee, and cover the gas compensation. The borrower has to provide a `_maxFeePercentage` that he/she is willing to accept in case of a fee slippage, i.e. when a redemption transaction is processed first, driving up the issuance fee.
 
@@ -795,11 +761,11 @@ All data structures with the ‘public’ visibility specifier are ‘gettable�
 
 `claimCollateral(address _user)`: when a borrower’s Trove has been fully redeemed from and closed, or liquidated in Recovery Mode with a collateralization ratio above 130%, this function allows the borrower to claim their Assets collateral surplus that remains in the system (collateral - debt upon redemption; collateral - 130% of the debt upon liquidation).
 
-### TroveManager Functions - `TroveManager.sol`
+### TroveManager Functions - `trove-manager-contract`
 
 `liquidate(address _borrower)`: callable by anyone, attempts to liquidate the Trove of `_user`. Executes successfully if `_user`’s Trove meets the conditions for liquidation (e.g. in Normal Mode, it liquidates if the Trove's ICR < the system MCR).
 
-`liquidateTroves(uint n)`: callable by anyone, checks for under-collateralized Troves below MCR and liquidates up to `n`, starting from the Trove with the lowest collateralization ratio; subject to gas constraints and the actual number of under-collateralized Troves. The gas costs of `liquidateTroves(uint n)` mainly depend on the number of Troves that are liquidated, and whAsset the Troves are offset against the Stability Pool or redistributed. For n=1, the gas costs per liquidated Trove are roughly between 215K-400K, for n=5 between 80K-115K, for n=10 between 70K-82K, and for n=50 between 60K-65K.
+`liquidateTroves(uint n)`: callable by anyone, checks for under-collateralized Troves below MCR and liquidates up to `n`, starting from the Trove with the lowest collateralization ratio; subject to gas constraints and the actual number of under-collateralized Troves. The gas costs of `liquidateTroves(uint n)` mainly depend on the number of Troves that are liquidated, and whether the Troves are offset against the Stability Pool or redistributed. For n=1, the gas costs per liquidated Trove are roughly between 215K-400K, for n=5 between 80K-115K, for n=10 between 70K-82K, and for n=50 between 60K-65K.
 
 `batchLiquidateTroves(address[] calldata _troveArray)`: callable by anyone, accepts a custom list of Troves addresses as an argument. Steps through the provided list and attempts to liquidate every Trove, until it reaches the end or it runs out of gas. A Trove is liquidated only if it meets the conditions for liquidation. For a batch of 10 Troves, the gas costs per liquidated Trove are roughly between 75K-83K, for a batch of 50 Troves between 54K-69K.
 
@@ -833,27 +799,21 @@ All data structures with the ‘public’ visibility specifier are ‘gettable�
 
 The number of Troves to consider for redemption can be capped by passing a non-zero value as `_maxIterations`, while passing zero will leave it uncapped.
 
-### Stability Pool Functions - `StabilityPool.sol`
+### Stability Pool Functions - `stability-pool-contract`
 
-`provideToSP(uint _amount, address _frontEndTag)`: allows stablecoin holders to deposit `_amount` of USDF to the Stability Pool. It sends `_amount` of USDF from their address to the Pool, and tops up their USDF deposit by `_amount` and their tagged front end’s stake by `_amount`. If the depositor already has a non-zero deposit, it sends their accumulated Assets and FPT gains to their address, and pays out their front end’s FPT gain to their front end.
+`provideToSP(uint _amount)`: allows stablecoin holders to deposit `_amount` of USDF to the Stability Pool. It sends `_amount` of USDF from their address to the Pool, and tops up their USDF deposit by `_amount` and their tagged front end’s stake by `_amount`. If the depositor already has a non-zero deposit, it sends their accumulated Assets and FPT gains to their address, and pays out their front end’s FPT gain to their front end.
 
 `withdrawFromSP(uint _amount)`: allows a stablecoin holder to withdraw `_amount` of USDF from the Stability Pool, up to the value of their remaining Stability deposit. It decreases their USDF balance by `_amount` and decreases their front end’s stake by `_amount`. It sends the depositor’s accumulated Assets and FPT gains to their address, and pays out their front end’s FPT gain to their front end. If the user makes a partial withdrawal, their deposit remainder will earn further gains. To prevent potential loss evasion by depositors, withdrawals from the Stability Pool are suspended when there are liquidable Troves with ICR < 130% in the system.
 
 `withdrawETHGainToTrove(address _hint)`: sends the user's entire accumulated Assets gain to the user's active Trove, and updates their Stability deposit with its accumulated loss from debt absorptions. Sends the depositor's FPT gain to the depositor, and sends the tagged front end's FPT gain to the front end.
 
-`registerFrontEnd(uint _kickbackRate)`: Registers an address as a front end and sets their chosen kickback rate in range `[0,1]`.
-
 `getDepositorETHGain(address _depositor)`: returns the accumulated Assets gain for a given Stability Pool depositor
 
 `getDepositorFPTGain(address _depositor)`: returns the accumulated FPT gain for a given Stability Pool depositor
 
-`getFrontEndFPTGain(address _frontEnd)`: returns the accumulated FPT gain for a given front end
-
 `getCompoundedUSDFDeposit(address _depositor)`: returns the remaining deposit amount for a given Stability Pool depositor
 
-`getCompoundedFrontEndStake(address _frontEnd)`: returns the remaining front end stake for a given front end
-
-### FPT Staking Functions `FPTStaking.sol`
+### FPT Staking Functions `fpt-staking-contract`
 
 `stake(uint _FPTamount)`: sends `_FPTAmount` from the caller to the staking contract, and increases their stake. If the caller already has a non-zero stake, it pays out their accumulated Assets and USDF gains from staking.
 
@@ -867,7 +827,7 @@ The number of Troves to consider for redemption can be capped by passing a non-z
 
 `withdrawFPT()`: When the current time is later than the `unlockTime` and the caller is the beneficiary, it transfers their FPT to them.
 
-### USDF token `USDFToken.sol` and FPT token `FPTToken.sol`
+### USDF token `usdf-token-contract` and FPT token `fpt-token-contract`
 
 Standard ERC20 and EIP2612 (`permit()` ) functionality.
 
@@ -879,7 +839,7 @@ The end result is the same for the signer A and spender B, but does mean that a 
 could be front-run and revert - which may hamper the execution flow of a contract that is intended to handle the submission of a Permit on-chain.
 
 For more details please see the original proposal EIP-2612:
-https://eips.Asseteum.org/EIPS/eip-2612
+https://eips.Fuel.org/EIPS/eip-2612
 
 ## Supplying Hints to Trove operations
 
@@ -914,7 +874,7 @@ Gas cost will be worst case `O(n)`, where n is the size of the `SortedTroves` li
 
 Gas cost of steps 2-4 will be free, and step 5 will be `O(1)`.
 
-Hints allow cheaper Trove operations for the user, at the expense of a slightly longer time to completion, due to the need to await the result of the two read calls in steps 1 and 2 - which may be sent as JSON-RPC requests to Infura, unless the Frontend Operator is running a full Asseteum node.
+Hints allow cheaper Trove operations for the user, at the expense of a slightly longer time to completion, due to the need to await the result of the two read calls in steps 1 and 2 - which may be sent as JSON-RPC requests to Infura, unless the Frontend Operator is running a full Fuel node.
 
 ### Example Borrower Operations with Hints
 
@@ -1004,7 +964,7 @@ It’s likely that the last Trove in the redemption sequence would be partially 
 
 However, if between the off-chain hint computation and on-chain execution a different transaction changes the state of a Trove that would otherwise be hit by the redemption sequence, then the off-chain hint computation could end up totally inaccurate. This could lead to the whole redemption sequence reverting due to out-of-gas error.
 
-To mitigate this, another hint needs to be provided: `_partialRedemptionHintNICR`, the expected nominal ICR of the final partially-redeemed-from Trove. The on-chain redemption function checks whAsset, after redemption, the nominal ICR of this Trove would equal the nominal ICR hint.
+To mitigate this, another hint needs to be provided: `_partialRedemptionHintNICR`, the expected nominal ICR of the final partially-redeemed-from Trove. The on-chain redemption function checks whether, after redemption, the nominal ICR of this Trove would equal the nominal ICR hint.
 
 If not, the redemption sequence doesn’t perform the final partial redemption, and terminates early. This ensures that the transaction doesn’t revert, and most of the requested USDF redemption can be fulfilled.
 
@@ -1043,7 +1003,7 @@ If not, the redemption sequence doesn’t perform the final partial redemption, 
 
 In Fluid, we want to maximize liquidation throughput, and ensure that undercollateralized Troves are liquidated promptly by “liquidators” - agents who may also hold Stability Pool deposits, and who expect to profit from liquidations.
 
-However, gas costs in Asseteum are substantial. If the gas costs of our public liquidation functions are too high, this may discourage liquidators from calling them, and leave the system holding too many undercollateralized Troves for too long.
+However, gas costs in Fuel are substantial. If the gas costs of our public liquidation functions are too high, this may discourage liquidators from calling them, and leave the system holding too many undercollateralized Troves for too long.
 
 The protocol thus directly compensates liquidators for their gas costs, to incentivize prompt liquidations in both normal and extreme periods of high gas prices. Liquidators should be confident that they will at least break even by making liquidation transactions.
 
@@ -1059,14 +1019,6 @@ The intentions behind this formula are:
 
 - To ensure that smaller Troves are liquidated promptly in normal times, at least
 - To ensure that larger Troves are liquidated promptly even in extreme high gas price periods. The larger the Trove, the stronger the incentive to liquidate it.
-
-### Gas compensation schedule
-
-When a borrower opens a Trove, an additional 200 USDF debt is issued, and 200 USDF is minted and sent to a dedicated contract (`GasPool`) for gas compensation - the "gas pool".
-
-When a borrower closes their active Trove, this gas compensation is refunded: 200 USDF is burned from the gas pool's balance, and the corresponding 200 USDF debt on the Trove is cancelled.
-
-The purpose of the 200 USDF Liquidation Reserve is to provide a minimum level of gas compensation, regardless of the Trove's collateral size or the current Assets price.
 
 ### Liquidation
 
@@ -1112,7 +1064,7 @@ Because the Assets collateral fraction matches the offset debt fraction, the eff
 
 ### Stability Pool deposit losses and Assets gains - implementation
 
-Deposit functionality is handled by `StabilityPool.sol` (`provideToSP`, `withdrawFromSP`, etc). StabilityPool also handles the liquidation calculation, and holds the USDF and Assets balances.
+Deposit functionality is handled by `stability-pool-contract` (`provideToSP`, `withdrawFromSP`, etc). StabilityPool also handles the liquidation calculation, and holds the USDF and Assets balances.
 
 When a liquidation is offset with the Stability Pool, debt from the liquidation is cancelled with an equal amount of USDF in the pool, which is burned.
 
@@ -1189,15 +1141,15 @@ Each liquidation updates `P` and `S`. After a series of liquidations, a compound
 
 Any time a depositor updates their deposit (withdrawal, top-up) their Assets gain is paid out, and they receive new snapshots of `P` and `S`.
 
-This is similar in spirit to the simpler [Scalable Reward Distribution on the Asseteum Network by Bogdan Batog et al](http://batog.info/papers/scalable-reward-distribution.pdf), however, the mathematics is more involved as we handle a compounding, decreasing stake, and a corresponding Assets reward.
+This is similar in spirit to the simpler [Scalable Reward Distribution on the Fuel Network by Bogdan Batog et al](http://batog.info/papers/scalable-reward-distribution.pdf), however, the mathematics is more involved as we handle a compounding, decreasing stake, and a corresponding Assets reward.
 
 ## FPT Issuance to Stability Providers
 
-Stability Providers earn FPT tokens continuously over time, in proportion to the size of their deposit. This is known as “Community Issuance”, and is handled by `CommunityIssuance.sol`.
+Stability Providers earn FPT tokens continuously over time, in proportion to the size of their deposit. This is known as “Community Issuance”, and is handled by `community-issuance-contract`.
 
 Upon system deployment and activation, `CommunityIssuance` holds an initial FPT supply, currently (provisionally) set at 32 million FPT tokens.
 
-Each Stability Pool deposit is tagged with a front end tag - the Asseteum address of the front end through which the deposit was made. Stability deposits made directly with the protocol (no front end) are tagged with the zero address.
+Each Stability Pool deposit is tagged with a front end tag - the Fuel address of the front end through which the deposit was made. Stability deposits made directly with the protocol (no front end) are tagged with the zero address.
 
 When a deposit earns FPT, it is split between the depositor, and the front end through which the deposit was made. Upon registering as a front end, a front end chooses a “kickback rate”: this is the percentage of FPT earned by a tagged deposit, to allocate to the depositor. Thus, the total FPT received by a depositor is the total FPT earned by their deposit, multiplied by `kickbackRate`. The front end takes a cut of `1-kickbackRate` of the FPT earned by the deposit.
 
@@ -1290,13 +1242,13 @@ Redemptions fees are paid in ETH. Issuance fees (when a user opens a Trove, or i
 
 The redemption fee is taken as a cut of the total Assets drawn from the system in a redemption. It is based on the current redemption rate.
 
-In the `TroveManager`, `redeemCollateral` calculates the Assets fee and transfers it to the staking contract, `FPTStaking.sol`
+In the `TroveManager`, `redeemCollateral` calculates the Assets fee and transfers it to the staking contract, `fpt-staking-contract`
 
 ### Issuance fee
 
 The issuance fee is charged on the USDF drawn by the user and is added to the Trove's USDF debt. It is based on the current borrowing rate.
 
-When new USDF are drawn via one of the `BorrowerOperations` functions `openTrove`, `withdrawUSDF` or `adjustTrove`, an extra amount `USDFFee` is minted, and an equal amount of debt is added to the user’s Trove. The `USDFFee` is transferred to the staking contract, `FPTStaking.sol`.
+When new USDF are drawn via one of the `BorrowerOperations` functions `openTrove`, `withdrawUSDF` or `adjustTrove`, an extra amount `USDFFee` is minted, and an equal amount of debt is added to the user’s Trove. The `USDFFee` is transferred to the staking contract, `fpt-staking-contract`.
 
 ### Fee Schedule
 
@@ -1335,7 +1287,7 @@ The decay parameter is tuned such that the fee changes by a factor of 0.99 per h
 
 ### Staking FPT and earning fees
 
-FPT holders may `stake` and `unstake` their FPT in the `FPTStaking.sol` contract.
+FPT holders may `stake` and `unstake` their FPT in the `fpt-staking-contract` contract.
 
 When a fee event occurs, the fee in USDF or Assets is sent to the staking contract, and a reward-per-unit-staked sum (`F_ETH`, or `F_USDF`) is incremented. A FPT stake earns a share of the fee equal to its share of the total FPT staked, at the instant the fee occurred.
 
@@ -1349,7 +1301,7 @@ For two Troves A and B with collateral `A.coll > B.coll`, Trove A should earn a 
 
 In Fluid it is important that all active Troves remain ordered by their ICR. We have proven that redistribution of the liquidated debt and collateral proportional to active Troves’ collateral, preserves the ordering of active Troves by ICR, as liquidations occur over time. Please see the [proofs section](https://github.com/Fluid/dev/tree/main/papers).
 
-However, when it comes to implementation, Asseteum gas costs make it too expensive to loop over all Troves and write new data to storage for each one. When a Trove receives redistribution rewards, the system does not update the Trove's collateral and debt properties - instead, the Trove’s rewards remain "pending" until the borrower's next operation.
+However, when it comes to implementation, Fuel gas costs make it too expensive to loop over all Troves and write new data to storage for each one. When a Trove receives redistribution rewards, the system does not update the Trove's collateral and debt properties - instead, the Trove’s rewards remain "pending" until the borrower's next operation.
 
 These “pending rewards” can not be accounted for in future reward calculations in a scalable way.
 
@@ -1394,11 +1346,11 @@ PDFs of these can be found in https://github.com/Fluid/dev/blob/main/papers
 
 ## Definitions
 
-_**Trove:**_ a collateralized debt position, bound to a single Asseteum address. Also referred to as a “CDP” in similar protocols.
+_**Trove:**_ a collateralized debt position, bound to a single Fuel address. Also referred to as a “CDP” in similar protocols.
 
-_**USDF**_: The stablecoin that may be issued from a user's collateralized debt position and freely transferred/traded to any Asseteum address. Intended to maintain parity with the US dollar, and can always be redeemed directly with the system: 1 USDF is always exchangeable for $1 USD worth of ETH.
+_**USDF**_: The stablecoin that may be issued from a user's collateralized debt position and freely transferred/traded to any Fuel address. Intended to maintain parity with the US dollar, and can always be redeemed directly with the system: 1 USDF is always exchangeable for $1 USD worth of ETH.
 
-_**Active Trove:**_ an Asseteum address owns an “active Trove” if there is a node in the `SortedTroves` list with ID equal to the address, and non-zero collateral is recorded on the Trove struct for that address.
+_**Active Trove:**_ an Fuel address owns an “active Trove” if there is a node in the `SortedTroves` list with ID equal to the address, and non-zero collateral is recorded on the Trove struct for that address.
 
 _**Closed Trove:**_ a Trove that was once active, but now has zero debt and zero collateral recorded on its struct, and there is no node in the `SortedTroves` list with ID equal to the owning address.
 
@@ -1432,7 +1384,7 @@ _**Borrower:**_ an externally owned account or contract that locks collateral in
 
 _**Depositor:**_ an externally owned account or contract that has assigned USDF tokens to the Stability Pool, in order to earn returns from liquidations, and receive FPT token issuance.
 
-_**Redemption:**_ the act of swapping USDF tokens with the system, in return for an equivalent value of ETH. Any account with a USDF token balance may redeem them, whAsset or not they are a borrower.
+_**Redemption:**_ the act of swapping USDF tokens with the system, in return for an equivalent value of ETH. Any account with a USDF token balance may redeem them, whether or not they are a borrower.
 
 When USDF is redeemed for ETH, the Assets is always withdrawn from the lowest collateral Troves, in ascending order of their collateralization ratio. A redeemer can not selectively target Troves with which to swap USDF for ETH.
 
@@ -1540,7 +1492,7 @@ This copies the contract artifacts to a version controlled area (`packages/lib/l
 yarn start-dev-chain
 ```
 
-Starts an openAsseteum node in a Docker container, running the [private development chain](https://openAsseteum.github.io/Private-development-chain), then deploys the contracts to this chain.
+Starts an openFuel node in a Docker container, running the [private development chain](https://openFuel.github.io/Private-development-chain), then deploys the contracts to this chain.
 
 You may want to use this before starting the dev-frontend in development mode. To use the newly deployed contracts, switch MetaMask to the built-in "Localhost 8545" network.
 
@@ -1555,172 +1507,6 @@ Once you no longer need the local node, stop it with:
 yarn stop-dev-chain
 ```
 
-#### Start dev-frontend in development mode
-
-```
-yarn start-dev-frontend
-```
-
-This will start dev-frontend in development mode on http://localhost:3000. The app will automatically be reloaded if you change a source file under `packages/dev-frontend`.
-
-If you make changes to a different package under `packages`, it is recommended to rebuild the entire project with `yarn prepare` in the root directory of the repo. This makes sure that a change in one package doesn't break another.
-
-To stop the dev-frontend running in this mode, bring up the terminal in which you've started the command and press Ctrl+C.
-
-#### Start dev-frontend in demo mode
-
-This will automatically start the local blockchain, so you need to make sure that's not already running before you run the following command.
-
-```
-yarn start-demo
-```
-
-This spawns a modified version of dev-frontend that ignores MetaMask, and directly uses the local blockchain node. Every time the page is reloaded (at http://localhost:3000), a new random account is created with a balance of 100 ETH. Additionally, transactions are automatically signed, so you no longer need to accept wallet confirmations. This lets you play around with Fluid more freely.
-
-When you no longer need the demo mode, press Ctrl+C in the terminal then run:
-
-```
-yarn stop-demo
-```
-
-#### Start dev-frontend against a mainnet fork RPC node
-
-This will start a hardhat mainnet forked RPC node at the block number configured in `hardhat.config.mainnet-fork.ts`, so you need to make sure you're not running a hardhat node on port 8545 already.
-
-You'll need an Alchemy API key to create the fork.
-
-```
-ALCHEMY_API_KEY=enter_your_key_here yarn start-fork
-```
-
-```
-yarn start-demo:dev-frontend
-```
-
-This spawns a modified version of dev-frontend that automatically signs transactions so you don't need to interact with a browser wallet. It directly uses the local forked RPC node.
-
-You may need to wait a minute or so for your fork mainnet provider to load and cache all the blockchain state at your chosen block number. Refresh the page after 5 minutes.
-
-#### Build dev-frontend for production
-
-In a freshly cloned & installed monorepo, or if you have only modified code inside the dev-frontend package:
-
-```
-yarn build
-```
-
-If you have changed something in one or more packages apart from dev-frontend, it's best to use:
-
-```
-yarn rebuild
-```
-
-This combines the top-level `prepare` and `build` scripts.
-
-You'll find the output in `packages/dev-frontend/build`.
-
-### Configuring your custom frontend
-
-Your custom built frontend can be configured by putting a file named `config.json` inside the same directory as `index.html` built in the previous step. The format of this file is:
-
-```
-{
-  "frontendTag": "0x2781fD154358b009abf6280db4Ec066FCC6cb435",
-  "infuraApiKey": "158b6511a5c74d1ac028a8a2afe8f626"
-}
-```
-
-## Running a frontend with Docker
-
-The quickest way to get a frontend up and running is to use the [prebuilt image](https://hub.docker.com/r/Fluid/dev-frontend) available on Docker Hub.
-
-### Prerequisites
-
-You will need to have [Docker](https://docs.docker.com/get-docker/) installed.
-
-### Running with `docker`
-
-```
-docker pull Fluid/dev-frontend
-docker run --name Fluid -d --rm -p 3000:80 Fluid/dev-frontend
-```
-
-This will start serving your frontend using HTTP on port 3000. If everything went well, you should be able to open http://localhost:3000/ in your browser. To use a different port, just replace 3000 with your desired port number.
-
-To stop the service:
-
-```
-docker kill Fluid
-```
-
-### Configuring a public frontend
-
-If you're planning to publicly host a frontend, you might need to pass the Docker container some extra configuration in the form of environment variables.
-
-#### FRONTEND_TAG
-
-If you want to receive a share of the FPT rewards earned by users of your frontend, set this variable to the Asseteum address you want the FPT to be sent to.
-
-#### INFURA_API_KEY
-
-This is an optional parameter. If you'd like your frontend to use Infura's [WebSocket endpoint](https://infura.io/docs/Asseteum#section/Websockets) for receiving blockchain events, set this variable to an Infura Project ID.
-
-### Setting a kickback rate
-
-The kickback rate is the portion of FPT you pass on to users of your frontend. For example with a kickback rate of 80%, you receive 20% while users get the other 80. Before you can start to receive a share of FPT rewards, you'll need to set this parameter by making a transaction on-chain.
-
-It is highly recommended that you do this while running a frontend locally, before you start hosting it publicly:
-
-```
-docker run --name Fluid -d --rm -p 3000:80 \
-  -e FRONTEND_TAG=0x2781fD154358b009abf6280db4Ec066FCC6cb435 \
-  -e INFURA_API_KEY=158b6511a5c74d1ac028a8a2afe8f626 \
-  Fluid/dev-frontend
-```
-
-Remember to replace the environment variables in the above example. After executing this command, open http://localhost:3000/ in a browser with MetaMask installed, then switch MetaMask to the account whose address you specified as FRONTEND_TAG to begin setting the kickback rate.
-
-### Setting a kickback rate with Gnosis Safe
-
-If you are using Gnosis safe, you have to set the kickback rate mannually through contract interaction. On the dashboard of Gnosis safe, click on "New transaction" and pick "Contraction interaction." Then, follow the [instructions](https://help.gnosis-safe.io/en/articles/3738081-contract-interactions):
-
-- First, set the contract address as `0x66017D22b0f8556afDd19FC67041899Eb65a21bb `;
-- Second, for method, choose "registerFrontEnd" from the list;
-- Finally, type in the unit256 _Kickbackrate_. The kickback rate should be an integer representing an 18-digit decimal. So for a kickback rate of 99% (0.99), the value is: `990000000000000000`. The number is 18 digits long.
-
-### Next steps for hosting a frontend
-
-Now that you've set a kickback rate, you'll need to decide how you want to host your frontend. There are way too many options to list here, so these are going to be just a few examples.
-
-#### Example 1: using static website hosting
-
-A frontend doesn't require any database or server-side computation, so the easiest way to host it is to use a service that lets you upload a folder of static files (HTML, CSS, JS, etc).
-
-To obtain the files you need to upload, you need to extract them from a frontend Docker container. If you were following the guide for setting a kickback rate and haven't stopped the container yet, then you already have one! Otherwise, you can create it with a command like this (remember to use your own `FRONTEND_TAG` and `INFURA_API_KEY`):
-
-```
-docker run --name Fluid -d --rm \
-  -e FRONTEND_TAG=0x2781fD154358b009abf6280db4Ec066FCC6cb435 \
-  -e INFURA_API_KEY=158b6511a5c74d1ac028a8a2afe8f626 \
-  Fluid/dev-frontend
-```
-
-While the container is running, use `docker cp` to extract the frontend's files to a folder of your choosing. For example to extract them to a new folder named "devui" inside the current folder, run:
-
-```
-docker cp Fluid:/usr/share/nginx/html ./devui
-```
-
-Upload the contents of this folder to your chosen hosting service (or serve them using your own infrastructure), and you're set!
-
-#### Example 2: wrapping the frontend container in HTTPS
-
-If you have command line access to a server with Docker installed, hosting a frontend from a Docker container is a viable option.
-
-The frontend Docker container simply serves files using plain HTTP, which is susceptible to man-in-the-middle attacks. Therefore it is highly recommended to wrap it in HTTPS using a reverse proxy. You can find an example docker-compose config [here](packages/dev-frontend/docker-compose-example/docker-compose.yml) that secures the frontend using [SWAG (Secure Web Application Gateway)](https://github.com/linuxserver/docker-swag) and uses [watchtower](https://github.com/containrrr/watchtower) for automatically updating the frontend image to the latest version on Docker Hub.
-
-Remember to customize both [docker-compose.yml](packages/dev-frontend/docker-compose-example/docker-compose.yml) and the [site config](packages/dev-frontend/docker-compose-example/config/nginx/site-confs/Fluid.example.com).
-
 ## Known Issues
 
 ### Temporary and slightly inaccurate TCR calculation within `batchLiquidateTroves` in Recovery Mode.
@@ -1732,28 +1518,6 @@ There is a theoretical and extremely rare case where it incorrectly causes a los
 ### SortedTroves edge cases - top and bottom of the sorted list
 
 When the trove is at one end of the `SortedTroves` list and adjusted such that its ICR moves further away from its neighbor, `findInsertPosition` returns unhelpful positional hints, which if used can cause the `adjustTrove` transaction to run out of gas. This is due to the fact that one of the returned addresses is in fact the address of the trove to move - however, at re-insertion, it has already been removed from the list. As such the insertion logic defaults to `0x0` for that hint address, causing the system to search for the trove starting at the opposite end of the list. A workaround is possible, and this has been corrected in the SDK used by front ends.
-
-### Front-running issues
-
-#### Loss evasion by front-running Stability Pool depositors
-
-_Example sequence 1): evade liquidation tx_
-
-- Depositor sees incoming liquidation tx that would cause them a net loss
-- Depositor front-runs with `withdrawFromSP()` to evade the loss
-
-_Example sequence 2): evade price drop_
-
-- Depositor sees incoming price drop tx (or just anticipates one, by reading exchange price data), that would shortly be followed by unprofitable liquidation txs
-- Depositor front-runs with `withdrawFromSP()` to evade the loss
-
-Stability Pool depositors expect to make profits from liquidations which are likely to happen at a collateral ratio slightly below 130%, but well above 100%. In rare cases (flash crashes, oracle failures), troves may be liquidated below 100% though, resulting in a net loss for stability depositors. Depositors thus have an incentive to withdraw their deposits if they anticipate liquidations below 100% (note that the exact threshold of such “unprofitable” liquidations will depend on the current Dollar price of USDF).
-
-As long the difference between two price feed updates is <10% and price stability is maintained, loss evasion situations should be rare. The percentage changes between two consecutive prices reported by Chainlink’s ETH:USD oracle has only ever come close to 10% a handful of times in the past few years.
-
-In the current implementation, deposit withdrawals are prohibited if and while there are troves with a collateral ratio (ICR) < 130% in the system. This prevents loss evasion by front-running the liquidate transaction as long as there are troves that are liquidatable in normal mode.
-
-This solution is only partially effective since it does not prevent stability depositors from monitoring the Assets price feed and front-running oracle price update transactions that would make troves liquidatable. Given that we expect loss-evasion opportunities to be very rare, we do not expect that a significant fraction of stability depositors would actually apply front-running strategies, which require sophistication and automation. In the unlikely event that large fraction of the depositors withdraw shortly before the liquidation of troves at <100% CR, the redistribution mechanism will still be able to absorb defaults.
 
 #### Reaping liquidation gains on the fly
 
@@ -1786,9 +1550,9 @@ Finally, this DoS could be avoided if the initial transaction avoids the public 
 
 The content of this readme document (“Readme”) is of purely informational nature. In particular, none of the content of the Readme shall be understood as advice provided by Fluid AG, any Fluid Project Team member or other contributor to the Readme, nor does any of these persons warrant the actuality and accuracy of the Readme.
 
-Please read this Disclaimer carefully before accessing, interacting with, or using the Fluid Protocol software, consisting of the Fluid Protocol technology stack (in particular its smart contracts) as well as any other Fluid technology such as e.g., the launch kit for frontend operators (togAsset the “Fluid Protocol Software”).
+Please read this Disclaimer carefully before accessing, interacting with, or using the Fluid Protocol software, consisting of the Fluid Protocol technology stack (in particular its smart contracts).
 
-While Fluid AG developed the Fluid Protocol Software, the Fluid Protocol Software runs in a fully decentralized and autonomous manner on the Asseteum network. Fluid AG is not involved in the operation of the Fluid Protocol Software nor has it any control over transactions made using its smart contracts. Further, Fluid AG does neither enter into any relationship with users of the Fluid Protocol Software and/or frontend operators, nor does it operate an own frontend. Any and all functionalities of the Fluid Protocol Software, including the USDF and the FPT, are of purely technical nature and there is no claim towards any private individual or legal entity in this regard.
+While Fluid AG developed the Fluid Protocol Software, the Fluid Protocol Software runs in a fully decentralized and autonomous manner on the Fuel network. Fluid AG is not involved in the operation of the Fluid Protocol Software nor has it any control over transactions made using its smart contracts. Further, Fluid AG does neither enter into any relationship with users of the Fluid Protocol Software and/or frontend operators, nor does it operate an own frontend. Any and all functionalities of the Fluid Protocol Software, including the USDF and the FPT, are of purely technical nature and there is no claim towards any private individual or legal entity in this regard.
 
 Fluid AG IS NOT LIABLE TO ANY USER FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE, IN CONNECTION WITH THE USE OR INABILITY TO USE THE Fluid PROTOCOL SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF ETH, USDF OR FPT, NON-ALLOCATION OF TECHNICAL FEES TO FPT HOLDERS, LOSS OF DATA, BUSINESS INTERRUPTION, DATA BEING RENDERED INACCURATE OR OTHER LOSSES SUSTAINED BY A USER OR THIRD PARTIES AS A RESULT OF THE Fluid PROTOCOL SOFTWARE AND/OR ANY ACTIVITY OF A FRONTEND OPERATOR OR A FAILURE OF THE Fluid PROTOCOL SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE).
 

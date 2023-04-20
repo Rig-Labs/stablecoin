@@ -1,12 +1,14 @@
+use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::prelude::*;
 
 use fuels::programs::call_response::FuelCallResponse;
-use fuels::signers::fuel_crypto::rand::{self, Rng};
 use fuels::types::Identity;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
-use test_utils::setup::common::{deploy_stability_pool, deploy_token};
+use test_utils::setup::common::{
+    deploy_stability_pool, deploy_token, get_absolute_path_from_relative,
+};
 
 abigen!(Contract(
     name = "MockTroveManagerContract",
@@ -14,9 +16,7 @@ abigen!(Contract(
 ));
 
 const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
-    "tests/artifacts/out/debug/mock-trove-manager-sp-contract.bin";
-const MOCK_TROVE_MANAGER_CONTRACT_STORAGE_PATH: &str =
-    "tests/artifacts/out/debug/mock-trove-manager-sp-contract-storage_slots.json";
+    "contracts/stability-pool-contract/tests/artifacts/out/debug/mock-trove-manager-sp-contract.bin";
 
 pub fn get_relative_path(path: String) -> String {
     let current_dir = std::env::current_dir().unwrap();
@@ -26,24 +26,17 @@ pub fn get_relative_path(path: String) -> String {
 
 pub async fn deploy_mock_trove_manager_contract(
     wallet: &WalletUnlocked,
-) -> MockTroveManagerContract {
+) -> MockTroveManagerContract<WalletUnlocked> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
     let tx_parms = TxParameters::default().set_gas_price(1);
 
-    let deploy_config = DeployConfiguration::default()
-        .set_storage_configuration(
-            StorageConfiguration::default()
-                .set_storage_path(MOCK_TROVE_MANAGER_CONTRACT_STORAGE_PATH.to_string()),
-        )
-        .set_salt(salt)
-        .set_tx_parameters(tx_parms);
-
-    let id = Contract::deploy(
-        &get_relative_path(MOCK_TROVE_MANAGER_BINARY_PATH.to_string()),
-        &wallet,
-        deploy_config,
+    let id = Contract::load_from(
+        &get_absolute_path_from_relative(MOCK_TROVE_MANAGER_BINARY_PATH),
+        LoadConfiguration::default().set_salt(salt),
     )
+    .unwrap()
+    .deploy(&wallet.clone(), tx_parms)
     .await
     .unwrap();
 
@@ -51,8 +44,8 @@ pub async fn deploy_mock_trove_manager_contract(
 }
 
 pub async fn set_nominal_icr_and_insert(
-    trove_manager: &MockTroveManagerContract,
-    sorted_troves: &SortedTroves,
+    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    sorted_troves: &SortedTroves<WalletUnlocked>,
     new_id: Identity,
     new_icr: u64,
     prev_id: Identity,
@@ -71,7 +64,7 @@ pub async fn set_nominal_icr_and_insert(
 }
 
 pub async fn get_nominal_icr(
-    trove_manager: &MockTroveManagerContract,
+    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     id: Identity,
 ) -> FuelCallResponse<u64> {
     trove_manager
@@ -83,10 +76,10 @@ pub async fn get_nominal_icr(
 }
 
 pub async fn offset(
-    trove_manager: &MockTroveManagerContract,
-    stability_pool: &StabilityPool,
-    fuel_token: &Token,
-    usdf_token: &Token,
+    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    stability_pool: &StabilityPool<WalletUnlocked>,
+    fuel_token: &Token<WalletUnlocked>,
+    usdf_token: &Token<WalletUnlocked>,
     coll_to_offset: u64,
     debt_to_offset: u64,
 ) -> FuelCallResponse<()> {
@@ -103,7 +96,7 @@ pub async fn offset(
 }
 
 pub async fn initialize(
-    trove_manager: &MockTroveManagerContract,
+    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     borrow_operations: ContractId,
     sorted_troves: ContractId,
     stability_pool: ContractId,
@@ -119,8 +112,8 @@ pub async fn initialize(
 }
 
 pub async fn remove(
-    trove_manager: &MockTroveManagerContract,
-    sorted_troves: &SortedTroves,
+    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
@@ -138,9 +131,9 @@ pub async fn remove(
 pub async fn setup(
     num_wallets: Option<u64>,
 ) -> (
-    StabilityPool,
-    MockTroveManagerContract,
-    Token,
+    StabilityPool<WalletUnlocked>,
+    MockTroveManagerContract<WalletUnlocked>,
+    Token<WalletUnlocked>,
     WalletUnlocked,
     WalletUnlocked,
     Vec<WalletUnlocked>,

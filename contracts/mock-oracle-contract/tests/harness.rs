@@ -5,7 +5,7 @@ use test_utils::{
     setup::common::deploy_oracle,
 };
 
-async fn get_contract_instance() -> Oracle {
+async fn get_contract_instance() -> Oracle<WalletUnlocked> {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

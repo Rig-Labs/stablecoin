@@ -3,7 +3,12 @@ use test_utils::interfaces::vesting::VestingContract;
 use test_utils::setup::common::deploy_vesting_contract;
 use test_utils::{interfaces::token::Token, setup::common::deploy_token};
 
-pub async fn setup() -> (VestingContract, WalletUnlocked, WalletUnlocked, Token) {
+pub async fn setup() -> (
+    VestingContract<WalletUnlocked>,
+    WalletUnlocked,
+    WalletUnlocked,
+    Token<WalletUnlocked>,
+) {
     let config = Config {
         manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
         ..Config::local_node()
@@ -38,8 +43,8 @@ pub mod test_helpers {
     use super::*;
 
     pub async fn init_and_mint_to_vesting(
-        contract: &Token,
-        vesting_contract: &VestingContract,
+        contract: &Token<WalletUnlocked>,
+        vesting_contract: &VestingContract<WalletUnlocked>,
         amount: u64,
         admin: &WalletUnlocked,
     ) {
