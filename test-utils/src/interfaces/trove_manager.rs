@@ -198,9 +198,27 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         trove_manager
             .methods()
             .get_trove_coll(id)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn get_entire_debt_and_coll<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+        id: Identity,
+    ) -> FuelCallResponse<(u64, u64, u64, u64)> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
+        trove_manager
+            .methods()
+            .get_entire_debt_and_coll(id)
+            .tx_params(tx_params)
             .call()
             .await
             .unwrap()

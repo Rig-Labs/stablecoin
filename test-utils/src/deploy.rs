@@ -1,12 +1,18 @@
 use dotenv::dotenv;
-use fuels::prelude::{Address, Provider, WalletUnlocked};
+use fuels::{
+    prelude::{Address, Bech32Address, Bech32ContractId, Provider, WalletUnlocked},
+    types::ContractId,
+};
 
-use crate::setup::common::{deploy_and_initialize_all, ProtocolContracts};
+use crate::{
+    interfaces::trove_manager::trove_manager_abi,
+    setup::common::{deploy_and_initialize_all, ProtocolContracts},
+};
 
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+// #[tokio::test]
 pub async fn deploy() {
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {
