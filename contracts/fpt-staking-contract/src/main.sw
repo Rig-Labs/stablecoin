@@ -24,6 +24,7 @@ storage {
     f_usdf: u64 = 0,
     total_fpt_staked: u64 = 0,
     protocol_manager_address: ContractId = null_contract(),
+    trove_manager_address: ContractId = null_contract(),
     is_initialized: bool = false,
 }
 
@@ -52,6 +53,13 @@ abi FPTStaking {
     fn initialize(
         protocol_manager: ContractId,
     );
+
+    #[storage(read)]
+    fn get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {};
+
+    #[storage(read)]
+    fn get_pending_usdf_gain(id: Identity) -> u64 {};
+
 }
 
 impl FPTStaking for Contract {
@@ -87,12 +95,13 @@ impl FPTStaking for Contract {
             }
         }
 
+        update_user_snapshots(id);
+
         let new_stake = current_stake + amount;
         storage.stakes.insert(id, new_stake); //overwrite previous balance
         storage.total_fpt_staked = storage.total_fpt_staked + amount;
         //here we actually need to transfer the FPT tokens from the user to this contract
 
-        update_user_snapshots(id);
     }
 
     #[storage(read)]
@@ -109,6 +118,8 @@ impl FPTStaking for Contract {
             asset_gain = get_pending_asset_gain(id, current_asset_address);
             internal_send_asset_gain_to_user(asset_gain, current_asset_address);
         }
+
+        update_user_snapshots(id);
 
         if (amount > 0){
             let amount_to_withdraw = min(amount, current_stake);
@@ -132,22 +143,52 @@ impl FPTStaking for Contract {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_address);
 
-        //todo, determine if this is 126 or 64
+        //todo, determine if this is 128 or 64
         //storage.f_asset.insert(asset_address, U128::from_u64(0));
     }
 
+    #[storage(read)]
+    fn get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
+        internal_get_pending_asset_gain(id, asset_address)
+    }
+
+    #[storage(read)]
+    fn get_pending_usdf_gain(id: Identity) -> u64 {
+        internal_get_pending_usdf_gain(id)
+    }
+
+    #[storage(read, write)]
+    fn increase_f_usdf(usdf_fee_amount: u64){
+        require_is_trove_manager();
+        let mut usdf_fee_per_fpt_staked;
+        if (storage.total_fpt_staked > 0){
+            usdf_fee_per_fpt_staked = (usdf_fee_amount * DECIMAL_PRECISION) / storage.total_fpt_staked;
+        }
+        storage.f_usdf = storage.f_usdf + usdf_fee_per_fpt_staked;
+    }
+
+    #[storage(read, write)]
+    fn increase_f_asset(asset_fee_amount: u64, asset_address: ContractId){
+        require_is_trove_manager();
+        let mut asset_fee_per_fpt_staked;
+        if (storage.total_fpt_staked > 0){
+            asset_fee_per_fpt_staked = (asset_fee_amount * DECIMAL_PRECISION) / storage.total_fpt_staked;
+        }
+        let mut new_f_asset = storage.f_asset.get(asset_address).unwrap() + asset_fee_per_fpt_staked;
+        storage.f_asset.insert(asset_address, new_f_asset);
+    }
 }
 
-// doesn't really look like in Sway we need to have a public wrapper of a private function for these 
+
 #[storage(read)]
-fn get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
+fn internal_get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
     let f_asset_snapshot = storage.asset_snapshot.get((id, asset_address)).unwrap();
     let asset_gain = (storage.stakes.get(id).unwrap() * (storage.f_asset.get(asset_address).unwrap() - f_asset_snapshot)) / DECIMAL_PRECISION;
     asset_gain
 }
 
 #[storage(read)]
-fn get_pending_usdf_gain(id: Identity) -> u64 {
+fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
     let f_usdf_snapshot = storage.usdf_snapshot.get(id).unwrap();
     let usdf_gain = (storage.stakes.get(id).unwrap() * (storage.f_usdf - f_usdf_snapshot)) / DECIMAL_PRECISION;
     usdf_gain
@@ -155,10 +196,16 @@ fn get_pending_usdf_gain(id: Identity) -> u64 {
 
 #[storage(read, write)]
 fn update_user_snapshots(id: Identity) {
-    /*let mut user_snapshot = storage.snapshots.get(id);
-    user_snapshot.f_usdf_snapshot = storage.f_usdf;
-    user_snapshot.f_asset_snapshot = storage.f_asset;
-    storage.snapshots.insert(id, user_snapshot);*/
+
+    storage.usdf_snapshot.insert(id, storage.f_usdf);
+ 
+    let mut x = 0;
+    while x < storage.valid_assets.length{
+        let current_asset_address = storage.valid_assets[x];
+        let f_asset = storage.f_asset.get(current_asset_address);
+        storage.asset_snapshot.insert(id, current_asset_address, f_asset);
+    }
+
 }
 
 fn require_non_zero(amount: u64) {
@@ -176,8 +223,14 @@ fn require_is_protocol_manager() {
 }
 
 #[storage(read)]
-fn internal_send_asset_gain_to_user(amount: u64, asset_address: ContractId) {
+fn require_is_trove_manager() {
+    let trove_manager = Identity::ContractId(storage.trove_manager_address);
+    require(msg_sender().unwrap() == trove_manager, "Caller is not the trove manager");
+}
 
+#[storage(read)]
+fn internal_send_asset_gain_to_user(amount: u64, asset_address: ContractId) {
+ //todo
 }
 
 fn min(amount_one: u64, amount_two:u64) -> u64 {
@@ -190,5 +243,5 @@ fn min(amount_one: u64, amount_two:u64) -> u64 {
 
 #[storage(read)]
 fn internal_send_usdf_gain_to_user(amount: u64) {
-
+// todo
 }
