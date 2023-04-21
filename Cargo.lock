@@ -1688,26 +1688,54 @@ dependencies = [
 
 [[package]]
 name = "fuels"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9eede2cde3dd4e8cba56ed5bf4412836d7be280e013e392b2756af99ffb9e714"
+checksum = "2c50be8902e21d9f6d4f711cfe6409b0bf8f7d7b480fd419f0587fdafe9c7afc"
 dependencies = [
  "fuel-core",
  "fuel-core-client",
  "fuel-tx",
+ "fuels-accounts",
  "fuels-core",
  "fuels-macros",
  "fuels-programs",
- "fuels-signers",
  "fuels-test-helpers",
  "fuels-types",
 ]
 
 [[package]]
-name = "fuels-code-gen"
-version = "0.38.1"
+name = "fuels-accounts"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96d03eee7fa041bb4da8cdecc84b81f1ab8e5810d67bcec0c090bdd58f07e955"
+checksum = "b3013bd63e8f1d7e76cd755eada352961e34aa13e8fc593a74949fa050b4db26"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "chrono",
+ "elliptic-curve 0.11.12",
+ "eth-keystore",
+ "fuel-core-client",
+ "fuel-crypto",
+ "fuel-tx",
+ "fuel-types",
+ "fuel-vm",
+ "fuels-core",
+ "fuels-types",
+ "hex",
+ "itertools",
+ "rand",
+ "serde",
+ "sha2 0.9.9",
+ "tai64",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "fuels-code-gen"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04d7fd915aff47f7115028045faea2ec2d6f36ce888436bcb1fe978d4307b033"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
@@ -1722,9 +1750,9 @@ dependencies = [
 
 [[package]]
 name = "fuels-core"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd7273ee45a548acbd95e67405809e4b1778f4973851c16633e75b902f0ea9e"
+checksum = "72c6733285c70df69f164489e333f2f885f7204119b57722590a0b129b32392a"
 dependencies = [
  "fuel-tx",
  "fuel-types",
@@ -1737,9 +1765,9 @@ dependencies = [
 
 [[package]]
 name = "fuels-macros"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6107ffb7dda1051d1db5d1bc209a66d3c2911a8fc844cf3662ca4b705556b57a"
+checksum = "bee12007d881133ca2515bcf37f6b2fc22f71a5a6e5095f5146c847b51681a2d"
 dependencies = [
  "Inflector",
  "fuel-abi-types",
@@ -1756,17 +1784,18 @@ dependencies = [
 
 [[package]]
 name = "fuels-programs"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c1034d747824c089622ca9ec400dc44a7a7119d9caf001116d8befa441bd47"
+checksum = "4c095b969b3cef1aa554e773ede87cef722b028578961e19f768f88c794d050b"
 dependencies = [
- "bytes 1.4.0",
+ "async-trait",
+ "bytes",
  "fuel-abi-types",
  "fuel-tx",
  "fuel-types",
  "fuel-vm",
+ "fuels-accounts",
  "fuels-core",
- "fuels-signers",
  "fuels-types",
  "futures",
  "hex",
@@ -1784,38 +1813,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "fuels-signers"
-version = "0.38.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "862c60e598272158d3877896b1a47ae6109733f4538711a4d898c571a88aacb7"
-dependencies = [
- "async-trait",
- "bytes 1.4.0",
- "chrono",
- "elliptic-curve 0.11.12",
- "eth-keystore",
- "fuel-core-client",
- "fuel-crypto",
- "fuel-tx",
- "fuel-types",
- "fuel-vm",
- "fuels-core",
- "fuels-types",
- "hex",
- "itertools 0.10.5",
- "rand 0.8.5",
- "serde",
- "sha2 0.9.9",
- "tai64",
- "thiserror",
- "tokio 1.27.0",
-]
-
-[[package]]
 name = "fuels-test-helpers"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c51cb48e1a813b61d811f0811d9758e0f4527097b6a17fccf613ecc3595d3e4d"
+checksum = "d2955a03fd9be90982e3e42c3485517766bc1b8426cf88d4eb96ecb545b549ff"
 dependencies = [
  "fuel-core",
  "fuel-core-chain-config",
@@ -1824,7 +1825,7 @@ dependencies = [
  "fuel-tx",
  "fuel-types",
  "fuel-vm",
- "fuels-signers",
+ "fuels-accounts",
  "fuels-types",
  "futures",
  "hex",
@@ -1840,9 +1841,9 @@ dependencies = [
 
 [[package]]
 name = "fuels-types"
-version = "0.38.1"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e2ee9c34502c6427661beb51ee954b2c7c50e51a9bb518f2a7d512682cddd31"
+checksum = "dbbe53d12644471c990b7460109d4f4400a1cdcfc70ce3108b323f44d70a03d1"
 dependencies = [
  "bech32 0.9.1",
  "chrono",

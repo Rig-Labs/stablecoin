@@ -102,7 +102,7 @@ mod success {
 
         let asset_id = AssetId::from(*asset.id().hash());
 
-        let provider = admin.get_provider().unwrap();
+        let provider = admin.provider().unwrap();
 
         let vest_balance = provider
             .get_contract_asset_balance(&vest.id(), asset_id)
@@ -182,7 +182,7 @@ mod success {
 
         let asset_id = AssetId::from(*asset.id().hash());
 
-        let provider = admin.get_provider().unwrap();
+        let provider = admin.provider().unwrap();
 
         let starting_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -342,7 +342,7 @@ mod success {
 
         let asset_id = AssetId::from(*asset.id().hash());
 
-        let provider = admin.get_provider().unwrap();
+        let provider = admin.provider().unwrap();
 
         produce_block_at_height(&provider, cliff_timestamp - 1).await;
         // Block produced then claim vested tokens happens in the next block

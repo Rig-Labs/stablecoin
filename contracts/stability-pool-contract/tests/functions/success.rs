@@ -8,7 +8,7 @@ use test_utils::{
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils},
     },
-    setup::common::{assert_within_threshold, setup_protocol},
+    setup::common::{assert_within_threshold, print_response, setup_protocol},
     utils::with_min_borrow_fee,
 };
 
@@ -48,7 +48,7 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
-    stability_pool_abi::provide_to_stability_pool(
+    let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
@@ -57,14 +57,18 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
+    print_response(res);
+
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
         0,
         contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await;
+    println!("1");
 
     stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 600_000_000).await;
+    println!("2");
 
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
@@ -72,6 +76,7 @@ async fn proper_stability_deposit() {
         600_000_000,
     )
     .await;
+    println!("3");
 
     stability_pool_utils::assert_depositor_asset_gain(
         &contracts.stability_pool,
@@ -300,7 +305,7 @@ async fn proper_one_sp_depositor_position() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let fuel_asset_id: AssetId =
         AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
@@ -984,7 +989,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let fuel_asset_id: AssetId =
         AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
@@ -996,7 +1001,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     assert_eq!(fuel_balance, asset_with_fee_adjustment);
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     let st_fuel_asset_id: AssetId =
         AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());

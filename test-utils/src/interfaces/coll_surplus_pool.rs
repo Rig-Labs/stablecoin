@@ -10,14 +10,14 @@ abigen!(Contract(
 pub mod coll_surplus_pool_abi {
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
     use fuels::{
-        prelude::{ContractId, LogDecoder, TxParameters},
+        prelude::{Account, ContractId, LogDecoder, TxParameters, WalletUnlocked},
         types::Identity,
     };
 
     use super::*;
 
-    pub async fn initialize(
-        default_pool: &CollSurplusPool,
+    pub async fn initialize<T: Account>(
+        default_pool: &CollSurplusPool<T>,
         trove_manager: Identity,
         active_pool: ContractId,
         borrow_operations: ContractId,
@@ -47,14 +47,14 @@ pub mod coll_surplus_pool_abi {
         }
     }
 
-    pub async fn get_asset(default_pool: &CollSurplusPool) -> FuelCallResponse<u64> {
+    pub async fn get_asset<T: Account>(default_pool: &CollSurplusPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_asset().call().await.unwrap()
     }
 
-    pub async fn claim_coll(
-        default_pool: &CollSurplusPool,
+    pub async fn claim_coll<T: Account>(
+        default_pool: CollSurplusPool<T>,
         acount: Identity,
-        active_pool: &ActivePool,
+        active_pool: &ActivePool<T>,
     ) -> FuelCallResponse<()> {
         default_pool
             .methods()
@@ -67,7 +67,7 @@ pub mod coll_surplus_pool_abi {
     }
 
     pub async fn get_collateral(
-        default_pool: &CollSurplusPool,
+        default_pool: &CollSurplusPool<WalletUnlocked>,
         acount: Identity,
     ) -> FuelCallResponse<u64> {
         default_pool

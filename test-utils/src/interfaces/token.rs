@@ -6,13 +6,13 @@ abigen!(Contract(
 ));
 
 pub mod token_abi {
-    use fuels::prelude::{LogDecoder, TxParameters};
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
 
     use super::*;
-    pub async fn initialize(
-        instance: &Token,
+    pub async fn initialize<T: Account>(
+        instance: &Token<T>,
         amount: u64,
         admin: &Identity,
         mut name: String,
@@ -46,8 +46,8 @@ pub mod token_abi {
         }
     }
 
-    pub async fn mint_to_id(
-        instance: &Token,
+    pub async fn mint_to_id<T: Account>(
+        instance: &Token<T>,
         amount: u64,
         admin: Identity,
     ) -> FuelCallResponse<()> {

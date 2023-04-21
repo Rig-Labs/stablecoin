@@ -95,6 +95,8 @@ impl StabilityPool for Contract {
         storage.community_issuance_address = community_issuance_address;
         storage.protocol_manager_address = protocol_manager;
         storage.is_initialized = true;
+        // Super weird, updated from 0.38.1 to 0.41.0 and initial storage assignment was not working
+        storage.p = U128::from_u64(DECIMAL_PRECISION);
     }
 
     #[storage(read, write)]
@@ -329,22 +331,30 @@ fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
 
 #[storage(read)]
 fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots) -> u64 {
+    log(1);
     let epoch_snapshot = snapshots.epoch;
     let scale_snapshot = snapshots.scale;
     let p_snapshot = snapshots.P;
+    log(2);
 
     if (epoch_snapshot < storage.current_epoch) {
         return 0;
     }
-
+    log(3);
     let mut compounded_stake: U128 = U128::from_u64(0);
     let scale_diff = storage.current_scale - scale_snapshot;
 
     if (scale_diff == 0) {
+        log(33);
+        log(initial_stake);
+        log(storage.p.as_u64());
+        log(p_snapshot.as_u64());
         compounded_stake = U128::from_u64(initial_stake) * storage.p / p_snapshot;
     } else if (scale_diff == 1) {
+        log(44);
         compounded_stake = U128::from_u64(initial_stake) * storage.p / p_snapshot / U128::from_u64(SCALE_FACTOR);
     } else {
+        log(55);
         compounded_stake = U128::from_u64(0);
     }
 
@@ -352,7 +362,7 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     {
         return 0;
     }
-
+    log(4);
     return compounded_stake.as_u64().unwrap();
 }
 #[storage(read, write)]
@@ -370,6 +380,8 @@ fn internal_increase_asset(total_asset_to_increase: u64, asset_address: Contract
 #[storage(read, write)]
 fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposits.insert(depositor, amount);
+    log(0);
+    log(amount);
 
     if (amount == 0) {
         // TODO use storage remove when available
@@ -379,6 +391,13 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let current_epoch = storage.current_epoch;
     let current_scale = storage.current_scale;
     let current_p = storage.p;
+
+    log(current_epoch);
+    log(current_scale);
+    log(current_p.as_u64());
+    log(current_p.lower);
+    log(current_p.upper);
+    log(77);
 
     let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale));
 

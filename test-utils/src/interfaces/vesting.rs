@@ -1,5 +1,5 @@
 use fuels::{
-    prelude::{abigen, Address, ContractId},
+    prelude::{abigen, Account, Address, ContractId},
     programs::call_response::FuelCallResponse,
     types::Identity,
 };
@@ -9,8 +9,8 @@ abigen!(Contract(
     abi = "contracts/vesting-contract/out/debug/vesting-contract-abi.json"
 ));
 
-pub async fn instantiate_vesting_contract(
-    contract: &VestingContract,
+pub async fn instantiate_vesting_contract<T: Account>(
+    contract: &VestingContract<T>,
     admin: &Address,
     vesting_schedule: &Vec<VestingSchedule>,
     asset_contract: &ContractId,

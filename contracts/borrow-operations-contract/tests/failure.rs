@@ -20,7 +20,7 @@ async fn fails_open_two_troves() {
     )
     .await;
 
-    let provider = admin.get_provider().unwrap();
+    let provider = admin.provider().unwrap();
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,

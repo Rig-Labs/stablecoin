@@ -10,7 +10,7 @@ abigen!(Contract(
 pub mod default_pool_abi {
     use crate::interfaces::token::Token;
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
-    use fuels::prelude::LogDecoder;
+    use fuels::prelude::{Account, LogDecoder};
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, TxParameters},
         types::Identity,
@@ -18,8 +18,8 @@ pub mod default_pool_abi {
 
     use super::*;
 
-    pub async fn initialize(
-        default_pool: &DefaultPool,
+    pub async fn initialize<T: Account>(
+        default_pool: &DefaultPool<T>,
         trove_manager: Identity,
         active_pool: ContractId,
         asset_id: ContractId,
@@ -43,16 +43,16 @@ pub mod default_pool_abi {
         }
     }
 
-    pub async fn get_usdf_debt(default_pool: &DefaultPool) -> FuelCallResponse<u64> {
+    pub async fn get_usdf_debt<T: Account>(default_pool: &DefaultPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_usdf_debt().call().await.unwrap()
     }
 
-    pub async fn get_asset(default_pool: &DefaultPool) -> FuelCallResponse<u64> {
+    pub async fn get_asset<T: Account>(default_pool: &DefaultPool<T>) -> FuelCallResponse<u64> {
         default_pool.methods().get_asset().call().await.unwrap()
     }
 
-    pub async fn increase_usdf_debt(
-        default_pool: &DefaultPool,
+    pub async fn increase_usdf_debt<T: Account>(
+        default_pool: &DefaultPool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
@@ -63,8 +63,8 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn decrease_usdf_debt(
-        default_pool: &DefaultPool,
+    pub async fn decrease_usdf_debt<T: Account>(
+        default_pool: &DefaultPool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
@@ -75,9 +75,9 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn recieve(
-        default_pool: &DefaultPool,
-        token: &Token,
+    pub async fn recieve<T: Account>(
+        default_pool: &DefaultPool<T>,
+        token: &Token<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         let fuel_asset_id = AssetId::from(*token.contract_id().hash());
@@ -101,9 +101,9 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn send_asset_to_active_pool(
-        default_pool: &DefaultPool,
-        active_pool: &ActivePool,
+    pub async fn send_asset_to_active_pool<T: Account>(
+        default_pool: &DefaultPool<T>,
+        active_pool: &ActivePool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
         default_pool
