@@ -19,14 +19,14 @@ use std::{
 };
 
 
-//todo: switch anything that involves multiplication to U128
+// anything that is NOT a token balance to 128
 storage {
     valid_assets: StorageVec<ContractId> = StorageVec {},
-    stakes: StorageMap<Identity, u64> = StorageMap {},
-    usdf_snapshot: StorageMap<Identity, u64> = StorageMap {},
-    asset_snapshot: StorageMap<(Identity, ContractId), u64> = StorageMap {},
-    f_asset: StorageMap<ContractId, u64> = StorageMap {},
-    f_usdf: u64 = 0,
+    stakes: StorageMap<Identity, u64> = StorageMap {}, 
+    usdf_snapshot: StorageMap<Identity, u64> = StorageMap {}, 
+    asset_snapshot: StorageMap<(Identity, ContractId), u64> = StorageMap {}, 
+    f_asset: StorageMap<ContractId, u64> = StorageMap {}, 
+    f_usdf: u64 = 0, 
     total_fpt_staked: u64 = 0,
     protocol_manager_address: ContractId = null_contract(),
     trove_manager_address: ContractId = null_contract(),
@@ -36,7 +36,7 @@ storage {
     is_initialized: bool = false,
 }
 
-const DECIMAL_PRECISION = 1; //temporary until we figure this out!
+const DECIMAL_PRECISION: U128 = U128::from_u64(1); //temporary until we figure this out!
 // use shared library decimal precision var
 
 // TODO Migrate this to follow the other contracts
@@ -194,7 +194,7 @@ impl FPTStaking for Contract {
         require_is_borrower_operations();
         let mut usdf_fee_per_fpt_staked = 0;
         if (storage.total_fpt_staked > 0){
-            usdf_fee_per_fpt_staked = (usdf_fee_amount * DECIMAL_PRECISION) / storage.total_fpt_staked;
+            usdf_fee_per_fpt_staked = ((U128::from_u64(usdf_fee_amount) * DECIMAL_PRECISION) / U128::from_u64(storage.total_fpt_staked)).as_u64().unwrap();
         }
         storage.f_usdf = storage.f_usdf + usdf_fee_per_fpt_staked;
     }
@@ -204,7 +204,7 @@ impl FPTStaking for Contract {
         require_is_borrower_operations();
         let mut asset_fee_per_fpt_staked =0;
         if (storage.total_fpt_staked > 0){
-            asset_fee_per_fpt_staked = (asset_fee_amount * DECIMAL_PRECISION) / storage.total_fpt_staked;
+            asset_fee_per_fpt_staked = ((U128::from_u64(asset_fee_amount) * DECIMAL_PRECISION) / U128::from_u64(storage.total_fpt_staked)).as_u64().unwrap();
         }
         let mut new_f_asset = storage.f_asset.get(asset_address).unwrap() + asset_fee_per_fpt_staked;
         storage.f_asset.insert(asset_address, new_f_asset);
@@ -214,15 +214,15 @@ impl FPTStaking for Contract {
 
 #[storage(read)]
 fn internal_get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
-    let f_asset_snapshot = storage.asset_snapshot.get((id, asset_address)).unwrap();
-    let asset_gain = (storage.stakes.get(id).unwrap() * (storage.f_asset.get(asset_address).unwrap() - f_asset_snapshot)) / DECIMAL_PRECISION;
+    let f_asset_snapshot: U128 = U128::from_u64(storage.asset_snapshot.get((id, asset_address)).unwrap());
+    let asset_gain = ((U128::from_u64(storage.stakes.get(id).unwrap()) * (U128::from_u64(storage.f_asset.get(asset_address).unwrap()) - f_asset_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
     asset_gain
 }
 
 #[storage(read)]
 fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
-    let f_usdf_snapshot = storage.usdf_snapshot.get(id).unwrap();
-    let usdf_gain = (storage.stakes.get(id).unwrap() * (storage.f_usdf - f_usdf_snapshot)) / DECIMAL_PRECISION;
+    let f_usdf_snapshot: U128  = U128::from_u64(storage.usdf_snapshot.get(id).unwrap());
+    let usdf_gain = ((U128::from_u64(storage.stakes.get(id).unwrap()) * (U128::from_u64(storage.f_usdf) - f_usdf_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
     usdf_gain
 }
 
