@@ -2,6 +2,7 @@ contract;
 
 use libraries::numbers::*;
 use libraries::fluid_math::{ null_contract };
+use libraries::fpt_staking_interface::{FPTStaking};
 use std::{
     auth::msg_sender,
     call_frames::{
@@ -18,8 +19,6 @@ use std::{
     },
 };
 
-
-// anything that is NOT a token balance to 128
 storage {
     valid_assets: StorageVec<ContractId> = StorageVec {},
     stakes: StorageMap<Identity, u64> = StorageMap {}, 
@@ -36,49 +35,7 @@ storage {
     is_initialized: bool = false,
 }
 
-const DECIMAL_PRECISION: U128 = U128::from_u64(1); //temporary until we figure this out!
-// use shared library decimal precision var
-
-// TODO Migrate this to follow the other contracts
-// move ABI to libraries/src
-abi FPTStaking {
-    #[storage(read, write)]
-    fn stake(id: Identity);
-
-    #[storage(read, write)]
-    fn unstake(id: Identity, amount: u64);
-    
-    #[storage(read, write)]
-    fn add_asset(
-        trove_manager_address: ContractId,
-        active_pool_address: ContractId,
-        sorted_troves_address: ContractId,
-        asset_address: ContractId,
-        oracle_address: ContractId,
-    );
-
-     #[storage(read, write)]
-    fn initialize(
-        protocol_manager: ContractId,
-        trove_manager_address: ContractId,
-        borrower_operations_address: ContractId,
-        fpt_address: ContractId,
-        usdf_address: ContractId,
-    );
-
-    #[storage(read)]
-    fn get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64;
-
-    #[storage(read)]
-    fn get_pending_usdf_gain(id: Identity) -> u64;
-
-    #[storage(read, write)]
-    fn increase_f_usdf(usdf_fee_amount: u64);
-
-    #[storage(read, write)]
-    fn increase_f_asset(asset_fee_amount: u64, asset_address: ContractId);
-
-}
+const DECIMAL_PRECISION: U128 = U128::from_u64(1); //todo: import from fluidmath once we switch this to u128
 
 impl FPTStaking for Contract {
 

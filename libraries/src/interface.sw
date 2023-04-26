@@ -13,6 +13,7 @@ dep default_pool_interface;
 dep coll_surplus_pool_interface;
 dep usdf_token_interface;
 dep protocol_manager_interface;
+dep fpt_staking_interface;
 
 use data_structures::{Trove};
 

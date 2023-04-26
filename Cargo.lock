@@ -1710,7 +1710,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3013bd63e8f1d7e76cd755eada352961e34aa13e8fc593a74949fa050b4db26"
 dependencies = [
  "async-trait",
- "bytes",
+ "bytes 1.4.0",
  "chrono",
  "elliptic-curve 0.11.12",
  "eth-keystore",
@@ -1722,13 +1722,13 @@ dependencies = [
  "fuels-core",
  "fuels-types",
  "hex",
- "itertools",
- "rand",
+ "itertools 0.10.5",
+ "rand 0.8.5",
  "serde",
  "sha2 0.9.9",
  "tai64",
  "thiserror",
- "tokio",
+ "tokio 1.27.0",
 ]
 
 [[package]]
@@ -1789,7 +1789,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c095b969b3cef1aa554e773ede87cef722b028578961e19f768f88c794d050b"
 dependencies = [
  "async-trait",
- "bytes",
+ "bytes 1.4.0",
  "fuel-abi-types",
  "fuel-tx",
  "fuel-types",

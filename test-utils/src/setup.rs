@@ -1,6 +1,6 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
+    coll_surplus_pool::CollSurplusPool, fpt_staking::FPTStaking, default_pool::DefaultPool, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
     vesting::VestingContract,
@@ -645,6 +645,39 @@ pub mod common {
                 .unwrap();
 
                 return CollSurplusPool::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_fpt_staking(wallet: &WalletUnlocked) -> FPTStaking<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return FPTStaking::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return FPTStaking::new(id, wallet.clone());
             }
         }
     }

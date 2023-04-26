@@ -10,3 +10,4 @@ pub mod token;
 pub mod trove_manager;
 pub mod usdf_token;
 pub mod vesting;
+pub mod fpt_staking;

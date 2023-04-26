@@ -31,7 +31,7 @@ use std::{
 };
 
 const SCALE_FACTOR = 1_000_000_000;
-const DECIMAL_PRECISION = 1_000_000;
+const DECIMAL_PRECISION = 1_000_000; //todo: import from fluidmath library
 
 storage {
     // List of assets tracked by the Stability Pool
