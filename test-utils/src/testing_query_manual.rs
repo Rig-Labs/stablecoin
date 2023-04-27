@@ -12,7 +12,7 @@ use crate::{
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+//#[tokio::test]
 pub async fn testing_query() {
     let provider = match Provider::connect(RPC).await {
         Ok(p) => p,

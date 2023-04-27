@@ -9,13 +9,16 @@ abigen!(Contract(
 
 pub mod protocol_manager_abi {
 
-    use fuels::prelude::{Account, Error, LogDecoder};
-
-    use crate::setup::common::wait;
+    use fuels::prelude::{Account};
+    use fuels::{
+        prelude::{ContractId},
+        types::Identity,
+    };
+    // use crate::setup::common::wait;
 
     use super::*;
 
-    pub async fn initialize<>(
+    pub async fn initialize<T: Account>(
         fpt_staking: &FPTStaking<T>,
         protocol_manager_address: ContractId,
         trove_manager_address: ContractId,
@@ -26,14 +29,18 @@ pub mod protocol_manager_abi {
         fpt_staking
             .methods()
             .initialize(
-
+                protocol_manager_address,
+                trove_manager_address,
+                borrower_operations_address,
+                fpt_address,
+                usdf_address,
             )
             .call()
             .await
             .unwrap()
     }
 
-    pub async fn stake<>(
+    pub async fn stake<T: Account>(
         fpt_staking: &FPTStaking<T>,
         id: Identity,
     ) -> FuelCallResponse<()> {
@@ -45,7 +52,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn unstake<>(
+    pub async fn unstake<T: Account>(
         fpt_staking: &FPTStaking<T>,
         id: Identity,
         amount: u64,
@@ -58,7 +65,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn add_asset<>(
+    pub async fn add_asset<T: Account>(
         fpt_staking: &FPTStaking<T>,
         trove_manager_address: ContractId,
         active_pool_address: ContractId,
@@ -79,11 +86,11 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_asset_gain<>(
+    pub async fn get_pending_asset_gain<T: Account>(
         fpt_staking: &FPTStaking<T>,
         id: Identity,
         asset_address: ContractId
-    ) -> FuelCallResponse<(u64)> {
+    ) -> FuelCallResponse<u64> {
         fpt_staking
             .methods()
             .get_pending_asset_gain(id, asset_address)
@@ -92,10 +99,10 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdf_gain<>(
+    pub async fn get_pending_usdf_gain<T: Account>(
         fpt_staking: &FPTStaking<T>,
         id: Identity
-    ) -> FuelCallResponse<(u64)> {
+    ) -> FuelCallResponse<u64> {
         fpt_staking
             .methods()
             .get_pending_usdf_gain(id)
@@ -104,7 +111,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn increase_f_usdf<>(
+    pub async fn increase_f_usdf<T: Account>(
         fpt_staking: &FPTStaking<T>,
         usdf_fee_amount: u64
     ) -> FuelCallResponse<()> {
@@ -116,7 +123,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn increase_f_asset<>(
+    pub async fn increase_f_asset<T: Account>(
         fpt_staking: &FPTStaking<T>,
         asset_fee_amount: u64, 
         asset_address: ContractId

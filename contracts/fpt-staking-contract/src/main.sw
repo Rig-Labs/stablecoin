@@ -64,7 +64,7 @@ impl FPTStaking for Contract {
         let amount = msg_amount();
 
         require_non_zero(amount);
-        let current_stake = storage.stakes.get(id).unwrap();
+        let current_stake = storage.stakes.get(id);
 
         let mut usdf_gain = 0;
         if (current_stake != 0) {
@@ -92,7 +92,7 @@ impl FPTStaking for Contract {
 
     #[storage(read, write)]
     fn unstake(id: Identity, amount: u64) {
-        let current_stake = storage.stakes.get(id).unwrap();
+        let current_stake = storage.stakes.get(id);
         require_user_has_stake(current_stake);
 
         let usdf_gain = internal_get_pending_usdf_gain(id);
@@ -163,7 +163,7 @@ impl FPTStaking for Contract {
         if (storage.total_fpt_staked > 0){
             asset_fee_per_fpt_staked = ((U128::from_u64(asset_fee_amount) * DECIMAL_PRECISION) / U128::from_u64(storage.total_fpt_staked)).as_u64().unwrap();
         }
-        let mut new_f_asset = storage.f_asset.get(asset_address).unwrap() + asset_fee_per_fpt_staked;
+        let mut new_f_asset = storage.f_asset.get(asset_address) + asset_fee_per_fpt_staked;
         storage.f_asset.insert(asset_address, new_f_asset);
     }
 }
@@ -171,15 +171,15 @@ impl FPTStaking for Contract {
 
 #[storage(read)]
 fn internal_get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
-    let f_asset_snapshot: U128 = U128::from_u64(storage.asset_snapshot.get((id, asset_address)).unwrap());
-    let asset_gain = ((U128::from_u64(storage.stakes.get(id).unwrap()) * (U128::from_u64(storage.f_asset.get(asset_address).unwrap()) - f_asset_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
+    let f_asset_snapshot: U128 = U128::from_u64(storage.asset_snapshot.get((id, asset_address)));
+    let asset_gain = ((U128::from_u64(storage.stakes.get(id)) * (U128::from_u64(storage.f_asset.get(asset_address)) - f_asset_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
     asset_gain
 }
 
 #[storage(read)]
 fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
-    let f_usdf_snapshot: U128  = U128::from_u64(storage.usdf_snapshot.get(id).unwrap());
-    let usdf_gain = ((U128::from_u64(storage.stakes.get(id).unwrap()) * (U128::from_u64(storage.f_usdf) - f_usdf_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
+    let f_usdf_snapshot: U128  = U128::from_u64(storage.usdf_snapshot.get(id));
+    let usdf_gain = ((U128::from_u64(storage.stakes.get(id)) * (U128::from_u64(storage.f_usdf) - f_usdf_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
     usdf_gain
 }
 
@@ -191,7 +191,7 @@ fn update_user_snapshots(id: Identity) {
     let mut x = 0;
     while x < storage.valid_assets.len(){
         let current_asset_address = storage.valid_assets.get(x).unwrap();
-        let f_asset = storage.f_asset.get(current_asset_address).unwrap();
+        let f_asset = storage.f_asset.get(current_asset_address);
         storage.asset_snapshot.insert((id, current_asset_address), f_asset);
         x += 1;
     }
