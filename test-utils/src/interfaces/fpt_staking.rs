@@ -7,7 +7,7 @@ abigen!(Contract(
     abi = "contracts/fpt-staking-contract/out/debug/fpt-staking-contract-abi.json"
 ));
 
-pub mod protocol_manager_abi {
+pub mod fpt_staking_abi {
 
     use fuels::prelude::{Account};
     use fuels::{

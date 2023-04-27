@@ -96,13 +96,13 @@ pub mod deployment {
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
             oracle::oracle_abi, protocol_manager::protocol_manager_abi,
             sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking,
         },
         setup::common::{
             deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
             deploy_default_pool, deploy_oracle, deploy_protocol_manager, deploy_sorted_troves,
             deploy_stability_pool, deploy_token, deploy_trove_manager_contract, deploy_usdf_token,
-            AssetContracts, ProtocolContracts,
+            AssetContracts, ProtocolContracts, deploy_fpt_staking,
         },
     };
 
@@ -303,6 +303,8 @@ pub mod deployment {
         pb.inc();
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
         pb.inc();
+        let fpt_staking = deploy_fpt_staking(&wallet).await;
+        pb.inc();
         println!("Deploying asset contracts... Done");
         println!("Oracle: {}", oracle.contract_id());
         println!("Sorted Troves: {}", sorted_troves.contract_id());
@@ -311,6 +313,7 @@ pub mod deployment {
         println!("Active Pool: {}", active_pool.contract_id());
         println!("Default Pool: {}", default_pool.contract_id());
         println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
+        println!("FPT Staking: {}", fpt_staking.contract_id());
 
         return AssetContracts {
             oracle,
@@ -320,6 +323,7 @@ pub mod deployment {
             active_pool,
             default_pool,
             coll_surplus_pool,
+            fpt_staking,
         };
     }
 
