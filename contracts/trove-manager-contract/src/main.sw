@@ -446,12 +446,17 @@ fn internal_batch_liquidate_troves(
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
     let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
 
+    log(1);
+    log(123);
     let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers, upper_partial_hint, lower_partial_hint);
+    log(2);
 
     require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
+    log(3);
 
     if (totals.total_coll_surplus > 0) {
+        log(4);
         // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
         active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus);
@@ -532,20 +537,25 @@ fn internal_get_totals_from_batch_liquidate(
     let mut i = 0;
     let mut totals = LiquidationTotals::default();
 
+    log(11);
     while i < borrowers.len() {
         vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
-
+        log(12);
         if vars.icr < MCR {
             let position = internal_get_entire_debt_and_coll(vars.borrower);
+            log(13);
 
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
+            log(14);
 
             single_liquidation = get_offset_and_redistribution_vals(position.entire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
+            log(15);
 
             internal_apply_liquidation(vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
+            log(16);
         } else {
             break;
         }

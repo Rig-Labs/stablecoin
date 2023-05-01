@@ -12,7 +12,7 @@ use crate::{
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-// #[tokio::test]
+#[tokio::test]
 pub async fn deploy() {
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {
@@ -36,41 +36,8 @@ pub async fn deploy() {
     let address = Address::from(wallet.address());
     println!("🔑 Wallet address: {}", address);
 
-    let contracts: ProtocolContracts<WalletUnlocked> =
-        deployment::deploy_and_initialize_all(wallet, 100, true, false).await;
-
-    println!(
-        "Borrow operations: {}",
-        contracts.borrow_operations.contract_id()
-    );
-    println!(
-        "Oracle: {}",
-        contracts.asset_contracts[0].oracle.contract_id()
-    );
-    println!(
-        "Sorted Troves: {}",
-        contracts.asset_contracts[0].sorted_troves.contract_id()
-    );
-    println!(
-        "Trove Manager: {}",
-        contracts.asset_contracts[0].trove_manager.contract_id()
-    );
-    println!("Fuel: {}", contracts.asset_contracts[0].asset.contract_id());
-    println!("Usdf: {}", contracts.usdf.contract_id());
-    println!(
-        "Active Pool: {}",
-        contracts.asset_contracts[0].active_pool.contract_id()
-    );
-    println!("Stability Pool: {}", contracts.stability_pool.contract_id());
-
-    println!(
-        "Default Pool: {}",
-        contracts.asset_contracts[0].default_pool.contract_id()
-    );
-    println!(
-        "Collateral Surplus Pool: {}",
-        contracts.asset_contracts[0].coll_surplus_pool.contract_id()
-    );
+    let _contracts: ProtocolContracts<WalletUnlocked> =
+        deployment::deploy_and_initialize_all(wallet, 100, true, true).await;
 }
 
 use super::interfaces::{
@@ -140,7 +107,7 @@ pub mod deployment {
         is_testnet: bool,
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
-        println!("Deploying parent contracts...");
+        println!("Uploading parent protocol contracts...");
         let mut pb = ProgressBar::new(4);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
@@ -164,7 +131,7 @@ pub mod deployment {
 
         let mut pb = ProgressBar::new(4);
 
-        let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
 
         let _ = usdf_token_abi::initialize(
@@ -219,7 +186,7 @@ pub mod deployment {
             &stability_pool,
             &protocol_manager,
             &usdf,
-            wallet,
+            wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
             fuel_asset_contracts.default_pool,
@@ -232,22 +199,27 @@ pub mod deployment {
         )
         .await;
 
-        // if deploy_2nd_asset {
-        //     let usdf_asset_contracts = add_asset(
-        //         &borrow_operations,
-        //         &stability_pool,
-        //         &protocol_manager,
-        //         &usdf,
-        //         wallet,
-        //         "stFuel".to_string(),
-        //         "stFUEL".to_string(),
-        //         is_testnet,
-        //     )
-        //     .await;
-        //     pb.finish();
+        if deploy_2nd_asset {
+            let stfuel_asset_contracts = upload_asset(wallet.clone()).await;
 
-        //     asset_contracts.push(usdf_asset_contracts);
-        // }
+            initialize_asset(
+                &borrow_operations,
+                &stability_pool,
+                &protocol_manager,
+                &usdf,
+                wallet.clone(),
+                "stFuel".to_string(),
+                "stFUEL".to_string(),
+                stfuel_asset_contracts.default_pool,
+                stfuel_asset_contracts.active_pool,
+                stfuel_asset_contracts.asset,
+                stfuel_asset_contracts.coll_surplus_pool,
+                stfuel_asset_contracts.trove_manager,
+                stfuel_asset_contracts.sorted_troves,
+                stfuel_asset_contracts.oracle,
+            )
+            .await;
+        }
         pb.finish();
 
         // asset_contracts.push(fuel_asset_contracts);
@@ -413,7 +385,7 @@ pub mod deployment {
         wait();
         pb.inc();
 
-        let _ = oracle_abi::set_price(&oracle, 1_000_000).await;
+        let _ = oracle_abi::set_price(&oracle, 1_000_000_000).await;
         wait();
         pb.inc();
 

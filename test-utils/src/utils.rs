@@ -9,8 +9,13 @@ pub fn with_min_borrow_fee(debt: u64) -> u64 {
 }
 
 pub fn calculate_icr(coll: u64, debt: u64) -> u64 {
-    let icr = coll * DECIMAL_PRECISION / debt;
-    return icr;
+    let icr = coll as u128 * DECIMAL_PRECISION as u128 / debt as u128;
+    return icr.try_into().unwrap();
+}
+
+pub fn calculate_cr(price: u64, coll: u64, debt: u64) -> u64 {
+    let cr = price as u128 * coll as u128 / debt as u128;
+    return cr.try_into().unwrap();
 }
 
 pub fn with_liquidation_penalty(amount: u64) -> u64 {

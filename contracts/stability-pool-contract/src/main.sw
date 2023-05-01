@@ -10,7 +10,7 @@ use libraries::active_pool_interface::{ActivePool};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::numbers::*;
-use libraries::fluid_math::{fm_min, null_contract, null_identity_address};
+use libraries::fluid_math::{DECIMAL_PRECISION, fm_min, null_contract, null_identity_address};
 
 use std::{
     auth::msg_sender,
@@ -31,7 +31,6 @@ use std::{
 };
 
 const SCALE_FACTOR = 1_000_000_000;
-const DECIMAL_PRECISION = 1_000_000;
 
 storage {
     // List of assets tracked by the Stability Pool
