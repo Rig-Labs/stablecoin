@@ -24,24 +24,23 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 5_000_000;
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
-pub const ORACLE_PRICE_PRECISION: u64 = 1_000_000;
-
-pub const MCR: u64 = 1_200_000;
+pub const MCR: u64 = 1_200_000_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
 // min debt is 500 USDF
-pub const MIN_NET_DEBT: u64 = 500_000_000;
+pub const MIN_NET_DEBT: u64 = 500_000_000_000;
 
 pub const PERCENT_DIVERSOR = 200;
 
-pub const POST_COLLATERAL_RATIO: u64 = 1_300_000;
+pub const POST_COLLATERAL_RATIO: u64 = 1_300_000_000;
 
-pub const STABILITY_POOL_FEE: u64 = 50_000;
+// 0.5% fee
+pub const STABILITY_POOL_FEE: u64 = 50_000_000;
 
-pub const ONE: u64 = 1_000_000;
+pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 

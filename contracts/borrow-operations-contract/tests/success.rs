@@ -2,6 +2,7 @@ use fuels::{prelude::*, types::Identity};
 
 // Load abi from json
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::borrow_operations::borrow_operations_abi,
     interfaces::borrow_operations::BorrowOperations,
     interfaces::sorted_troves::sorted_troves_abi,
@@ -15,16 +16,19 @@ use test_utils::{
 async fn proper_creating_trove() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
-    let _ = token_abi::mint_to_id(
+    token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let provider = admin.provider().unwrap();
 
-    let _res = borrow_operations_abi::open_trove(
+    let deposit_amount = 1200 * PRECISION;
+    let borrow_amount = 600 * PRECISION;
+
+    borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
@@ -32,12 +36,13 @@ async fn proper_creating_trove() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount,
+        borrow_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     let usdf_balance = provider
         .get_asset_balance(
@@ -66,10 +71,10 @@ async fn proper_creating_trove() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 600_000_000);
+    assert_eq!(usdf_balance, borrow_amount);
 
     let expected_net_debt: u64 = with_min_borrow_fee(usdf_balance);
-    let expected_icr = calculate_icr(1_200_000_000, expected_net_debt);
+    let expected_icr = calculate_icr(deposit_amount, expected_net_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
 
@@ -87,7 +92,7 @@ async fn proper_creating_trove() {
     .await
     .value;
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
     let active_pool_debt =
@@ -103,7 +108,7 @@ async fn proper_creating_trove() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col, deposit_amount,
         "Active Pool Collateral is wrong"
     );
 }
@@ -114,11 +119,13 @@ async fn proper_increase_collateral() {
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
+    let deposit_amount = 1200 * PRECISION;
+    let borrow_amount = 600 * PRECISION;
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -127,8 +134,8 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount,
+        borrow_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -143,7 +150,7 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
+        deposit_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -164,9 +171,9 @@ async fn proper_increase_collateral() {
     .await
     .value;
 
-    let expected_debt = with_min_borrow_fee(600_000_000);
+    let expected_debt = with_min_borrow_fee(borrow_amount);
 
-    assert_eq!(trove_col, 2_400_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, 2 * deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
@@ -189,7 +196,7 @@ async fn proper_increase_collateral() {
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    let expected_nicr = calculate_icr(2_400_000_000, expected_debt);
+    let expected_nicr = calculate_icr(2 * deposit_amount, expected_debt);
 
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
@@ -203,7 +210,8 @@ async fn proper_increase_collateral() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 2_400_000_000,
+        active_pool_col,
+        2 * deposit_amount,
         "Active Pool Collateral is wrong"
     );
 }
@@ -212,7 +220,7 @@ async fn proper_increase_collateral() {
 async fn proper_decrease_collateral() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
-    let balance = 5_000_000_000;
+    let balance = 5000 * PRECISION;
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -224,6 +232,8 @@ async fn proper_decrease_collateral() {
 
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
 
+    let deposit_amount = 1200 * PRECISION;
+    let borrow_amount = 600 * PRECISION;
     let _ = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -232,12 +242,14 @@ async fn proper_decrease_collateral() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount,
+        borrow_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await;
+
+    let withdraw_amount = 300 * PRECISION;
 
     borrow_operations_abi::withdraw_coll(
         &contracts.borrow_operations,
@@ -246,7 +258,7 @@ async fn proper_decrease_collateral() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        30_000_0000,
+        withdraw_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -267,9 +279,13 @@ async fn proper_decrease_collateral() {
     .await
     .value;
 
-    let expected_debt = with_min_borrow_fee(600_000_000);
+    let expected_debt = with_min_borrow_fee(borrow_amount);
 
-    assert_eq!(trove_col, 900_000_000, "Trove Collateral is wrong");
+    assert_eq!(
+        trove_col,
+        deposit_amount - withdraw_amount,
+        "Trove Collateral is wrong"
+    );
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
@@ -288,7 +304,7 @@ async fn proper_decrease_collateral() {
     .await
     .value;
 
-    let expected_nicr = calculate_icr(900_000_000, expected_debt);
+    let expected_nicr = calculate_icr(deposit_amount - withdraw_amount, expected_debt);
 
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
@@ -301,7 +317,7 @@ async fn proper_decrease_collateral() {
         .await
         .unwrap();
 
-    assert_eq!(admin_balance, 4_100_000_000, "Balance is wrong");
+    assert_eq!(admin_balance, 4100 * PRECISION, "Balance is wrong");
 
     let active_pool_debt =
         active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
@@ -313,7 +329,8 @@ async fn proper_decrease_collateral() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 900_000_000,
+        active_pool_col,
+        deposit_amount - withdraw_amount,
         "Active Pool Collateral is wrong"
     );
 }
@@ -322,7 +339,7 @@ async fn proper_decrease_collateral() {
 async fn proper_increase_debt() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
-    let balance = 5_000_000_000;
+    let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -335,6 +352,8 @@ async fn proper_increase_debt() {
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
 
+    let deposit_amount = 1200 * PRECISION;
+    let borrow_amount = 600 * PRECISION;
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -343,8 +362,8 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount,
+        borrow_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -359,7 +378,7 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        200_000_000,
+        200 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -379,9 +398,9 @@ async fn proper_increase_debt() {
     .await
     .value;
 
-    let expected_debt = with_min_borrow_fee(800_000_000);
+    let expected_debt = with_min_borrow_fee(800 * PRECISION);
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
@@ -400,7 +419,7 @@ async fn proper_increase_debt() {
     .await
     .value;
 
-    let expected_nicr = calculate_icr(1_200_000_000, expected_debt);
+    let expected_nicr = calculate_icr(deposit_amount, expected_debt);
 
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
@@ -413,14 +432,14 @@ async fn proper_increase_debt() {
         .await
         .unwrap();
 
-    assert_eq!(admin_balance, 3_800_000_000, "Balance is wrong");
+    assert_eq!(admin_balance, 3800 * PRECISION, "Balance is wrong");
 
     let usdf_balance = provider
         .get_asset_balance(admin.address().into(), usdf_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(usdf_balance, 800_000_000, "USDF Balance is wrong");
+    assert_eq!(usdf_balance, 800 * PRECISION, "USDF Balance is wrong");
 
     let active_pool_debt =
         active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
@@ -433,7 +452,7 @@ async fn proper_increase_debt() {
         .value;
 
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col, deposit_amount,
         "Active Pool Collateral is wrong"
     );
 }
@@ -442,7 +461,7 @@ async fn proper_increase_debt() {
 async fn proper_decrease_debt() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
-    let balance = 5_000_000_000;
+    let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -455,6 +474,9 @@ async fn proper_decrease_debt() {
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
 
+    let deposit_amount = 1200 * PRECISION;
+    let borrow_amount = 800 * PRECISION;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -463,14 +485,15 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        800_000_000,
+        deposit_amount,
+        borrow_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
+    let repay_amount = 200 * PRECISION;
     borrow_operations_abi::repay_usdf(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -479,7 +502,7 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        200_000_000,
+        repay_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -500,9 +523,9 @@ async fn proper_decrease_debt() {
     .await
     .value;
 
-    let expected_debt = with_min_borrow_fee(800_000_000) - 200_000_000;
+    let expected_debt = with_min_borrow_fee(borrow_amount) - repay_amount;
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
@@ -525,7 +548,7 @@ async fn proper_decrease_debt() {
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
 
-    let expected_nicr = calculate_icr(1_200_000_000, expected_debt);
+    let expected_nicr = calculate_icr(deposit_amount, expected_debt);
 
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
@@ -534,14 +557,14 @@ async fn proper_decrease_debt() {
         .await
         .unwrap();
 
-    assert_eq!(admin_balance, 3_800_000_000, "Balance is wrong");
+    assert_eq!(admin_balance, 3800 * PRECISION, "Balance is wrong");
 
     let usdf_balance = provider
         .get_asset_balance(admin.address().into(), usdf_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(usdf_balance, 600_000_000, "USDF Balance is wrong");
+    assert_eq!(usdf_balance, 600 * PRECISION, "USDF Balance is wrong");
 
     let active_pool_debt =
         active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
@@ -554,7 +577,7 @@ async fn proper_decrease_debt() {
         .value;
 
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col, deposit_amount,
         "Active Pool Collateral is wrong"
     );
 }
@@ -566,7 +589,7 @@ async fn proper_open_multiple_troves() {
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
 
-    let balance = 5_000_000_000;
+    let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -591,6 +614,8 @@ async fn proper_open_multiple_troves() {
         wallet2.clone(),
     );
 
+    let deposit_amount1 = 3000 * PRECISION;
+    let borrow_amount1 = 1000 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
         &contracts.asset_contracts[0].oracle,
@@ -599,14 +624,16 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        3_000_000_000,
-        1_000_000_000,
+        deposit_amount1,
+        borrow_amount1,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
+    let deposit_amount2 = 2000 * PRECISION;
+    let borrow_amount2 = 1000 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
@@ -615,8 +642,8 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        2_000_000_000,
-        1_000_000_000,
+        deposit_amount2,
+        borrow_amount2,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -642,7 +669,7 @@ async fn proper_open_multiple_troves() {
             .await
             .value;
 
-    let expected_debt = with_min_borrow_fee(2_000_000_000);
+    let expected_debt = with_min_borrow_fee(borrow_amount1 + borrow_amount2);
     assert_eq!(active_pool_debt, expected_debt, "Active Pool Debt is wrong");
 
     let active_pool_col = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
@@ -650,7 +677,8 @@ async fn proper_open_multiple_troves() {
         .value;
 
     assert_eq!(
-        active_pool_col, 5_000_000_000,
+        active_pool_col,
+        deposit_amount1 + deposit_amount2,
         "Active Pool Collateral is wrong"
     );
 }
@@ -662,7 +690,7 @@ async fn proper_close_trove() {
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
 
-    let balance = 5_000_000_000;
+    let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -687,6 +715,8 @@ async fn proper_close_trove() {
         wallet2.clone(),
     );
 
+    let deposit_amount1 = 3000 * PRECISION;
+    let borrow_amount1 = 1000 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
         &contracts.asset_contracts[0].oracle,
@@ -695,16 +725,17 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        3_000_000_000,
-        1_000_000_000,
+        deposit_amount1,
+        borrow_amount1,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
+    // Transfering to cover the fee
     let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
-    let amount = 1_000_000_000 / 200;
+    let amount = borrow_amount1 / 200;
     let tx_parms = TxParameters::default();
 
     wallet1
@@ -712,6 +743,8 @@ async fn proper_close_trove() {
         .await
         .unwrap();
 
+    let deposit_amount2 = 2000 * PRECISION;
+    let borrow_amount2 = 1000 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
@@ -720,15 +753,15 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        2_000_000_000,
-        1_000_000_000,
+        deposit_amount2,
+        borrow_amount2,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
-    let expected_debt = with_min_borrow_fee(1_000_000_000);
+    let expected_debt = with_min_borrow_fee(borrow_amount2);
 
     borrow_operations_abi::close_trove(
         &borrow_operations_wallet2,
@@ -751,7 +784,11 @@ async fn proper_close_trove() {
         .await
         .unwrap();
 
-    assert_eq!(wallet2_balance, 5_000_000_000, "Wallet 2 balance is wrong");
+    assert_eq!(
+        wallet2_balance,
+        5000 * PRECISION,
+        "Wallet 2 balance is wrong"
+    );
 
     let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
         .await
@@ -778,7 +815,8 @@ async fn proper_close_trove() {
         .value;
 
     assert_eq!(
-        active_pool_col, 3_000_000_000,
+        active_pool_col,
+        3000 * PRECISION,
         "Active Pool Collateral is wrong"
     );
 
@@ -790,8 +828,8 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        2_000_000_000,
-        1_000_000_000,
+        2000 * PRECISION,
+        1000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -808,13 +846,15 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let provider = admin.provider().unwrap();
 
+    let deposit_amount1 = 1200 * PRECISION;
+    let borrow_amount1 = 600 * PRECISION;
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -823,8 +863,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount1,
+        borrow_amount1,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -858,10 +898,10 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 600_000_000);
+    assert_eq!(usdf_balance, borrow_amount1);
 
     let expected_net_debt: u64 = with_min_borrow_fee(usdf_balance);
-    let expected_icr = calculate_icr(1_200_000_000, expected_net_debt);
+    let expected_icr = calculate_icr(deposit_amount1, expected_net_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
 
@@ -879,7 +919,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .value;
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, deposit_amount1, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
     let active_pool_debt =
@@ -895,7 +935,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col, deposit_amount1,
         "Active Pool Collateral is wrong"
     );
 
@@ -904,14 +944,14 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[1].asset,
-        5_000_000_000,
+        5000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[1].asset,
-        5_000_000_000,
+        5000 * PRECISION,
         Identity::Address(wallet2.address().into()),
     )
     .await;
@@ -919,6 +959,8 @@ async fn proper_creating_trove_with_2nd_asset() {
     let borrow_operations_wallet2 =
         BorrowOperations::new(contracts.borrow_operations.contract_id().clone(), wallet2);
 
+    let deposit_amount2 = 1200 * PRECISION;
+    let borrow_amount2 = 600 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[1].oracle,
@@ -927,8 +969,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.asset_contracts[1].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount2,
+        borrow_amount2,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -945,8 +987,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.asset_contracts[1].active_pool,
-        1_200_000_000,
-        600_000_000,
+        deposit_amount1,
+        borrow_amount1,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -974,10 +1016,10 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(size, 2);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 2 * 600_000_000);
+    assert_eq!(usdf_balance, 2 * borrow_amount1);
 
-    let expected_net_debt: u64 = with_min_borrow_fee(600_000_000);
-    let expected_icr = calculate_icr(1_200_000_000, expected_net_debt);
+    let expected_net_debt: u64 = with_min_borrow_fee(borrow_amount1);
+    let expected_icr = calculate_icr(deposit_amount1, expected_net_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
 
@@ -995,7 +1037,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .value;
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, deposit_amount1, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
     let active_pool_debt =
@@ -1013,7 +1055,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         .value;
     assert_eq!(
         active_pool_col,
-        2 * 1_200_000_000,
+        2 * deposit_amount1,
         "Active Pool Collateral is wrong"
     );
 
@@ -1025,7 +1067,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.asset_contracts[1].active_pool,
-        with_min_borrow_fee(600_000_000),
+        with_min_borrow_fee(borrow_amount1),
     )
     .await;
 }

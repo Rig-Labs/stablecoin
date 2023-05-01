@@ -24,6 +24,7 @@ pub mod common {
 
     use super::*;
     use crate::{
+        data_structures::PRECISION,
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
@@ -488,7 +489,7 @@ pub mod common {
         )
         .await;
 
-        oracle_abi::set_price(&oracle, 1_000_000).await;
+        oracle_abi::set_price(&oracle, 1 * PRECISION).await;
 
         protocol_manager_abi::register_asset(
             &protocol_manager,

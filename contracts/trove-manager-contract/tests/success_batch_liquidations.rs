@@ -1,5 +1,6 @@
 use fuels::types::Identity;
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::borrow_operations_utils,
@@ -17,14 +18,14 @@ use test_utils::{
 async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let liquidated_wallet2 = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
 
-    let usdf_deposit_to_be_liquidated = 1_000_000_000;
-    let asset_deposit_to_be_liquidated = 1_100_000_000;
+    let usdf_deposit_to_be_liquidated = 1_000 * PRECISION;
+    let asset_deposit_to_be_liquidated = 1_100 * PRECISION;
 
     borrow_operations_utils::mint_token_and_open_trove(
         liquidated_wallet.clone(),
@@ -51,8 +52,8 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
-        10_000_000_000,
-        5_000_000_000,
+        10_000 * PRECISION,
+        5_000 * PRECISION,
     )
     .await;
 
@@ -65,12 +66,12 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &stability_pool_healthy_wallet1,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
     )
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // 2 wallets has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
     trove_manager_abi::batch_liquidate_troves(
@@ -140,7 +141,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         .value;
 
     let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
-    assert_eq!(deposits, 5_000_000_000 - 2 * liquidated_net_debt);
+    assert_eq!(deposits, 5_000 * PRECISION - 2 * liquidated_net_debt);
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
@@ -150,8 +151,8 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .unwrap()
     .value;
 
-    // 5% Penalty on 1_000_000_000 of debt
-    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050_000_000);
+    // 5% Penalty on 1_000* PRECISION of debt
+    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
     assert_eq!(asset, 2 * asset_with_min_borrow_fee);
 
     let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
@@ -163,9 +164,9 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
             .await
             .value;
 
-    assert_eq!(active_pool_asset, 10_000_000_000);
+    assert_eq!(active_pool_asset, 10_000 * PRECISION);
 
-    let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000_000_000);
+    let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000 * PRECISION);
     assert_eq!(active_pool_debt, active_pool_debt_with_min_borrow_fee);
 
     let default_pool_asset =
