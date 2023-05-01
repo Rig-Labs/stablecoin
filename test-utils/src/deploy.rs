@@ -12,7 +12,7 @@ use crate::{
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+// #[tokio::test]
 pub async fn deploy() {
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {

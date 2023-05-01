@@ -15,8 +15,8 @@ use test_utils::{
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -83,8 +83,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1 * PRECISION).await;
 
     let redemption_amount: u64 = 8_000 * PRECISION;
 

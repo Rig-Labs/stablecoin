@@ -19,7 +19,7 @@ use test_utils::{
 async fn proper_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -111,7 +111,7 @@ async fn proper_redemption_from_partially_closed() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
 
     let redemption_amount: u64 = 3_000 * PRECISION;
 
@@ -193,7 +193,7 @@ async fn proper_redemption_from_partially_closed() {
 async fn proper_redemption_with_a_trove_closed_fully() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -294,7 +294,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     // Troves
     // H1: 12/6 = 2 -> H2: 9/5 = 1.8 -> H3: 8/5 = 1.6
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
 
     let redemption_amount: u64 = 6_000 * PRECISION;
 

@@ -1,6 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::default_pool::{default_pool_abi, DefaultPool},
     interfaces::{
         active_pool::{active_pool_abi, ActivePool},
@@ -18,9 +19,9 @@ async fn get_contract_instance() -> (
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
-            Some(2),             /* Single wallet */
-            Some(1),             /* Single coin (UTXO) */
-            Some(1_000_000_000), /* Amount per coin */
+            Some(2),                 /* Single wallet */
+            Some(1),                 /* Single coin (UTXO) */
+            Some(1_000 * PRECISION), /* Amount per coin */
         ),
         None,
         None,
@@ -35,7 +36,7 @@ async fn get_contract_instance() -> (
 
     token_abi::initialize(
         &asset,
-        1_000_000_000,
+        1_000 * PRECISION,
         &Identity::Address(wallet.address().into()),
         "Fuel".to_string(),
         "FUEL".to_string(),
@@ -96,24 +97,29 @@ async fn proper_adjust_asset_col() {
 
     token_abi::mint_to_id(
         &mock_fuel,
-        1_000_000,
+        1 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
-    active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
+    active_pool_abi::recieve(&active_pool, &mock_fuel, 1 * PRECISION).await;
 
-    active_pool_abi::send_asset_to_default_pool(&active_pool, &default_pool, &mock_fuel, 1_000_000)
-        .await
-        .unwrap();
+    active_pool_abi::send_asset_to_default_pool(
+        &active_pool,
+        &default_pool,
+        &mock_fuel,
+        1 * PRECISION,
+    )
+    .await
+    .unwrap();
 
     let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
-    assert_eq!(asset_amount, 1_000_000);
+    assert_eq!(asset_amount, 1 * PRECISION);
 
-    default_pool_abi::send_asset_to_active_pool(&default_pool, &active_pool, 500_000).await;
+    default_pool_abi::send_asset_to_active_pool(&default_pool, &active_pool, PRECISION / 2).await;
 
     let asset_amount = default_pool_abi::get_asset(&default_pool).await.value;
-    assert_eq!(asset_amount, 500_000);
+    assert_eq!(asset_amount, PRECISION / 2);
 
     println!("Asset amount: {}", asset_amount);
 }

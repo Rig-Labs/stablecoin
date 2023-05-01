@@ -24,8 +24,6 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 5_000_000;
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
-pub const ORACLE_PRICE_PRECISION: u64 = 1_000_000;
-
 pub const MCR: u64 = 1_200_000_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
