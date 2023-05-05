@@ -49,3 +49,36 @@ async fn fails_fake_usdf_deposit() {
     .await
     .expect_err("Able to deposit fake USDF into stability pool");
 }
+
+#[tokio::test]
+async fn fails_unauthorized() {
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 4, false).await;
+
+    let attacker = wallets.pop().unwrap();
+
+    let stability_pool_attacker = StabilityPool::new(
+        contracts.stability_pool.contract_id().clone(),
+        attacker.clone(),
+    );
+
+    stability_pool_abi::initialize(
+        &stability_pool_attacker,
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+    )
+    .await
+    .expect_err("Able to initialize stability pool with unauthorized address");
+
+    stability_pool_abi::add_asset(
+        &stability_pool_attacker,
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
+    )
+    .await
+    .expect_err("Able to add asset with unauthorized address");
+}
