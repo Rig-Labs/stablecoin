@@ -9,11 +9,11 @@ use crate::{
     setup::common::{deploy_and_initialize_all, ProtocolContracts},
 };
 
-const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
 // #[tokio::test]
 pub async fn deploy() {
+    const RPC: &str = "beta-3.fuel.network";
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {
         Ok(p) => p,
@@ -58,6 +58,7 @@ pub mod deployment {
 
     use super::*;
     use crate::{
+        data_structures::PRECISION,
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
@@ -104,7 +105,7 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
         _max_size: u64,
-        is_testnet: bool,
+        _is_testnet: bool,
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Uploading parent protocol contracts...");
@@ -143,9 +144,6 @@ pub mod deployment {
             Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
-
-        pb.inc();
-        wait();
 
         let _ = borrow_operations_abi::initialize(
             &borrow_operations,
@@ -385,7 +383,7 @@ pub mod deployment {
         wait();
         pb.inc();
 
-        let _ = oracle_abi::set_price(&oracle, 1_000_000_000).await;
+        let _ = oracle_abi::set_price(&oracle, 1000 * PRECISION).await;
         wait();
         pb.inc();
 

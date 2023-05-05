@@ -35,7 +35,7 @@ pub mod stability_pool_abi {
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
-        let res = stability_pool
+        stability_pool
             .methods()
             .initialize(
                 borrow_operations_address,
@@ -45,16 +45,7 @@ pub mod stability_pool_abi {
             )
             .tx_params(tx_params)
             .call()
-            .await;
-
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => Ok(res),
-            Err(_) => {
-                wait();
-                return Ok(FuelCallResponse::new((), vec![], LogDecoder::default()));
-            }
-        }
+            .await
     }
 
     pub async fn add_asset<T: Account>(
@@ -271,7 +262,6 @@ pub mod stability_pool_utils {
         depositor: Identity,
         expected_compounded_usdf_deposit: u64,
     ) {
-        println!("3");
         let compounded_usdf_deposit =
             stability_pool_abi::get_compounded_usdf_deposit(stability_pool, depositor)
                 .await
