@@ -264,7 +264,7 @@ fn require_is_protocol_manager() {
 
 #[storage(read)]
 fn require_usdf_is_valid_and_non_zero() {
-    require(storage.usdf_address == msg_asset_id(), "USDF contract not initialized");
+    require(storage.usdf_address == msg_asset_id(), "USDF address is invalid");
     require(msg_amount() > 0, "USDF amount must be greater than 0");
 }
 
