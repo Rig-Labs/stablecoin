@@ -1,19 +1,11 @@
-use crate::utils::setup::setup;
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
-        borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
-        oracle::oracle_abi,
-        stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
-        token::token_abi,
-        trove_manager::{trove_manager_abi, trove_manager_utils},
+        stability_pool::{stability_pool_abi, StabilityPool},
         usdf_token::usdf_token_abi,
     },
-    setup::common::{
-        add_asset, assert_within_threshold, deploy_token, deploy_usdf_token, setup_protocol,
-    },
-    utils::with_min_borrow_fee,
+    setup::common::{deploy_usdf_token, setup_protocol},
 };
 
 #[tokio::test]
