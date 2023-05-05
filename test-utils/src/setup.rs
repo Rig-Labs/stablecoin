@@ -211,10 +211,24 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
-        .await
-        .unwrap();
+        .await;
 
-        Token::new(id, wallet.clone())
+        match id {
+            Ok(id) => return Token::new(id, wallet.clone()),
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return Token::new(id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves<WalletUnlocked> {
@@ -228,10 +242,24 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
-        .await
-        .unwrap();
+        .await;
 
-        SortedTroves::new(id, wallet.clone())
+        match id {
+            Ok(id) => return SortedTroves::new(id, wallet.clone()),
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return SortedTroves::new(id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_trove_manager_contract(
@@ -247,10 +275,24 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_parms)
-        .await
-        .unwrap();
+        .await;
 
-        TroveManagerContract::new(id, wallet.clone())
+        match id {
+            Ok(id) => return TroveManagerContract::new(id, wallet.clone()),
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return TroveManagerContract::new(id, wallet.clone());
+            }
+        }
     }
 
     pub async fn deploy_vesting_contract(
@@ -602,7 +644,7 @@ pub mod common {
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
-                    DEFAULT_POOL_CONTRACT_BINARY_PATH,
+                    &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
                     LoadConfiguration::default().set_salt(salt),
                 )
                 .unwrap()

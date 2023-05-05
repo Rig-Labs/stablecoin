@@ -44,8 +44,6 @@ pub mod usdf_token_abi {
             .call()
             .await;
 
-        return res.unwrap();
-
         // TODO: remove this workaround
         match res {
             Ok(res) => res,
