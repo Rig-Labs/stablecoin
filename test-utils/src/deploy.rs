@@ -96,7 +96,7 @@ pub mod deployment {
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
             oracle::oracle_abi, protocol_manager::protocol_manager_abi,
             sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::{self, fpt_staking_abi},
         },
         setup::common::{
             deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
@@ -141,12 +141,18 @@ pub mod deployment {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(4);
+        let mut pb = ProgressBar::new(6);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
 
         let usdf = deploy_usdf_token(&wallet).await;
+        pb.inc();
+
+        let fpt = deploy_token(&wallet).await;
+        pb.inc();
+
+        let fpt_staking = deploy_fpt_staking(&wallet).await;
         pb.inc();
 
         let stability_pool = deploy_stability_pool(&wallet).await;
@@ -160,6 +166,8 @@ pub mod deployment {
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("Usdf: {}", usdf.contract_id());
         println!("Stability Pool: {}", stability_pool.contract_id());
+        println!("FPT Staking: {}", fpt_staking.contract_id());
+        println!("FPT: {}", fpt.contract_id());
         println!("Initializing contracts...");
 
         let mut pb = ProgressBar::new(4);
@@ -214,6 +222,17 @@ pub mod deployment {
         wait();
         pb.inc();
 
+        let _ = fpt_staking_abi::initialize(
+            &fpt_staking,
+            protocol_manager.contract_id().into(),
+            protocol_manager.contract_id().into(), // this should be trove manager in the future
+            borrow_operations.contract_id().into(),
+            fpt.contract_id().into(),
+            usdf.contract_id().into(),
+        ).await;
+        wait();
+        pb.inc();
+
         initialize_asset(
             &borrow_operations,
             &stability_pool,
@@ -256,8 +275,10 @@ pub mod deployment {
             borrow_operations,
             usdf,
             stability_pool,
-            asset_contracts,
             protocol_manager,
+            asset_contracts,
+            fpt_staking,
+            fpt
         };
 
         return contracts;

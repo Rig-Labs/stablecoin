@@ -1,4 +1,4 @@
-use fuels::prelude::abigen;
+use fuels::prelude::{abigen, TxParameters};
 
 use fuels::programs::call_response::FuelCallResponse;
 
@@ -9,6 +9,7 @@ abigen!(Contract(
 
 pub mod fpt_staking_abi {
 
+    use fuels::client::schema::schema::__fields::Contract;
     use fuels::prelude::{Account};
     use fuels::{
         prelude::{ContractId},
@@ -26,6 +27,8 @@ pub mod fpt_staking_abi {
         fpt_address: ContractId,
         usdf_address: ContractId,
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .initialize(
@@ -44,6 +47,8 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         id: Identity,
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .stake(id)
@@ -57,6 +62,8 @@ pub mod fpt_staking_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .unstake(id, amount)
@@ -73,6 +80,8 @@ pub mod fpt_staking_abi {
         asset_address: ContractId,
         oracle_address: ContractId,
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .add_asset(trove_manager_address,
@@ -91,6 +100,8 @@ pub mod fpt_staking_abi {
         id: Identity,
         asset_address: ContractId
     ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .get_pending_asset_gain(id, asset_address)
@@ -103,6 +114,8 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         id: Identity
     ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .get_pending_usdf_gain(id)
@@ -115,6 +128,8 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         usdf_fee_amount: u64
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .increase_f_usdf(usdf_fee_amount)
@@ -128,6 +143,8 @@ pub mod fpt_staking_abi {
         asset_fee_amount: u64, 
         asset_address: ContractId
     ) -> FuelCallResponse<()> {
+        let tx_params = TxParameters::default().set_gas_price(1);
+
         fpt_staking
             .methods()
             .increase_f_asset(asset_fee_amount, asset_address)

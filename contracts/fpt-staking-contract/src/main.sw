@@ -1,7 +1,7 @@
 contract;
 
 use libraries::numbers::*;
-use libraries::fluid_math::{ null_contract };
+use libraries::fluid_math::{ null_contract, null_identity_address };
 use libraries::fpt_staking_interface::{FPTStaking};
 use std::{
     auth::msg_sender,
@@ -158,7 +158,7 @@ impl FPTStaking for Contract {
 
     #[storage(read, write)]
     fn increase_f_asset(asset_fee_amount: u64, asset_address: ContractId){
-        require_is_borrower_operations();
+        require_is_trove_manager();
         let mut asset_fee_per_fpt_staked =0;
         if (storage.total_fpt_staked > 0){
             asset_fee_per_fpt_staked = ((U128::from_u64(asset_fee_amount) * DECIMAL_PRECISION) / U128::from_u64(storage.total_fpt_staked)).as_u64().unwrap();

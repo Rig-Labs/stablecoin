@@ -1,42 +1,33 @@
-use fuels::prelude::*;
+use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    interfaces::oracle::{oracle_abi, Oracle},
-    setup::common::deploy_oracle,
+    interfaces::{
+        fpt_staking::{fpt_staking_abi, FPTStaking},
+        token::{token_abi, Token},
+        usdf_token::{usdf_token_abi, USDFToken},
+    },
+    setup::common::{deploy_fpt_staking, deploy_token, setup_protocol},
 };
 
-async fn get_contract_instance() -> Oracle<WalletUnlocked> {
-    // Launch a local network and deploy the contract
-    let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(1),             /* Single wallet */
-            Some(1),             /* Single coin (UTXO) */
-            Some(1_000_000_000), /* Amount per coin */
-        ),
-        None,
-        None,
-    )
-    .await;
-    let wallet = wallets.pop().unwrap();
-
-    let instance = deploy_oracle(&wallet).await;
-
-    instance
-}
 
 #[tokio::test]
-async fn can_set_proper_price() {
-    let instance = get_contract_instance().await;
-    let new_price: u64 = 100;
-    // Increment the counter
-    let _result = oracle_abi::set_price(&instance, new_price).await;
+async fn proper_intialize() {
 
-    // Get the current value of the counter
-    let result = oracle_abi::get_price(&instance).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
 
-    // Check that the current value of the counter is 1.
-    // Recall that the initial value of the counter was 0.
-    assert_eq!(result.value, new_price);
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000_000_000,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
 
-    // Now you have an instance of your contract you can use to test each function
+    let pending_rewards_fpt = fpt_staking_abi::get_pending_usdf_gain(&contracts.fpt_staking, Identity::Address(admin.address().into())).await.value;
+    assert_eq!(pending_rewards_fpt, 0);
+
+    let pending_rewards_asset = fpt_staking_abi::get_pending_asset_gain(&contracts.fpt_staking, Identity::Address(admin.address().into()), contracts.asset_contracts[0].asset.contract_id().into()).await.value;
+    assert_eq!(pending_rewards_asset, 0);
+
+    // how to check token balances of native token 
+
 }
