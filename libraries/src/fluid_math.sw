@@ -62,6 +62,16 @@ pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     }
 }
 
+pub fn fm_abs_diff(a: u64, b: u64) -> u64 {
+    if a > b { return a - b; } else { return b - a; }
+}
+
+pub fn assert_within_percent_tolerance(a: u64, b: u64, tolerance: u64) {
+    let diff = fm_abs_diff(a, b);
+    let max_diff = fm_min(a, b) * tolerance / 1_000_000_000;
+    assert(diff <= max_diff);
+}
+
 pub fn fm_min(a: u64, b: u64) -> u64 {
     if a < b { return a; } else { return b; }
 }
