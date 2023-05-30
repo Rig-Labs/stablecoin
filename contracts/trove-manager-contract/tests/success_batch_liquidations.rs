@@ -31,6 +31,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         asset_deposit_to_be_liquidated,
         usdf_deposit_to_be_liquidated,
     )
@@ -41,6 +42,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         asset_deposit_to_be_liquidated,
         usdf_deposit_to_be_liquidated,
     )
@@ -51,6 +53,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         10_000_000_000,
         5_000_000_000,
     )

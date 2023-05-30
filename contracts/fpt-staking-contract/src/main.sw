@@ -1,7 +1,9 @@
 contract;
 
+dep data_structures;
+use data_structures::ReadStorage;
 use libraries::numbers::*;
-use libraries::fluid_math::{ null_contract, null_identity_address };
+use libraries::fluid_math::{ null_contract, null_identity_address, fm_min };
 use libraries::fpt_staking_interface::{FPTStaking};
 use std::{
     auth::msg_sender,
@@ -17,6 +19,7 @@ use std::{
     context::{
         msg_amount,
     },
+    logging::log,
 };
 
 storage {
@@ -35,7 +38,7 @@ storage {
     is_initialized: bool = false,
 }
 
-const DECIMAL_PRECISION: U128 = U128::from_u64(1); //todo: import from fluidmath once we switch this to u128
+const DECIMAL_PRECISION: U128 = U128::from_u64(1_000_000_000); //todo: import from fluidmath once we switch fluidmath to u128, until then just keep it here
 
 impl FPTStaking for Contract {
 
@@ -56,8 +59,24 @@ impl FPTStaking for Contract {
         storage.is_initialized = true;
     }
 
-    #[storage(read, write)]
-    fn stake(id: Identity) {
+    #[storage(read)]
+    fn get_storage() -> ReadStorage {
+        ReadStorage { 
+            f_usdf: storage.f_usdf,
+            total_fpt_staked: storage.total_fpt_staked,
+            protocol_manager_address: storage.protocol_manager_address,
+            trove_manager_address: storage.trove_manager_address,
+            borrower_operations_address: storage.borrower_operations_address,
+            fpt_address: storage.fpt_address,
+            usdf_address: storage.usdf_address,
+            is_initialized: storage.is_initialized,
+        }
+    }
+
+    #[storage(read, write), payable]
+    fn stake() {
+
+        let id = msg_sender().unwrap();
 
         require_fpt_is_valid_and_non_zero();
 
@@ -91,14 +110,18 @@ impl FPTStaking for Contract {
     }
 
     #[storage(read, write)]
-    fn unstake(id: Identity, amount: u64) {
+    fn unstake(amount: u64) {
+
+        let id = msg_sender().unwrap();
+
         let current_stake = storage.stakes.get(id);
-        require_user_has_stake(current_stake);
+        require_user_has_stake(current_stake, amount);
 
         let usdf_gain = internal_get_pending_usdf_gain(id);
         internal_send_usdf_gain_to_user(usdf_gain);
 
         let mut x = 0;
+
         while x < storage.valid_assets.len(){
             let mut asset_gain = 0;
             let current_asset_address = storage.valid_assets.get(x).unwrap();
@@ -110,30 +133,27 @@ impl FPTStaking for Contract {
         update_user_snapshots(id);
 
         if (amount > 0){
-            let amount_to_withdraw = min(amount, current_stake);
+            let amount_to_withdraw = fm_min(amount, current_stake);
             let new_stake = current_stake - amount_to_withdraw;
             storage.stakes.insert(id, new_stake); //overwrite previous balance
             storage.total_fpt_staked = storage.total_fpt_staked - amount_to_withdraw;
 
-            // here we need to actually transfer the FPT tokens to the user
-            transfer(amount_to_withdraw, storage.fpt_address, msg_sender().unwrap());
+            if (amount_to_withdraw > 0 ){
+                log(amount_to_withdraw);
+                // transfer the FPT tokens to the user
+                transfer(amount_to_withdraw, storage.fpt_address, msg_sender().unwrap());
+            }
         }
     }
 
-    // later we need to call this from the protocol manager contract in the `register_asset` fn
+    // called from the protocol manager contract in the `register_asset` fn
     #[storage(read, write)]
     fn add_asset(
-        trove_manager_address: ContractId,
-        active_pool_address: ContractId,
-        sorted_troves_address: ContractId,
         asset_address: ContractId,
-        oracle_address: ContractId,
     ) {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_address);
-
-        //todo, determine if this is 128 or 64
-        //storage.f_asset.insert(asset_address, U128::from_u64(0));
+        storage.f_asset.insert(asset_address, 0);
     }
 
     #[storage(read)]
@@ -147,6 +167,7 @@ impl FPTStaking for Contract {
     }
 
     #[storage(read, write)]
+    
     fn increase_f_usdf(usdf_fee_amount: u64){
         require_is_borrower_operations();
         let mut usdf_fee_per_fpt_staked = 0;
@@ -202,8 +223,9 @@ fn require_non_zero(amount: u64) {
     require(amount > 0, "FPT Amount must be greater than 0");
 }
 
-fn require_user_has_stake(amount: u64) {
-    require(amount > 0, "User must have stake greater than 0");
+fn require_user_has_stake(current_stake_amount: u64, unstake_amount: u64) {
+    require(current_stake_amount > 0, "User must have stake greater than 0");
+    require(current_stake_amount >= unstake_amount, "Cannot unstake more than current staked amount");
 }
 
 #[storage(read)]
@@ -230,21 +252,16 @@ fn require_fpt_is_valid_and_non_zero() {
     require(msg_amount() > 0, "FPT amount must be greater than 0");
 }
 
-#[storage(read)]
 fn internal_send_asset_gain_to_user(amount: u64, asset_address: ContractId) {
-    //when they add a .contains or .indexOf for StorageVec, double check asset address is in valid_assets here
-    transfer(amount, asset_address, msg_sender().unwrap());
+    // when fuel adds a .contains or .indexOf for StorageVec, double check asset address is in valid_assets here
+    if (amount > 0) {
+        transfer(amount, asset_address, msg_sender().unwrap());
+    }
 }
 
 #[storage(read)]
 fn internal_send_usdf_gain_to_user(amount: u64) {
-    transfer(amount, storage.usdf_address, msg_sender().unwrap());
-}
-
-fn min(amount_one: u64, amount_two:u64) -> u64 {
-    if (amount_one >= amount_two){
-        amount_two
-    } else {
-        amount_one
+    if (amount > 0) {
+        transfer(amount, storage.usdf_address, msg_sender().unwrap());
     }
 }

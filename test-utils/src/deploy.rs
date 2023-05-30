@@ -77,7 +77,7 @@ use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
-    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
+    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken, fpt_staking::FPTStaking,
 };
 
 pub mod deployment {
@@ -211,17 +211,6 @@ pub mod deployment {
         wait();
         pb.inc();
 
-        let _ = protocol_manager_abi::initialize(
-            &protocol_manager,
-            borrow_operations.contract_id().into(),
-            stability_pool.contract_id().into(),
-            usdf.contract_id().into(),
-            Identity::Address(wallet.address().into()),
-        )
-        .await;
-        wait();
-        pb.inc();
-
         let _ = fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
@@ -233,8 +222,22 @@ pub mod deployment {
         wait();
         pb.inc();
 
+
+        let _ = protocol_manager_abi::initialize(
+            &protocol_manager,
+            borrow_operations.contract_id().into(),
+            stability_pool.contract_id().into(),
+            fpt_staking.contract_id().into(),
+            usdf.contract_id().into(),
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+        wait();
+        pb.inc();
+
         initialize_asset(
             &borrow_operations,
+            &fpt_staking,
             &stability_pool,
             &protocol_manager,
             &usdf,
@@ -344,12 +347,12 @@ pub mod deployment {
             active_pool,
             default_pool,
             coll_surplus_pool,
-            fpt_staking,
         };
     }
 
     pub async fn initialize_asset<T: Account>(
         borrow_operations: &BorrowOperations<T>,
+        fpt_staking: &FPTStaking<T>,
         stability_pool: &StabilityPool<T>,
         protocol_manager: &ProtocolManager<T>,
         usdf: &USDFToken<T>,
@@ -453,6 +456,7 @@ pub mod deployment {
             borrow_operations,
             stability_pool,
             usdf,
+            fpt_staking,
         )
         .await;
         wait();

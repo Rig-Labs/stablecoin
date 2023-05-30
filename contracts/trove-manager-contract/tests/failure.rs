@@ -35,6 +35,7 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,

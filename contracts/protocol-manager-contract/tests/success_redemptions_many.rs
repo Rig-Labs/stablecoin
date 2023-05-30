@@ -26,6 +26,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         20_000_000_000,
         10_000_000_000,
     )
@@ -36,6 +37,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         9_000_000_000,
         5_000_000_000,
     )
@@ -46,6 +48,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         8_000_000_000,
         5_000_000_000,
     )
@@ -56,6 +59,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         15_000_000_000,
         5_000_000_000,
     )
@@ -66,6 +70,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
         &contracts.usdf,
+        &contracts.fpt_staking,
         7_000_000_000,
         5_000_000_000,
     )
@@ -106,6 +111,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         None,
         None,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts,
     )
     .await;
@@ -147,9 +153,9 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         .unwrap();
 
     // TODO Replace with staking contract when implemented
-    let oracle_balance = provider
+    let staking_balance = provider
         .get_contract_asset_balance(
-            contracts.asset_contracts[0].oracle.contract_id(),
+            &contracts.fpt_staking.contract_id(),
             fuel_asset_id,
         )
         .await
@@ -157,15 +163,20 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let fees2 = provider
         .get_contract_asset_balance(
-            contracts.asset_contracts[1].oracle.contract_id(),
+            &contracts.fpt_staking.contract_id(),
             st_fuel_asset_id,
         )
         .await
         .unwrap();
 
+    let a = fuel_balance + st_fuel_balance;
+    let b = redemption_amount - staking_balance - fees2;
+
+    println!("fees check {} {} {}", a, b, staking_balance);
+
     assert_eq!(
         fuel_balance + st_fuel_balance,
-        redemption_amount - oracle_balance - fees2
+        redemption_amount - staking_balance - fees2
     );
 
     // Started with 8k portion obsorved by the 2nd collateral type

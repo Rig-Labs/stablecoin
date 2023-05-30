@@ -1,19 +1,32 @@
 library fpt_staking_interface;
+use std::{
+    storage::{
+        StorageMap,
+        StorageVec,
+    },
+};
+
+pub struct ReadStorage {
+    f_usdf: u64, 
+    total_fpt_staked: u64,
+    protocol_manager_address: ContractId,
+    trove_manager_address: ContractId,
+    borrower_operations_address: ContractId,
+    fpt_address: ContractId,
+    usdf_address: ContractId,
+    is_initialized: bool,
+}
 
 abi FPTStaking {
-    #[storage(read, write)]
-    fn stake(id: Identity);
+    #[storage(read, write), payable]
+    fn stake();
 
     #[storage(read, write)]
-    fn unstake(id: Identity, amount: u64);
+    fn unstake(amount: u64);
     
     #[storage(read, write)]
     fn add_asset(
-        trove_manager_address: ContractId,
-        active_pool_address: ContractId,
-        sorted_troves_address: ContractId,
         asset_address: ContractId,
-        oracle_address: ContractId,
     );
 
      #[storage(read, write)]
@@ -24,6 +37,10 @@ abi FPTStaking {
         fpt_address: ContractId,
         usdf_address: ContractId,
     );
+
+    #[storage(read)]
+    fn get_storage() -> ReadStorage;
+
 
     #[storage(read)]
     fn get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64;

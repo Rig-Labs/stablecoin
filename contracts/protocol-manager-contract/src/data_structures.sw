@@ -59,4 +59,5 @@ pub struct AssetContracts {
     coll_surplus_pool: ContractId,
     oracle: ContractId,
     sorted_troves: ContractId,
+    fpt_staking: ContractId,
 }

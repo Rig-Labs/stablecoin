@@ -368,6 +368,18 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
+    pub async fn get_redemption_fee<T: Account>(
+        trove_manager: &TroveManagerContract<T>,
+        asset_drawdown: u64,
+    ) -> FuelCallResponse<u64> {
+        trove_manager
+            .methods()
+            .get_redemption_fee(asset_drawdown)
+            .call()
+            .await
+            .unwrap()
+    }
+
     pub async fn get_redemption_rate<T: Account>(
         trove_manager: &TroveManagerContract<T>,
     ) -> FuelCallResponse<u64> {
