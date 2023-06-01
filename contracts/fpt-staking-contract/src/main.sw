@@ -3,22 +3,22 @@ contract;
 dep data_structures;
 use data_structures::ReadStorage;
 use libraries::numbers::*;
-use libraries::fluid_math::{ null_contract, null_identity_address, fm_min };
+use libraries::fluid_math::{fm_min, null_contract, null_identity_address};
 use libraries::fpt_staking_interface::{FPTStaking};
 use std::{
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
     },
+    context::{
+        msg_amount,
+    },
+    logging::log,
     storage::{
         StorageMap,
         StorageVec,
     },
     token::transfer,
-    context::{
-        msg_amount,
-    },
-    logging::log,
     u128::U128,
 };
 storage {
@@ -38,7 +38,6 @@ storage {
 }
 
 const DECIMAL_PRECISION: U128 = U128::from_u64(1_000_000_000); //todo: import from fluidmath once we switch fluidmath to u128, until then just keep it here
-
 impl FPTStaking for Contract {
     #[storage(read, write)]
     fn initialize(
@@ -59,7 +58,7 @@ impl FPTStaking for Contract {
 
     #[storage(read)]
     fn get_storage() -> ReadStorage {
-        ReadStorage { 
+        ReadStorage {
             f_usdf: storage.f_usdf,
             total_fpt_staked: storage.total_fpt_staked,
             protocol_manager_address: storage.protocol_manager_address,
@@ -73,7 +72,6 @@ impl FPTStaking for Contract {
 
     #[storage(read, write), payable]
     fn stake() {
-
         let id = msg_sender().unwrap();
 
         require_fpt_is_valid_and_non_zero();
@@ -109,7 +107,6 @@ impl FPTStaking for Contract {
 
     #[storage(read, write)]
     fn unstake(amount: u64) {
-
         let id = msg_sender().unwrap();
 
         let current_stake = storage.stakes.get(id);
@@ -120,7 +117,7 @@ impl FPTStaking for Contract {
 
         let mut x = 0;
 
-        while x < storage.valid_assets.len(){
+        while x < storage.valid_assets.len() {
             let mut asset_gain = 0;
             let current_asset_address = storage.valid_assets.get(x).unwrap();
             asset_gain = internal_get_pending_asset_gain(id, current_asset_address);
@@ -130,13 +127,13 @@ impl FPTStaking for Contract {
 
         update_user_snapshots(id);
 
-        if (amount > 0){
+        if (amount > 0) {
             let amount_to_withdraw = fm_min(amount, current_stake);
             let new_stake = current_stake - amount_to_withdraw;
             storage.stakes.insert(id, new_stake); //overwrite previous balance
             storage.total_fpt_staked = storage.total_fpt_staked - amount_to_withdraw;
 
-            if (amount_to_withdraw > 0 ){
+            if (amount_to_withdraw > 0) {
                 log(amount_to_withdraw);
                 // transfer the FPT tokens to the user
                 transfer(amount_to_withdraw, storage.fpt_address, msg_sender().unwrap());
@@ -146,9 +143,7 @@ impl FPTStaking for Contract {
 
     // called from the protocol manager contract in the `register_asset` fn
     #[storage(read, write)]
-    fn add_asset(
-        asset_address: ContractId,
-    ) {
+    fn add_asset(asset_address: ContractId) {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_address);
         storage.f_asset.insert(asset_address, 0);
@@ -165,8 +160,7 @@ impl FPTStaking for Contract {
     }
 
     #[storage(read, write)]
-    
-    fn increase_f_usdf(usdf_fee_amount: u64){
+    fn increase_f_usdf(usdf_fee_amount: u64) {
         require_is_borrower_operations();
         let mut usdf_fee_per_fpt_staked = 0;
         if (storage.total_fpt_staked > 0) {
@@ -176,10 +170,10 @@ impl FPTStaking for Contract {
     }
 
     #[storage(read, write)]
-    fn increase_f_asset(asset_fee_amount: u64, asset_address: ContractId){
+    fn increase_f_asset(asset_fee_amount: u64, asset_address: ContractId) {
         require_is_trove_manager();
-        let mut asset_fee_per_fpt_staked =0;
-        if (storage.total_fpt_staked > 0){
+        let mut asset_fee_per_fpt_staked = 0;
+        if (storage.total_fpt_staked > 0) {
             asset_fee_per_fpt_staked = ((U128::from_u64(asset_fee_amount) * DECIMAL_PRECISION) / U128::from_u64(storage.total_fpt_staked)).as_u64().unwrap();
         }
         let mut new_f_asset = storage.f_asset.get(asset_address) + asset_fee_per_fpt_staked;
@@ -196,7 +190,7 @@ fn internal_get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u
 
 #[storage(read)]
 fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
-    let f_usdf_snapshot: U128  = U128::from_u64(storage.usdf_snapshot.get(id));
+    let f_usdf_snapshot: U128 = U128::from_u64(storage.usdf_snapshot.get(id));
     let usdf_gain = ((U128::from_u64(storage.stakes.get(id)) * (U128::from_u64(storage.f_usdf) - f_usdf_snapshot)) / DECIMAL_PRECISION).as_u64().unwrap();
     usdf_gain
 }

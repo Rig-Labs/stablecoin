@@ -174,8 +174,6 @@ impl ProtocolManager for Contract {
             // TODO require user accepts fee
             // TODO active pool send fee to stakers
             // TODO lqty staking increase f_asset
-        
-
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
             active_pool_contract.send_asset(Identity::ContractId(contracts_cache.fpt_staking), totals.asset_fee);
@@ -235,7 +233,7 @@ fn get_all_assets_info() -> AssetInfo {
         let oracle_contract = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
         let trove_manager_contract = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
         let sorted_troves_contract = abi(SortedTroves, asset_contracts.get(i).unwrap().sorted_troves.into());
-        
+
         let price = oracle_contract.get_price();
         let mut current_borrower = sorted_troves_contract.get_last();
         let mut current_cr = trove_manager_contract.get_current_icr(current_borrower, price);
