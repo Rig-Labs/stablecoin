@@ -8,6 +8,12 @@ pub fn with_min_borrow_fee(debt: u64) -> u64 {
     return net_debt;
 }
 
+// 1% min redemption fee
+pub fn with_min_redemption_fee(amount: u64) -> u64 {
+    let amount_with_fee = amount * 1_010 / 1_000;
+    return amount_with_fee;
+}
+
 pub fn calculate_icr(coll: u64, debt: u64) -> u64 {
     let icr = coll as u128 * DECIMAL_PRECISION as u128 / debt as u128;
     return icr.try_into().unwrap();

@@ -185,35 +185,8 @@ impl TroveManager for Contract {
     }
 
     #[storage(read)]
-    fn get_borrowing_fee(debt: u64) -> u64 {
-        internal_calculate_borrowing_fee(internal_get_borrowing_rate(), debt)
-    }
-
-    #[storage(read, write)]
-    fn decay_base_rate_from_borrowing() {
-        require_caller_is_borrow_operations_contract();
-
-        // TODO Decay base rate but timestamp is not implemented properly
-    }
-
-    #[storage(read)]
     fn get_trove_stake(id: Identity) -> u64 {
         internal_get_trove_stake(id)
-    }
-
-    #[storage(read)]
-    fn get_borrowing_fee_with_decay(debt: u64) -> u64 {
-        internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), debt)
-    }
-
-    #[storage(read)]
-    fn get_borrowing_rate() -> u64 {
-        internal_get_borrowing_rate()
-    }
-
-    #[storage(read)]
-    fn get_borrowing_rate_with_decay() -> u64 {
-        internal_get_borrowing_rate_with_decay()
     }
 
     #[storage(read)]
@@ -847,28 +820,6 @@ fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
     return redemption_fee;
 }
 
-// ----- Borrowing ----- //
-#[storage(read)]
-fn internal_calculate_borrowing_fee(borrowing_rate: u64, usdf_debt: u64) -> u64 {
-    let numerator = U128::from_u64(borrowing_rate) * U128::from_u64(usdf_debt);
-    let prod = (numerator / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
-    return prod;
-}
-
-#[storage(read)]
-fn internal_get_borrowing_rate() -> u64 {
-    internal_calculate_borrowing_rate(storage.base_rate.as_u64().unwrap())
-}
-
-#[storage(read)]
-fn internal_get_borrowing_rate_with_decay() -> u64 {
-    internal_calculate_borrowing_rate(calculate_decayed_base_rate())
-}
-
-#[storage(read)]
-fn internal_calculate_borrowing_rate(base_rate: u64) -> u64 {
-    return fm_min(BORROWING_FEE_FLOOR + base_rate, MAX_BORROWING_FEE);
-}
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");

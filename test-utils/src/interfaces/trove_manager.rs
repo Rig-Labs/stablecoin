@@ -319,65 +319,8 @@ pub mod trove_manager_abi {
     //         .unwrap()
     // }
 
-    pub async fn get_borrowing_rate<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_rate()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_rate_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().set_gas_price(1);
-
-        trove_manager
-            .methods()
-            .get_borrowing_rate_with_decay()
-            .tx_params(tx_params)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_fee<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        usdf_borrowed: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_fee(usdf_borrowed)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_fee_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        usdf_borrowed: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_fee_with_decay(usdf_borrowed)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_fee<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        asset_drawdown: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_fee(asset_drawdown)
-            .call()
-            .await
-            .unwrap()
+    pub fn get_redemption_fee(asset_drawdown: u64) -> u64 {
+        return asset_drawdown * 1 / 100;
     }
 
     pub async fn get_redemption_rate<T: Account>(

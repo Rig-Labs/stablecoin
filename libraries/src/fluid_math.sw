@@ -18,8 +18,8 @@ pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
 // Max borrowing fee is 5%
 pub const MAX_BORROWING_FEE: u64 = 50_000_000;
 
-// Max redemption fee floor is 0.5%
-pub const REDEMPTION_FEE_FLOOR: u64 = 5_000_000;
+// Redemption fee floor is 1%
+pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
@@ -43,6 +43,18 @@ pub const STABILITY_POOL_FEE: u64 = 50_000_000;
 pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
+
+// 0.5% one-time borrow fee
+pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
+    let fee = U128::from_u64(debt) * U128::from_u64(BORROWING_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    return fee.as_u64().unwrap();
+}
+
+// 1% redemption fee
+pub fn fm_compute_redemption_fee(debt: u64) -> u64 {
+    let fee = U128::from_u64(debt) * U128::from_u64(REDEMPTION_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    return fee.as_u64().unwrap();
+}
 
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {

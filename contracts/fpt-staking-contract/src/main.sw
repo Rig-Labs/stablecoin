@@ -134,7 +134,6 @@ impl FPTStaking for Contract {
             storage.total_fpt_staked = storage.total_fpt_staked - amount_to_withdraw;
 
             if (amount_to_withdraw > 0) {
-                log(amount_to_withdraw);
                 // transfer the FPT tokens to the user
                 transfer(amount_to_withdraw, storage.fpt_address, msg_sender().unwrap());
             }

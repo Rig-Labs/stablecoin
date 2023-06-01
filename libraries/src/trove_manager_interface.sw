@@ -68,25 +68,10 @@ abi TroveManager {
     fn get_redemption_rate_with_decay() -> u64;
 
     #[storage(read)]
-    fn get_borrowing_rate() -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_rate_with_decay() -> u64;
-
-    #[storage(read)]
     fn get_redemption_fee(asset_drawn: u64) -> u64;
 
     #[storage(read)]
     fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_fee(debt: u64) -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_fee_with_decay(debt: u64) -> u64;
-
-    #[storage(read, write)]
-    fn decay_base_rate_from_borrowing();
 
     #[storage(read)]
     fn get_trove_status(id: Identity) -> Status;

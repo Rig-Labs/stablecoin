@@ -170,10 +170,11 @@ impl ProtocolManager for Contract {
             }
 
             trove_manager_contract.update_base_rate_from_redemption(totals.total_asset_drawn, price, total_usdf_supply_at_start);
-            totals.asset_fee = trove_manager_contract.get_redemption_fee(totals.total_asset_drawn);
+            totals.asset_fee = fm_compute_redemption_fee(totals.total_asset_drawn); 
+            // trove_manager_contract.get_redemption_fee(totals.total_asset_drawn);
             // TODO require user accepts fee
             // TODO active pool send fee to stakers
-            // TODO lqty staking increase f_asset
+            // TODO fpt staking increase f_asset
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
             active_pool_contract.send_asset(Identity::ContractId(contracts_cache.fpt_staking), totals.asset_fee);
