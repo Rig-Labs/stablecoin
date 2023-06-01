@@ -1,13 +1,7 @@
 use dotenv::dotenv;
-use fuels::{
-    prelude::{Address, Bech32Address, Bech32ContractId, Provider, WalletUnlocked},
-    types::ContractId,
-};
+use fuels::prelude::{Address, Provider, WalletUnlocked};
 
-use crate::{
-    interfaces::trove_manager::trove_manager_abi,
-    setup::common::{deploy_and_initialize_all, ProtocolContracts},
-};
+use crate::setup::common::ProtocolContracts;
 
 // const RPC: &str = "http://localhost:4000";
 
@@ -42,9 +36,10 @@ pub async fn deploy() {
 
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
-    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
-    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken, fpt_staking::FPTStaking,
+    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, fpt_staking::FPTStaking,
+    oracle::Oracle, protocol_manager::ProtocolManager, sorted_troves::SortedTroves,
+    stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
+    usdf_token::USDFToken,
 };
 
 pub mod deployment {
@@ -62,15 +57,16 @@ pub mod deployment {
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
-            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::{self, fpt_staking_abi},
+            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
+            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
+            usdf_token::usdf_token_abi,
         },
         setup::common::{
             deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
-            deploy_default_pool, deploy_oracle, deploy_protocol_manager, deploy_sorted_troves,
-            deploy_stability_pool, deploy_token, deploy_trove_manager_contract, deploy_usdf_token,
-            AssetContracts, ProtocolContracts, deploy_fpt_staking,
+            deploy_default_pool, deploy_fpt_staking, deploy_oracle, deploy_protocol_manager,
+            deploy_sorted_troves, deploy_stability_pool, deploy_token,
+            deploy_trove_manager_contract, deploy_usdf_token, AssetContracts, ProtocolContracts,
         },
     };
 
@@ -140,7 +136,7 @@ pub mod deployment {
 
         let mut pb = ProgressBar::new(4);
 
-        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
 
         let _ = usdf_token_abi::initialize(
@@ -183,10 +179,10 @@ pub mod deployment {
             borrow_operations.contract_id().into(),
             fpt.contract_id().into(),
             usdf.contract_id().into(),
-        ).await;
+        )
+        .await;
         wait();
         pb.inc();
-
 
         let _ = protocol_manager_abi::initialize(
             &protocol_manager,
@@ -252,7 +248,7 @@ pub mod deployment {
             protocol_manager,
             asset_contracts,
             fpt_staking,
-            fpt
+            fpt,
         };
 
         return contracts;

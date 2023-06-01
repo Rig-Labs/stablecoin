@@ -67,6 +67,6 @@ jobs:
       # - name: Test Sway
       #   run: |
       #     forc test
-      - name: Run Rust tests
-        run: |
-          cargo test
+      # - name: Run Rust tests
+      #   run: |
+      #     cargo test

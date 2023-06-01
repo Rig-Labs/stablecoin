@@ -9,11 +9,11 @@ abigen!(Contract(
 
 pub mod protocol_manager_abi {
     use crate::interfaces::borrow_operations::BorrowOperations;
+    use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::stability_pool::StabilityPool;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::interfaces::fpt_staking::FPTStaking;
-    use crate::setup::common::{wait, AssetContracts};
-    use fuels::prelude::{Account, CallParameters, LogDecoder, SettableContract};
+    use crate::setup::common::AssetContracts;
+    use fuels::prelude::{Account, CallParameters, SettableContract};
     use fuels::types::AssetId;
     use fuels::{
         prelude::{ContractId, TxParameters},
