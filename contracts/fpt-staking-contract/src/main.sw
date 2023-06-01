@@ -19,6 +19,7 @@ use std::{
         msg_amount,
     },
     logging::log,
+    u128::U128,
 };
 storage {
     valid_assets: StorageVec<ContractId> = StorageVec {},
