@@ -69,8 +69,6 @@ storage {
     l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
     last_usdf_error_redistribution: u64 = 0,
-    last_fee_operation_timestamp: u64 = 0,
-    base_rate: U128 = U128::from_u64(0),
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap {},
@@ -156,32 +154,6 @@ impl TroveManager for Contract {
             res.pending_debt_rewards,
             res.pending_coll_rewards,
         )
-    }
-
-    #[storage(read, write)]
-    fn update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
-        require_caller_is_protocol_manager_contract();
-        internal_update_base_rate_from_redemption(asset_drawn, price, total_usdf_supply)
-    }
-
-    #[storage(read)]
-    fn get_redemption_rate() -> u64 {
-        internal_get_redemption_rate().as_u64().unwrap()
-    }
-
-    #[storage(read)]
-    fn get_redemption_rate_with_decay() -> u64 {
-        internal_get_redemption_rate_with_decay().as_u64().unwrap()
-    }
-
-    #[storage(read)]
-    fn get_redemption_fee(asset_drawn: u64) -> u64 {
-        internal_get_redemption_fee(asset_drawn)
-    }
-
-    #[storage(read)]
-    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
-        internal_get_redemption_fee_with_decay(asset_drawn)
     }
 
     #[storage(read)]
@@ -772,76 +744,7 @@ fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
     active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset);
 }
 
-// ---- Redemption Fees ---- //
-#[storage(read, write)]
-fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
-    let decayed_base_rate = calculate_decayed_base_rate();
-
-    let redeemed_usdf_fraction = U128::from_u64(asset_drawn) * U128::from_u64(price) / U128::from_u64(total_usdf_supply);
-    let mut new_base_rate: U128 = U128::from_u64(decayed_base_rate) + (redeemed_usdf_fraction / U128::from_u64(BETA));
-
-    // Weird memory overflow error if this is included
-    // new_base_rate = fm_min_u128(new_base_rate, U128::from_u64(DECIMAL_PRECISION));
-    require(new_base_rate > U128::from_u64(0), "Base rate cannot be zero");
-
-    storage.base_rate = new_base_rate;
-
-    update_last_fee_op_time();
-}
-
-#[storage(read)]
-fn internal_get_redemption_rate() -> U128 {
-    return calc_redemption_rate(storage.base_rate);
-}
-
-#[storage(read)]
-fn internal_get_redemption_rate_with_decay() -> U128 {
-    return calc_redemption_rate(U128::from_u64(calculate_decayed_base_rate()));
-}
-#[storage(read)]
-fn calc_redemption_rate(base_rate: U128) -> U128 {
-    return fm_min_u128(base_rate + U128::from_u64(REDEMPTION_FEE_FLOOR), U128::from_u64(DECIMAL_PRECISION));
-}
-
-#[storage(read)]
-fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate());
-}
-#[storage(read)]
-fn internal_get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate_with_decay());
-}
-
-#[storage(read)]
-fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
-    let redemption_fee = ((U128::from_u64(asset_drawn) * redemption_rate) / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
-
-    require(redemption_fee < asset_drawn, "Redemption fee cannot exceed asset drawn");
-    return redemption_fee;
-}
-
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
-}
-
-#[storage(read)]
-fn calculate_decayed_base_rate() -> u64 {
-    let minutes_passed = internal_minutes_passed_since_last_fee_op();
-    let decay_factor = dec_pow(MINUTE_DECAY_FACTOR, minutes_passed);
-    return (storage.base_rate.as_u64().unwrap() * decay_factor.as_u64().unwrap()) / DECIMAL_PRECISION;
-}
-
-#[storage(read)]
-fn internal_minutes_passed_since_last_fee_op() -> u64 {
-    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
-    return time_passed / SECONDS_IN_ONE_MINUTE;
-}
-
-#[storage(read, write)]
-fn update_last_fee_op_time() {
-    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
-    if (time_passed >= SECONDS_IN_ONE_MINUTE) {
-        storage.last_fee_operation_timestamp = timestamp();
-    }
 }

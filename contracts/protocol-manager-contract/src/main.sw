@@ -169,7 +169,6 @@ impl ProtocolManager for Contract {
                 continue;
             }
 
-            trove_manager_contract.update_base_rate_from_redemption(totals.total_asset_drawn, price, total_usdf_supply_at_start);
             totals.asset_fee = fm_compute_redemption_fee(totals.total_asset_drawn); 
             // trove_manager_contract.get_redemption_fee(totals.total_asset_drawn);
             // TODO require user accepts fee

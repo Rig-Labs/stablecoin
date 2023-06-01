@@ -322,40 +322,6 @@ pub mod trove_manager_abi {
     pub fn get_redemption_fee(asset_drawdown: u64) -> u64 {
         return asset_drawdown * 1 / 100;
     }
-
-    pub async fn get_redemption_rate<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_rate()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_rate_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_rate_with_decay()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_fee_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        asset_drawn: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_fee_with_decay(asset_drawn)
-            .call()
-            .await
-            .unwrap()
-    }
 }
 
 pub mod trove_manager_utils {
