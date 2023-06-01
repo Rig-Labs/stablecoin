@@ -10,9 +10,6 @@ use std::{
     call_frames::{
         msg_asset_id,
     },
-    context::{
-        msg_amount,
-    },
     storage::{
         StorageMap,
         StorageVec,
