@@ -18,11 +18,9 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, LogDecoder, WalletUnlocked},
+        prelude::{Account, AssetId, CallParameters, Error, WalletUnlocked},
         types::Identity,
     };
-
-    use crate::setup::common::wait;
 
     use super::*;
 

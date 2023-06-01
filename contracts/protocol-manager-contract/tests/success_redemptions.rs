@@ -9,7 +9,7 @@ use test_utils::{
         oracle::oracle_abi,
         protocol_manager::protocol_manager_abi,
         token::token_abi,
-        trove_manager::{trove_manager_utils, Status, trove_manager_abi},
+        trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
     utils::with_min_borrow_fee,
@@ -17,7 +17,6 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
-
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
@@ -169,23 +168,16 @@ async fn proper_redemption_from_partially_closed() {
         .unwrap();
 
     // TODO Replace with staking contract when implemented
-    let oracle_balance = provider
-        .get_contract_asset_balance(
-            contracts.asset_contracts[0].oracle.contract_id(),
-            fuel_asset_id,
-        )
+    let staking_balance = provider
+        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await
         .unwrap();
 
-
     // here we need to calculate the fee and subtract it
-    let redemption_asset_fee = trove_manager_abi::get_redemption_fee(
-        &contracts.asset_contracts[0].trove_manager,
-        redemption_amount
-    )
-    .await.value;
+    let redemption_asset_fee = trove_manager_abi::get_redemption_fee(redemption_amount);
 
-    assert_eq!(fuel_balance, redemption_amount - oracle_balance - redemption_asset_fee);
+    assert_eq!(staking_balance, redemption_asset_fee);
+    assert_eq!(fuel_balance, redemption_amount - redemption_asset_fee);
 
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
@@ -365,10 +357,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(
-            &contracts.fpt_staking.contract_id(),
-            fuel_asset_id,
-        )
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await
         .unwrap();
 

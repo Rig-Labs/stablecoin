@@ -1,6 +1,6 @@
 library data_structures;
 
-pub struct RedemptionTotals{
+pub struct RedemptionTotals {
     remaining_usdf: u64,
     total_usdf_to_redeem: u64,
     total_asset_drawn: u64,
@@ -41,7 +41,6 @@ impl SingleRedemptionValues {
         }
     }
 }
-
 
 pub struct AssetInfo {
     assets: Vec<ContractId>,

@@ -89,8 +89,6 @@ impl BorrowOperations for Contract {
         lower_hint: Identity,
         asset_contract: ContractId,
     ) {
-        // log(12355);
-        // log("12355");
         require_valid_asset_id();
         let asset_contracts = storage.asset_contracts.get(asset_contract);
         let usdf_contract = storage.usdf_contract;
@@ -107,12 +105,10 @@ impl BorrowOperations for Contract {
         vars.price = oracle.get_price();
 
         require_trove_is_not_active(sender, asset_contracts.trove_manager);
-        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, 0, asset_contracts.trove_manager, usdf_contract, fpt_staking_contract, asset_contracts.active_pool);
+        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, usdf_contract, fpt_staking_contract);
+
         vars.net_debt = vars.net_debt + vars.usdf_fee;
-        log(1);
-        log(vars.net_debt);
-        log(2);
-        log(vars.usdf_fee);
+
         // TODO Trigger borrowing fee
         require_at_least_min_net_debt(vars.net_debt);
 
@@ -135,7 +131,7 @@ impl BorrowOperations for Contract {
         sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
-        // Move the ether to the Active Pool, and mint the LUSDAmount to the borrower
+        // Move the ether to the Active Pool, and mint the USDF to the borrower
         internal_active_pool_add_coll(msg_amount(), asset_contract, asset_contracts.active_pool);
         internal_withdraw_usdf(sender, usdf_amount, vars.net_debt, asset_contracts.active_pool, usdf_contract);
     }
@@ -256,25 +252,17 @@ impl BorrowOperations for Contract {
 #[storage(read)]
 fn internal_trigger_borrowing_fee(
     usdf_amount: u64,
-    max_fee_percentage: u64,
-    trove_manager_contract: ContractId,
     usdf_contract: ContractId,
     fpt_staking_contract: ContractId,
-    active_pool_contract: ContractId,
 ) -> u64 {
-    let active_pool = abi(ActivePool, active_pool_contract.value);
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
     let usdf = abi(USDFToken, usdf_contract.value);
     let fpt_staking = abi(FPTStaking, fpt_staking_contract.value);
-    trove_manager.decay_base_rate_from_borrowing();
-    let usdf_fee = trove_manager.get_borrowing_fee(usdf_amount);
-    // TODO require user accepts fee
 
-    log(3);
-    log(usdf_fee);
-    // Mint usdf to LQTY staking contract
+    let usdf_fee = fm_compute_borrow_fee(usdf_amount); 
+    // TODO require user accepts fee
+    // Mint usdf to fpt staking contract
     usdf.mint(usdf_fee, Identity::ContractId(fpt_staking_contract));
-    //increase lqty staking rewards
+    //increase fpt staking rewards
     fpt_staking.increase_f_usdf(usdf_fee);
 
     return usdf_fee
@@ -298,7 +286,7 @@ fn internal_adjust_trove(
     let oracle = abi(MockOracle, asset_contracts.oracle.value);
     let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
     let sorted_troves = abi(SortedTroves, asset_contracts.sorted_troves.value);
-    
+
     let price = oracle.get_price();
     let mut vars = LocalVariables_AdjustTrove::new();
 
@@ -317,7 +305,8 @@ fn internal_adjust_trove(
 
     vars.net_debt_change = usdf_change;
     if is_debt_increase {
-        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, 0, asset_contracts.trove_manager, usdf_contract, fpt_staking_contract, asset_contracts.active_pool);
+        vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt_change, usdf_contract, fpt_staking_contract);
+
         vars.net_debt_change = vars.net_debt_change + vars.usdf_fee;
     }
 
