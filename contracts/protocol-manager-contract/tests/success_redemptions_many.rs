@@ -1,4 +1,5 @@
 use fuels::{prelude::AssetId, types::Identity};
+use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::{
@@ -14,8 +15,8 @@ use test_utils::{
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -27,8 +28,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
-        20_000_000_000,
-        10_000_000_000,
+        20_000 * PRECISION,
+        10_000 * PRECISION,
     )
     .await;
 
@@ -38,8 +39,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
-        9_000_000_000,
-        5_000_000_000,
+        9_000 * PRECISION,
+        5_000 * PRECISION,
     )
     .await;
 
@@ -49,8 +50,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
-        8_000_000_000,
-        5_000_000_000,
+        8_000 * PRECISION,
+        5_000 * PRECISION,
     )
     .await;
 
@@ -60,8 +61,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
-        15_000_000_000,
-        5_000_000_000,
+        15_000 * PRECISION,
+        5_000 * PRECISION,
     )
     .await;
 
@@ -71,8 +72,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
-        7_000_000_000,
-        5_000_000_000,
+        7_000 * PRECISION,
+        5_000 * PRECISION,
     )
     .await;
 
@@ -87,10 +88,10 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1 * PRECISION).await;
 
-    let redemption_amount: u64 = 8_000_000_000;
+    let redemption_amount: u64 = 8_000 * PRECISION;
 
     let protocol_manager_health1 = ProtocolManager::new(
         contracts.protocol_manager.contract_id().clone(),
@@ -129,12 +130,13 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     //  + amount taken from the 2nd collateral type
     assert_eq!(
         active_pool_asset,
-        37_000_000_000 - redemption_amount + with_min_borrow_fee(5_000_000_000)
+        37_000 * PRECISION - redemption_amount + with_min_borrow_fee(5_000 * PRECISION)
     );
 
     assert_eq!(
         active_pool_debt,
-        pre_redemption_active_pool_debt - redemption_amount + with_min_borrow_fee(5_000_000_000)
+        pre_redemption_active_pool_debt - redemption_amount
+            + with_min_borrow_fee(5_000 * PRECISION)
     );
 
     let provider = healthy_wallet1.provider().unwrap();
@@ -183,14 +185,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
-        8_000_000_000 + st_fuel_balance + fees2 - redemption_amount,
+        8_000 * PRECISION + st_fuel_balance + fees2 - redemption_amount,
     )
     .await;
 
     trove_manager_utils::assert_trove_debt(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
-        with_min_borrow_fee(5_000_000_000) + st_fuel_balance + fees2 - redemption_amount,
+        with_min_borrow_fee(5_000 * PRECISION) + st_fuel_balance + fees2 - redemption_amount,
     )
     .await;
 }

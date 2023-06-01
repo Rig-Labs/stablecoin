@@ -1,5 +1,6 @@
 use fuels::types::Identity;
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -18,12 +19,12 @@ use test_utils::{
 async fn proper_full_liquidation_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
 
-    let balance = 25_000_000_000;
+    let balance = 25_000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -48,8 +49,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         healthy_wallet1.clone(),
     );
 
-    let usdf_deposit_to_be_liquidated = 1_000_000_000;
-    let asset_deposit_to_be_liquidated = 1_100_000_000;
+    let usdf_deposit_to_be_liquidated = 1_000 * PRECISION;
+    let asset_deposit_to_be_liquidated = 1_100 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
         &contracts.asset_contracts[0].oracle,
@@ -77,8 +78,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        10_000_000_000,
-        5_000_000_000,
+        10_000 * PRECISION,
+        5_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -94,12 +95,12 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &stability_pool_healthy_wallet1,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
     )
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
     trove_manager_abi::liquidate(
@@ -152,7 +153,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         .value;
 
     let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
-    assert_eq!(deposits, 5_000_000_000 - liquidated_net_debt);
+    assert_eq!(deposits, 5_000 * PRECISION - liquidated_net_debt);
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
@@ -162,8 +163,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .unwrap()
     .value;
 
-    // 5% Penalty on 1_000_000_000 of debt
-    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050_000_000);
+    // 5% Penalty on 1_000* PRECISION of debt
+    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
     assert_eq!(asset, asset_with_min_borrow_fee);
 
     let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
@@ -175,9 +176,9 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
             .await
             .value;
 
-    assert_eq!(active_pool_asset, 10_000_000_000);
+    assert_eq!(active_pool_asset, 10_000 * PRECISION);
 
-    let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000_000_000);
+    let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000 * PRECISION);
     assert_eq!(active_pool_debt, active_pool_debt_with_min_borrow_fee);
 
     let default_pool_asset =
@@ -212,13 +213,13 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 async fn proper_full_liquidation_partial_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
 
-    let balance = 35_000_000_000;
+    let balance = 35_000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -264,8 +265,8 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_100_000_000,
-        1_000_000_000,
+        1_100 * PRECISION,
+        1_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -282,8 +283,8 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        10_000_000_000,
-        5_000_000_000,
+        10_000 * PRECISION,
+        5_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -300,8 +301,8 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        30_000_000_000,
-        15_000_000_000,
+        30_000 * PRECISION,
+        15_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -317,12 +318,12 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &stability_pool_healthy_wallet1,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
-        500_000_000,
+        500 * PRECISION,
     )
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
     trove_manager_abi::liquidate(
@@ -377,9 +378,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .unwrap()
     .value;
 
-    // 5% Penalty on 1_000_000_000 of debt
+    // 5% Penalty on 1_000* PRECISION of debt
     assert_eq!(
-        asset, 525_000_000,
+        asset,
+        525 * PRECISION,
         "Incorrect asset amount in stability pool"
     );
 
@@ -392,8 +394,8 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
             .await
             .value;
 
-    assert_eq!(active_pool_asset, 40_000_000_000);
-    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
+    assert_eq!(active_pool_asset, 40_000 * PRECISION);
+    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000 * PRECISION));
 
     let default_pool_asset =
         default_pool_abi::get_asset(&contracts.asset_contracts[0].default_pool)
@@ -406,7 +408,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
             .value;
 
     // 1.05 * 500_000_000
-    let debt_being_redistributed = with_min_borrow_fee(1_000_000_000) - 500_000_000;
+    let debt_being_redistributed = with_min_borrow_fee(1_000 * PRECISION) - 500 * PRECISION;
     let asset_being_redistributed = with_liquidation_penalty(debt_being_redistributed);
     assert_eq!(
         default_pool_asset, asset_being_redistributed,
@@ -451,7 +453,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
     assert_eq!(
         liq_coll_surplus,
-        1_100_000_000 - with_liquidation_penalty(with_min_borrow_fee(1_000_000_000)),
+        1_100 * PRECISION - with_liquidation_penalty(with_min_borrow_fee(1_000 * PRECISION)),
         "Liquidated wallet collateral surplus was not 50_000_000"
     );
 }
@@ -460,13 +462,13 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 async fn proper_full_liquidation_empty_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
 
-    let balance = 35_000_000_000;
+    let balance = 35_000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -512,8 +514,8 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_100_000_000,
-        1_000_000_000,
+        1_100 * PRECISION,
+        1_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -530,8 +532,8 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        10_000_000_000,
-        5_000_000_000,
+        10_000 * PRECISION,
+        5_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -548,15 +550,15 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        30_000_000_000,
-        15_000_000_000,
+        30_000 * PRECISION,
+        15_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
     let _response = trove_manager_abi::liquidate(
@@ -622,8 +624,8 @@ async fn proper_full_liquidation_empty_sp() {
             .await
             .value;
 
-    assert_eq!(active_pool_asset, 40_000_000_000);
-    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000_000_000));
+    assert_eq!(active_pool_asset, 40_000 * PRECISION);
+    assert_eq!(active_pool_debt, with_min_borrow_fee(20_000 * PRECISION));
 
     let default_pool_asset =
         default_pool_abi::get_asset(&contracts.asset_contracts[0].default_pool)
@@ -636,8 +638,9 @@ async fn proper_full_liquidation_empty_sp() {
             .value;
 
     // 1.05 * 500_000_000
-    let expected_default_pool_asset = with_liquidation_penalty(with_min_borrow_fee(1_000_000_000));
-    let expected_default_pool_debt = with_min_borrow_fee(1_000_000_000);
+    let expected_default_pool_asset =
+        with_liquidation_penalty(with_min_borrow_fee(1_000 * PRECISION));
+    let expected_default_pool_debt = with_min_borrow_fee(1_000 * PRECISION);
     assert_eq!(default_pool_asset, expected_default_pool_asset);
     assert_eq!(default_pool_debt, expected_default_pool_debt);
 
@@ -678,7 +681,7 @@ async fn proper_full_liquidation_empty_sp() {
 
     assert_eq!(
         liq_coll_surplus,
-        1_100_000_000 - expected_default_pool_asset,
+        1_100 * PRECISION - expected_default_pool_asset,
         "Liquidated wallet collateral surplus was not 50_000"
     );
 }

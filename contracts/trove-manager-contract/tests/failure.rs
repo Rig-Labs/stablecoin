@@ -1,5 +1,6 @@
 use fuels::types::Identity;
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         oracle::oracle_abi,
@@ -13,11 +14,11 @@ use test_utils::{
 async fn fails_to_liquidate_trove_not_under_mcr() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10_000_000).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let wallet1 = wallets.pop().unwrap();
 
-    let balance = 25_000_000_000;
+    let balance = 25_000 * PRECISION;
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
@@ -39,8 +40,8 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_100_000_000,
-        1_000_000_000,
+        1_100 * PRECISION,
+        1_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )

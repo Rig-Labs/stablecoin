@@ -40,8 +40,9 @@ pub mod coll_surplus_pool_abi {
         // TODO: remove this workaround
         match res {
             Ok(res) => res,
-            Err(_) => {
+            Err(err) => {
                 wait();
+                println!("Error: {:?}", err);
                 return FuelCallResponse::new((), vec![], LogDecoder::default());
             }
         }

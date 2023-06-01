@@ -24,24 +24,23 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 5_000_000;
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
-pub const ORACLE_PRICE_PRECISION: u64 = 1_000_000;
-
-pub const MCR: u64 = 1_200_000;
+pub const MCR: u64 = 1_200_000_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
 // min debt is 500 USDF
-pub const MIN_NET_DEBT: u64 = 500_000_000;
+pub const MIN_NET_DEBT: u64 = 500_000_000_000;
 
 pub const PERCENT_DIVERSOR = 200;
 
-pub const POST_COLLATERAL_RATIO: u64 = 1_300_000;
+pub const POST_COLLATERAL_RATIO: u64 = 1_300_000_000;
 
-pub const STABILITY_POOL_FEE: u64 = 50_000;
+// 0.5% fee
+pub const STABILITY_POOL_FEE: u64 = 50_000_000;
 
-pub const ONE: u64 = 1_000_000;
+pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 
@@ -61,6 +60,16 @@ pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     } else {
         return MAX_U64;
     }
+}
+
+pub fn fm_abs_diff(a: u64, b: u64) -> u64 {
+    if a > b { return a - b; } else { return b - a; }
+}
+
+pub fn assert_within_percent_tolerance(a: u64, b: u64, tolerance: u64) {
+    let diff = fm_abs_diff(a, b);
+    let max_diff = fm_min(a, b) * tolerance / 1_000_000_000;
+    assert(diff <= max_diff);
 }
 
 pub fn fm_min(a: u64, b: u64) -> u64 {

@@ -10,7 +10,7 @@ use libraries::active_pool_interface::{ActivePool};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::numbers::*;
-use libraries::fluid_math::{fm_min, null_contract, null_identity_address};
+use libraries::fluid_math::{DECIMAL_PRECISION, fm_min, null_contract, null_identity_address};
 
 use std::{
     auth::msg_sender,
@@ -31,7 +31,6 @@ use std::{
 };
 
 const SCALE_FACTOR = 1_000_000_000;
-const DECIMAL_PRECISION = 1_000_000; //todo: import from fluidmath library
 
 storage {
     // List of assets tracked by the Stability Pool
@@ -265,7 +264,7 @@ fn require_is_protocol_manager() {
 
 #[storage(read)]
 fn require_usdf_is_valid_and_non_zero() {
-    require(storage.usdf_address == msg_asset_id(), "USDF contract not initialized");
+    require(storage.usdf_address == msg_asset_id(), "USDF address is invalid");
     require(msg_amount() > 0, "USDF amount must be greater than 0");
 }
 
@@ -331,30 +330,22 @@ fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
 
 #[storage(read)]
 fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots) -> u64 {
-    log(1);
     let epoch_snapshot = snapshots.epoch;
     let scale_snapshot = snapshots.scale;
     let p_snapshot = snapshots.P;
-    log(2);
 
     if (epoch_snapshot < storage.current_epoch) {
         return 0;
     }
-    log(3);
+
     let mut compounded_stake: U128 = U128::from_u64(0);
     let scale_diff = storage.current_scale - scale_snapshot;
 
     if (scale_diff == 0) {
-        log(33);
-        log(initial_stake);
-        log(storage.p.as_u64());
-        log(p_snapshot.as_u64());
         compounded_stake = U128::from_u64(initial_stake) * storage.p / p_snapshot;
     } else if (scale_diff == 1) {
-        log(44);
         compounded_stake = U128::from_u64(initial_stake) * storage.p / p_snapshot / U128::from_u64(SCALE_FACTOR);
     } else {
-        log(55);
         compounded_stake = U128::from_u64(0);
     }
 
@@ -362,7 +353,6 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     {
         return 0;
     }
-    log(4);
     return compounded_stake.as_u64().unwrap();
 }
 #[storage(read, write)]
@@ -380,8 +370,6 @@ fn internal_increase_asset(total_asset_to_increase: u64, asset_address: Contract
 #[storage(read, write)]
 fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposits.insert(depositor, amount);
-    log(0);
-    log(amount);
 
     if (amount == 0) {
         // TODO use storage remove when available
@@ -391,13 +379,6 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let current_epoch = storage.current_epoch;
     let current_scale = storage.current_scale;
     let current_p = storage.p;
-
-    log(current_epoch);
-    log(current_scale);
-    log(current_p.as_u64());
-    log(current_p.lower);
-    log(current_p.upper);
-    log(77);
 
     let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale));
 

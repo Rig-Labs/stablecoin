@@ -1,6 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::borrow_operations::borrow_operations_abi,
     interfaces::sorted_troves::sorted_troves_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
@@ -15,7 +16,7 @@ async fn fails_open_two_troves() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -31,8 +32,8 @@ async fn fails_open_two_troves() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -48,8 +49,8 @@ async fn fails_open_two_troves() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -85,10 +86,10 @@ async fn fails_open_two_troves() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 600_000_000);
+    assert_eq!(usdf_balance, 600 * PRECISION);
 
-    let expected_debt = with_min_borrow_fee(600_000_000);
-    let expected_icr = calculate_icr(1_200_000_000, expected_debt);
+    let expected_debt = with_min_borrow_fee(600 * PRECISION);
+    let expected_icr = calculate_icr(1_200 * PRECISION, expected_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
 
@@ -106,7 +107,7 @@ async fn fails_open_two_troves() {
     .await
     .value;
 
-    assert_eq!(trove_col, 1_200_000_000, "Trove Collateral is wrong");
+    assert_eq!(trove_col, 1_200 * PRECISION, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let active_pool_debt =
@@ -119,7 +120,8 @@ async fn fails_open_two_troves() {
         .await
         .value;
     assert_eq!(
-        active_pool_col, 1_200_000_000,
+        active_pool_col,
+        1_200 * PRECISION,
         "Active Pool Collateral is wrong"
     );
 }
@@ -131,7 +133,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -145,8 +147,8 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        1_000_000_000,
+        1_200 * PRECISION,
+        1_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -166,7 +168,7 @@ async fn fails_open_trove_under_min_usdf_required() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -180,8 +182,8 @@ async fn fails_open_trove_under_min_usdf_required() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        100_000_000,
+        1_200 * PRECISION,
+        100 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -201,7 +203,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -215,8 +217,8 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -231,7 +233,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        300_000_000,
+        300 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -251,7 +253,7 @@ async fn fails_decrease_collateral_under_mcr() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -265,8 +267,8 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -280,7 +282,7 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_000_000_000,
+        1_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -311,14 +313,14 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
 
     token_abi::mint_to_id(
         &mock_fake_token,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -332,8 +334,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -355,8 +357,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_200_000_000,
-        600_000_000,
+        1_200 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -371,7 +373,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_000_000,
+        1 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -397,7 +399,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
 
     usdf_token_abi::mint(
         &fake_usdf_token,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await
@@ -411,7 +413,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
-        1_000_000,
+        1 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
