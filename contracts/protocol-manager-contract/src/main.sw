@@ -11,6 +11,7 @@ use libraries::active_pool_interface::{ActivePool};
 use libraries::{MockOracle};
 use libraries::protocol_manager_interface::{ProtocolManager};
 use libraries::usdf_token_interface::{USDFToken};
+use libraries::fpt_staking_interface::{FPTStaking};
 use libraries::fluid_math::*;
 
 use std::{
@@ -32,6 +33,7 @@ use std::{
 storage {
     admin: Identity = null_identity_address(),
     borrow_operations_contract: ContractId = null_contract(),
+    fpt_staking_contract: ContractId = null_contract(),
     usdf_token_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
@@ -44,6 +46,7 @@ impl ProtocolManager for Contract {
     fn initialize(
         borrow_operations: ContractId,
         stability_pool: ContractId,
+        fpt_staking: ContractId,
         usdf_token: ContractId,
         admin: Identity,
     ) {
@@ -51,6 +54,7 @@ impl ProtocolManager for Contract {
 
         storage.admin = admin;
         storage.borrow_operations_contract = borrow_operations;
+        storage.fpt_staking_contract = fpt_staking;
         storage.stability_pool_contract = stability_pool;
         storage.usdf_token_contract = usdf_token;
         storage.is_initialized = true;
@@ -69,6 +73,9 @@ impl ProtocolManager for Contract {
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.value);
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.value);
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.value);
+        let fpt_staking_contract = abi(FPTStaking, storage.fpt_staking_contract.value);
+
+        let fpt_staking = storage.fpt_staking_contract;
 
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager,
@@ -76,11 +83,13 @@ impl ProtocolManager for Contract {
             coll_surplus_pool,
             oracle,
             sorted_troves,
+            fpt_staking,
         });
         storage.assets.push(asset_address);
 
         borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle, active_pool, coll_surplus_pool);
         stability_pool.add_asset(trove_manager, active_pool, sorted_troves, asset_address, oracle);
+        fpt_staking_contract.add_asset(asset_address);
         usdf_token.add_trove_manager(trove_manager);
     }
 
@@ -116,6 +125,7 @@ impl ProtocolManager for Contract {
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
             let sorted_troves_contract = abi(SortedTroves, contracts_cache.sorted_troves.value);
             let active_pool_contract = abi(ActivePool, contracts_cache.active_pool.value);
+
             let price = assets_info.prices.get(index).unwrap();
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
 
@@ -149,6 +159,7 @@ impl ProtocolManager for Contract {
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
             let sorted_troves_contract = abi(SortedTroves, contracts_cache.sorted_troves.value);
             let active_pool_contract = abi(ActivePool, contracts_cache.active_pool.value);
+            let fpt_staking_contract = abi(FPTStaking, contracts_cache.fpt_staking.value);
             let price = assets_info.prices.get(i).unwrap();
             let mut totals = assets_info.redemption_totals.get(i).unwrap();
 
@@ -163,9 +174,12 @@ impl ProtocolManager for Contract {
             // TODO require user accepts fee
             // TODO active pool send fee to stakers
             // TODO lqty staking increase f_asset
+        
+
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
-            // TODO Send to stakers instead of oracle when implemented
-            active_pool_contract.send_asset(Identity::ContractId(contracts_cache.oracle), totals.asset_fee);
+            // Send to stakers instead of oracle when implemented
+            active_pool_contract.send_asset(Identity::ContractId(contracts_cache.fpt_staking), totals.asset_fee);
+            fpt_staking_contract.increase_f_asset(totals.asset_fee, assets_info.assets.get(i).unwrap());
 
             total_usdf_redeemed += totals.total_usdf_to_redeem;
             active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
@@ -221,7 +235,7 @@ fn get_all_assets_info() -> AssetInfo {
         let oracle_contract = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
         let trove_manager_contract = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
         let sorted_troves_contract = abi(SortedTroves, asset_contracts.get(i).unwrap().sorted_troves.into());
-
+        
         let price = oracle_contract.get_price();
         let mut current_borrower = sorted_troves_contract.get_last();
         let mut current_cr = trove_manager_contract.get_current_icr(current_borrower, price);

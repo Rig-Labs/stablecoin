@@ -11,8 +11,9 @@ pub mod protocol_manager_abi {
     use crate::interfaces::borrow_operations::BorrowOperations;
     use crate::interfaces::stability_pool::StabilityPool;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::setup::common::AssetContracts;
-    use fuels::prelude::{Account, CallParameters, SettableContract};
+    use crate::interfaces::fpt_staking::FPTStaking;
+    use crate::setup::common::{wait, AssetContracts};
+    use fuels::prelude::{Account, CallParameters, LogDecoder, SettableContract};
     use fuels::types::AssetId;
     use fuels::{
         prelude::{ContractId, TxParameters},
@@ -25,6 +26,7 @@ pub mod protocol_manager_abi {
         protocol_manager: &ProtocolManager<T>,
         borrow_operations: ContractId,
         stability_pool: ContractId,
+        fpt_staking: ContractId,
         usdf: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
@@ -32,7 +34,7 @@ pub mod protocol_manager_abi {
 
         let res = protocol_manager
             .methods()
-            .initialize(borrow_operations, stability_pool, usdf, admin)
+            .initialize(borrow_operations, stability_pool, fpt_staking, usdf, admin)
             .tx_params(tx_params)
             .call()
             .await
@@ -61,6 +63,7 @@ pub mod protocol_manager_abi {
         borrow_operations: &BorrowOperations<T>,
         stability_pool: &StabilityPool<T>,
         usdf: &USDFToken<T>,
+        fpt_staking: &FPTStaking<T>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -75,7 +78,7 @@ pub mod protocol_manager_abi {
                 sorted_troves,
             )
             .tx_params(tx_params)
-            .set_contracts(&[borrow_operations, stability_pool, usdf])
+            .set_contracts(&[borrow_operations, stability_pool, usdf, fpt_staking])
             .call()
             .await
             .unwrap()
@@ -90,6 +93,7 @@ pub mod protocol_manager_abi {
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
         usdf: &USDFToken<T>,
+        fpt_staking: &FPTStaking<T>,
         asset_contracts: &Vec<AssetContracts<T>>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default()
@@ -109,8 +113,10 @@ pub mod protocol_manager_abi {
             set_contracts.push(&contracts.coll_surplus_pool);
             set_contracts.push(&contracts.oracle);
             set_contracts.push(&contracts.sorted_troves);
-            set_contracts.push(&contracts.default_pool)
+            set_contracts.push(&contracts.default_pool);
         }
+
+        set_contracts.push(fpt_staking);
 
         set_contracts.push(usdf);
 

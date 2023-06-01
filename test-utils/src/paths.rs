@@ -52,6 +52,9 @@ pub const COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH: &str =
 pub const USDF_TOKEN_CONTRACT_BINARY_PATH: &str =
     "contracts/usdf-token-contract/out/debug/usdf-token-contract.bin";
 
+pub const FPT_STAKING_CONTRACT_BINARY_PATH: &str =
+    "contracts/fpt-staking-contract/out/debug/fpt-staking-contract.bin";
+
 pub const USDF_TOKEN_CONTRACT_STORAGE_PATH: &str =
     "contracts/usdf-token-contract/out/debug/usdf-token-contract-storage_slots.json";
 

@@ -9,7 +9,7 @@ use test_utils::{
         oracle::oracle_abi,
         protocol_manager::protocol_manager_abi,
         token::token_abi,
-        trove_manager::{trove_manager_utils, Status},
+        trove_manager::{trove_manager_utils, Status, trove_manager_abi},
     },
     setup::common::setup_protocol,
     utils::with_min_borrow_fee,
@@ -17,6 +17,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
+
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
@@ -58,6 +59,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -79,6 +81,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -100,6 +103,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -134,6 +138,7 @@ async fn proper_redemption_from_partially_closed() {
         None,
         None,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts,
     )
     .await;
@@ -172,7 +177,15 @@ async fn proper_redemption_from_partially_closed() {
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, redemption_amount - oracle_balance);
+
+    // here we need to calculate the fee and subtract it
+    let redemption_asset_fee = trove_manager_abi::get_redemption_fee(
+        &contracts.asset_contracts[0].trove_manager,
+        redemption_amount
+    )
+    .await.value;
+
+    assert_eq!(fuel_balance, redemption_amount - oracle_balance - redemption_asset_fee);
 
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
@@ -234,6 +247,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -257,6 +271,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -280,6 +295,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.asset_contracts[0].active_pool,
@@ -312,6 +328,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         None,
         None,
         &contracts.usdf,
+        &contracts.fpt_staking,
         &contracts.asset_contracts,
     )
     .await;
@@ -347,16 +364,15 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .await
         .unwrap();
 
-    // TODO change to Staking contract when implemented
-    let oracle_balance = provider
+    let staking_balance = provider
         .get_contract_asset_balance(
-            contracts.asset_contracts[0].oracle.contract_id(),
+            &contracts.fpt_staking.contract_id(),
             fuel_asset_id,
         )
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, 6_000 * PRECISION - oracle_balance);
+    assert_eq!(fuel_balance, 6_000 * PRECISION - staking_balance);
 
     trove_manager_utils::assert_trove_status(
         &contracts.asset_contracts[0].trove_manager,
