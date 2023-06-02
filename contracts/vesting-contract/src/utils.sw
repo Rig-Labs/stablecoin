@@ -19,6 +19,7 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
     let total_vesting_duration = vesting_schedule.end_timestamp - vesting_schedule.cliff_timestamp;
     let time_elapsed = current_time - vesting_schedule.cliff_timestamp;
 
+    // TODO U128 for overflow
     let fraction_amount_claimable = total_minus_cliff * time_elapsed / total_vesting_duration;
 
     amount_redeemable += fraction_amount_claimable - vesting_schedule.claimed_amount;
