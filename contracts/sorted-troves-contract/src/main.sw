@@ -325,7 +325,7 @@ fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
     let mut next_id = start_id;
     let mut prev_id = storage.nodes.get(next_id).prev_id;
 
-    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id)) {
         next_id = storage.nodes.get(next_id).prev_id;
         prev_id = storage.nodes.get(next_id).prev_id;
     }

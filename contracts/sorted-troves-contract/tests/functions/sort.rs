@@ -349,7 +349,7 @@ async fn proper_hint_gas_usage() {
     // only use next hint
     let random_addr_3 = rng.gen::<[u8; 32]>();
 
-    let inbetween_num3 = vals[12].1 + (vals[11].1 - vals[12].1) / 2;
+    let inbetween_num3 = vals[12].1 + 1;
 
     let res3 = set_nominal_icr_and_insert(
         &trove_manager,
@@ -361,7 +361,12 @@ async fn proper_hint_gas_usage() {
     )
     .await;
     let gas_next_hint = res3.gas_used;
-    assert!(gas_next_hint < avg_gas);
+    assert!(
+        gas_next_hint < avg_gas,
+        "average gas: {}, gas used: {}",
+        avg_gas,
+        gas_next_hint
+    );
 
     let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
     let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
