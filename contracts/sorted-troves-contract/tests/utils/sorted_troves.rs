@@ -45,7 +45,12 @@ pub mod sorted_troves_utils {
 
             let next_icr = get_nominal_icr(trove_manager, next.clone()).await.value;
 
-            assert!(current_icr >= next_icr);
+            assert!(
+                current_icr >= next_icr,
+                "ICR of current trove {} is less than next trove {}",
+                current_icr,
+                next_icr
+            );
 
             current = next.clone();
             next = sorted_troves_abi::get_next(&sorted_troves, current.clone())
@@ -94,11 +99,12 @@ pub mod sorted_troves_utils {
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
         sorted_troves: &SortedTroves<WalletUnlocked>,
         max_size: u64,
-    ) -> Vec<(Identity, u64)> {
+    ) -> (Vec<(Identity, u64)>, u64) {
         let mut count = 0;
         let mut rng = rand::thread_rng();
 
         let mut pairs: Vec<(Identity, u64)> = vec![];
+        let mut avg_gas = 0;
 
         while count < max_size {
             let random_number = rng.gen::<u64>() % 10000;
@@ -109,7 +115,7 @@ pub mod sorted_troves_utils {
                 random_number.clone(),
             ));
 
-            let _res = set_nominal_icr_and_insert(
+            let gas_used = set_nominal_icr_and_insert(
                 trove_manager,
                 &sorted_troves,
                 Identity::Address(random_address.into()),
@@ -117,11 +123,15 @@ pub mod sorted_troves_utils {
                 Identity::Address([0; 32].into()),
                 Identity::Address([0; 32].into()),
             )
-            .await;
+            .await
+            .gas_used;
+            avg_gas += gas_used;
 
             count += 1;
         }
 
-        return pairs;
+        avg_gas /= max_size;
+
+        return (pairs, avg_gas);
     }
 }

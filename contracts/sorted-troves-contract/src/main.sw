@@ -89,12 +89,12 @@ impl SortedTroves for Contract {
     fn insert(
         id: Identity,
         nicr: u64,
-        prev_id: Identity,
-        next_id: Identity,
+        hint_prev_id: Identity,
+        hint_next_id: Identity,
     ) {
         require_is_bo_or_tm();
 
-        internal_insert(id, nicr, prev_id, next_id);
+        internal_insert(id, nicr, hint_prev_id, hint_next_id);
     }
 
     #[storage(read, write)]
@@ -222,7 +222,7 @@ fn internal_contains(id: Identity) -> bool {
 }
 
 #[storage(read)]
-fn internal_valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity) -> bool {
+fn internal_valid_insert_position(icr: u64, prev_id: Identity, next_id: Identity) -> bool {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
     if (next_id == null_identity_address()
@@ -256,9 +256,9 @@ fn require_is_bo_or_tm() {
 
 #[storage(read)]
 fn internal_find_insert_position(
-    icr: u64,
-    next_id: Identity,
+    nicr: u64,
     prev_id: Identity,
+    next_id: Identity,
 ) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
 
@@ -267,7 +267,7 @@ fn internal_find_insert_position(
 
     if (prev_id != null_identity_address()) {
         if (!internal_contains(prev_id)
-            || icr > trove_manager_contract.get_nominal_icr(prev_id))
+            || nicr > trove_manager_contract.get_nominal_icr(prev_id))
         {
             prev_id = null_identity_address()
         }
@@ -275,7 +275,7 @@ fn internal_find_insert_position(
 
     if (next_id != null_identity_address()) {
         if (!internal_contains(next_id)
-            || icr < trove_manager_contract.get_nominal_icr(prev_id))
+            || nicr < trove_manager_contract.get_nominal_icr(prev_id))
         {
             next_id = null_identity_address()
         }
@@ -284,20 +284,19 @@ fn internal_find_insert_position(
     if (prev_id == null_identity_address()
         && next_id == null_identity_address())
     {
-        return internal_descend_list(icr, storage.head);
+        return internal_descend_list(nicr, storage.head);
     } else if (prev_id == null_identity_address()) {
-        return internal_ascend_list(icr, next_id);
+        return internal_ascend_list(nicr, next_id);
     } else if (next_id == null_identity_address()) {
-        return internal_descend_list(icr, prev_id);
+        return internal_descend_list(nicr, prev_id);
     } else {
-        return internal_descend_list(icr, prev_id);
+        return internal_descend_list(nicr, prev_id);
     }
 }
 
 #[storage(read)]
 fn internal_descend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.value);
-
     if (storage.head == start_id
         && nicr >= trove_manager_contract.get_nominal_icr(start_id))
     {
@@ -306,12 +305,10 @@ fn internal_descend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) 
 
     let mut prev_id = start_id;
     let mut next_id = storage.nodes.get(prev_id).next_id;
-
-    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, next_id, prev_id)) {
+    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id)) {
         prev_id = storage.nodes.get(prev_id).next_id;
         next_id = storage.nodes.get(prev_id).next_id;
     }
-
     return (prev_id, next_id);
 }
 
@@ -340,8 +337,8 @@ fn internal_ascend_list(nicr: u64, start_id: Identity) -> (Identity, Identity) {
 fn internal_insert(
     id: Identity,
     nicr: u64,
-    prev_id: Identity,
-    next_id: Identity,
+    hint_prev_id: Identity,
+    hint_next_id: Identity,
 ) {
     let trove_manager_contract = abi(TroveManager, storage.trove_manager_contract_id.into());
     require(!internal_is_full(), "list is full");
@@ -349,8 +346,8 @@ fn internal_insert(
     require(null_identity_address() != id, "id must not be zero");
     require(nicr > 0, "icr must be greater than 0");
 
-    let mut next_id: Identity = next_id;
-    let mut prev_id: Identity = prev_id;
+    let mut next_id: Identity = hint_next_id;
+    let mut prev_id: Identity = hint_prev_id;
 
     if (!internal_valid_insert_position(nicr, prev_id, next_id))
     {
@@ -407,7 +404,6 @@ fn edit_node_neighbors(
     prev_id: Option<Identity>,
     next_id: Option<Identity>,
 ) {
-    // TODO Update when StorageMap supports updating values
     let mut node = storage.nodes.get(id);
 
     if (prev_id.is_some()) {
