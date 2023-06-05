@@ -792,7 +792,7 @@ pub mod common {
         }
     }
 
-    pub fn print_response<T>(response: FuelCallResponse<T>)
+    pub fn print_response<T>(response: &FuelCallResponse<T>)
     where
         T: std::fmt::Debug,
     {
