@@ -3,7 +3,7 @@ use super::interfaces::{
     coll_surplus_pool::CollSurplusPool, fpt_staking::FPTStaking, default_pool::DefaultPool, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
-    vesting::VestingContract,
+    vesting::VestingContract, fpt_token::FPTToken,
 };
 
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
@@ -264,6 +264,37 @@ pub mod common {
                 .unwrap();
 
                 return Token::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
+
+        match id {
+            Ok(id) => return FPTToken::new(id, wallet.clone()),
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return FPTToken::new(id, wallet.clone());
             }
         }
     }

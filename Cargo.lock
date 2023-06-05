@@ -1314,6 +1314,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fpt-token-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio 1.27.0",
+]
+
+[[package]]
 name = "fuchsia-zircon"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

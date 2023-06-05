@@ -1,0 +1,16 @@
+[package]
+name = "community-issuance-contract"
+version = "0.1.0"
+authors = ["hydrogen-labs"]
+edition = "2021"
+license = "Apache-2.0"
+
+[dev-dependencies]
+fuels = { version = "0.41.0", features = ["fuel-core-lib"] }
+tokio = { version = "1.12", features = ["rt", "macros"] }
+# Not the latest version because of indexer bug o.o 
+
+[[test]]
+harness = true
+name = "tests"
+path = "tests/harness.rs"

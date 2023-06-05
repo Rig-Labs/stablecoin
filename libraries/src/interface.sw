@@ -14,6 +14,8 @@ dep coll_surplus_pool_interface;
 dep usdf_token_interface;
 dep protocol_manager_interface;
 dep fpt_staking_interface;
+dep fpt_token_interface;
+dep community_issuance_interface;
 
 use data_structures::{Trove};
 
