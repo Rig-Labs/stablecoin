@@ -44,18 +44,17 @@ storage {
 
 impl VestingContract for Contract {
     #[storage(write, read)]
-    fn constructor(admin: Identity, asset: ContractId, debugging: bool) {
+    fn constructor(
+        admin: Identity,
+        asset: ContractId,
+        schedules: Vec<VestingSchedule>,
+        debugging: bool,
+    ) {
         require(!storage.is_initialized, "Contract is already initialized");
         // TODO Check that there are sufficient funds to cover all vesting schedules
         storage.asset = asset;
         storage.admin = admin;
         storage.debug = debugging;
-        storage.is_initialized = true;
-    }
-
-    #[storage(write, read), payable]
-    fn initiate_vesting_schedules(schedules: Vec<VestingSchedule>) {
-        require(msg_sender().unwrap() == storage.admin, "Only admin can initiate vesting schedules");
 
         let mut i = 0;
         while i < schedules.len() {
@@ -69,6 +68,8 @@ impl VestingContract for Contract {
             storage.vesting_addresses.push(schedule.recipient);
             i += 1;
         }
+
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]
@@ -81,11 +82,10 @@ impl VestingContract for Contract {
 
         let currently_unclaimed = calculate_redeemable_amount(now, schedule);
         require(currently_unclaimed > 0, "Nothing to redeem");
+        schedule.claimed_amount += currently_unclaimed;
+        storage.vesting_schedules.insert(address, Option::Some(schedule));
 
         transfer(currently_unclaimed, storage.asset, address);
-        schedule.claimed_amount += currently_unclaimed;
-
-        storage.vesting_schedules.insert(address, Option::Some(schedule));
     }
 
     #[storage(read)]

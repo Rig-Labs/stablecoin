@@ -13,26 +13,16 @@ pub async fn instantiate_vesting_contract<T: Account>(
     contract: &VestingContract<T>,
     admin: &Address,
     asset_contract: &ContractId,
+    schedules: Vec<VestingSchedule>,
 ) -> FuelCallResponse<()> {
     contract
         .methods()
         .constructor(
             Identity::Address(admin.clone()),
             asset_contract.clone(),
+            schedules,
             true,
         )
-        .call()
-        .await
-        .unwrap()
-}
-
-pub async fn initiate_vesting_schedules<T: Account>(
-    contract: &VestingContract<T>,
-    schedules: Vec<VestingSchedule>,
-) -> FuelCallResponse<()> {
-    contract
-        .methods()
-        .initiate_vesting_schedules(schedules)
         .call()
         .await
         .unwrap()

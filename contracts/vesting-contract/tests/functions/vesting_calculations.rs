@@ -6,8 +6,7 @@ use fuels::{prelude::AssetId, types::Identity};
 mod success {
 
     use test_utils::interfaces::vesting::{
-        get_vesting_schedule, initiate_vesting_schedules, instantiate_vesting_contract,
-        set_timestamp, VestingContract,
+        get_vesting_schedule, instantiate_vesting_contract, set_timestamp, VestingContract,
     };
 
     use crate::utils::setup::test_helpers::init_and_mint_to_vesting;
@@ -27,10 +26,13 @@ mod success {
             Identity::Address(recipient.address().into()),
         )];
 
-        let _ =
-            instantiate_vesting_contract(&vest, &admin.address().into(), &asset.id().into()).await;
-
-        let _ = initiate_vesting_schedules(&vest, vesting_schedule.to_vec()).await;
+        let _ = instantiate_vesting_contract(
+            &vest,
+            &admin.address().into(),
+            &asset.id().into(),
+            vesting_schedule.to_vec(),
+        )
+        .await;
 
         let res = vest
             .methods()
@@ -72,10 +74,9 @@ mod success {
             &vest,
             &admin.address().into(),
             &asset.contract_id().into(),
+            vesting_schedule.to_vec(),
         )
         .await;
-
-        let _ = initiate_vesting_schedules(&vest, vesting_schedule.to_vec()).await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
@@ -153,10 +154,9 @@ mod success {
             &vest,
             &admin.address().into(),
             &asset.contract_id().into(),
+            vesting_schedule.to_vec(),
         )
         .await;
-
-        let _ = initiate_vesting_schedules(&vest, vesting_schedule.to_vec()).await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
