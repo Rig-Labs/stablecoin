@@ -62,6 +62,11 @@ pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     }
 }
 
+pub fn fm_multiply_ratio(value: u64, numerator: u64, denominator: u64) -> u64 {
+    let ratio: U128 = U128::from_u64(value) * U128::from_u64(numerator) / U128::from_u64(denominator);
+    return ratio.as_u64().unwrap();
+}
+
 pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     if (debt > 0) {
         let cr: U128 = U128::from_u64(coll) * U128::from_u64(price) / U128::from_u64(debt);

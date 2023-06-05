@@ -12,22 +12,29 @@ abigen!(Contract(
 pub async fn instantiate_vesting_contract<T: Account>(
     contract: &VestingContract<T>,
     admin: &Address,
-    vesting_schedule: &Vec<VestingSchedule>,
     asset_contract: &ContractId,
-    amount: u64,
+    schedules: Vec<VestingSchedule>,
 ) -> FuelCallResponse<()> {
-    let asset: Asset = Asset {
-        id: asset_contract.clone(),
-        amount,
-    };
-
     contract
         .methods()
         .constructor(
             Identity::Address(admin.clone()),
-            vesting_schedule.clone(),
-            asset.clone(),
+            asset_contract.clone(),
+            schedules,
+            true,
         )
+        .call()
+        .await
+        .unwrap()
+}
+
+pub async fn set_timestamp<T: Account>(
+    contract: &VestingContract<T>,
+    timestamp: u64,
+) -> FuelCallResponse<()> {
+    contract
+        .methods()
+        .set_current_time(timestamp)
         .call()
         .await
         .unwrap()
@@ -40,7 +47,6 @@ pub fn get_vesting_schedule(
     claimed_amount: u64,
     total_amount: u64,
     recipient: Identity,
-    revocable: bool,
 ) -> VestingSchedule {
     VestingSchedule {
         cliff_amount,
@@ -49,6 +55,5 @@ pub fn get_vesting_schedule(
         claimed_amount,
         total_amount,
         recipient,
-        revocable,
     }
 }

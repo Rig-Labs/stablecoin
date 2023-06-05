@@ -4,7 +4,7 @@ dep data_structures;
 dep interface;
 dep utils;
 
-use data_structures::{Asset, VestingSchedule};
+use data_structures::{VestingSchedule};
 use interface::VestingContract;
 use utils::{calculate_redeemable_amount, is_valid_vesting_schedule};
 use std::{
@@ -32,29 +32,31 @@ use std::{
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
 storage {
-    admin: Identity = Identity::Address(Address::from(ZERO_B256)),
     vesting_schedules: StorageMap<Identity, Option<VestingSchedule>> = StorageMap {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
-    asset: Asset = Asset::new(ContractId::from(ZERO_B256), 0),
-}
-
-#[storage(read)]
-fn validate_admin() {
-    let sender = msg_sender().unwrap();
-    require(storage.admin == sender, "Access denied");
+    asset: ContractId = ContractId::from(ZERO_B256),
+    admin: Identity = Identity::Address(Address::from(ZERO_B256)),
+    is_initialized: bool = false,
+    // timestamp is used for testing purposes only, as Fuel does not support timestamp currently in integration tests
+    debug: bool = false,
+    debug_timestamp: u64 = 0,
 }
 
 impl VestingContract for Contract {
     #[storage(write, read)]
     fn constructor(
         admin: Identity,
+        asset: ContractId,
         schedules: Vec<VestingSchedule>,
-        asset: Asset,
+        debugging: bool,
     ) {
-        storage.admin = admin;
+        require(!storage.is_initialized, "Contract is already initialized");
         // TODO Check that there are sufficient funds to cover all vesting schedules
-        let mut i = 0;
+        storage.asset = asset;
+        storage.admin = admin;
+        storage.debug = debugging;
 
+        let mut i = 0;
         while i < schedules.len() {
             let schedule = schedules.get(i).unwrap();
             require(is_valid_vesting_schedule(schedule), "Invalid vesting schedule");
@@ -67,36 +69,23 @@ impl VestingContract for Contract {
             i += 1;
         }
 
-        storage.asset = asset;
+        storage.is_initialized = true;
     }
 
     #[storage(read, write)]
-    fn claim_vested_tokens(address: Identity) {
+    fn claim_vested_tokens() {
+        let address = msg_sender().unwrap();
         // TODO add re entry guard
         let mut schedule = storage.vesting_schedules.get(address).unwrap();
         // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
-        let now = height();
+        let now = internal_get_current_time();
 
-        let unclaimed = calculate_redeemable_amount(now, schedule);
-        require(unclaimed > 0, "Nothing to redeem");
-
-        transfer(unclaimed, storage.asset.id, address);
-        schedule.claimed_amount += unclaimed;
-
+        let currently_unclaimed = calculate_redeemable_amount(now, schedule);
+        require(currently_unclaimed > 0, "Nothing to redeem");
+        schedule.claimed_amount += currently_unclaimed;
         storage.vesting_schedules.insert(address, Option::Some(schedule));
-    }
 
-    #[storage(read, write)]
-    fn revoke_vesting_schedule(address: Identity) {
-        validate_admin();
-        // TODO add re entry guard
-        let schedule = storage.vesting_schedules.get(address).unwrap();
-
-        let unclaimed = schedule.total_amount - schedule.claimed_amount;
-        require(unclaimed > 0, "Nothing to revoke");
-        storage.vesting_schedules.insert(address, Option::None);
-
-        transfer(unclaimed, storage.asset.id, storage.admin);
+        transfer(currently_unclaimed, storage.asset, address);
     }
 
     #[storage(read)]
@@ -113,20 +102,22 @@ impl VestingContract for Contract {
 
     #[storage(read)]
     fn get_current_time() -> u64 {
-        return timestamp();
+        return internal_get_current_time();
     }
 
- 
-    // TODO waiting for Fuel to enable Vector outputs 
-    // #[storage(read)]
-    // fn get_vesting_addresses() -> Vec<Identity> {
-    //     let mut i = 0;
-    //     let mut addresses: Vec<Identity> = Vec::new();
-    //     while i < storage.vesting_addresses.len() {
-    //         let address = storage.vesting_addresses.get(i).unwrap();
-    //         addresses.push(address);
-    //         i += 1;
-    //     }
-    //     return addresses;
-    // }
+    #[storage(write, read)]
+    fn set_current_time(time: u64) {
+        require(msg_sender().unwrap() == storage.admin, "Only admin can set current time");
+        require(storage.debug, "Debugging must be enabled to set current time");
+        storage.debug_timestamp = time;
+    }
+}
+
+#[storage(read)]
+fn internal_get_current_time() -> u64 {
+    if storage.debug {
+        return storage.debug_timestamp;
+    } else {
+        return timestamp();
+    }
 }

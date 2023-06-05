@@ -3,6 +3,9 @@ library utils;
 dep data_structures;
 
 use data_structures::VestingSchedule;
+use std::{u128::U128};
+use libraries::numbers::*;
+use libraries::fluid_math::fm_multiply_ratio;
 
 pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingSchedule) -> u64 {
     if current_time < vesting_schedule.cliff_timestamp {
@@ -19,7 +22,7 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
     let total_vesting_duration = vesting_schedule.end_timestamp - vesting_schedule.cliff_timestamp;
     let time_elapsed = current_time - vesting_schedule.cliff_timestamp;
 
-    let fraction_amount_claimable = total_minus_cliff * time_elapsed / total_vesting_duration;
+    let fraction_amount_claimable = fm_multiply_ratio(total_minus_cliff, time_elapsed, total_vesting_duration);
 
     amount_redeemable += fraction_amount_claimable - vesting_schedule.claimed_amount;
 
@@ -42,4 +45,56 @@ pub fn is_valid_vesting_schedule(vesting_schedule: VestingSchedule) -> bool {
     }
 
     return true;
+}
+
+#[test]
+fn test_redeemable_calculations() {
+    let ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+    let mut vesting_schedule = VestingSchedule {
+        cliff_timestamp: 100,
+        cliff_amount: 100,
+        end_timestamp: 200,
+        total_amount: 1000,
+        claimed_amount: 0,
+        recipient: Identity::Address(Address::from(ZERO_B256)),
+    };
+
+    // Before cliff
+    assert(calculate_redeemable_amount(0, vesting_schedule) == 0);
+    // At cliff
+    assert(calculate_redeemable_amount(100, vesting_schedule) == 100);
+
+    // In the middle of the vesting period with cliff amount claimed
+    vesting_schedule = VestingSchedule {
+        cliff_timestamp: 100,
+        cliff_amount: 100,
+        end_timestamp: 200,
+        total_amount: 1000,
+        claimed_amount: 100,
+        recipient: Identity::Address(Address::from(ZERO_B256)),
+    };
+
+    assert(calculate_redeemable_amount(150, vesting_schedule) == 450);
+
+    // At the end of the vesting period with 650 claimed
+    vesting_schedule = VestingSchedule {
+        cliff_timestamp: 100,
+        cliff_amount: 100,
+        end_timestamp: 200,
+        total_amount: 1000,
+        claimed_amount: 650,
+        recipient: Identity::Address(Address::from(ZERO_B256)),
+    };
+    assert(calculate_redeemable_amount(200, vesting_schedule) == 350);
+
+    // After the end of the vesting period with 1000 claimed
+    vesting_schedule = VestingSchedule {
+        cliff_timestamp: 100,
+        cliff_amount: 100,
+        end_timestamp: 200,
+        total_amount: 1000,
+        claimed_amount: 1000,
+        recipient: Identity::Address(Address::from(ZERO_B256)),
+    };
+    assert(calculate_redeemable_amount(300, vesting_schedule) == 0);
 }
