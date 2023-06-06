@@ -1,5 +1,5 @@
 library numbers;
-use std::{logging::log, u128::U128, u256::U256};
+use std::{u128::U128, u256::U256};
 
 impl U256 {
     pub fn from_u64(value: u64) -> U256 {

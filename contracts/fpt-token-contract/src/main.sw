@@ -37,7 +37,7 @@ storage {
 }
 
 // import fluid math decinals here
-const TOTAL_SUPPLY: u64 = 100_000_000;
+pub const TOTAL_SUPPLY: u64 = 100_000_000;
 
 impl FPTToken for Contract {
     //////////////////////////////////////
