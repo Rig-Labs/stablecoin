@@ -3,7 +3,7 @@ use super::interfaces::{
     coll_surplus_pool::CollSurplusPool, fpt_staking::FPTStaking, default_pool::DefaultPool, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
-    vesting::VestingContract, fpt_token::FPTToken,
+    vesting::VestingContract, fpt_token::FPTToken, community_issuance::CommunityIssuance,
 };
 
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
@@ -30,7 +30,7 @@ pub mod common {
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
             oracle::oracle_abi, protocol_manager::protocol_manager_abi,
             sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::fpt_staking_abi,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::fpt_staking_abi
         },
         paths::*,
     };
@@ -760,6 +760,39 @@ pub mod common {
                 .unwrap();
 
                 return CollSurplusPool::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_community_issuance(wallet: &WalletUnlocked) -> CommunityIssuance<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return CommunityIssuance::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return CommunityIssuance::new(id, wallet.clone());
             }
         }
     }

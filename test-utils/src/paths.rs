@@ -69,3 +69,9 @@ pub const PROTCOL_MANAGER_CONTRACT_BINARY_PATH: &str =
 
 pub const PROTCOL_MANAGER_CONTRACT_STORAGE_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-storage_slots.json";
+
+pub const COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH: &str =
+    "contracts/community-issuance-contract/out/debug/community-issuance-contract.bin";
+
+pub const COMMUNITY_ISSUANCE_CONTRACT_STORAGE_PATH: &str =
+    "contracts/community-issuance-contract/out/debug/community-issuance-contract-storage_slots.json";

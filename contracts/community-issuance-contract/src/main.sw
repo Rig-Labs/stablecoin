@@ -2,6 +2,7 @@ contract;
 dep utils;
 use libraries::community_issuance_interface::{CommunityIssuance};
 use libraries::fluid_math::{null_contract, null_identity_address, dec_pow, fm_min, DECIMAL_PRECISION};
+use utils::*;
 
 
 use std::{
@@ -26,8 +27,7 @@ use std::{
 
 // todo: if sway supports constant multiplications inherit decimal precision from fluid math
 pub const FPT_SUPPLY_CAP = 32_000_000_000_000_000;
-pub const SECONDS_IN_ONE_MINUTE = 60;
-pub const ISSUANCE_FACTOR = 999998681227695000;
+
 
 storage {
     stability_pool_contract: ContractId = null_contract(),
@@ -77,7 +77,15 @@ impl CommunityIssuance for Contract {
     #[storage(read, write)]
     fn issue_fpt() -> u64 {
         internal_require_caller_is_stability_pool();
-        let latest_total_fpt_issued = (internal_get_fpt_supply_cap() * internal_get_cumulative_issuance_fraction()) / DECIMAL_PRECISION;
+        let latest_total_fpt_issued = (
+            internal_get_fpt_supply_cap(
+                storage.time_transition_started, 
+                storage.total_transition_time_seconds, 
+                internal_get_current_time(), 
+                storage.has_transitioned_rewards
+            ) 
+            * internal_get_cumulative_issuance_fraction(internal_get_current_time(), storage.deployment_time)
+        ) / DECIMAL_PRECISION;
         let issuance = latest_total_fpt_issued - storage.total_fpt_issued;
         storage.total_fpt_issued = latest_total_fpt_issued;
         issuance
@@ -103,6 +111,7 @@ impl CommunityIssuance for Contract {
 }
 
 // todo: do we need to use u128?
+/*
 #[storage(read)]
 fn internal_get_fpt_supply_cap() -> u64 {
     if (!storage.has_transitioned_rewards){
@@ -114,10 +123,11 @@ fn internal_get_fpt_supply_cap() -> u64 {
         (FPT_SUPPLY_CAP / 2) + (fm_min(1, change_in_fpt_supply_cap) * (FPT_SUPPLY_CAP / 2))
     }
 }
-
+*/
+/*
 #[storage(read)]
 fn internal_get_cumulative_issuance_fraction() -> u64 {
-    let time_passed_in_minutes = internal_get_current_time() - storage.deployment_time / SECONDS_IN_ONE_MINUTE;
+    let time_passed_in_minutes = (internal_get_current_time() - storage.deployment_time) / SECONDS_IN_ONE_MINUTE;
 
     let power = dec_pow(ISSUANCE_FACTOR, time_passed_in_minutes).as_u64().unwrap();
 
@@ -127,7 +137,7 @@ fn internal_get_cumulative_issuance_fraction() -> u64 {
 
     cumulative_issuance_fraction
 }
-
+*/
 #[storage(read)]
 fn internal_require_caller_is_stability_pool() {
     require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract), "Caller must be stability pool");
