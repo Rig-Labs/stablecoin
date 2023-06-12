@@ -194,6 +194,7 @@ async fn proper_staking_multiple_positions() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
         &contracts.asset_contracts,
     )
     .await;

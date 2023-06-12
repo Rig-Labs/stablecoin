@@ -138,6 +138,7 @@ async fn proper_redemption_from_partially_closed() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
         &contracts.asset_contracts,
     )
     .await;
@@ -321,6 +322,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
         &contracts.asset_contracts,
     )
     .await;
@@ -406,8 +408,9 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     .await;
 
     let coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(healthy_wallet3.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;

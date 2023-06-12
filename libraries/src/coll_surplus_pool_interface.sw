@@ -2,7 +2,10 @@ library coll_surplus_pool_interface;
 
 abi CollSurplusPool {
     #[storage(read, write)]
-    fn initialize(trove_manager: Identity, active_pool: ContractId, borrow_operations: ContractId, asset_id: ContractId);
+    fn initialize(borrow_operations: ContractId, protocol_manager: Identity);
+
+    #[storage(read, write)]
+    fn add_asset(asset: ContractId, trove_manager: Identity);
 
     #[storage(read, write)]
     fn claim_coll(acount: Identity, asset: ContractId);

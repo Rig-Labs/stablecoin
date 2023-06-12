@@ -113,6 +113,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
         &contracts.asset_contracts,
     )
     .await;

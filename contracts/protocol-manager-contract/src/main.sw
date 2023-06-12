@@ -8,6 +8,7 @@ use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::active_pool_interface::{ActivePool};
+use libraries::coll_surplus_pool_interface::{CollSurplusPool};
 use libraries::{MockOracle};
 use libraries::protocol_manager_interface::{ProtocolManager};
 use libraries::usdf_token_interface::{USDFToken};
@@ -36,6 +37,7 @@ storage {
     fpt_staking_contract: ContractId = null_contract(),
     usdf_token_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
+    coll_surplus_pool_contract: ContractId = null_contract(),
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     assets: StorageVec<ContractId> = StorageVec {},
     is_initialized: bool = false,
@@ -48,6 +50,7 @@ impl ProtocolManager for Contract {
         stability_pool: ContractId,
         fpt_staking: ContractId,
         usdf_token: ContractId,
+        coll_surplus_pool: ContractId,
         admin: Identity,
     ) {
         require(storage.is_initialized == false, "Already initialized");
@@ -57,6 +60,7 @@ impl ProtocolManager for Contract {
         storage.fpt_staking_contract = fpt_staking;
         storage.stability_pool_contract = stability_pool;
         storage.usdf_token_contract = usdf_token;
+        storage.coll_surplus_pool_contract = coll_surplus_pool;
         storage.is_initialized = true;
     }
 
@@ -65,7 +69,6 @@ impl ProtocolManager for Contract {
         asset_address: ContractId,
         active_pool: ContractId,
         trove_manager: ContractId,
-        coll_surplus_pool: ContractId,
         oracle: ContractId,
         sorted_troves: ContractId,
     ) {
@@ -74,20 +77,21 @@ impl ProtocolManager for Contract {
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.value);
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.value);
         let fpt_staking_contract = abi(FPTStaking, storage.fpt_staking_contract.value);
-
+        let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
         let fpt_staking = storage.fpt_staking_contract;
 
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager,
             active_pool,
-            coll_surplus_pool,
             oracle,
             sorted_troves,
             fpt_staking,
         });
         storage.assets.push(asset_address);
 
-        borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle, active_pool, coll_surplus_pool);
+        // TODO Remove 2nd active pool from borrow operations
+        borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle, active_pool);
+        coll_surplus_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
         stability_pool.add_asset(trove_manager, active_pool, sorted_troves, asset_address, oracle);
         fpt_staking_contract.add_asset(asset_address);
         usdf_token.add_trove_manager(trove_manager);

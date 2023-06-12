@@ -16,47 +16,52 @@ use std::{
 };
 
 storage {
-    trove_manager_contract: Identity = null_identity_address(),
+    is_initialized: bool = false,
+    protocol_manager: Identity = null_identity_address(),
     borrow_operations: ContractId = null_contract(),
-    asset_id: ContractId = null_contract(),
     asset_amount: StorageMap<ContractId, u64> = StorageMap {},
     balances: StorageMap<(Identity, ContractId), u64> = StorageMap {},
-    is_initialized: bool = false,
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
+    valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
 }
 
 impl CollSurplusPool for Contract {
     #[storage(read, write)]
-    fn initialize(
-        trove_manager: Identity,
-        active_pool: ContractId,
-        borrow_operations: ContractId,
-        asset_id: ContractId,
-    ) {
+    fn initialize(borrow_operations: ContractId, protocol_manager: Identity) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
-        storage.trove_manager_contract = trove_manager;
         storage.borrow_operations = borrow_operations;
-        storage.asset_id = asset_id;
+        storage.protocol_manager = protocol_manager;
         storage.is_initialized = true;
+    }
+
+    #[storage(read, write)]
+    fn add_asset(asset: ContractId, trove_manager: Identity) {
+        require_is_protocol_manager();
+        storage.valid_asset_ids.insert(asset, true);
+        storage.valid_trove_managers.insert(trove_manager, true);
+        storage.asset_amount.insert(asset, 0);
     }
 
     #[storage(read, write)]
     fn claim_coll(account: Identity, asset: ContractId) {
         require_is_borrow_operations();
+        require_is_valid_asset_id(asset);
+
         let balance = storage.balances.get((account, asset));
         if balance > 0 {
             storage.balances.insert((account, asset), 0);
-            let asset_amount = storage.asset_amount.get(storage.asset_id);
-            storage.asset_amount.insert(storage.asset_id, asset_amount - balance);
+            let asset_amount = storage.asset_amount.get(asset);
+            storage.asset_amount.insert(asset, asset_amount - balance);
 
-            transfer(balance, storage.asset_id, account);
+            transfer(balance, asset, account);
         }
     }
 
     #[storage(read, write)]
     fn account_surplus(account: Identity, amount: u64, asset: ContractId) {
         require_is_trove_manager();
+        require_is_valid_asset_id(asset);
 
         let current_asset_amount = storage.asset_amount.get(asset);
         storage.asset_amount.insert(asset, current_asset_amount + amount);
@@ -84,10 +89,17 @@ fn require_is_valid_asset_id(contract_id: ContractId) {
 }
 
 #[storage(read)]
+fn require_is_protocol_manager() {
+    let caller = msg_sender().unwrap();
+    let protocol_manager = storage.protocol_manager;
+    require(caller == protocol_manager, "Caller is not ProtocolManager");
+}
+
+#[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
-    let trove_manager_contract = storage.trove_manager_contract;
-    require(caller == trove_manager_contract, "Caller is not TroveManager");
+    let is_valid = storage.valid_trove_managers.get(caller);
+    require(is_valid, "Caller is not TroveManager");
 }
 
 #[storage(read)]

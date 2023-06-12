@@ -55,7 +55,7 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].active_pool,
         &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(wallet1.address().into()),
         Identity::Address([0; 32].into()),

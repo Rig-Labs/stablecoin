@@ -84,7 +84,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].active_pool,
         &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         &contracts.usdf,
         vec![
             Identity::Address(liquidated_wallet.address().into()),
@@ -186,8 +186,9 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     assert_eq!(default_pool_debt, 0);
 
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;

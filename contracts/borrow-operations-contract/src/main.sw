@@ -38,6 +38,7 @@ storage {
     usdf_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
+    coll_surplus_pool_contract: ContractId = null_contract(),
     protocol_manager_contract: ContractId = null_contract(),
     is_initialized: bool = false,
 }
@@ -49,6 +50,7 @@ impl BorrowOperations for Contract {
         fpt_staking_contract: ContractId,
         stability_pool_contract: ContractId,
         protocol_manager: ContractId,
+        coll_surplus_pool_contract: ContractId,
     ) {
         require(!storage.is_initialized, "BorrowOperations: already initialized");
 
@@ -56,6 +58,7 @@ impl BorrowOperations for Contract {
         storage.fpt_staking_contract = fpt_staking_contract;
         storage.stability_pool_contract = stability_pool_contract;
         storage.protocol_manager_contract = protocol_manager;
+        storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
         storage.is_initialized = true;
     }
 
@@ -66,12 +69,10 @@ impl BorrowOperations for Contract {
         sorted_troves_contract: ContractId,
         oracle_contract: ContractId,
         active_pool_contract: ContractId,
-        coll_surplus_pool_contract: ContractId,
     ) {
         require_is_protocol_manager();
         let asset_contracts = AssetContracts {
             active_pool: active_pool_contract,
-            coll_surplus_pool: coll_surplus_pool_contract,
             sorted_troves: sorted_troves_contract,
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,
@@ -239,8 +240,8 @@ impl BorrowOperations for Contract {
     #[storage(read)]
     fn claim_collateral(asset: ContractId) {
         let asset_contracts = storage.asset_contracts.get(asset);
-        let coll_surplus = abi(CollSurplusPool, asset_contracts.coll_surplus_pool.value);
-        coll_surplus.claim_coll(msg_sender().unwrap());
+        let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
+        coll_surplus.claim_coll(msg_sender().unwrap(), asset);
     }
 
     #[storage(read)]

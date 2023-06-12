@@ -1,11 +1,5 @@
 library data_structures;
 
-pub enum BorrowOperations {
-    OpenTrove: (),
-    CloseTrove: (),
-    AdjustTrove: (),
-}
-
 pub struct LocalVariables_OpenTrove {
     price: u64,
     usdf_fee: u64,
@@ -19,7 +13,6 @@ pub struct LocalVariables_OpenTrove {
 
 pub struct AssetContracts {
     active_pool: ContractId,
-    coll_surplus_pool: ContractId,
     sorted_troves: ContractId,
     trove_manager: ContractId,
     oracle: ContractId,
