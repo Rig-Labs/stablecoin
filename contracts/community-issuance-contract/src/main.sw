@@ -1,12 +1,11 @@
 contract;
 dep utils;
 use libraries::community_issuance_interface::{CommunityIssuance};
-use libraries::fluid_math::{null_contract, null_identity_address, dec_pow, fm_min, DECIMAL_PRECISION};
+use libraries::fluid_math::{null_contract, null_identity_address,  DECIMAL_PRECISION, dec_pow,};
 use utils::*;
 
 
 use std::{
-    address::*,
     auth::{
         AuthError,
         msg_sender,
@@ -20,14 +19,10 @@ use std::{
     context::{balance_of, msg_amount},
     contract_id::ContractId,
     revert::require,
-    storage::*,
-    token::*,
+    token::transfer,
     u256::U256,
+    u128::U128,
 };
-
-// todo: if sway supports constant multiplications inherit decimal precision from fluid math
-pub const FPT_SUPPLY_CAP = 32_000_000_000_000_000;
-
 
 storage {
     stability_pool_contract: ContractId = null_contract(),
@@ -62,7 +57,6 @@ impl CommunityIssuance for Contract {
             storage.debug_timestamp = time;
         }
         storage.deployment_time = internal_get_current_time();
-
     }
 
     #[storage(read, write)]
@@ -108,6 +102,28 @@ impl CommunityIssuance for Contract {
         require(storage.debug, "Debugging must be enabled to set current time");
         storage.debug_timestamp = time;
     }
+    // todo: take this out and use the function in utils. This is for integration test
+    fn get_cumulative_issuance_fraction(current_time: u64, deployment_time: u64 ) -> u64 {
+        let time_passed_in_minutes = (current_time - deployment_time) / SECONDS_IN_ONE_MINUTE;
+
+        let power = dec_pow(ISSUANCE_FACTOR, time_passed_in_minutes);
+
+        let cumulative_issuance_fraction = U128::from_u64(DECIMAL_PRECISION) - power;
+
+        return cumulative_issuance_fraction.as_u64().unwrap()
+    }
+    fn external_test_issue_fpt(
+        current_time: u64, 
+        deployment_time: u64, 
+        time_transition_started: u64, 
+        total_transition_time_seconds:u64, 
+        total_fpt_issued: u64, 
+        has_transitioned_rewards:bool
+    ) -> u64 {
+        return test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
+    }
+    
+
 }
 
 // todo: do we need to use u128?

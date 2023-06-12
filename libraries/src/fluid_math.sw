@@ -84,30 +84,30 @@ pub fn fm_max(a: u64, b: u64) -> u64 {
     if a > b { return a; } else { return b; }
 }
 
-pub fn dec_mul(a: U256, b: U256) -> U256 {
+pub fn dec_mul(a: U128, b: U128) -> U128 {
     let prod = a * b;
-    let dec_prod = (prod + U256::from_u64(DECIMAL_PRECISION / 2)) / U256::from_u64(DECIMAL_PRECISION);
+    let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
     return dec_prod;
 }
 
-pub fn dec_pow(base: u64, _minutes: u64) -> U256 {
+pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
     let mut minutes = _minutes;
     if minutes > 525600000 {
         minutes = 525600000;
     }
 
-    let mut y = U256::from_u64(DECIMAL_PRECISION);
-    let mut x = U256::from_u64(base);
-    let mut n = U256::from_u64(minutes);
+    let mut y = U128::from_u64(DECIMAL_PRECISION);
+    let mut x = U128::from_u64(base);
+    let mut n = U128::from_u64(minutes);
 
-    while n > U256::from_u64(1) {
-        if n % U256::from_u64(2) == U256::from_u64(0) {
+    while n > U128::from_u64(1) {
+        if n % U128::from_u64(2) == U128::from_u64(0) {
             x = dec_mul(x, x);
-            n = n / U256::from_u64(2);
+            n = n / U128::from_u64(2);
         } else {
             y = dec_mul(x, y);
             x = dec_mul(x, x);
-            n = (n - U256::from_u64(1)) / U256::from_u64(2);
+            n = (n - U128::from_u64(1)) / U128::from_u64(2);
         }
     }
 
@@ -127,7 +127,7 @@ fn test_dec_pow_zero() {
     let base = 1_000_000_000;
     let exponent = 0;
     let result = dec_pow(base, exponent);
-    assert(result == U256::from_u64(DECIMAL_PRECISION));
+    assert(result == U128::from_u64(DECIMAL_PRECISION));
 }
 
 #[test]

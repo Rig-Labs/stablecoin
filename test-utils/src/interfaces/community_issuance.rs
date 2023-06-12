@@ -42,20 +42,39 @@ pub mod community_issuance_abi {
         }
     }
 
-    // pub async fn test_dec_pow<T: Account>(
-    //     community_issuance: &CommunityIssuance<T>,
-    //     x: u64,
-    //     y: u64
-    // ) -> FuelCallResponse<u64> {
-    //     let tx_params = TxParameters::default().set_gas_price(1);
+    pub async fn get_cumulative_issuance_fraction<T: Account>(
+        community_issuance: &CommunityIssuance<T>,
+        x: u64,
+        y: u64
+    ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::default().set_gas_price(1).set_gas_limit(20000000);
 
-    //     community_issuance
-    //         .methods()
-    //         .test_dec_pow(x, y)
-    //         .tx_params(tx_params)
-    //         .call()
-    //         .await
-    //         .unwrap()
-    // }
+        community_issuance
+            .methods()
+            .get_cumulative_issuance_fraction(x, y)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
 
+    pub async fn external_test_issue_fpt<T: Account>(
+        community_issuance: &CommunityIssuance<T>,
+        current_time: u64, 
+        deployment_time: u64, 
+        time_transition_started: u64, 
+        total_transition_time_seconds:u64, 
+        total_fpt_issued: u64, 
+        has_transitioned_rewards:bool
+    ) -> FuelCallResponse<u64> {
+        let tx_params = TxParameters::default().set_gas_price(1).set_gas_limit(20000000);
+
+        community_issuance
+            .methods()
+            .external_test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards)
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
 }
