@@ -516,16 +516,17 @@ fn internal_move_offset_coll_and_debt(
     asset_address: ContractId,
     asset_addresses_cache: AssetContracts,
 ) {
+    // TODO Remove active pool from cache
     let active_pool = abi(ActivePool, asset_addresses_cache.active_pool.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_address);
-    active_pool.decrease_usdf_debt(debt_to_offset);
+    active_pool.decrease_usdf_debt(debt_to_offset, asset_address);
 
     usdf_contract.burn {
         coins: debt_to_offset,
         asset_id: storage.usdf_address.value,
     }();
 
-    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add);
+    active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add, asset_address);
 }

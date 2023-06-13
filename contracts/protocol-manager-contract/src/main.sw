@@ -8,6 +8,7 @@ use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
 use libraries::sorted_troves_interface::{SortedTroves};
 use libraries::active_pool_interface::{ActivePool};
+use libraries::default_pool_interface::{DefaultPool};
 use libraries::coll_surplus_pool_interface::{CollSurplusPool};
 use libraries::{MockOracle};
 use libraries::protocol_manager_interface::{ProtocolManager};
@@ -38,6 +39,8 @@ storage {
     usdf_token_contract: ContractId = null_contract(),
     stability_pool_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
+    default_pool_contract: ContractId = null_contract(),
+    active_pool_contract: ContractId = null_contract(),
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     assets: StorageVec<ContractId> = StorageVec {},
     is_initialized: bool = false,
@@ -51,6 +54,8 @@ impl ProtocolManager for Contract {
         fpt_staking: ContractId,
         usdf_token: ContractId,
         coll_surplus_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
         admin: Identity,
     ) {
         require(storage.is_initialized == false, "Already initialized");
@@ -61,13 +66,14 @@ impl ProtocolManager for Contract {
         storage.stability_pool_contract = stability_pool;
         storage.usdf_token_contract = usdf_token;
         storage.coll_surplus_pool_contract = coll_surplus_pool;
+        storage.default_pool_contract = default_pool;
+        storage.active_pool_contract = active_pool;
         storage.is_initialized = true;
     }
 
     #[storage(read, write)]
     fn register_asset(
         asset_address: ContractId,
-        active_pool: ContractId,
         trove_manager: ContractId,
         oracle: ContractId,
         sorted_troves: ContractId,
@@ -79,20 +85,24 @@ impl ProtocolManager for Contract {
         let fpt_staking_contract = abi(FPTStaking, storage.fpt_staking_contract.value);
         let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
         let fpt_staking = storage.fpt_staking_contract;
+        let default_pool = abi(DefaultPool, storage.default_pool_contract.value);
+        let active_pool_contract = storage.active_pool_contract;
+        let active_pool = abi(ActivePool, active_pool_contract.value);
 
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager,
-            active_pool,
             oracle,
             sorted_troves,
             fpt_staking,
+            asset_address,
         });
         storage.assets.push(asset_address);
 
-        // TODO Remove 2nd active pool from borrow operations
-        borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle, active_pool);
+        borrow_operations.add_asset(asset_address, trove_manager, sorted_troves, oracle);
         coll_surplus_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
-        stability_pool.add_asset(trove_manager, active_pool, sorted_troves, asset_address, oracle);
+        active_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
+        default_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
+        stability_pool.add_asset(trove_manager, active_pool_contract, sorted_troves, asset_address, oracle);
         fpt_staking_contract.add_asset(asset_address);
         usdf_token.add_trove_manager(trove_manager);
     }
@@ -117,6 +127,7 @@ impl ProtocolManager for Contract {
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
         let usdf_address = storage.usdf_token_contract;
         let usdf_contract = abi(USDFToken, usdf_address.value);
+        let active_pool_address = storage.active_pool_contract;
 
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
@@ -128,7 +139,7 @@ impl ProtocolManager for Contract {
             let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
             let sorted_troves_contract = abi(SortedTroves, contracts_cache.sorted_troves.value);
-            let active_pool_contract = abi(ActivePool, contracts_cache.active_pool.value);
+            let active_pool_contract = abi(ActivePool, active_pool_address.value);
 
             let price = assets_info.prices.get(index).unwrap();
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
@@ -162,7 +173,7 @@ impl ProtocolManager for Contract {
             let contracts_cache = assets_info.asset_contracts.get(i).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
             let sorted_troves_contract = abi(SortedTroves, contracts_cache.sorted_troves.value);
-            let active_pool_contract = abi(ActivePool, contracts_cache.active_pool.value);
+            let active_pool_contract = abi(ActivePool, active_pool_address.value);
             let fpt_staking_contract = abi(FPTStaking, contracts_cache.fpt_staking.value);
             let price = assets_info.prices.get(i).unwrap();
             let mut totals = assets_info.redemption_totals.get(i).unwrap();
@@ -180,12 +191,12 @@ impl ProtocolManager for Contract {
             // TODO fpt staking increase f_asset
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
-            active_pool_contract.send_asset(Identity::ContractId(contracts_cache.fpt_staking), totals.asset_fee);
+            active_pool_contract.send_asset(Identity::ContractId(contracts_cache.fpt_staking), totals.asset_fee, contracts_cache.asset_address);
             fpt_staking_contract.increase_f_asset(totals.asset_fee, assets_info.assets.get(i).unwrap());
 
             total_usdf_redeemed += totals.total_usdf_to_redeem;
-            active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem);
-            active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer);
+            active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
+            active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
             i += 1;
         }
 

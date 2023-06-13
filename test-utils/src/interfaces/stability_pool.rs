@@ -135,7 +135,6 @@ pub mod stability_pool_abi {
         stability_pool: &StabilityPool<WalletUnlocked>,
         depositor: Identity,
     ) -> Result<FuelCallResponse<u64>, Error> {
-        println!("5");
         stability_pool
             .methods()
             .get_compounded_usdf_deposit(depositor)

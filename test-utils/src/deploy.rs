@@ -128,6 +128,12 @@ pub mod deployment {
         pb.inc();
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
 
+        pb.inc();
+        let default_pool = deploy_default_pool(&wallet).await;
+
+        pb.inc();
+        let active_pool = deploy_active_pool(&wallet).await;
+
         let fuel_asset_contracts = upload_asset(wallet.clone()).await;
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
@@ -159,6 +165,7 @@ pub mod deployment {
             stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
         wait();
@@ -204,7 +211,29 @@ pub mod deployment {
             fpt_staking.contract_id().into(),
             usdf.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
             Identity::Address(wallet.address().into()),
+        )
+        .await;
+        wait();
+        pb.inc();
+
+        let _ = default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(protocol_manager.contract_id().into()),
+            protocol_manager.contract_id().into(),
+        )
+        .await;
+        wait();
+        pb.inc();
+
+        let _ = active_pool_abi::initialize(
+            &active_pool,
+            Identity::ContractId(borrow_operations.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            default_pool.contract_id().into(),
+            Identity::ContractId(protocol_manager.contract_id().into()),
         )
         .await;
         wait();
@@ -220,8 +249,8 @@ pub mod deployment {
             wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
-            fuel_asset_contracts.default_pool,
-            fuel_asset_contracts.active_pool,
+            &default_pool,
+            &active_pool,
             fuel_asset_contracts.asset,
             fuel_asset_contracts.trove_manager,
             fuel_asset_contracts.sorted_troves,
@@ -242,8 +271,8 @@ pub mod deployment {
                 wallet.clone(),
                 "stFuel".to_string(),
                 "stFUEL".to_string(),
-                stfuel_asset_contracts.default_pool,
-                stfuel_asset_contracts.active_pool,
+                &default_pool,
+                &active_pool,
                 stfuel_asset_contracts.asset,
                 stfuel_asset_contracts.trove_manager,
                 stfuel_asset_contracts.sorted_troves,
@@ -264,6 +293,8 @@ pub mod deployment {
             fpt_staking,
             fpt,
             coll_surplus_pool,
+            default_pool,
+            active_pool,
         };
 
         return contracts;
@@ -302,10 +333,7 @@ pub mod deployment {
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
         let asset = deploy_token(&wallet).await;
-        pb.inc();
-        let active_pool = deploy_active_pool(&wallet).await;
-        pb.inc();
-        let default_pool = deploy_default_pool(&wallet).await;
+
         pb.inc();
         let fpt_staking = deploy_fpt_staking(&wallet).await;
         pb.inc();
@@ -314,8 +342,6 @@ pub mod deployment {
         println!("Sorted Troves: {}", sorted_troves.contract_id());
         println!("Trove Manager: {}", trove_manager.contract_id());
         println!("Asset: {}", asset.contract_id());
-        println!("Active Pool: {}", active_pool.contract_id());
-        println!("Default Pool: {}", default_pool.contract_id());
         println!("FPT Staking: {}", fpt_staking.contract_id());
 
         return AssetContracts {
@@ -323,8 +349,6 @@ pub mod deployment {
             sorted_troves,
             trove_manager,
             asset,
-            active_pool,
-            default_pool,
         };
     }
 
@@ -338,8 +362,8 @@ pub mod deployment {
         wallet: WalletUnlocked,
         name: String,
         symbol: String,
-        default_pool: DefaultPool<T>,
-        active_pool: ActivePool<T>,
+        default_pool: &DefaultPool<T>,
+        active_pool: &ActivePool<T>,
         asset: Token<T>,
         trove_manager: TroveManagerContract<T>,
         sorted_troves: SortedTroves<T>,
@@ -347,28 +371,6 @@ pub mod deployment {
     ) -> () {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(7);
-        let _ = default_pool_abi::initialize(
-            &default_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            asset.contract_id().into(),
-        )
-        .await;
-        wait();
-        pb.inc();
-
-        let _ = active_pool_abi::initialize(
-            &active_pool,
-            Identity::ContractId(borrow_operations.contract_id().into()),
-            Identity::ContractId(trove_manager.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            asset.contract_id().into(),
-            default_pool.contract_id().into(),
-            protocol_manager.contract_id().into(),
-        )
-        .await;
-        wait();
-        pb.inc();
 
         let _ = token_abi::initialize(
             &asset,
@@ -415,7 +417,6 @@ pub mod deployment {
         let _ = protocol_manager_abi::register_asset(
             &protocol_manager,
             asset.contract_id().into(),
-            active_pool.contract_id().into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
             sorted_troves.contract_id().into(),
@@ -424,6 +425,8 @@ pub mod deployment {
             usdf,
             fpt_staking,
             coll_surplus_pool,
+            default_pool,
+            active_pool,
         )
         .await;
         wait();

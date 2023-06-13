@@ -44,16 +44,16 @@ pub mod common {
         pub asset_contracts: Vec<AssetContracts<T>>,
         pub fpt_staking: FPTStaking<T>,
         pub coll_surplus_pool: CollSurplusPool<T>,
+        pub default_pool: DefaultPool<T>,
+        pub active_pool: ActivePool<T>,
         pub fpt: Token<T>,
     }
 
     pub struct AssetContracts<T: Account> {
         pub asset: Token<T>,
         pub oracle: Oracle<T>,
-        pub active_pool: ActivePool<T>,
         pub trove_manager: TroveManagerContract<T>,
         pub sorted_troves: SortedTroves<T>,
-        pub default_pool: DefaultPool<T>,
     }
 
     pub async fn setup_protocol(
@@ -112,6 +112,13 @@ pub mod common {
         pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+
+        pb.inc();
+        let default_pool = deploy_default_pool(&wallet).await;
+
+        pb.inc();
+        let active_pool = deploy_active_pool(&wallet).await;
+
         pb.finish_println("Parent Contracts deployed");
 
         if is_testnet {
@@ -122,6 +129,7 @@ pub mod common {
             println!("FPT Staking: {}", fpt_staking.contract_id());
             println!("FPT Mock Token: {}", fpt.contract_id());
             println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
+            println!("Default Pool: {}", default_pool.contract_id());
         }
 
         let mut pb = ProgressBar::new(6);
@@ -156,6 +164,7 @@ pub mod common {
             stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
         pb.inc();
@@ -190,6 +199,8 @@ pub mod common {
             fpt_staking.contract_id().into(),
             usdf.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
             Identity::Address(wallet.address().into()),
         )
         .await;
@@ -202,6 +213,22 @@ pub mod common {
         )
         .await;
 
+        default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(protocol_manager.contract_id().into()),
+            active_pool.contract_id().into(),
+        )
+        .await;
+
+        active_pool_abi::initialize(
+            &active_pool,
+            Identity::ContractId(borrow_operations.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            default_pool.contract_id().into(),
+            Identity::ContractId(protocol_manager.contract_id().into()),
+        )
+        .await;
+
         let fuel_asset_contracts = add_asset(
             &borrow_operations,
             &stability_pool,
@@ -209,6 +236,8 @@ pub mod common {
             &usdf,
             &fpt_staking,
             &coll_surplus_pool,
+            &default_pool,
+            &active_pool,
             wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
@@ -224,6 +253,8 @@ pub mod common {
                 &usdf,
                 &fpt_staking,
                 &coll_surplus_pool,
+                &default_pool,
+                &active_pool,
                 wallet,
                 "stFuel".to_string(),
                 "stFUEL".to_string(),
@@ -247,6 +278,8 @@ pub mod common {
             fpt_staking,
             fpt,
             coll_surplus_pool,
+            default_pool,
+            active_pool,
         };
 
         return contracts;
@@ -493,6 +526,8 @@ pub mod common {
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
         coll_surplus_pool: &CollSurplusPool<WalletUnlocked>,
+        default_pool: &DefaultPool<WalletUnlocked>,
+        active_pool: &ActivePool<WalletUnlocked>,
         wallet: WalletUnlocked,
         name: String,
         symbol: String,
@@ -502,41 +537,14 @@ pub mod common {
         let sorted_troves = deploy_sorted_troves(&wallet).await;
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         let asset = deploy_token(&wallet).await;
-        let active_pool = deploy_active_pool(&wallet).await;
-        let default_pool = deploy_default_pool(&wallet).await;
 
         if is_testnet {
             println!("Deployed asset: {}", asset.contract_id());
-            println!("Deployed active pool: {}", active_pool.contract_id());
-            println!("Deployed default pool: {}", default_pool.contract_id());
-            println!(
-                "Deployed coll surplus pool: {}",
-                coll_surplus_pool.contract_id()
-            );
             println!("Deployed trove manager: {}", trove_manager.contract_id());
             println!("Deployed sorted troves: {}", sorted_troves.contract_id());
             println!("Deployed oracle: {}", oracle.contract_id());
             println!("Deployed fpt staking: {}", fpt_staking.contract_id());
         }
-
-        default_pool_abi::initialize(
-            &default_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            asset.contract_id().into(),
-        )
-        .await;
-
-        active_pool_abi::initialize(
-            &active_pool,
-            Identity::ContractId(borrow_operations.contract_id().into()),
-            Identity::ContractId(trove_manager.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            asset.contract_id().into(),
-            default_pool.contract_id().into(),
-            protocol_manager.contract_id().into(),
-        )
-        .await;
 
         token_abi::initialize(
             &asset,
@@ -575,7 +583,6 @@ pub mod common {
         protocol_manager_abi::register_asset(
             &protocol_manager,
             asset.contract_id().into(),
-            active_pool.contract_id().into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
             sorted_troves.contract_id().into(),
@@ -584,6 +591,8 @@ pub mod common {
             usdf,
             fpt_staking,
             &coll_surplus_pool,
+            default_pool,
+            active_pool,
         )
         .await;
 
@@ -592,8 +601,6 @@ pub mod common {
             sorted_troves,
             trove_manager,
             asset,
-            active_pool,
-            default_pool,
         };
     }
 

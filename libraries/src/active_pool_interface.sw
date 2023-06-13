@@ -2,26 +2,29 @@ library active_pool_interface;
 
 abi ActivePool {
     #[storage(read, write)]
-    fn initialize(borrow_operations: Identity, trove_manager: Identity, stability_pool: Identity, asset_id: ContractId, default_pool: ContractId, protocol_manager: ContractId,);
+    fn initialize(borrow_operations: Identity, stability_pool: Identity, default_pool: ContractId, protocol_manager: Identity);
 
     #[storage(read, write)]
-    fn send_asset(address: Identity, amount: u64);
+    fn send_asset(address: Identity, amount: u64, asset_id: ContractId);
+
+    #[storage(read, write)]
+    fn add_asset(asset: ContractId, trove_manager: Identity);
 
     #[storage(read)]
-    fn get_asset() -> u64;
+    fn get_asset(asset_id: ContractId) -> u64;
 
     #[storage(read)]
-    fn get_usdf_debt() -> u64;
+    fn get_usdf_debt(asset_id: ContractId) -> u64;
 
     #[storage(read, write)]
-    fn increase_usdf_debt(amount: u64);
+    fn increase_usdf_debt(amount: u64, asset_id: ContractId);
 
     #[storage(read, write)]
-    fn decrease_usdf_debt(amount: u64);
+    fn decrease_usdf_debt(amount: u64, asset_id: ContractId);
 
     #[storage(read, write), payable]
     fn recieve();
 
     #[storage(read, write)]
-    fn send_asset_to_default_pool(amount: u64);
+    fn send_asset_to_default_pool(amount: u64, asset_id: ContractId);
 }

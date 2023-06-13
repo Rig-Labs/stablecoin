@@ -12,7 +12,6 @@ pub struct LocalVariables_OpenTrove {
 }
 
 pub struct AssetContracts {
-    active_pool: ContractId,
     sorted_troves: ContractId,
     trove_manager: ContractId,
     oracle: ContractId,

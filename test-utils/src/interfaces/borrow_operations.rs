@@ -28,6 +28,7 @@ pub mod borrow_operations_abi {
         stability_pool_contract: ContractId,
         protocol_manager_contract: ContractId,
         coll_surplus_pool_contract: ContractId,
+        active_pool_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -39,6 +40,7 @@ pub mod borrow_operations_abi {
                 stability_pool_contract,
                 protocol_manager_contract,
                 coll_surplus_pool_contract,
+                active_pool_contract,
             )
             .tx_params(tx_params)
             .call()
@@ -288,14 +290,13 @@ pub mod borrow_operations_abi {
         oracle: ContractId,
         sorted_troves: ContractId,
         trove_manager: ContractId,
-        active_pool: ContractId,
         asset: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
-            .add_asset(asset, trove_manager, sorted_troves, oracle, active_pool)
+            .add_asset(asset, trove_manager, sorted_troves, oracle)
             .tx_params(tx_params)
             .call()
             .await
@@ -306,6 +307,7 @@ pub mod borrow_operations_utils {
     use fuels::prelude::{Account, WalletUnlocked};
 
     use super::*;
+    use crate::interfaces::active_pool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
@@ -316,6 +318,7 @@ pub mod borrow_operations_utils {
         borrow_operations: &BorrowOperations<T>,
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
+        active_pool: &active_pool::ActivePool<WalletUnlocked>,
         amount: u64,
         usdf_amount: u64,
     ) {
@@ -337,7 +340,7 @@ pub mod borrow_operations_utils {
             fpt_staking,
             &asset_contracts.sorted_troves,
             &asset_contracts.trove_manager,
-            &asset_contracts.active_pool,
+            &active_pool,
             amount,
             usdf_amount,
             Identity::Address([0; 32].into()),
