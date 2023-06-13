@@ -7,7 +7,7 @@ use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
 use test_utils::setup::common::{
-    deploy_stability_pool, deploy_token, get_absolute_path_from_relative,
+    deploy_active_pool, deploy_stability_pool, deploy_token, get_absolute_path_from_relative,
 };
 
 abigen!(Contract(
@@ -166,6 +166,8 @@ pub async fn setup(
     let fuel_token = deploy_token(&wallet).await;
     let usdf_token = deploy_token(&wallet).await;
 
+    let active_pool = deploy_active_pool(&wallet).await;
+
     token_abi::initialize(
         &fuel_token,
         0,
@@ -190,6 +192,7 @@ pub async fn setup(
         usdf_token.contract_id().into(),
         stability_pool.contract_id().into(),
         fuel_token.contract_id().into(),
+        active_pool.contract_id().into(),
     )
     .await
     .unwrap();

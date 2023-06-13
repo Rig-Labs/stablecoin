@@ -1,6 +1,5 @@
 use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::{prelude::TxParameters, types::Identity};
-use test_utils::setup::common::print_response;
 
 use crate::utils::setup::{initialize_st_and_tm, remove, set_nominal_icr_and_insert, setup};
 
@@ -160,7 +159,7 @@ async fn proper_head_and_tails_after_insert() {
         "Last should be wallet"
     );
 
-    let res = set_nominal_icr_and_insert(
+    let _res = set_nominal_icr_and_insert(
         &trove_manager,
         &sorted_troves,
         Identity::ContractId(sorted_troves.contract_id().into()),

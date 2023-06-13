@@ -30,6 +30,7 @@ pub mod stability_pool_abi {
         usdf_address: ContractId,
         community_issuance_address: ContractId,
         protocol_manager_contract: ContractId,
+        active_pool: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -40,6 +41,7 @@ pub mod stability_pool_abi {
                 usdf_address,
                 community_issuance_address,
                 protocol_manager_contract,
+                active_pool,
             )
             .tx_params(tx_params)
             .call()
@@ -49,7 +51,6 @@ pub mod stability_pool_abi {
     pub async fn add_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         trove_manager: ContractId,
-        active_pool: ContractId,
         sorted_troves: ContractId,
         asset_address: ContractId,
         oracle_address: ContractId,
@@ -58,13 +59,7 @@ pub mod stability_pool_abi {
 
         stability_pool
             .methods()
-            .add_asset(
-                trove_manager,
-                active_pool,
-                sorted_troves,
-                asset_address,
-                oracle_address,
-            )
+            .add_asset(trove_manager, sorted_troves, asset_address, oracle_address)
             .tx_params(tx_params)
             .call()
             .await

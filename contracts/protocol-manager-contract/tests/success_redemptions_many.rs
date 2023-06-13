@@ -180,9 +180,6 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         .await
         .unwrap();
 
-    let a = fuel_balance + st_fuel_balance;
-    let b = redemption_amount - staking_balance - fees2;
-
     assert_eq!(
         fuel_balance + st_fuel_balance,
         redemption_amount - staking_balance - fees2

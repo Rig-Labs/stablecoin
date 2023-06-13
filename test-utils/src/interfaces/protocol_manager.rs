@@ -10,7 +10,6 @@ abigen!(Contract(
 pub mod protocol_manager_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
-    use crate::interfaces::coll_surplus_pool;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
     use crate::interfaces::default_pool::DefaultPool;
     use crate::interfaces::fpt_staking::FPTStaking;

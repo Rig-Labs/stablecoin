@@ -77,6 +77,7 @@ storage {
     is_initialized: bool = false,
     // Asset specific addresses
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
+    active_pool_address: ContractId = null_contract(),
 }
 
 impl StabilityPool for Contract {
@@ -86,6 +87,7 @@ impl StabilityPool for Contract {
         usdf_address: ContractId,
         community_issuance_address: ContractId,
         protocol_manager: ContractId,
+        active_pool_address: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
@@ -93,6 +95,7 @@ impl StabilityPool for Contract {
         storage.usdf_address = usdf_address;
         storage.community_issuance_address = community_issuance_address;
         storage.protocol_manager_address = protocol_manager;
+        storage.active_pool_address = active_pool_address;
         storage.is_initialized = true;
         // Super weird, updated from 0.38.1 to 0.41.0 and initial storage assignment was not working
         storage.p = U128::from_u64(DECIMAL_PRECISION);
@@ -101,7 +104,6 @@ impl StabilityPool for Contract {
     #[storage(read, write)]
     fn add_asset(
         trove_manager_address: ContractId,
-        active_pool_address: ContractId,
         sorted_troves_address: ContractId,
         asset_address: ContractId,
         oracle_address: ContractId,
@@ -111,7 +113,6 @@ impl StabilityPool for Contract {
         storage.last_asset_error_offset.insert(asset_address, U128::from_u64(0));
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager: trove_manager_address,
-            active_pool: active_pool_address,
             sorted_troves: sorted_troves_address,
             oracle: oracle_address,
         });
@@ -516,8 +517,7 @@ fn internal_move_offset_coll_and_debt(
     asset_address: ContractId,
     asset_addresses_cache: AssetContracts,
 ) {
-    // TODO Remove active pool from cache
-    let active_pool = abi(ActivePool, asset_addresses_cache.active_pool.value);
+    let active_pool = abi(ActivePool, storage.active_pool_address.value);
     let usdf_contract = abi(USDFToken, storage.usdf_address.value);
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_address);

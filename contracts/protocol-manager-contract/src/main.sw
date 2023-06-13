@@ -102,7 +102,7 @@ impl ProtocolManager for Contract {
         coll_surplus_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
         active_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
         default_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
-        stability_pool.add_asset(trove_manager, active_pool_contract, sorted_troves, asset_address, oracle);
+        stability_pool.add_asset(trove_manager, sorted_troves, asset_address, oracle);
         fpt_staking_contract.add_asset(asset_address);
         usdf_token.add_trove_manager(trove_manager);
     }

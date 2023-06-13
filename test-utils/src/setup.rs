@@ -176,6 +176,7 @@ pub mod common {
             usdf.contract_id().into(),
             usdf.contract_id().into(),
             protocol_manager.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await
         .unwrap();
