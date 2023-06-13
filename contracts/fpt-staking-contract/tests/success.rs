@@ -148,7 +148,7 @@ async fn proper_staking_multiple_positions() {
         &contracts.fpt_staking,
         &contracts.asset_contracts[0].sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         40_000_000_000_000,
         20_000_000_000_000,
         Identity::Address([0; 32].into()),
@@ -194,6 +194,9 @@ async fn proper_staking_multiple_positions() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
+        &contracts.default_pool,
+        &contracts.active_pool,
         &contracts.asset_contracts,
     )
     .await;

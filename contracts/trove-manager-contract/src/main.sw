@@ -386,6 +386,7 @@ fn internal_batch_liquidate_troves(
 
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(MockOracle, storage.oracle_contract.into());
+    let asset_contract_cache = storage.asset_contract;
 
     vars.price = oracle.get_price();
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
@@ -399,7 +400,7 @@ fn internal_batch_liquidate_troves(
     if (totals.total_coll_surplus > 0) {
         // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus);
+        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus, asset_contract_cache);
     }
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
@@ -567,12 +568,13 @@ fn internal_apply_liquidation(
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
-        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
+        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus, storage.asset_contract);
     }
 }
 
 #[storage(read, write)]
 fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
+    let asset_contract_cache = storage.asset_contract;
     if (debt == 0) {
         return;
     }
@@ -592,9 +594,9 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
 
-    active_pool.decrease_usdf_debt(debt);
-    default_pool.increase_usdf_debt(debt);
-    active_pool.send_asset_to_default_pool(coll);
+    active_pool.decrease_usdf_debt(debt, asset_contract_cache);
+    default_pool.increase_usdf_debt(debt, asset_contract_cache);
+    active_pool.send_asset_to_default_pool(coll, asset_contract_cache);
 }
 
 #[storage(read, write)]
@@ -669,20 +671,22 @@ fn internal_move_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
     if (coll == 0 && debt == 0) {
         return;
     }
+    let asset_contract_cache = storage.asset_contract;
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
 
-    default_pool.decrease_usdf_debt(debt);
-    active_pool.increase_usdf_debt(debt);
+    default_pool.decrease_usdf_debt(debt, asset_contract_cache);
+    active_pool.increase_usdf_debt(debt, asset_contract_cache);
 
-    default_pool.send_asset_to_active_pool(coll);
+    default_pool.send_asset_to_active_pool(coll, asset_contract_cache);
 }
 #[storage(read)]
 fn internal_get_entire_system_debt() -> u64 {
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
+    let asset_contract_cache = storage.asset_contract;
 
-    return active_pool.get_usdf_debt() + default_pool.get_usdf_debt();
+    return active_pool.get_usdf_debt(asset_contract_cache) + default_pool.get_usdf_debt(asset_contract_cache);
 }
 
 #[storage(read, write)]
@@ -729,19 +733,22 @@ fn internal_redeem_collateral_from_trove(
 }
 
 #[storage(read, write)]
-fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
+fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amount: u64) {
+    let asset_contract = storage.asset_contract;
+    let coll_surplus_pool_contract = storage.coll_surplus_pool_contract;
+
     let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-    let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+    let coll_surplus_pool = abi(CollSurplusPool, coll_surplus_pool_contract.into());
 
     usdf_contract.burn {
-        coins: usdf,
+        coins: usdf_amount,
         asset_id: storage.usdf_contract.value,
     }();
 
-    active_pool.decrease_usdf_debt(usdf);
-    coll_surplus_pool.account_surplus(borrower, asset);
-    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset);
+    active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
+    coll_surplus_pool.account_surplus(borrower, asset_amount, asset_contract);
+    active_pool.send_asset(Identity::ContractId(coll_surplus_pool_contract), asset_amount, asset_contract);
 }
 
 #[storage(read)]

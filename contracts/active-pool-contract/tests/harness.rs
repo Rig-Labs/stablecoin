@@ -42,39 +42,54 @@ async fn get_contract_instance() -> (
         &instance,
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
+        default_pool.contract_id().into(),
         Identity::Address(wallet.address().into()),
-        asset.contract_id().into(),
-        default_pool.contract_id().into(),
-        default_pool.contract_id().into(),
     )
     .await;
+
+    active_pool_abi::add_asset(
+        &instance,
+        asset.contract_id().into(),
+        Identity::Address(wallet.address().into()),
+    )
+    .await;
+
+    // TODO: probably need to add_asset here
 
     (instance, asset, wallet)
 }
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (active_pool, _mock_fuel, _admin) = get_contract_instance().await;
+    let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
 
-    let debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    let debt = active_pool_abi::get_usdf_debt(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(debt, 0);
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool).await.value;
+    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(asset_amount, 0);
 }
 
 #[tokio::test]
 async fn proper_adjust_debt() {
-    let (active_pool, _mock_fuel, _admin) = get_contract_instance().await;
+    let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
 
-    active_pool_abi::increase_usdf_debt(&active_pool, 1000).await;
+    active_pool_abi::increase_usdf_debt(&active_pool, 1000, mock_fuel.contract_id().into()).await;
 
-    let debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    let debt = active_pool_abi::get_usdf_debt(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(debt, 1000);
 
-    active_pool_abi::decrease_usdf_debt(&active_pool, 500).await;
+    active_pool_abi::decrease_usdf_debt(&active_pool, 500, mock_fuel.contract_id().into()).await;
 
-    let debt = active_pool_abi::get_usdf_debt(&active_pool).await.value;
+    let debt = active_pool_abi::get_usdf_debt(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(debt, 500);
 }
 
@@ -91,7 +106,9 @@ async fn proper_adjust_asset_col() {
 
     active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool).await.value;
+    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(asset_amount, 1_000_000);
 
     let provdier = admin.provider().unwrap();
@@ -106,10 +123,13 @@ async fn proper_adjust_asset_col() {
         &active_pool,
         Identity::Address(admin.address().into()),
         500_000,
+        mock_fuel.contract_id().into(),
     )
     .await;
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool).await.value;
+    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+        .await
+        .value;
     assert_eq!(asset_amount, 500_000);
 
     let balance_after = provdier
