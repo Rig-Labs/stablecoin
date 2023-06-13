@@ -7,6 +7,7 @@ use std::{u128::U128, u256::U256};
 // todo: if sway supports constant multiplications inherit decimal precision from fluid math
 // 32_000_000 * 1_000_000_000
 
+
 pub const FPT_SUPPLY_CAP = 32_000_000_000_000_000;
 pub const SECONDS_IN_ONE_MINUTE = 60;
 pub const ISSUANCE_FACTOR = 999_998_681;
@@ -16,9 +17,22 @@ pub fn internal_get_fpt_supply_cap(time_transition_started: u64, total_transitio
     if (!has_transitioned_rewards){
         return FPT_SUPPLY_CAP / 2;
     } else {
-        let time_since_transition_started_seconds = current_time - time_transition_started;
-        let change_in_fpt_supply_cap = time_since_transition_started_seconds / total_transition_time_seconds;
-        return (FPT_SUPPLY_CAP / 2) + (fm_min(1, change_in_fpt_supply_cap) * (FPT_SUPPLY_CAP / 2));
+        let time_since_transition_started_seconds = U128::from_u64(current_time - time_transition_started) * U128::from_u64(10_000);
+        let change_in_fpt_supply_cap = time_since_transition_started_seconds / U128::from_u64(total_transition_time_seconds);
+        let supply_cap = U128::from_u64(FPT_SUPPLY_CAP / 2) 
+            + (
+                (
+                    U128::from_u64(
+                        fm_min(10_000, change_in_fpt_supply_cap.as_u64().unwrap())
+                    ) 
+                    / 
+                    U128::from_u64(10_000)
+                    * 
+                    U128::from_u64(FPT_SUPPLY_CAP / 2)
+                    
+                )
+            );
+        return supply_cap.as_u64().unwrap();
     }
 }
 
@@ -105,6 +119,17 @@ fn test_issuance_factor(){
     let cumulative_issuance = internal_get_cumulative_issuance_fraction(current_time, deployment_time);
     let diff = fm_abs_diff(cumulative_issuance, 999_000_000);
     assert(diff <= 10_000_000);
+}
+
+#[test]
+fn test_supply_cap_transition_overflow(){
+    let current_time = 2;
+    let time_transition_started = 1;
+    let total_transition_time_seconds = 1;
+    let has_transitioned_rewards = false;
+
+    let supply_cap_before_transition = internal_get_fpt_supply_cap(time_transition_started, total_transition_time_seconds, current_time, has_transitioned_rewards);
+    
 }
 
 #[test]
@@ -228,6 +253,16 @@ fn test_emissions_schedule(){
 
 
     // test emissions during transition
+
+    // let current_time = 60 * 60 * 24 * 30 * 12;
+    // let deployment_time = 0;
+    // let time_transition_started = 0;
+    // let total_transition_time_seconds = 60 * 60 * 24 * 30 * 12 * 2;
+    // let total_fpt_issued = 0;
+    // let has_transitioned_rewards = true;
+    // let issuance = test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
+    // let diff = fm_abs_diff(issuance, FPT_SUPPLY_CAP);
+    // assert(diff <= 1_000_000_000_000);
 
     // test comparing time periods during transition
 

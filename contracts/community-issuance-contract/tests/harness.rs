@@ -31,7 +31,7 @@ async fn get_community_issuance () -> (
 }
 
 #[tokio::test]
-async fn test_dec_pow() {
+async fn test_emissions() {
     let (instance, wallet) = get_community_issuance().await;
 
     // here let's basically just set one year in seconds difference and see what the issuance is. because my unit test didn't work
@@ -44,20 +44,24 @@ async fn test_dec_pow() {
     //     true, 
     //     0).await;
 
-    let fraction = community_issuance_abi::get_cumulative_issuance_fraction(
-        &instance,
-        60 * 60 * 24 * 30,
-        0
-    ).await.value;
+    // let fraction = community_issuance_abi::get_cumulative_issuance_fraction(
+    //     &instance,
+    //     60 * 60 * 24 * 30,
+    //     0
+    // ).await.value;
 
-    println!("done {:?}", fraction);
+    // println!("done {:?}", fraction);
 
     let current_time = 60 * 60 * 24 * 30 * 12;
     let deployment_time = 0;
-    let time_transition_started = current_time - 1;
-    let total_transition_time_seconds = 1;
+    let time_transition_started = current_time - (current_time / 24);
+    let total_transition_time_seconds = current_time / 6;
     let total_fpt_issued = 0;
     let has_transitioned_rewards = true;
+
+    println!("time since transition started {:?}", current_time - time_transition_started);
+    println!("total transition time {}", total_transition_time_seconds);
+    println!("change in fpt supply cap {:?}", (current_time - time_transition_started) / total_transition_time_seconds);
 
     let res = community_issuance_abi::external_test_issue_fpt(
         &instance,
