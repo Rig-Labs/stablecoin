@@ -34,6 +34,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         asset_deposit_to_be_liquidated,
         usdf_deposit_to_be_liquidated,
     )
@@ -46,6 +47,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         asset_deposit_to_be_liquidated,
         usdf_deposit_to_be_liquidated,
     )
@@ -58,6 +60,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         10_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -84,7 +87,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,

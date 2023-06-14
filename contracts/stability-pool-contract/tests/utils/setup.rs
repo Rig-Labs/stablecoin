@@ -50,12 +50,13 @@ pub async fn set_nominal_icr_and_insert(
     new_icr: u64,
     prev_id: Identity,
     next_id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id)
+        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -115,12 +116,13 @@ pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .remove(id)
+        .remove(id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()

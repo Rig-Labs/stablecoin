@@ -5,7 +5,6 @@ use std::{u128::U128};
 pub struct AssetContracts {
     trove_manager: ContractId,
     oracle: ContractId,
-    sorted_troves: ContractId,
 }
 
 pub struct Snapshots {

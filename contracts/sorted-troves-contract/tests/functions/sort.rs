@@ -1,4 +1,5 @@
 use fuels::accounts::fuel_crypto::rand::{self, Rng};
+use fuels::types::ContractId;
 use fuels::{prelude::TxParameters, types::Identity};
 
 use crate::utils::setup::{initialize_st_and_tm, remove, set_nominal_icr_and_insert, setup};
@@ -11,23 +12,34 @@ use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 
 #[tokio::test]
 async fn proper_initialization() {
-    let (sorted_troves, trove_manager, _wallet, _wallet2, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, wallet, _wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
+    let asset = ContractId::from([1; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
 
     // Get the current value of the counter
     let result = sorted_troves.methods().get_max_size().call().await.unwrap();
 
     assert_eq!(result.value, max_size);
 
-    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    let result_size = sorted_troves
+        .methods()
+        .get_size(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(result_size.value, 0);
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await;
+    let first = sorted_troves_abi::get_first(&sorted_troves, asset).await;
     assert_eq!(first.value, Identity::Address([0; 32].into()));
 
-    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    let last = sorted_troves
+        .methods()
+        .get_last(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(last.value, Identity::Address([0; 32].into()));
 }
 
@@ -35,14 +47,22 @@ async fn proper_initialization() {
 async fn proper_head_and_tails_after_insert() {
     let (sorted_troves, trove_manager, wallet, wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
+    let asset = ContractId::from([1; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(
+        &sorted_troves,
+        &trove_manager,
+        max_size,
+        asset,
+        wallet.clone(),
+    )
+    .await;
 
     // Get the current value of the counter
     // check if contains
     let result = sorted_troves
         .methods()
-        .contains(Identity::Address(wallet.address().into()))
+        .contains(Identity::Address(wallet.address().into()), asset)
         .call()
         .await
         .unwrap();
@@ -57,6 +77,7 @@ async fn proper_head_and_tails_after_insert() {
             100,
             Identity::Address([0; 32].into()),
             Identity::Address([0; 32].into()),
+            asset,
         )
         .set_contracts(&[&trove_manager])
         .tx_params(tx_params)
@@ -80,23 +101,34 @@ async fn proper_head_and_tails_after_insert() {
         100,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
     // State:
     // (100, wallet)
 
-    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    let result_size = sorted_troves
+        .methods()
+        .get_size(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(result_size.value, 1);
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await;
+    let first = sorted_troves_abi::get_first(&sorted_troves, asset).await;
     assert_eq!(
         first.value,
         Identity::Address(wallet.address().into()),
         "first should be wallet"
     );
 
-    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    let last = sorted_troves
+        .methods()
+        .get_last(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(last.value, Identity::Address(wallet.address().into()));
 
     let _res = set_nominal_icr_and_insert(
@@ -106,23 +138,34 @@ async fn proper_head_and_tails_after_insert() {
         200,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
     // State:
     // (200, wallet2) -> (100, wallet)
 
-    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    let result_size = sorted_troves
+        .methods()
+        .get_size(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(result_size.value, 2);
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await;
+    let first = sorted_troves_abi::get_first(&sorted_troves, asset).await;
     assert_eq!(
         first.value,
         Identity::Address(wallet2.address().into()),
         "First should be wallet2"
     );
 
-    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    let last = sorted_troves
+        .methods()
+        .get_last(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(
         last.value,
         Identity::Address(wallet.address().into()),
@@ -136,23 +179,34 @@ async fn proper_head_and_tails_after_insert() {
         300,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
     // State:
     // (300, trove_manager) -> (200, wallet2) -> (100, wallet)
 
-    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    let result_size = sorted_troves
+        .methods()
+        .get_size(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(result_size.value, 3);
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await;
+    let first = sorted_troves_abi::get_first(&sorted_troves, asset).await;
     assert_eq!(
         first.value,
         Identity::ContractId(trove_manager.contract_id().into()),
         "First should be trove manager"
     );
 
-    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    let last = sorted_troves
+        .methods()
+        .get_last(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(
         last.value,
         Identity::Address(wallet.address().into()),
@@ -166,15 +220,21 @@ async fn proper_head_and_tails_after_insert() {
         150,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
     // State:
     // (300, trove_manager) -> (200, wallet2) -> (150, sorted_troves) -> (100, wallet)
 
-    let result_size = sorted_troves.methods().get_size().call().await.unwrap();
+    let result_size = sorted_troves
+        .methods()
+        .get_size(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(result_size.value, 4);
 
-    let first = sorted_troves_abi::get_first(&sorted_troves).await;
+    let first = sorted_troves_abi::get_first(&sorted_troves, asset).await;
 
     assert_eq!(
         first.value,
@@ -182,7 +242,12 @@ async fn proper_head_and_tails_after_insert() {
         "First should be trove manager"
     );
 
-    let last = sorted_troves.methods().get_last().call().await.unwrap();
+    let last = sorted_troves
+        .methods()
+        .get_last(asset)
+        .call()
+        .await
+        .unwrap();
     assert_eq!(
         last.value,
         Identity::Address(wallet.address().into()),
@@ -194,8 +259,16 @@ async fn proper_head_and_tails_after_insert() {
 async fn proper_node_neighbors() {
     let (sorted_troves, trove_manager, wallet, wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
+    let asset = ContractId::from([0; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(
+        &sorted_troves,
+        &trove_manager,
+        max_size,
+        asset,
+        wallet.clone(),
+    )
+    .await;
 
     let _ = set_nominal_icr_and_insert(
         &trove_manager,
@@ -204,6 +277,7 @@ async fn proper_node_neighbors() {
         100,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
@@ -215,6 +289,7 @@ async fn proper_node_neighbors() {
         Identity::Address(wallet.address().into()),
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
@@ -225,6 +300,7 @@ async fn proper_node_neighbors() {
         200,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
@@ -236,6 +312,7 @@ async fn proper_node_neighbors() {
         Identity::Address(wallet2.address().into()),
         Identity::Address([0; 32].into()),
         Identity::Address(wallet2.address().into()),
+        asset,
     );
 
     let _res = set_nominal_icr_and_insert(
@@ -245,6 +322,7 @@ async fn proper_node_neighbors() {
         300,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
@@ -256,6 +334,7 @@ async fn proper_node_neighbors() {
         Identity::ContractId(trove_manager.contract_id().into()),
         Identity::Address([0; 32].into()),
         Identity::Address(wallet2.address().into()),
+        asset,
     );
 
     let _res = set_nominal_icr_and_insert(
@@ -265,6 +344,7 @@ async fn proper_node_neighbors() {
         150,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
 
@@ -276,31 +356,35 @@ async fn proper_node_neighbors() {
         Identity::ContractId(sorted_troves.contract_id().into()),
         Identity::Address(wallet2.address().into()),
         Identity::Address(wallet.address().into()),
+        asset,
     );
 }
 
 #[tokio::test]
 async fn proper_insertion_of_random_nodes() {
     let max_size: u64 = 10;
-    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let asset = ContractId::from([0; 32]);
 
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
 
-    let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
+    let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size, asset).await;
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
 
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 }
 
 #[tokio::test]
 async fn proper_hint_gas_usage() {
     let max_size: u64 = 20;
-    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let asset = ContractId::from([0; 32]);
 
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
 
-    let (mut vals, avg_gas) = generate_random_nodes(&trove_manager, &sorted_troves, 15).await;
+    let (mut vals, avg_gas) =
+        generate_random_nodes(&trove_manager, &sorted_troves, 15, asset).await;
 
     vals.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
@@ -316,14 +400,15 @@ async fn proper_hint_gas_usage() {
         inbetween_num,
         vals[5].0.clone(),
         vals[6].0.clone(),
+        asset,
     )
     .await;
 
     let gas_with_hint = res.gas_used;
     assert!(gas_with_hint < avg_gas);
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 
     // only use prev hint
     let random_addr_2 = rng.gen::<[u8; 32]>();
@@ -337,13 +422,14 @@ async fn proper_hint_gas_usage() {
         inbetween_num2,
         vals[8].0.clone(),
         Identity::Address([0; 32].into()),
+        asset,
     )
     .await;
     let gas_prev_hint = res2.gas_used;
     assert!(gas_prev_hint < avg_gas);
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 
     // only use next hint
     let random_addr_3 = rng.gen::<[u8; 32]>();
@@ -357,6 +443,7 @@ async fn proper_hint_gas_usage() {
         inbetween_num3,
         Identity::Address([0; 32].into()),
         vals[12].0.clone(),
+        asset,
     )
     .await;
     let gas_next_hint = res3.gas_used;
@@ -367,40 +454,45 @@ async fn proper_hint_gas_usage() {
         gas_next_hint
     );
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 }
 
 #[tokio::test]
 async fn proper_removal() {
     let max_size: u64 = 10;
-    let (sorted_troves, trove_manager, _, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let asset = ContractId::from([0; 32]);
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
 
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size).await;
-
-    let (mut nodes, _) = generate_random_nodes(&trove_manager, &sorted_troves, max_size).await;
+    let (mut nodes, _) =
+        generate_random_nodes(&trove_manager, &sorted_troves, max_size, asset).await;
 
     // get random node
     let rand_node = nodes.pop().unwrap();
 
-    let _res = remove(&trove_manager, &sorted_troves, rand_node.0).await;
+    let _res = remove(&trove_manager, &sorted_troves, rand_node.0, asset).await;
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
 
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 
-    let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
+    let size = sorted_troves_abi::get_size(&sorted_troves, asset)
+        .await
+        .value;
 
     assert_eq!(size, max_size - 1);
 
     let rand_node = nodes.pop().unwrap();
 
-    let _res = remove(&trove_manager, &sorted_troves, rand_node.0).await;
-    let size = sorted_troves_abi::get_size(&sorted_troves).await.value;
+    let _res = remove(&trove_manager, &sorted_troves, rand_node.0, asset).await;
+    let size = sorted_troves_abi::get_size(&sorted_troves, asset)
+        .await
+        .value;
 
     assert_eq!(size, max_size - 2);
 
-    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
 
-    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager).await;
+    let _ = assert_in_order_from_tail(&sorted_troves, &trove_manager, asset).await;
 }

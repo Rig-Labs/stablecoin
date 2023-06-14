@@ -29,6 +29,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         20_000 * PRECISION,
         10_000 * PRECISION,
     )
@@ -41,6 +42,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         9_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -53,6 +55,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         8_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -65,6 +68,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         15_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -77,6 +81,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         7_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -123,6 +128,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
         &contracts.active_pool,
+        &contracts.sorted_troves,
         &contracts.asset_contracts,
     )
     .await;

@@ -2,10 +2,10 @@ library protocol_manager_interface;
 
 abi ProtocolManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, stability_pool: ContractId, fpt_staking: ContractId, usdf: ContractId, coll_surplus_pool: ContractId, default_pool: ContractId, active_pool:ContractId, admin: Identity);
+    fn initialize(borrow_operations: ContractId, stability_pool: ContractId, fpt_staking: ContractId, usdf: ContractId, coll_surplus_pool: ContractId, default_pool: ContractId, active_pool: ContractId, sorted_troves: ContractId, admin: Identity);
 
     #[storage(read, write)]
-    fn register_asset(asset_address: ContractId, trove_manager: ContractId, oracle: ContractId, sorted_troves: ContractId);
+    fn register_asset(asset_address: ContractId, trove_manager: ContractId, oracle: ContractId);
 
     #[storage(read, write)]
     fn renounce_admin();

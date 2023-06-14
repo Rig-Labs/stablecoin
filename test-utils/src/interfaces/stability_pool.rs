@@ -51,7 +51,6 @@ pub mod stability_pool_abi {
     pub async fn add_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         trove_manager: ContractId,
-        sorted_troves: ContractId,
         asset_address: ContractId,
         oracle_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
@@ -59,7 +58,7 @@ pub mod stability_pool_abi {
 
         stability_pool
             .methods()
-            .add_asset(trove_manager, sorted_troves, asset_address, oracle_address)
+            .add_asset(trove_manager, asset_address, oracle_address)
             .tx_params(tx_params)
             .call()
             .await
