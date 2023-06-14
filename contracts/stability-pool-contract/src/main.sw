@@ -104,7 +104,6 @@ impl StabilityPool for Contract {
     #[storage(read, write)]
     fn add_asset(
         trove_manager_address: ContractId,
-        sorted_troves_address: ContractId,
         asset_address: ContractId,
         oracle_address: ContractId,
     ) {
@@ -113,7 +112,6 @@ impl StabilityPool for Contract {
         storage.last_asset_error_offset.insert(asset_address, U128::from_u64(0));
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager: trove_manager_address,
-            sorted_troves: sorted_troves_address,
             oracle: oracle_address,
         });
     }

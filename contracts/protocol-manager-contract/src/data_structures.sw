@@ -55,7 +55,5 @@ pub struct AssetInfo {
 pub struct AssetContracts {
     trove_manager: ContractId,
     oracle: ContractId,
-    sorted_troves: ContractId,
-    fpt_staking: ContractId,
     asset_address: ContractId,
 }

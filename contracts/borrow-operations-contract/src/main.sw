@@ -41,6 +41,7 @@ storage {
     coll_surplus_pool_contract: ContractId = null_contract(),
     active_pool_contract: ContractId = null_contract(),
     protocol_manager_contract: ContractId = null_contract(),
+    sorted_troves_contract: ContractId = null_contract(),
     is_initialized: bool = false,
 }
 
@@ -53,6 +54,7 @@ impl BorrowOperations for Contract {
         protocol_manager: ContractId,
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
+        sorted_troves_contract: ContractId,
     ) {
         require(!storage.is_initialized, "BorrowOperations: already initialized");
 
@@ -62,6 +64,7 @@ impl BorrowOperations for Contract {
         storage.protocol_manager_contract = protocol_manager;
         storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
         storage.active_pool_contract = active_pool_contract;
+        storage.sorted_troves_contract = sorted_troves_contract;
         storage.is_initialized = true;
     }
 
@@ -69,12 +72,10 @@ impl BorrowOperations for Contract {
     fn add_asset(
         asset_contract: ContractId,
         trove_manager_contract: ContractId,
-        sorted_troves_contract: ContractId,
         oracle_contract: ContractId,
     ) {
         require_is_protocol_manager();
         let asset_contracts = AssetContracts {
-            sorted_troves: sorted_troves_contract,
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,
         };
@@ -96,10 +97,11 @@ impl BorrowOperations for Contract {
         let usdf_contract = storage.usdf_contract;
         let fpt_staking_contract = storage.fpt_staking_contract;
         let active_pool_contract = storage.active_pool_contract;
+        let sorted_troves_contract = storage.sorted_troves_contract;
 
         let oracle = abi(MockOracle, asset_contracts.oracle.value);
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
-        let sorted_troves = abi(SortedTroves, asset_contracts.sorted_troves.value);
+        let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
         let usdf = abi(Token, storage.usdf_contract.value);
 
         let mut vars = LocalVariables_OpenTrove::new();
@@ -131,7 +133,7 @@ impl BorrowOperations for Contract {
         trove_manager.update_trove_reward_snapshots(sender);
         let _ = trove_manager.update_stake_and_total_stakes(sender);
 
-        sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint);
+        sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint, asset_contract);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
 
         // Move the ether to the Active Pool, and mint the USDF to the borrower
@@ -287,10 +289,11 @@ fn internal_adjust_trove(
     let usdf_contract = storage.usdf_contract;
     let fpt_staking_contract = storage.fpt_staking_contract;
     let active_pool_contract = storage.active_pool_contract;
+    let sorted_troves_contract = storage.sorted_troves_contract;
 
     let oracle = abi(MockOracle, asset_contracts.oracle.value);
     let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
-    let sorted_troves = abi(SortedTroves, asset_contracts.sorted_troves.value);
+    let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
 
     let price = oracle.get_price();
     let mut vars = LocalVariables_AdjustTrove::new();
@@ -334,7 +337,7 @@ fn internal_adjust_trove(
 
     let _ = trove_manager.update_stake_and_total_stakes(borrower);
     let new_nicr = internal_get_new_nominal_icr_from_trove_change(vars.coll, vars.debt, vars.coll_change, vars.is_coll_increase, vars.net_debt_change, is_debt_increase);
-    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint);
+    sorted_troves.re_insert(borrower, new_nicr, upper_hint, lower_hint, asset);
 
     internal_move_usdf_and_asset_from_adjustment(borrower, vars.coll_change, vars.is_coll_increase, usdf_change, is_debt_increase, vars.net_debt_change, asset, active_pool_contract, usdf_contract);
 }

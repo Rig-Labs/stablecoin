@@ -330,7 +330,7 @@ fn internal_apply_pending_rewards(borrower: Identity) {
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
     require(close_status != Status::NonExistent || close_status != Status::Active, "Invalid status");
-
+    let asset_contract_cache = storage.asset_contract;
     let trove_owner_array_length = storage.trove_owners.len();
     require_more_than_one_trove_in_system(trove_owner_array_length);
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
@@ -348,7 +348,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
 
     internal_remove_trove_owner(id, trove_owner_array_length);
 
-    sorted_troves_contract.remove(id);
+    sorted_troves_contract.remove(id, asset_contract_cache);
 }
 
 #[storage(read, write)]
@@ -502,8 +502,9 @@ fn internal_get_totals_from_batch_liquidate(
 
 #[storage(read)]
 fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
+    let asset_contract_cache = storage.asset_contract;
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-    let size = sorted_troves_contract.get_size();
+    let size = sorted_troves_contract.get_size(asset_contract_cache);
     require(trove_owner_array_length > 1 && size > 1, "There is only one trove in the system");
 }
 
@@ -563,7 +564,8 @@ fn internal_apply_liquidation(
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint);
+        let asset_contract_cache = storage.asset_contract;
+        sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint, asset_contract_cache);
     } else {
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         internal_remove_stake(borrower);
@@ -700,6 +702,7 @@ fn internal_redeem_collateral_from_trove(
 ) -> SingleRedemptionValues {
     let mut single_redemption_values = SingleRedemptionValues::default();
     let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    let asset_contract_cache = storage.asset_contract;
     // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
     let trove = storage.troves.get(borrower);
     single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
@@ -720,7 +723,7 @@ fn internal_redeem_collateral_from_trove(
             single_redemption_values.cancelled_partial = true;
             return single_redemption_values;
         }
-        sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
+        sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint, asset_contract_cache);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
         trove.coll = new_coll;

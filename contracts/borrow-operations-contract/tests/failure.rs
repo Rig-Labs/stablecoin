@@ -29,7 +29,7 @@ async fn fails_open_two_troves() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -46,7 +46,7 @@ async fn fails_open_two_troves() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -67,13 +67,15 @@ async fn fails_open_two_troves() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -149,7 +151,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -184,7 +186,7 @@ async fn fails_open_trove_under_min_usdf_required() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -219,7 +221,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -235,7 +237,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         300 * PRECISION,
@@ -269,7 +271,7 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -284,7 +286,7 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_000 * PRECISION,
@@ -336,7 +338,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &mock_fake_token,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -359,7 +361,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
@@ -375,7 +377,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].oracle,
         &mock_fake_token,
         &contracts.usdf,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1 * PRECISION,
@@ -415,7 +417,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &fake_usdf_token,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1 * PRECISION,

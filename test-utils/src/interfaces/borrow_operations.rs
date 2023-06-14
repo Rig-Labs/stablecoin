@@ -16,7 +16,7 @@ pub mod borrow_operations_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
-    use crate::interfaces::sorted_troves::SortedTroves;
+    use crate::interfaces::sorted_troves::{self, SortedTroves};
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
@@ -29,6 +29,7 @@ pub mod borrow_operations_abi {
         protocol_manager_contract: ContractId,
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
+        sorted_troves_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -41,6 +42,7 @@ pub mod borrow_operations_abi {
                 protocol_manager_contract,
                 coll_surplus_pool_contract,
                 active_pool_contract,
+                sorted_troves_contract,
             )
             .tx_params(tx_params)
             .call()
@@ -288,7 +290,6 @@ pub mod borrow_operations_abi {
     pub async fn add_asset<T: Account>(
         borrow_operations: BorrowOperations<T>,
         oracle: ContractId,
-        sorted_troves: ContractId,
         trove_manager: ContractId,
         asset: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
@@ -296,7 +297,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .add_asset(asset, trove_manager, sorted_troves, oracle)
+            .add_asset(asset, trove_manager, oracle)
             .tx_params(tx_params)
             .call()
             .await
@@ -309,6 +310,7 @@ pub mod borrow_operations_utils {
     use super::*;
     use crate::interfaces::active_pool;
     use crate::interfaces::fpt_staking::FPTStaking;
+    use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
 
@@ -319,6 +321,7 @@ pub mod borrow_operations_utils {
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
         active_pool: &active_pool::ActivePool<WalletUnlocked>,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
         amount: u64,
         usdf_amount: u64,
     ) {
@@ -338,7 +341,7 @@ pub mod borrow_operations_utils {
             &asset_contracts.asset,
             &usdf,
             fpt_staking,
-            &asset_contracts.sorted_troves,
+            &sorted_troves,
             &asset_contracts.trove_manager,
             &active_pool,
             amount,

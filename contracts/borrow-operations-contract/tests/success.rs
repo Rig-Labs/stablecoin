@@ -24,7 +24,7 @@ async fn proper_creating_trove() {
     .await;
 
     let provider = admin.provider().unwrap();
-
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
@@ -34,7 +34,7 @@ async fn proper_creating_trove() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -55,13 +55,13 @@ async fn proper_creating_trove() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -131,6 +131,7 @@ async fn proper_increase_collateral() {
         Identity::Address(admin.address().into()),
     )
     .await;
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -140,7 +141,7 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -156,7 +157,7 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -185,13 +186,13 @@ async fn proper_increase_collateral() {
     assert_eq!(trove_col, 2 * deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -254,7 +255,7 @@ async fn proper_decrease_collateral() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -263,14 +264,14 @@ async fn proper_decrease_collateral() {
         Identity::Address([0; 32].into()),
     )
     .await;
-
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let withdraw_amount = 300 * PRECISION;
 
     borrow_operations_abi::withdraw_coll(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         withdraw_amount,
@@ -303,13 +304,13 @@ async fn proper_decrease_collateral() {
     );
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -368,7 +369,7 @@ async fn proper_increase_debt() {
     .await;
 
     let provider = admin.provider().unwrap();
-
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
 
@@ -380,7 +381,7 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -397,7 +398,7 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         200 * PRECISION,
@@ -425,13 +426,13 @@ async fn proper_increase_debt() {
     assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -510,7 +511,7 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
@@ -527,7 +528,7 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         repay_amount,
@@ -544,6 +545,8 @@ async fn proper_decrease_debt() {
     .await
     .value;
 
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+
     let trove_debt = trove_manager_abi::get_trove_debt(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(admin.address().into()),
@@ -556,13 +559,13 @@ async fn proper_decrease_debt() {
     assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -637,6 +640,8 @@ async fn proper_open_multiple_troves() {
     )
     .await;
 
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+
     let borrow_operations_wallet1 = BorrowOperations::new(
         contracts.borrow_operations.contract_id().clone(),
         wallet1.clone(),
@@ -655,7 +660,7 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount1,
@@ -674,7 +679,7 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount2,
@@ -685,13 +690,13 @@ async fn proper_open_multiple_troves() {
     .await
     .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
 
@@ -763,7 +768,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount1,
@@ -792,7 +797,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount2,
@@ -811,7 +816,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         expected_debt,
@@ -833,13 +838,15 @@ async fn proper_close_trove() {
         "Wallet 2 balance is wrong"
     );
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
 
@@ -874,7 +881,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         2000 * PRECISION,
@@ -910,7 +917,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount1,
@@ -929,13 +936,15 @@ async fn proper_creating_trove_with_2nd_asset() {
         .await
         .unwrap();
 
-    let first = sorted_troves_abi::get_first(&contracts.asset_contracts[0].sorted_troves)
+    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+
+    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
         .await
         .value;
-    let last = sorted_troves_abi::get_last(&contracts.asset_contracts[0].sorted_troves)
+    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
         .await
         .value;
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[0].sorted_troves)
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -1022,7 +1031,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.active_pool,
         deposit_amount2,
@@ -1041,7 +1050,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.active_pool,
         deposit_amount1,
@@ -1060,7 +1069,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         .await
         .unwrap();
 
-    let size = sorted_troves_abi::get_size(&contracts.asset_contracts[1].sorted_troves)
+    let asset: ContractId = contracts.asset_contracts[1].asset.contract_id().into();
+    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
         .await
         .value;
     let icr = trove_manager_abi::get_nominal_icr(
@@ -1127,7 +1137,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[1].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
         &contracts.active_pool,
         with_min_borrow_fee(borrow_amount1),
