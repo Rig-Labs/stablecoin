@@ -1,5 +1,4 @@
 use fuels::{prelude::*, types::Identity};
-
 use test_utils::{
     interfaces::active_pool::{active_pool_abi, ActivePool},
     interfaces::token::{token_abi, Token},
@@ -53,8 +52,6 @@ async fn get_contract_instance() -> (
         Identity::Address(wallet.address().into()),
     )
     .await;
-
-    // TODO: probably need to add_asset here
 
     (instance, asset, wallet)
 }

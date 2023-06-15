@@ -1,22 +1,19 @@
-use fuels::accounts::fuel_crypto::rand::{self, Rng};
-use fuels::types::ContractId;
-use fuels::{prelude::TxParameters, types::Identity};
-
 use crate::utils::setup::{initialize_st_and_tm, remove, set_nominal_icr_and_insert, setup};
-
 use crate::utils::sorted_troves::sorted_troves_utils::{
     assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
 };
-
+use fuels::accounts::fuel_crypto::rand::{self, Rng};
+use fuels::types::ContractId;
+use fuels::{prelude::TxParameters, types::Identity};
 use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 
 #[tokio::test]
 async fn proper_initialization() {
-    let (sorted_troves, trove_manager, wallet, _wallet2, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, _wallet, _wallet2, _) = setup(Some(4)).await;
     let max_size: u64 = 1000;
     let asset = ContractId::from([1; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     // Get the current value of the counter
     let result = sorted_troves.methods().get_max_size().call().await.unwrap();
@@ -49,14 +46,7 @@ async fn proper_head_and_tails_after_insert() {
     let max_size: u64 = 1000;
     let asset = ContractId::from([1; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(
-        &sorted_troves,
-        &trove_manager,
-        max_size,
-        asset,
-        wallet.clone(),
-    )
-    .await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     // Get the current value of the counter
     // check if contains
@@ -261,14 +251,7 @@ async fn proper_node_neighbors() {
     let max_size: u64 = 1000;
     let asset = ContractId::from([0; 32]);
     // Increment the counter
-    let _ = initialize_st_and_tm(
-        &sorted_troves,
-        &trove_manager,
-        max_size,
-        asset,
-        wallet.clone(),
-    )
-    .await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     let _ = set_nominal_icr_and_insert(
         &trove_manager,
@@ -363,10 +346,10 @@ async fn proper_node_neighbors() {
 #[tokio::test]
 async fn proper_insertion_of_random_nodes() {
     let max_size: u64 = 10;
-    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, _wallet, _, _) = setup(Some(4)).await;
     let asset = ContractId::from([0; 32]);
 
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     let _ = generate_random_nodes(&trove_manager, &sorted_troves, max_size, asset).await;
 
@@ -378,10 +361,10 @@ async fn proper_insertion_of_random_nodes() {
 #[tokio::test]
 async fn proper_hint_gas_usage() {
     let max_size: u64 = 20;
-    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, _wallet, _, _) = setup(Some(4)).await;
     let asset = ContractId::from([0; 32]);
 
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     let (mut vals, avg_gas) =
         generate_random_nodes(&trove_manager, &sorted_troves, 15, asset).await;
@@ -461,9 +444,9 @@ async fn proper_hint_gas_usage() {
 #[tokio::test]
 async fn proper_removal() {
     let max_size: u64 = 10;
-    let (sorted_troves, trove_manager, wallet, _, _) = setup(Some(4)).await;
+    let (sorted_troves, trove_manager, _wallet, _, _) = setup(Some(4)).await;
     let asset = ContractId::from([0; 32]);
-    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset, wallet).await;
+    let _ = initialize_st_and_tm(&sorted_troves, &trove_manager, max_size, asset).await;
 
     let (mut nodes, _) =
         generate_random_nodes(&trove_manager, &sorted_troves, max_size, asset).await;

@@ -1,5 +1,4 @@
 use fuels::prelude::{abigen, ContractId};
-
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::types::Identity;
 
@@ -9,11 +8,9 @@ abigen!(Contract(
 ));
 
 pub mod sorted_troves_abi {
-    use fuels::prelude::{Account, LogDecoder, TxParameters};
-
-    use crate::setup::common::wait;
-
     use super::*;
+    use crate::setup::common::wait;
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     pub async fn initialize<T: Account>(
         sorted_troves: &SortedTroves<T>,

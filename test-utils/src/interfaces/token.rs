@@ -6,11 +6,10 @@ abigen!(Contract(
 ));
 
 pub mod token_abi {
+    use super::*;
+    use crate::setup::common::wait;
     use fuels::prelude::{Account, LogDecoder, TxParameters};
 
-    use crate::setup::common::wait;
-
-    use super::*;
     pub async fn initialize<T: Account>(
         instance: &Token<T>,
         amount: u64,

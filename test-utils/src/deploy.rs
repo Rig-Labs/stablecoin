@@ -1,7 +1,6 @@
+use crate::setup::common::ProtocolContracts;
 use dotenv::dotenv;
 use fuels::prelude::{Address, Provider, WalletUnlocked};
-
-use crate::setup::common::ProtocolContracts;
 
 // const RPC: &str = "http://localhost:4000";
 

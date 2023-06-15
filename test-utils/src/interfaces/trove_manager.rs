@@ -1,9 +1,3 @@
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-    types::Identity,
-};
-
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::coll_surplus_pool::CollSurplusPool;
 use crate::interfaces::default_pool::DefaultPool;
@@ -11,6 +5,11 @@ use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
+use fuels::{
+    prelude::{abigen, ContractId, TxParameters},
+    programs::call_response::FuelCallResponse,
+    types::Identity,
+};
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -19,11 +18,9 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::{Account, Error, LogDecoder};
-
-    use crate::setup::common::wait;
-
     use super::*;
+    use crate::setup::common::wait;
+    use fuels::prelude::{Account, Error, LogDecoder};
 
     pub async fn get_nominal_icr<T: Account>(
         trove_manager: &TroveManagerContract<T>,

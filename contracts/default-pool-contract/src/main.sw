@@ -27,28 +27,28 @@ use std::{
  */
 storage {
     protocol_manager: Identity = null_identity_address(),
-    active_pool: ContractId = null_contract(),
-    is_initialized: bool = false,
+    active_pool_contract: ContractId = null_contract(),
     asset_amount: StorageMap<ContractId, u64> = StorageMap {},
     usdf_debt_amount: StorageMap<ContractId, u64> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
+    is_initialized: bool = false,
 }
 
 impl DefaultPool for Contract {
     #[storage(read, write)]
-    fn initialize(protocol_manager: Identity, active_pool: ContractId) {
+    fn initialize(protocol_manager: Identity, active_pool_contract: ContractId) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
         storage.protocol_manager = protocol_manager;
-        storage.active_pool = active_pool;
+        storage.active_pool_contract = active_pool_contract;
         storage.is_initialized = true;
     }
 
     #[storage(read, write)]
     fn send_asset_to_active_pool(amount: u64, asset_id: ContractId) {
         require_is_trove_manager();
-        let active_pool = abi(ActivePool, storage.active_pool.value);
+        let active_pool = abi(ActivePool, storage.active_pool_contract.value);
         let new_amount = storage.asset_amount.get(asset_id) - amount;
 
         storage.asset_amount.insert(asset_id, new_amount);
@@ -93,7 +93,7 @@ impl DefaultPool for Contract {
 
     #[storage(read, write), payable]
     fn recieve() {
-        require_is_active_pool();
+        require_is_active_pool_contract();
         require_is_asset_id();
         let new_amount = storage.asset_amount.get(msg_asset_id()) + msg_amount();
         storage.asset_amount.insert(msg_asset_id(), new_amount);
@@ -104,26 +104,26 @@ impl DefaultPool for Contract {
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
     let valid_asset_id = storage.valid_asset_ids.get(asset_id);
-    require(valid_asset_id, "Asset ID is not correct");
+    require(valid_asset_id, "DP: Asset is not correct");
 }
 
 #[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
     let is_valid_trove_manager = storage.valid_trove_managers.get(caller);
-    require(is_valid_trove_manager, "Caller is not TroveManager");
+    require(is_valid_trove_manager, "DP: Caller is not TM");
 }
 
 #[storage(read)]
-fn require_is_active_pool() {
+fn require_is_active_pool_contract() {
     let caller = msg_sender().unwrap();
-    let active_pool_contract = Identity::ContractId(storage.active_pool);
-    require(caller == active_pool_contract, "Caller is not ActivePool");
+    let active_pool_contract_contract = Identity::ContractId(storage.active_pool_contract);
+    require(caller == active_pool_contract_contract, "DP: Caller is not AP");
 }
 
 #[storage(read)]
 fn require_is_protocol_manager() {
     let caller = msg_sender().unwrap();
     let protocol_manager = storage.protocol_manager;
-    require(caller == protocol_manager, "Caller is not ProtocolManager");
+    require(caller == protocol_manager, "DP: Caller is not PM");
 }

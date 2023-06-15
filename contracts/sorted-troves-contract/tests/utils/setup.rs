@@ -1,11 +1,8 @@
 use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::prelude::*;
-
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::types::Identity;
-use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
-
 use test_utils::setup::common::{deploy_sorted_troves, get_absolute_path_from_relative};
 
 abigen!(Contract(
@@ -128,7 +125,6 @@ pub async fn initialize_st_and_tm(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     max_size: u64,
     asset: ContractId,
-    admin: WalletUnlocked,
 ) {
     initialize(
         sorted_troves,

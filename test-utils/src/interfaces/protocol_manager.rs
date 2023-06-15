@@ -1,5 +1,4 @@
 use fuels::prelude::abigen;
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -8,6 +7,7 @@ abigen!(Contract(
 ));
 
 pub mod protocol_manager_abi {
+    use super::*;
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
@@ -23,8 +23,6 @@ pub mod protocol_manager_abi {
         prelude::{ContractId, TxParameters},
         types::Identity,
     };
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         protocol_manager: &ProtocolManager<T>,

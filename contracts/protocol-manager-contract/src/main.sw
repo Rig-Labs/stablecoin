@@ -60,7 +60,7 @@ impl ProtocolManager for Contract {
         sorted_troves: ContractId,
         admin: Identity,
     ) {
-        require(storage.is_initialized == false, "Already initialized");
+        require(storage.is_initialized == false, "PM: Already initialized");
 
         storage.admin = admin;
         storage.borrow_operations_contract = borrow_operations;
@@ -84,14 +84,11 @@ impl ProtocolManager for Contract {
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.value);
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.value);
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.value);
-        let fpt_staking_contract = abi(FPTStaking, storage.fpt_staking_contract.value);
+        let fpt_staking = abi(FPTStaking, storage.fpt_staking_contract.value);
         let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
-        let fpt_staking = storage.fpt_staking_contract;
         let default_pool = abi(DefaultPool, storage.default_pool_contract.value);
-        let active_pool_contract = storage.active_pool_contract;
-        let active_pool = abi(ActivePool, active_pool_contract.value);
-        let sorted_troves_contract = storage.sorted_troves_contract;
-        let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
+        let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
 
         storage.asset_contracts.insert(asset_address, AssetContracts {
             trove_manager,
@@ -106,7 +103,7 @@ impl ProtocolManager for Contract {
         default_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
         stability_pool.add_asset(trove_manager, asset_address, oracle);
         sorted_troves.add_asset(asset_address, trove_manager);
-        fpt_staking_contract.add_asset(asset_address);
+        fpt_staking.add_asset(asset_address);
         usdf_token.add_trove_manager(trove_manager);
     }
 
@@ -128,14 +125,13 @@ impl ProtocolManager for Contract {
         // TODO Require bootstrap mode
         require_valid_usdf_id();
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
-        let usdf_address = storage.usdf_token_contract;
-        let usdf_contract = abi(USDFToken, usdf_address.value);
-        let active_pool_address = storage.active_pool_contract;
-        let fpt_staking_address = storage.fpt_staking_contract;
-        let sorted_troves_address = storage.sorted_troves_contract;
-        let sorted_troves_contract = abi(SortedTroves, sorted_troves_address.value);
-        let active_pool_contract = abi(ActivePool, active_pool_address.value);
-        let fpt_staking_contract = abi(FPTStaking, fpt_staking_address.value);
+        let usdf_contract_cache = storage.usdf_token_contract;
+        let fpt_staking_contract_cache = storage.fpt_staking_contract;
+
+        let usdf = abi(USDFToken, usdf_contract_cache.value);
+        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
+        let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+        let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.value);
 
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
@@ -152,7 +148,7 @@ impl ProtocolManager for Contract {
 
             remaining_itterations -= 1;
 
-            let next_user_to_check = sorted_troves_contract.get_prev(current_borrower, contracts_cache.asset_address);
+            let next_user_to_check = sorted_troves.get_prev(current_borrower, contracts_cache.asset_address);
             trove_manager_contract.apply_pending_rewards(current_borrower);
 
             let single_redemption = trove_manager_contract.redeem_collateral_from_trove(current_borrower, remaining_usdf, price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
@@ -182,7 +178,7 @@ impl ProtocolManager for Contract {
             let price = assets_info.prices.get(i).unwrap();
             let mut totals = assets_info.redemption_totals.get(i).unwrap();
 
-            let total_usdf_supply_at_start = usdf_contract.total_supply();
+            let total_usdf_supply_at_start = usdf.total_supply();
             if (totals.total_usdf_to_redeem == 0) {
                 i += 1;
                 continue;
@@ -195,23 +191,23 @@ impl ProtocolManager for Contract {
             // TODO fpt staking increase f_asset
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
-            active_pool_contract.send_asset(Identity::ContractId(fpt_staking_address), totals.asset_fee, contracts_cache.asset_address);
-            fpt_staking_contract.increase_f_asset(totals.asset_fee, assets_info.assets.get(i).unwrap());
+            active_pool.send_asset(Identity::ContractId(fpt_staking_contract_cache), totals.asset_fee, contracts_cache.asset_address);
+            fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(i).unwrap());
 
             total_usdf_redeemed += totals.total_usdf_to_redeem;
-            active_pool_contract.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
-            active_pool_contract.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
+            active_pool.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
+            active_pool.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
             i += 1;
         }
 
-        usdf_contract.burn {
+        usdf.burn {
             coins: total_usdf_redeemed,
             asset_id: storage.usdf_token_contract.value,
         }();
 
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
-            transfer(remaining_usdf, usdf_address, msg_sender().unwrap());
+            transfer(remaining_usdf, usdf_contract_cache, msg_sender().unwrap());
         }
     }
 }
@@ -221,12 +217,12 @@ impl ProtocolManager for Contract {
 fn require_is_admin() {
     let caller = msg_sender().unwrap();
     let admin = storage.admin;
-    require(caller == admin, "Caller is not admin");
+    require(caller == admin, "PM: Caller is not admin");
 }
 
 #[storage(read)]
 fn require_valid_usdf_id() {
-    require(msg_asset_id() == storage.usdf_token_contract, "Invalid asset being transfered");
+    require(msg_asset_id() == storage.usdf_token_contract, "PM: Invalid asset being transfered");
 }
 
 #[storage(read)]
@@ -238,7 +234,7 @@ fn get_all_assets_info() -> AssetInfo {
     let mut redemption_totals: Vec<RedemptionTotals> = Vec::new();
     let mut current_borrowers: Vec<Identity> = Vec::new();
     let mut current_crs: Vec<u64> = Vec::new();
-    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.value);
+    let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
     let length = storage.assets.len();
 
     let mut i = 0;
@@ -250,21 +246,21 @@ fn get_all_assets_info() -> AssetInfo {
 
     i = 0;
     while (i < length) {
-        let oracle_contract = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
-        let trove_manager_contract = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
+        let oracle = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
+        let trove_manager = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
 
         let asset = assets.get(i).unwrap();
-        let price = oracle_contract.get_price();
-        let mut current_borrower = sorted_troves_contract.get_last(asset);
-        let mut current_cr = trove_manager_contract.get_current_icr(current_borrower, price);
+        let price = oracle.get_price();
+        let mut current_borrower = sorted_troves.get_last(asset);
+        let mut current_cr = trove_manager.get_current_icr(current_borrower, price);
 
         prices.push(price);
-        system_debt.push(trove_manager_contract.get_entire_system_debt());
+        system_debt.push(trove_manager.get_entire_system_debt());
         redemption_totals.push(RedemptionTotals::default());
 
         while (current_borrower != null_identity_address() && current_cr < MCR) {
-            current_borrower = sorted_troves_contract.get_prev(current_borrower, asset);
-            current_cr = trove_manager_contract.get_current_icr(current_borrower, price);
+            current_borrower = sorted_troves.get_prev(current_borrower, asset);
+            current_cr = trove_manager.get_current_icr(current_borrower, price);
         }
 
         current_borrowers.push(current_borrower);
@@ -283,6 +279,7 @@ fn get_all_assets_info() -> AssetInfo {
     }
 }
 
+// TODO write comments
 fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) -> (Identity, u64) {
     let mut min_borrower = current_borrowers.get(0).unwrap();
     let mut min_cr = current_crs.get(0).unwrap();

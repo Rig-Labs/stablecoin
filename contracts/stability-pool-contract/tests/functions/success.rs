@@ -601,12 +601,10 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .await
     .unwrap();
 
-    return;
-
     admin
         .transfer(
             depositor_2.address().into(),
-            500_000 * PRECISION,
+            500 * PRECISION,
             usdf_asset_id,
             tx_params,
         )
@@ -622,7 +620,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &depositor_2_sp,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
-        500_000 * PRECISION,
+        500 * PRECISION,
     )
     .await
     .unwrap();
@@ -638,7 +636,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
-        500_000 * PRECISION,
+        500 * PRECISION,
     )
     .await;
 }

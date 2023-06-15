@@ -16,21 +16,24 @@ use std::{
 };
 
 storage {
-    is_initialized: bool = false,
     protocol_manager: Identity = null_identity_address(),
-    borrow_operations: ContractId = null_contract(),
+    borrow_operations_contract: ContractId = null_contract(),
     asset_amount: StorageMap<ContractId, u64> = StorageMap {},
     balances: StorageMap<(Identity, ContractId), u64> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
+    is_initialized: bool = false,
 }
 
 impl CollSurplusPool for Contract {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, protocol_manager: Identity) {
+    fn initialize(
+        borrow_operations_contract: ContractId,
+        protocol_manager: Identity,
+    ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
-        storage.borrow_operations = borrow_operations;
+        storage.borrow_operations_contract = borrow_operations_contract;
         storage.protocol_manager = protocol_manager;
         storage.is_initialized = true;
     }
@@ -45,7 +48,7 @@ impl CollSurplusPool for Contract {
 
     #[storage(read, write)]
     fn claim_coll(account: Identity, asset: ContractId) {
-        require_is_borrow_operations();
+        require_is_borrow_operations_contract();
         require_is_valid_asset_id(asset);
 
         let balance = storage.balances.get((account, asset));
@@ -85,26 +88,26 @@ impl CollSurplusPool for Contract {
 #[storage(read)]
 fn require_is_valid_asset_id(contract_id: ContractId) {
     let is_valid = storage.valid_asset_ids.get(contract_id);
-    require(is_valid, "Invalid asset id");
+    require(is_valid, "CSP: Invalid asset");
 }
 
 #[storage(read)]
 fn require_is_protocol_manager() {
     let caller = msg_sender().unwrap();
     let protocol_manager = storage.protocol_manager;
-    require(caller == protocol_manager, "Caller is not ProtocolManager");
+    require(caller == protocol_manager, "CSP: Caller is not PM");
 }
 
 #[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
     let is_valid = storage.valid_trove_managers.get(caller);
-    require(is_valid, "Caller is not TroveManager");
+    require(is_valid, "CSP: Caller is not TM");
 }
 
 #[storage(read)]
-fn require_is_borrow_operations() {
+fn require_is_borrow_operations_contract() {
     let caller = msg_sender().unwrap();
-    let borrow_operations = Identity::ContractId(storage.borrow_operations);
-    require(caller == borrow_operations, "Caller is not TroveManager");
+    let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
+    require(caller == borrow_operations_contract, "CSP: Caller is not BO");
 }
