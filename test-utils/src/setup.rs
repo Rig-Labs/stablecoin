@@ -10,18 +10,6 @@ use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
 
 pub mod common {
 
-    use std::env;
-
-    use fuels::{
-        accounts::fuel_crypto::rand::{self, Rng},
-        prelude::{
-            launch_custom_provider_and_get_wallets, Account, LoadConfiguration, WalletsConfig,
-        },
-        programs::call_response::FuelCallResponse,
-        types::Identity,
-    };
-    use pbr::ProgressBar;
-
     use super::*;
     use crate::{
         data_structures::PRECISION,
@@ -35,6 +23,16 @@ pub mod common {
         },
         paths::*,
     };
+    use fuels::{
+        accounts::fuel_crypto::rand::{self, Rng},
+        prelude::{
+            launch_custom_provider_and_get_wallets, Account, LoadConfiguration, WalletsConfig,
+        },
+        programs::call_response::FuelCallResponse,
+        types::Identity,
+    };
+    use pbr::ProgressBar;
+    use std::env;
 
     pub struct ProtocolContracts<T: Account> {
         pub borrow_operations: BorrowOperations<T>,

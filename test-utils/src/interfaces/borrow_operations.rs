@@ -10,16 +10,15 @@ abigen!(Contract(
 ));
 
 pub mod borrow_operations_abi {
-    use fuels::prelude::{Account, AssetId, CallParameters, Error};
-
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
-    use crate::interfaces::sorted_troves::{self, SortedTroves};
+    use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
+    use fuels::prelude::{Account, AssetId, CallParameters, Error};
 
     pub async fn initialize<T: Account>(
         borrow_operations: &BorrowOperations<T>,

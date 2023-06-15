@@ -1,8 +1,3 @@
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-};
-
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::borrow_operations::BorrowOperations;
 use crate::interfaces::oracle::Oracle;
@@ -10,6 +5,10 @@ use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
 use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
+use fuels::{
+    prelude::{abigen, ContractId, TxParameters},
+    programs::call_response::FuelCallResponse,
+};
 
 abigen!(Contract(
     name = "StabilityPool",
@@ -17,12 +16,11 @@ abigen!(Contract(
 ));
 
 pub mod stability_pool_abi {
+    use super::*;
     use fuels::{
         prelude::{Account, AssetId, CallParameters, Error, WalletUnlocked},
         types::Identity,
     };
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         stability_pool: &StabilityPool<T>,

@@ -1,5 +1,4 @@
 use fuels::prelude::abigen;
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -8,13 +7,12 @@ abigen!(Contract(
 ));
 
 pub mod coll_surplus_pool_abi {
+    use super::*;
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
     use fuels::{
         prelude::{Account, ContractId, LogDecoder, TxParameters, WalletUnlocked},
         types::Identity,
     };
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         default_pool: &CollSurplusPool<T>,

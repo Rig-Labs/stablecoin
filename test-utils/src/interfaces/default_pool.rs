@@ -1,5 +1,4 @@
 use fuels::prelude::abigen;
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -8,6 +7,7 @@ abigen!(Contract(
 ));
 
 pub mod default_pool_abi {
+    use super::*;
     use crate::interfaces::token::Token;
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
     use fuels::prelude::{Account, LogDecoder};
@@ -15,8 +15,6 @@ pub mod default_pool_abi {
         prelude::{AssetId, CallParameters, ContractId, TxParameters},
         types::Identity,
     };
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         default_pool: &DefaultPool<T>,

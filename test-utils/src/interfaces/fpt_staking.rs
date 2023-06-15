@@ -1,5 +1,4 @@
 use fuels::prelude::{abigen, TxParameters};
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -9,13 +8,11 @@ abigen!(Contract(
 
 pub mod fpt_staking_abi {
 
+    use super::*;
     use crate::interfaces::token::Token;
     use crate::interfaces::usdf_token::USDFToken;
     use fuels::prelude::{Account, AssetId, CallParameters, Error};
     use fuels::{prelude::ContractId, types::Identity};
-    // use crate::setup::common::wait;
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         fpt_staking: &FPTStaking<T>,

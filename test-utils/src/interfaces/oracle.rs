@@ -1,5 +1,4 @@
 use fuels::prelude::abigen;
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -9,11 +8,9 @@ abigen!(Contract(
 
 pub mod oracle_abi {
 
-    use fuels::prelude::{Account, LogDecoder, TxParameters};
-
-    use crate::setup::common::wait;
-
     use super::*;
+    use crate::setup::common::wait;
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
