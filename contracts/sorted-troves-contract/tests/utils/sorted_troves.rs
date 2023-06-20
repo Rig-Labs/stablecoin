@@ -8,6 +8,7 @@ pub mod sorted_troves_utils {
     use fuels::{
         accounts::fuel_crypto::rand::{self, Rng},
         prelude::WalletUnlocked,
+        types::ContractId,
     };
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
@@ -19,24 +20,30 @@ pub mod sorted_troves_utils {
         current: Identity,
         prev_id: Identity,
         next_id: Identity,
+        asset: ContractId,
     ) {
-        let next = sorted_troves_abi::get_next(&sorted_troves, current.clone()).await;
+        let next = sorted_troves_abi::get_next(&sorted_troves, current.clone(), asset).await;
         assert_eq!(next.value, next_id);
 
-        let prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone()).await;
+        let prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset).await;
         assert_eq!(prev.value, prev_id);
     }
 
     pub async fn assert_in_order_from_head(
         sorted_troves: &SortedTroves<WalletUnlocked>,
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+        asset: ContractId,
     ) {
         let mut count = 0;
-        let size = sorted_troves_abi::get_size(sorted_troves).await.value;
+        let size = sorted_troves_abi::get_size(sorted_troves, asset)
+            .await
+            .value;
 
-        let mut current = sorted_troves_abi::get_first(sorted_troves).await.value;
+        let mut current = sorted_troves_abi::get_first(sorted_troves, asset)
+            .await
+            .value;
 
-        let mut next = sorted_troves_abi::get_next(sorted_troves, current.clone())
+        let mut next = sorted_troves_abi::get_next(sorted_troves, current.clone(), asset)
             .await
             .value;
 
@@ -45,10 +52,15 @@ pub mod sorted_troves_utils {
 
             let next_icr = get_nominal_icr(trove_manager, next.clone()).await.value;
 
-            assert!(current_icr >= next_icr);
+            assert!(
+                current_icr >= next_icr,
+                "ICR of current trove {} is less than next trove {}",
+                current_icr,
+                next_icr
+            );
 
             current = next.clone();
-            next = sorted_troves_abi::get_next(&sorted_troves, current.clone())
+            next = sorted_troves_abi::get_next(&sorted_troves, current.clone(), asset)
                 .await
                 .value
                 .clone();
@@ -62,13 +74,18 @@ pub mod sorted_troves_utils {
     pub async fn assert_in_order_from_tail(
         sorted_troves: &SortedTroves<WalletUnlocked>,
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+        asset: ContractId,
     ) {
         let mut count = 0;
-        let size = sorted_troves_abi::get_size(sorted_troves).await.value;
+        let size = sorted_troves_abi::get_size(sorted_troves, asset)
+            .await
+            .value;
 
-        let mut current = sorted_troves_abi::get_last(&sorted_troves).await.value;
+        let mut current = sorted_troves_abi::get_last(&sorted_troves, asset)
+            .await
+            .value;
 
-        let mut prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
+        let mut prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset)
             .await
             .value;
 
@@ -80,7 +97,7 @@ pub mod sorted_troves_utils {
             assert!(current_icr <= prev_icr);
 
             current = prev.clone();
-            prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone())
+            prev = sorted_troves_abi::get_prev(&sorted_troves, current.clone(), asset)
                 .await
                 .value
                 .clone();
@@ -94,11 +111,13 @@ pub mod sorted_troves_utils {
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
         sorted_troves: &SortedTroves<WalletUnlocked>,
         max_size: u64,
-    ) -> Vec<(Identity, u64)> {
+        asset: ContractId,
+    ) -> (Vec<(Identity, u64)>, u64) {
         let mut count = 0;
         let mut rng = rand::thread_rng();
 
         let mut pairs: Vec<(Identity, u64)> = vec![];
+        let mut avg_gas = 0;
 
         while count < max_size {
             let random_number = rng.gen::<u64>() % 10000;
@@ -109,19 +128,24 @@ pub mod sorted_troves_utils {
                 random_number.clone(),
             ));
 
-            let _res = set_nominal_icr_and_insert(
+            let gas_used = set_nominal_icr_and_insert(
                 trove_manager,
                 &sorted_troves,
                 Identity::Address(random_address.into()),
                 random_number,
                 Identity::Address([0; 32].into()),
                 Identity::Address([0; 32].into()),
+                asset,
             )
-            .await;
+            .await
+            .gas_used;
+            avg_gas += gas_used;
 
             count += 1;
         }
 
-        return pairs;
+        avg_gas /= max_size;
+
+        return (pairs, avg_gas);
     }
 }

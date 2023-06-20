@@ -9,7 +9,7 @@ use test_utils::{
         oracle::oracle_abi,
         protocol_manager::protocol_manager_abi,
         token::token_abi,
-        trove_manager::{trove_manager_utils, Status, trove_manager_abi},
+        trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
     utils::with_min_borrow_fee,
@@ -17,7 +17,6 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
-
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
@@ -60,9 +59,9 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -82,9 +81,9 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         9_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -104,9 +103,9 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         8_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -124,10 +123,12 @@ async fn proper_redemption_from_partially_closed() {
         healthy_wallet1.clone(),
     );
 
-    let pre_redemption_active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
@@ -139,18 +140,27 @@ async fn proper_redemption_from_partially_closed() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
+        &contracts.default_pool,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         &contracts.asset_contracts,
     )
     .await;
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     assert_eq!(active_pool_asset, 24_000 * PRECISION);
 
@@ -169,23 +179,16 @@ async fn proper_redemption_from_partially_closed() {
         .unwrap();
 
     // TODO Replace with staking contract when implemented
-    let oracle_balance = provider
-        .get_contract_asset_balance(
-            contracts.asset_contracts[0].oracle.contract_id(),
-            fuel_asset_id,
-        )
+    let staking_balance = provider
+        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await
         .unwrap();
 
-
     // here we need to calculate the fee and subtract it
-    let redemption_asset_fee = trove_manager_abi::get_redemption_fee(
-        &contracts.asset_contracts[0].trove_manager,
-        redemption_amount
-    )
-    .await.value;
+    let redemption_asset_fee = trove_manager_abi::get_redemption_fee(redemption_amount);
 
-    assert_eq!(fuel_balance, redemption_amount - oracle_balance - redemption_asset_fee);
+    assert_eq!(staking_balance, redemption_asset_fee);
+    assert_eq!(fuel_balance, redemption_amount - redemption_asset_fee);
 
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
@@ -248,9 +251,9 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         coll1,
         debt1,
         Identity::Address([0; 32].into()),
@@ -272,9 +275,9 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         coll2,
         debt2,
         Identity::Address([0; 32].into()),
@@ -296,9 +299,9 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         coll3,
         debt3,
         Identity::Address([0; 32].into()),
@@ -329,20 +332,27 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
+        &contracts.default_pool,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         &contracts.asset_contracts,
     )
     .await;
 
-    println!("Collateral redeemed");
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
-
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     let collateral_taken_from_trove3 = with_min_borrow_fee(5_000 * PRECISION);
     let remaining_collateral_to_redeem = redemption_amount - collateral_taken_from_trove3;
@@ -365,10 +375,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(
-            &contracts.fpt_staking.contract_id(),
-            fuel_asset_id,
-        )
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await
         .unwrap();
 
@@ -417,8 +424,9 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     .await;
 
     let coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(healthy_wallet3.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;

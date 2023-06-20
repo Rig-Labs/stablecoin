@@ -69,8 +69,6 @@ storage {
     l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
     last_usdf_error_redistribution: u64 = 0,
-    last_fee_operation_timestamp: u64 = 0,
-    base_rate: U128 = U128::from_u64(0),
     troves: StorageMap<Identity, Trove> = StorageMap {},
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap {},
@@ -91,7 +89,7 @@ impl TroveManager for Contract {
         asset_contract: ContractId,
         protocol_manager: ContractId,
     ) {
-        require(storage.is_initialized == false, "Contract is already initialized");
+        require(storage.is_initialized == false, "TM: Contract is already initialized");
         storage.sorted_troves_contract = sorted_troves;
         storage.borrow_operations_contract = borrow_operations;
         storage.stability_pool_contract = stability_pool;
@@ -158,62 +156,9 @@ impl TroveManager for Contract {
         )
     }
 
-    #[storage(read, write)]
-    fn update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
-        require_caller_is_protocol_manager_contract();
-        internal_update_base_rate_from_redemption(asset_drawn, price, total_usdf_supply)
-    }
-
-    #[storage(read)]
-    fn get_redemption_rate() -> u64 {
-        internal_get_redemption_rate().as_u64().unwrap()
-    }
-
-    #[storage(read)]
-    fn get_redemption_rate_with_decay() -> u64 {
-        internal_get_redemption_rate_with_decay().as_u64().unwrap()
-    }
-
-    #[storage(read)]
-    fn get_redemption_fee(asset_drawn: u64) -> u64 {
-        internal_get_redemption_fee(asset_drawn)
-    }
-
-    #[storage(read)]
-    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
-        internal_get_redemption_fee_with_decay(asset_drawn)
-    }
-
-    #[storage(read)]
-    fn get_borrowing_fee(debt: u64) -> u64 {
-        internal_calculate_borrowing_fee(internal_get_borrowing_rate(), debt)
-    }
-
-    #[storage(read, write)]
-    fn decay_base_rate_from_borrowing() {
-        require_caller_is_borrow_operations_contract();
-
-        // TODO Decay base rate but timestamp is not implemented properly
-    }
-
     #[storage(read)]
     fn get_trove_stake(id: Identity) -> u64 {
         internal_get_trove_stake(id)
-    }
-
-    #[storage(read)]
-    fn get_borrowing_fee_with_decay(debt: u64) -> u64 {
-        internal_calculate_borrowing_fee(internal_get_borrowing_rate_with_decay(), debt)
-    }
-
-    #[storage(read)]
-    fn get_borrowing_rate() -> u64 {
-        internal_get_borrowing_rate()
-    }
-
-    #[storage(read)]
-    fn get_borrowing_rate_with_decay() -> u64 {
-        internal_get_borrowing_rate_with_decay()
     }
 
     #[storage(read)]
@@ -384,11 +329,12 @@ fn internal_apply_pending_rewards(borrower: Identity) {
 
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
-    require(close_status != Status::NonExistent || close_status != Status::Active, "Invalid status");
-
+    require(close_status != Status::NonExistent || close_status != Status::Active, "TM: Invalid status");
+    let asset_contract_cache = storage.asset_contract;
     let trove_owner_array_length = storage.trove_owners.len();
-    require_more_than_one_trove_in_system(trove_owner_array_length);
-    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    let sorted_troves_contract_cache = storage.sorted_troves_contract;
+    let sorted_troves = abi(SortedTroves, sorted_troves_contract_cache.into());
+    require_more_than_one_trove_in_system(trove_owner_array_length, asset_contract_cache, sorted_troves_contract_cache);
 
     let mut trove = storage.troves.get(id);
     trove.status = close_status;
@@ -403,20 +349,20 @@ fn internal_close_trove(id: Identity, close_status: Status) {
 
     internal_remove_trove_owner(id, trove_owner_array_length);
 
-    sorted_troves_contract.remove(id);
+    sorted_troves.remove(id, asset_contract_cache);
 }
 
 #[storage(read, write)]
 fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u64) {
     let mut trove = storage.troves.get(_borrower);
 
-    require(trove.status != Status::NonExistent && trove.status != Status::Active, "Trove does not exist");
+    require(trove.status != Status::NonExistent && trove.status != Status::Active, "TM: Trove does not exist");
 
     let index = trove.array_index;
     let length = _trove_array_owner_length;
     let indx_last = length - 1;
 
-    require(index <= indx_last, "Trove does not exist");
+    require(index <= indx_last, "TM: Trove does not exist");
     let address_to_move = storage.trove_owners.get(indx_last).unwrap();
 
     let mut trove_to_move = storage.troves.get(address_to_move);
@@ -428,7 +374,7 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
 #[storage(read)]
 fn require_trove_is_active(id: Identity) {
     let trove = storage.troves.get(id);
-    require(trove.status == Status::Active, "Trove is not active");
+    require(trove.status == Status::Active, "TM: Trove is not active");
 }
 
 #[storage(read, write)]
@@ -437,10 +383,11 @@ fn internal_batch_liquidate_troves(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
-    require(borrowers.len() > 0, "No borrowers to liquidate");
+    require(borrowers.len() > 0, "TM: No borrowers to liquidate");
 
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(MockOracle, storage.oracle_contract.into());
+    let asset_contract_cache = storage.asset_contract;
 
     vars.price = oracle.get_price();
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
@@ -448,13 +395,13 @@ fn internal_batch_liquidate_troves(
 
     let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers, upper_partial_hint, lower_partial_hint);
 
-    require(totals.total_debt_in_sequence > 0, "No debt to liquidate");
+    require(totals.total_debt_in_sequence > 0, "TM: No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
 
     if (totals.total_coll_surplus > 0) {
         // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus);
+        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus, asset_contract_cache);
     }
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
@@ -464,14 +411,14 @@ fn internal_batch_liquidate_troves(
 fn require_caller_is_borrow_operations_contract() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
-    require(caller == borrow_operations_contract, "Caller is not the Borrow Operations contract");
+    require(caller == borrow_operations_contract, "TM: Caller is not the Borrow Operations contract");
 }
 
 #[storage(read)]
 fn require_caller_is_protocol_manager_contract() {
     let caller = msg_sender().unwrap();
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
-    require(caller == protocol_manager_contract, "Caller is not the Protocol Manager contract");
+    require(caller == protocol_manager_contract, "TM: Caller is not the Protocol Manager contract");
 }
 
 #[storage(read)]
@@ -479,7 +426,7 @@ fn require_caller_is_borrow_operations_contract_or_protocol_manager() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract);
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract);
-    require(caller == borrow_operations_contract || caller == protocol_manager_contract, "Caller is not the Borrow Operations or Protocol Manager contract");
+    require(caller == borrow_operations_contract || caller == protocol_manager_contract, "TM: Caller is not the Borrow Operations or Protocol Manager contract");
 }
 
 #[storage(read, write)]
@@ -555,10 +502,14 @@ fn internal_get_totals_from_batch_liquidate(
 }
 
 #[storage(read)]
-fn require_more_than_one_trove_in_system(trove_owner_array_length: u64) {
-    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-    let size = sorted_troves_contract.get_size();
-    require(trove_owner_array_length > 1 && size > 1, "There is only one trove in the system");
+fn require_more_than_one_trove_in_system(
+    trove_owner_array_length: u64,
+    asset_contract: ContractId,
+    sorted_troves_contract: ContractId,
+) {
+    let sorted_troves = abi(SortedTroves, sorted_troves_contract.into());
+    let size = sorted_troves.get_size(asset_contract);
+    require(trove_owner_array_length > 1 && size > 1, "TM: There is only one trove in the system");
 }
 
 #[storage(read)]
@@ -617,17 +568,19 @@ fn internal_apply_liquidation(
 
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
-        sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint);
+        let asset_contract_cache = storage.asset_contract;
+        sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint, asset_contract_cache);
     } else {
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation());
-        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus);
+        coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus, storage.asset_contract);
     }
 }
 
 #[storage(read, write)]
 fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
+    let asset_contract_cache = storage.asset_contract;
     if (debt == 0) {
         return;
     }
@@ -647,9 +600,9 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
 
-    active_pool.decrease_usdf_debt(debt);
-    default_pool.increase_usdf_debt(debt);
-    active_pool.send_asset_to_default_pool(coll);
+    active_pool.decrease_usdf_debt(debt, asset_contract_cache);
+    default_pool.increase_usdf_debt(debt, asset_contract_cache);
+    active_pool.send_asset_to_default_pool(coll, asset_contract_cache);
 }
 
 #[storage(read, write)]
@@ -671,7 +624,7 @@ fn internal_compute_new_stake(coll: u64) -> u64 {
     if (storage.total_collateral_snapshot == 0) {
         return coll;
     } else {
-        require(storage.total_stakes_snapshot > 0, "Total stakes snapshot is zero");
+        require(storage.total_stakes_snapshot > 0, "TM: Total stakes snapshot is zero");
         let stake = (U128::from_u64(coll) * U128::from_u64(storage.total_stakes_snapshot)) / U128::from_u64(storage.total_collateral_snapshot);
         return stake.as_u64().unwrap();
     }
@@ -724,20 +677,22 @@ fn internal_move_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
     if (coll == 0 && debt == 0) {
         return;
     }
+    let asset_contract_cache = storage.asset_contract;
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
 
-    default_pool.decrease_usdf_debt(debt);
-    active_pool.increase_usdf_debt(debt);
+    default_pool.decrease_usdf_debt(debt, asset_contract_cache);
+    active_pool.increase_usdf_debt(debt, asset_contract_cache);
 
-    default_pool.send_asset_to_active_pool(coll);
+    default_pool.send_asset_to_active_pool(coll, asset_contract_cache);
 }
 #[storage(read)]
 fn internal_get_entire_system_debt() -> u64 {
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.into());
+    let asset_contract_cache = storage.asset_contract;
 
-    return active_pool.get_usdf_debt() + default_pool.get_usdf_debt();
+    return active_pool.get_usdf_debt(asset_contract_cache) + default_pool.get_usdf_debt(asset_contract_cache);
 }
 
 #[storage(read, write)]
@@ -750,7 +705,8 @@ fn internal_redeem_collateral_from_trove(
     lower_partial_hint: Identity,
 ) -> SingleRedemptionValues {
     let mut single_redemption_values = SingleRedemptionValues::default();
-    let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.into());
+    let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.into());
+    let asset_contract_cache = storage.asset_contract;
     // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
     let trove = storage.troves.get(borrower);
     single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
@@ -771,7 +727,7 @@ fn internal_redeem_collateral_from_trove(
             single_redemption_values.cancelled_partial = true;
             return single_redemption_values;
         }
-        sorted_troves_contract.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint);
+        sorted_troves.re_insert(borrower, new_nicr, upper_partial_hint, lower_partial_hint, asset_contract_cache);
         let mut trove = storage.troves.get(borrower);
         trove.debt = new_debt;
         trove.coll = new_coll;
@@ -784,113 +740,25 @@ fn internal_redeem_collateral_from_trove(
 }
 
 #[storage(read, write)]
-fn internal_redeem_close_trove(borrower: Identity, usdf: u64, asset: u64) {
+fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amount: u64) {
+    let asset_contract = storage.asset_contract;
+    let coll_surplus_pool_contract = storage.coll_surplus_pool_contract;
+
     let usdf_contract = abi(USDFToken, storage.usdf_contract.into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.into());
-    let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.into());
+    let coll_surplus_pool = abi(CollSurplusPool, coll_surplus_pool_contract.into());
 
     usdf_contract.burn {
-        coins: usdf,
+        coins: usdf_amount,
         asset_id: storage.usdf_contract.value,
     }();
 
-    active_pool.decrease_usdf_debt(usdf);
-    coll_surplus_pool.account_surplus(borrower, asset);
-    active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), asset);
+    active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
+    coll_surplus_pool.account_surplus(borrower, asset_amount, asset_contract);
+    active_pool.send_asset(Identity::ContractId(coll_surplus_pool_contract), asset_amount, asset_contract);
 }
 
-// ---- Redemption Fees ---- //
-#[storage(read, write)]
-fn internal_update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64) {
-    let decayed_base_rate = calculate_decayed_base_rate();
-
-    let redeemed_usdf_fraction = U128::from_u64(asset_drawn) * U128::from_u64(price) / U128::from_u64(total_usdf_supply);
-    let mut new_base_rate: U128 = U128::from_u64(decayed_base_rate) + (redeemed_usdf_fraction / U128::from_u64(BETA));
-
-    // Weird memory overflow error if this is included
-    // new_base_rate = fm_min_u128(new_base_rate, U128::from_u64(DECIMAL_PRECISION));
-    require(new_base_rate > U128::from_u64(0), "Base rate cannot be zero");
-
-    storage.base_rate = new_base_rate;
-
-    update_last_fee_op_time();
-}
-
-#[storage(read)]
-fn internal_get_redemption_rate() -> U128 {
-    return calc_redemption_rate(storage.base_rate);
-}
-
-#[storage(read)]
-fn internal_get_redemption_rate_with_decay() -> U128 {
-    return calc_redemption_rate(U128::from_u64(calculate_decayed_base_rate()));
-}
-#[storage(read)]
-fn calc_redemption_rate(base_rate: U128) -> U128 {
-    return fm_min_u128(base_rate + U128::from_u64(REDEMPTION_FEE_FLOOR), U128::from_u64(DECIMAL_PRECISION));
-}
-
-#[storage(read)]
-fn internal_get_redemption_fee(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate());
-}
-#[storage(read)]
-fn internal_get_redemption_fee_with_decay(asset_drawn: u64) -> u64 {
-    return calc_redemption_fee(asset_drawn, internal_get_redemption_rate_with_decay());
-}
-
-#[storage(read)]
-fn calc_redemption_fee(asset_drawn: u64, redemption_rate: U128) -> u64 {
-    let redemption_fee = ((U128::from_u64(asset_drawn) * redemption_rate) / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
-
-    require(redemption_fee < asset_drawn, "Redemption fee cannot exceed asset drawn");
-    return redemption_fee;
-}
-
-// ----- Borrowing ----- //
-#[storage(read)]
-fn internal_calculate_borrowing_fee(borrowing_rate: u64, usdf_debt: u64) -> u64 {
-    let numerator = U128::from_u64(borrowing_rate) * U128::from_u64(usdf_debt);
-    let prod = (numerator / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
-    return prod;
-}
-
-#[storage(read)]
-fn internal_get_borrowing_rate() -> u64 {
-    internal_calculate_borrowing_rate(storage.base_rate.as_u64().unwrap())
-}
-
-#[storage(read)]
-fn internal_get_borrowing_rate_with_decay() -> u64 {
-    internal_calculate_borrowing_rate(calculate_decayed_base_rate())
-}
-
-#[storage(read)]
-fn internal_calculate_borrowing_rate(base_rate: u64) -> u64 {
-    return fm_min(BORROWING_FEE_FLOOR + base_rate, MAX_BORROWING_FEE);
-}
 #[storage(read)]
 fn require_valid_usdf_id() {
-    require(msg_asset_id() == storage.usdf_contract, "Invalid asset being transfered");
-}
-
-#[storage(read)]
-fn calculate_decayed_base_rate() -> u64 {
-    let minutes_passed = internal_minutes_passed_since_last_fee_op();
-    let decay_factor = dec_pow(MINUTE_DECAY_FACTOR, minutes_passed);
-    return (storage.base_rate.as_u64().unwrap() * decay_factor.as_u64().unwrap()) / DECIMAL_PRECISION;
-}
-
-#[storage(read)]
-fn internal_minutes_passed_since_last_fee_op() -> u64 {
-    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
-    return time_passed / SECONDS_IN_ONE_MINUTE;
-}
-
-#[storage(read, write)]
-fn update_last_fee_op_time() {
-    let time_passed = timestamp() - storage.last_fee_operation_timestamp;
-    if (time_passed >= SECONDS_IN_ONE_MINUTE) {
-        storage.last_fee_operation_timestamp = timestamp();
-    }
+    require(msg_asset_id() == storage.usdf_contract, "TM: Invalid asset being transfered");
 }

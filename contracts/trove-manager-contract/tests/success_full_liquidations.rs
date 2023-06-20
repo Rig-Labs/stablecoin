@@ -57,9 +57,9 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         asset_deposit_to_be_liquidated,
         usdf_deposit_to_be_liquidated,
         Identity::Address([0; 32].into()),
@@ -75,9 +75,9 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -109,10 +109,10 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address([0; 32].into()),
@@ -169,36 +169,46 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
     assert_eq!(asset, asset_with_min_borrow_fee);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     assert_eq!(active_pool_asset, 10_000 * PRECISION);
 
     let active_pool_debt_with_min_borrow_fee = with_min_borrow_fee(5_000 * PRECISION);
     assert_eq!(active_pool_debt, active_pool_debt_with_min_borrow_fee);
 
-    let default_pool_asset =
-        default_pool_abi::get_asset(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_asset = default_pool_abi::get_asset(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let default_pool_debt =
-        default_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_debt = default_pool_abi::get_usdf_debt(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     assert_eq!(default_pool_asset, 0);
     assert_eq!(default_pool_debt, 0);
 
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -264,9 +274,9 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -282,9 +292,9 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -300,9 +310,9 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         30_000 * PRECISION,
         15_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -334,10 +344,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address([0; 32].into()),
@@ -389,27 +399,36 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         "Incorrect asset amount in stability pool"
     );
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     assert_eq!(active_pool_asset, 40_000 * PRECISION);
     assert_eq!(active_pool_debt, with_min_borrow_fee(20_000 * PRECISION));
 
-    let default_pool_asset =
-        default_pool_abi::get_asset(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_asset = default_pool_abi::get_asset(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let default_pool_debt =
-        default_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_debt = default_pool_abi::get_usdf_debt(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     // 1.05 * 500_000_000
     let debt_being_redistributed = with_min_borrow_fee(1_000 * PRECISION) - 500 * PRECISION;
@@ -449,8 +468,9 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await;
 
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -515,9 +535,9 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -533,9 +553,9 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -551,9 +571,9 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
-        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
-        &contracts.asset_contracts[0].active_pool,
+        &contracts.active_pool,
         30_000 * PRECISION,
         15_000 * PRECISION,
         Identity::Address([0; 32].into()),
@@ -570,10 +590,10 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].sorted_troves,
-        &contracts.asset_contracts[0].active_pool,
-        &contracts.asset_contracts[0].default_pool,
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address([0; 32].into()),
@@ -620,27 +640,36 @@ async fn proper_full_liquidation_empty_sp() {
 
     assert_eq!(asset, 0);
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     assert_eq!(active_pool_asset, 40_000 * PRECISION);
     assert_eq!(active_pool_debt, with_min_borrow_fee(20_000 * PRECISION));
 
-    let default_pool_asset =
-        default_pool_abi::get_asset(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_asset = default_pool_abi::get_asset(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let default_pool_debt =
-        default_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].default_pool)
-            .await
-            .value;
+    let default_pool_debt = default_pool_abi::get_usdf_debt(
+        &contracts.default_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     // 1.05 * 500_000_000
     let expected_default_pool_asset =
@@ -678,8 +707,9 @@ async fn proper_full_liquidation_empty_sp() {
     .await;
 
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
-        &contracts.asset_contracts[0].coll_surplus_pool,
+        &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;

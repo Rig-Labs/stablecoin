@@ -12,6 +12,9 @@ use std::{
         msg_amount,
     },
     logging::log,
+    storage::{
+        StorageMap,
+    },
     token::transfer,
 };
 
@@ -23,86 +26,104 @@ use std::{
  * from the Default Pool to the Active Pool.
  */
 storage {
-    trove_manager_contract: Identity = null_identity_address(),
-    active_pool: ContractId = null_contract(),
-    asset_id: ContractId = null_contract(),
-    asset_amount: u64 = 0,
-    usdf_debt_amount: u64 = 0,
+    protocol_manager: Identity = null_identity_address(),
+    active_pool_contract: ContractId = null_contract(),
+    asset_amount: StorageMap<ContractId, u64> = StorageMap {},
+    usdf_debt_amount: StorageMap<ContractId, u64> = StorageMap {},
+    valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
+    valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
     is_initialized: bool = false,
 }
 
 impl DefaultPool for Contract {
     #[storage(read, write)]
-    fn initialize(
-        trove_manager: Identity,
-        active_pool: ContractId,
-        asset_id: ContractId,
-    ) {
+    fn initialize(protocol_manager: Identity, active_pool_contract: ContractId) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
-        storage.trove_manager_contract = trove_manager;
-        storage.active_pool = active_pool;
-        storage.asset_id = asset_id;
+        storage.protocol_manager = protocol_manager;
+        storage.active_pool_contract = active_pool_contract;
         storage.is_initialized = true;
     }
 
     #[storage(read, write)]
-    fn send_asset_to_active_pool(amount: u64) {
+    fn send_asset_to_active_pool(amount: u64, asset_id: ContractId) {
         require_is_trove_manager();
-        storage.asset_amount -= amount;
-        let active_pool = abi(ActivePool, storage.active_pool.value);
+        let active_pool = abi(ActivePool, storage.active_pool_contract.value);
+        let new_amount = storage.asset_amount.get(asset_id) - amount;
+
+        storage.asset_amount.insert(asset_id, new_amount);
         active_pool.recieve {
             coins: amount,
-            asset_id: storage.asset_id.value,
+            asset_id: asset_id.into(),
         }();
     }
 
-    #[storage(read)]
-    fn get_asset() -> u64 {
-        return storage.asset_amount;
+    #[storage(read, write)]
+    fn add_asset(asset: ContractId, trove_manager: Identity) {
+        require_is_protocol_manager();
+        storage.valid_asset_ids.insert(asset, true);
+        storage.valid_trove_managers.insert(trove_manager, true);
+        storage.asset_amount.insert(asset, 0);
+        storage.usdf_debt_amount.insert(asset, 0);
     }
 
     #[storage(read)]
-    fn get_usdf_debt() -> u64 {
-        return storage.usdf_debt_amount;
+    fn get_asset(asset_id: ContractId) -> u64 {
+        return storage.asset_amount.get(asset_id);
+    }
+
+    #[storage(read)]
+    fn get_usdf_debt(asset_id: ContractId) -> u64 {
+        return storage.usdf_debt_amount.get(asset_id);
     }
 
     #[storage(read, write)]
-    fn increase_usdf_debt(amount: u64) {
+    fn increase_usdf_debt(amount: u64, asset_id: ContractId) {
         require_is_trove_manager();
-        storage.usdf_debt_amount += amount;
+        let new_debt = storage.usdf_debt_amount.get(asset_id) + amount;
+        storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
 
     #[storage(read, write)]
-    fn decrease_usdf_debt(amount: u64) {
+    fn decrease_usdf_debt(amount: u64, asset_id: ContractId) {
         require_is_trove_manager();
-        storage.usdf_debt_amount -= amount;
+        let new_debt = storage.usdf_debt_amount.get(asset_id) - amount;
+        storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
 
     #[storage(read, write), payable]
     fn recieve() {
-        require_is_active_pool();
+        require_is_active_pool_contract();
         require_is_asset_id();
-        storage.asset_amount += msg_amount();
+        let new_amount = storage.asset_amount.get(msg_asset_id()) + msg_amount();
+        storage.asset_amount.insert(msg_asset_id(), new_amount);
     }
 }
 
 #[storage(read)]
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
-    require(asset_id == storage.asset_id, "Asset ID is not correct");
+    let valid_asset_id = storage.valid_asset_ids.get(asset_id);
+    require(valid_asset_id, "DP: Asset is not correct");
 }
 
 #[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
-    let trove_manager_contract = storage.trove_manager_contract;
-    require(caller == trove_manager_contract, "Caller is not TroveManager");
+    let is_valid_trove_manager = storage.valid_trove_managers.get(caller);
+    require(is_valid_trove_manager, "DP: Caller is not TM");
 }
 
 #[storage(read)]
-fn require_is_active_pool() {
+fn require_is_active_pool_contract() {
     let caller = msg_sender().unwrap();
-    let active_pool_contract = Identity::ContractId(storage.active_pool);
-    require(caller == active_pool_contract, "Caller is not ActivePool");
+    let active_pool_contract_contract = Identity::ContractId(storage.active_pool_contract);
+    require(caller == active_pool_contract_contract, "DP: Caller is not AP");
+}
+
+#[storage(read)]
+fn require_is_protocol_manager() {
+    let caller = msg_sender().unwrap();
+    let protocol_manager = storage.protocol_manager;
+    require(caller == protocol_manager, "DP: Caller is not PM");
 }

@@ -1,2 +1,2 @@
-pub mod success;
 pub mod failure;
+pub mod success;

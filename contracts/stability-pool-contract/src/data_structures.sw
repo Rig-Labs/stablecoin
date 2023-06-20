@@ -3,10 +3,8 @@ use libraries::numbers::*;
 use std::{u128::U128};
 
 pub struct AssetContracts {
-    active_pool: ContractId,
     trove_manager: ContractId,
     oracle: ContractId,
-    sorted_troves: ContractId,
 }
 
 pub struct Snapshots {

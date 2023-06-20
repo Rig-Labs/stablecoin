@@ -1,13 +1,6 @@
+use crate::setup::common::ProtocolContracts;
 use dotenv::dotenv;
-use fuels::{
-    prelude::{Address, Bech32Address, Bech32ContractId, Provider, WalletUnlocked},
-    types::ContractId,
-};
-
-use crate::{
-    interfaces::trove_manager::trove_manager_abi,
-    setup::common::{deploy_and_initialize_all, ProtocolContracts},
-};
+use fuels::prelude::{Address, Provider, WalletUnlocked};
 
 // const RPC: &str = "http://localhost:4000";
 
@@ -109,7 +102,7 @@ pub mod deployment {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(8);
+        let mut pb = ProgressBar::new(12);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -134,6 +127,17 @@ pub mod deployment {
 
         let community_issuance = deploy_community_issuance(&wallet).await;
         pb.inc();
+        
+        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+
+        pb.inc();
+        let default_pool = deploy_default_pool(&wallet).await;
+
+        pb.inc();
+        let active_pool = deploy_active_pool(&wallet).await;
+
+        pb.inc();
+        let sorted_troves = deploy_sorted_troves(&wallet).await;
 
         let fuel_asset_contracts = upload_asset(wallet.clone()).await;
 
@@ -148,7 +152,7 @@ pub mod deployment {
 
         let mut pb = ProgressBar::new(7);
 
-        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
 
         let _ = community_issuance_abi::initialize(
@@ -199,6 +203,9 @@ pub mod deployment {
             fpt_staking.contract_id().into(),
             stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+            active_pool.contract_id().into(),
+            sorted_troves.contract_id().into(),
         )
         .await;
         wait();
@@ -210,6 +217,7 @@ pub mod deployment {
             usdf.contract_id().into(),
             community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await
         .unwrap();
@@ -223,10 +231,19 @@ pub mod deployment {
             borrow_operations.contract_id().into(),
             fpt_token.contract_id().into(),
             usdf.contract_id().into(),
-        ).await;
+        )
+        .await;
         wait();
         pb.inc();
 
+        let _ = coll_surplus_pool_abi::initialize(
+            &coll_surplus_pool,
+            borrow_operations.contract_id().into(),
+            Identity::ContractId(protocol_manager.contract_id().into()),
+        )
+        .await;
+        wait();
+        pb.inc();
 
         let _ = protocol_manager_abi::initialize(
             &protocol_manager,
@@ -234,7 +251,41 @@ pub mod deployment {
             stability_pool.contract_id().into(),
             fpt_staking.contract_id().into(),
             usdf.contract_id().into(),
+            coll_surplus_pool.contract_id().into(),
+            default_pool.contract_id().into(),
+            active_pool.contract_id().into(),
+            sorted_troves.contract_id().into(),
             Identity::Address(wallet.address().into()),
+        )
+        .await;
+        wait();
+        pb.inc();
+
+        let _ = default_pool_abi::initialize(
+            &default_pool,
+            Identity::ContractId(protocol_manager.contract_id().into()),
+            protocol_manager.contract_id().into(),
+        )
+        .await;
+        wait();
+        pb.inc();
+
+        let _ = active_pool_abi::initialize(
+            &active_pool,
+            Identity::ContractId(borrow_operations.contract_id().into()),
+            Identity::ContractId(stability_pool.contract_id().into()),
+            default_pool.contract_id().into(),
+            Identity::ContractId(protocol_manager.contract_id().into()),
+        )
+        .await;
+        wait();
+        pb.inc();
+
+        let _ = sorted_troves_abi::initialize(
+            &sorted_troves,
+            100,
+            protocol_manager.contract_id().into(),
+            borrow_operations.contract_id().into(),
         )
         .await;
         wait();
@@ -246,15 +297,15 @@ pub mod deployment {
             &stability_pool,
             &protocol_manager,
             &usdf,
+            &coll_surplus_pool,
             wallet.clone(),
             "Fuel".to_string(),
             "FUEL".to_string(),
-            fuel_asset_contracts.default_pool,
-            fuel_asset_contracts.active_pool,
+            &default_pool,
+            &active_pool,
             fuel_asset_contracts.asset,
-            fuel_asset_contracts.coll_surplus_pool,
             fuel_asset_contracts.trove_manager,
-            fuel_asset_contracts.sorted_troves,
+            &sorted_troves,
             fuel_asset_contracts.oracle,
         )
         .await;
@@ -268,15 +319,15 @@ pub mod deployment {
                 &stability_pool,
                 &protocol_manager,
                 &usdf,
+                &coll_surplus_pool,
                 wallet.clone(),
                 "stFuel".to_string(),
                 "stFUEL".to_string(),
-                stfuel_asset_contracts.default_pool,
-                stfuel_asset_contracts.active_pool,
+                &default_pool,
+                &active_pool,
                 stfuel_asset_contracts.asset,
-                stfuel_asset_contracts.coll_surplus_pool,
                 stfuel_asset_contracts.trove_manager,
-                stfuel_asset_contracts.sorted_troves,
+                &sorted_troves,
                 stfuel_asset_contracts.oracle,
             )
             .await;
@@ -295,6 +346,10 @@ pub mod deployment {
             fpt_token,
             fpt,
             community_issuance,
+            coll_surplus_pool,
+            default_pool,
+            sorted_troves,
+            active_pool,
         };
 
         return contracts;
@@ -327,39 +382,25 @@ pub mod deployment {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(7);
         let oracle = deploy_oracle(&wallet).await;
-        pb.inc();
-        let sorted_troves = deploy_sorted_troves(&wallet).await;
+
         pb.inc();
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
         let asset = deploy_token(&wallet).await;
-        pb.inc();
-        let active_pool = deploy_active_pool(&wallet).await;
-        pb.inc();
-        let default_pool = deploy_default_pool(&wallet).await;
-        pb.inc();
-        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+
         pb.inc();
         let fpt_staking = deploy_fpt_staking(&wallet).await;
         pb.inc();
         println!("Deploying asset contracts... Done");
         println!("Oracle: {}", oracle.contract_id());
-        println!("Sorted Troves: {}", sorted_troves.contract_id());
         println!("Trove Manager: {}", trove_manager.contract_id());
         println!("Asset: {}", asset.contract_id());
-        println!("Active Pool: {}", active_pool.contract_id());
-        println!("Default Pool: {}", default_pool.contract_id());
-        println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
         println!("FPT Staking: {}", fpt_staking.contract_id());
 
         return AssetContracts {
             oracle,
-            sorted_troves,
             trove_manager,
             asset,
-            active_pool,
-            default_pool,
-            coll_surplus_pool,
         };
     }
 
@@ -369,52 +410,19 @@ pub mod deployment {
         stability_pool: &StabilityPool<T>,
         protocol_manager: &ProtocolManager<T>,
         usdf: &USDFToken<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
         wallet: WalletUnlocked,
         name: String,
         symbol: String,
-        default_pool: DefaultPool<T>,
-        active_pool: ActivePool<T>,
+        default_pool: &DefaultPool<T>,
+        active_pool: &ActivePool<T>,
         asset: Token<T>,
-        coll_surplus_pool: CollSurplusPool<T>,
         trove_manager: TroveManagerContract<T>,
-        sorted_troves: SortedTroves<T>,
+        sorted_troves: &SortedTroves<T>,
         oracle: Oracle<T>,
     ) -> () {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(7);
-        let _ = default_pool_abi::initialize(
-            &default_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            asset.contract_id().into(),
-        )
-        .await;
-        wait();
-        pb.inc();
-
-        let _ = active_pool_abi::initialize(
-            &active_pool,
-            Identity::ContractId(borrow_operations.contract_id().into()),
-            Identity::ContractId(trove_manager.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            asset.contract_id().into(),
-            default_pool.contract_id().into(),
-            protocol_manager.contract_id().into(),
-        )
-        .await;
-        wait();
-        pb.inc();
-
-        let _ = coll_surplus_pool_abi::initialize(
-            &coll_surplus_pool,
-            Identity::ContractId(trove_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-            borrow_operations.contract_id().into(),
-            asset.contract_id().into(),
-        )
-        .await;
-        wait();
-        pb.inc();
 
         let _ = token_abi::initialize(
             &asset,
@@ -422,16 +430,6 @@ pub mod deployment {
             &Identity::Address(wallet.address().into()),
             name.to_string(),
             symbol.to_string(),
-        )
-        .await;
-        wait();
-        pb.inc();
-
-        let _ = sorted_troves_abi::initialize(
-            &sorted_troves,
-            100,
-            borrow_operations.contract_id().into(),
-            trove_manager.contract_id().into(),
         )
         .await;
         wait();
@@ -461,15 +459,16 @@ pub mod deployment {
         let _ = protocol_manager_abi::register_asset(
             &protocol_manager,
             asset.contract_id().into(),
-            active_pool.contract_id().into(),
             trove_manager.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
             oracle.contract_id().into(),
-            sorted_troves.contract_id().into(),
             borrow_operations,
             stability_pool,
             usdf,
             fpt_staking,
+            coll_surplus_pool,
+            default_pool,
+            active_pool,
+            sorted_troves,
         )
         .await;
         wait();

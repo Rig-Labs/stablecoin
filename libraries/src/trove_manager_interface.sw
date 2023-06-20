@@ -32,9 +32,6 @@ abi TroveManager {
     fn update_stake_and_total_stakes(id: Identity) -> u64;
 
     #[storage(read, write)]
-    fn update_base_rate_from_redemption(asset_drawn: u64, price: u64, total_usdf_supply: u64);
-
-    #[storage(read, write)]
     fn update_trove_reward_snapshots(id: Identity);
 
     #[storage(read, write)]
@@ -61,32 +58,6 @@ abi TroveManager {
     #[storage(read, write)]
     fn remove_stake(id: Identity);
 
-    #[storage(read)]
-    fn get_redemption_rate() -> u64;
-
-    #[storage(read)]
-    fn get_redemption_rate_with_decay() -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_rate() -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_rate_with_decay() -> u64;
-
-    #[storage(read)]
-    fn get_redemption_fee(asset_drawn: u64) -> u64;
-
-    #[storage(read)]
-    fn get_redemption_fee_with_decay(asset_drawn: u64) -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_fee(debt: u64) -> u64;
-
-    #[storage(read)]
-    fn get_borrowing_fee_with_decay(debt: u64) -> u64;
-
-    #[storage(read, write)]
-    fn decay_base_rate_from_borrowing();
 
     #[storage(read)]
     fn get_trove_status(id: Identity) -> Status;

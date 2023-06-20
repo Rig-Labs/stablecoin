@@ -7,7 +7,7 @@ use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
 use test_utils::setup::common::{
-    deploy_stability_pool, deploy_token, get_absolute_path_from_relative,
+    deploy_active_pool, deploy_stability_pool, deploy_token, get_absolute_path_from_relative,
 };
 
 abigen!(Contract(
@@ -50,12 +50,13 @@ pub async fn set_nominal_icr_and_insert(
     new_icr: u64,
     prev_id: Identity,
     next_id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id)
+        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -115,12 +116,13 @@ pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .remove(id)
+        .remove(id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -166,6 +168,8 @@ pub async fn setup(
     let fuel_token = deploy_token(&wallet).await;
     let usdf_token = deploy_token(&wallet).await;
 
+    let active_pool = deploy_active_pool(&wallet).await;
+
     token_abi::initialize(
         &fuel_token,
         0,
@@ -190,6 +194,7 @@ pub async fn setup(
         usdf_token.contract_id().into(),
         stability_pool.contract_id().into(),
         fuel_token.contract_id().into(),
+        active_pool.contract_id().into(),
     )
     .await
     .unwrap();

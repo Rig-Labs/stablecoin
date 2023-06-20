@@ -10,16 +10,13 @@ pub const PCT_100: u64 = 1_000_000_000;
 
 pub const SECONDS_IN_ONE_MINUTE: u64 = 60;
 
-// uint constant public MINUTE_DECAY_FACTOR = 999_037_758_833_783_000;
-pub const MINUTE_DECAY_FACTOR: u64 = 999_037_758;
-
 pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
 // Max borrowing fee is 5%
 pub const MAX_BORROWING_FEE: u64 = 50_000_000;
 
-// Max redemption fee floor is 0.5%
-pub const REDEMPTION_FEE_FLOOR: u64 = 5_000_000;
+// Redemption fee floor is 1%
+pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
@@ -44,6 +41,18 @@ pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 
+// 0.5% one-time borrow fee
+pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
+    let fee = U128::from_u64(debt) * U128::from_u64(BORROWING_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    return fee.as_u64().unwrap();
+}
+
+// 1% redemption fee
+pub fn fm_compute_redemption_fee(debt: u64) -> u64 {
+    let fee = U128::from_u64(debt) * U128::from_u64(REDEMPTION_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    return fee.as_u64().unwrap();
+}
+
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {
         let ncr: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(debt);
@@ -51,6 +60,11 @@ pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     } else {
         return MAX_U64;
     }
+}
+
+pub fn fm_multiply_ratio(value: u64, numerator: u64, denominator: u64) -> u64 {
+    let ratio: U128 = U128::from_u64(value) * U128::from_u64(numerator) / U128::from_u64(denominator);
+    return ratio.as_u64().unwrap();
 }
 
 pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {

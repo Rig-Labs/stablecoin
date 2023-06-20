@@ -10,16 +10,15 @@ abigen!(Contract(
 ));
 
 pub mod borrow_operations_abi {
-    use fuels::prelude::{Account, AssetId, CallParameters, Error};
-
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
+    use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
-    use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
+    use fuels::prelude::{Account, AssetId, CallParameters, Error};
 
     pub async fn initialize<T: Account>(
         borrow_operations: &BorrowOperations<T>,
@@ -27,6 +26,9 @@ pub mod borrow_operations_abi {
         fpt_staking_contract: ContractId,
         stability_pool_contract: ContractId,
         protocol_manager_contract: ContractId,
+        coll_surplus_pool_contract: ContractId,
+        active_pool_contract: ContractId,
+        sorted_troves_contract: ContractId,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
@@ -37,6 +39,9 @@ pub mod borrow_operations_abi {
                 fpt_staking_contract,
                 stability_pool_contract,
                 protocol_manager_contract,
+                coll_surplus_pool_contract,
+                active_pool_contract,
+                sorted_troves_contract,
             )
             .tx_params(tx_params)
             .call()
@@ -84,7 +89,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
                 sorted_troves,
                 trove_manager,
-                fpt_staking
+                fpt_staking,
             ])
             .append_variable_outputs(3)
             .tx_params(tx_params)
@@ -284,24 +289,14 @@ pub mod borrow_operations_abi {
     pub async fn add_asset<T: Account>(
         borrow_operations: BorrowOperations<T>,
         oracle: ContractId,
-        sorted_troves: ContractId,
         trove_manager: ContractId,
-        active_pool: ContractId,
         asset: ContractId,
-        coll_surplus_pool_contract: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         borrow_operations
             .methods()
-            .add_asset(
-                asset,
-                trove_manager,
-                sorted_troves,
-                oracle,
-                active_pool,
-                coll_surplus_pool_contract,
-            )
+            .add_asset(asset, trove_manager, oracle)
             .tx_params(tx_params)
             .call()
             .await
@@ -312,9 +307,11 @@ pub mod borrow_operations_utils {
     use fuels::prelude::{Account, WalletUnlocked};
 
     use super::*;
+    use crate::interfaces::active_pool;
+    use crate::interfaces::fpt_staking::FPTStaking;
+    use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
-    use crate::interfaces::fpt_staking::FPTStaking;
 
     pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,
@@ -322,10 +319,11 @@ pub mod borrow_operations_utils {
         borrow_operations: &BorrowOperations<T>,
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
+        active_pool: &active_pool::ActivePool<WalletUnlocked>,
+        sorted_troves: &SortedTroves<WalletUnlocked>,
         amount: u64,
         usdf_amount: u64,
     ) {
-
         token_abi::mint_to_id(
             &asset_contracts.asset,
             amount,
@@ -342,9 +340,9 @@ pub mod borrow_operations_utils {
             &asset_contracts.asset,
             &usdf,
             fpt_staking,
-            &asset_contracts.sorted_troves,
+            &sorted_troves,
             &asset_contracts.trove_manager,
-            &asset_contracts.active_pool,
+            &active_pool,
             amount,
             usdf_amount,
             Identity::Address([0; 32].into()),
@@ -352,6 +350,5 @@ pub mod borrow_operations_utils {
         )
         .await
         .unwrap();
-
     }
 }

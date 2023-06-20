@@ -1,13 +1,6 @@
+use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
 use dotenv::dotenv;
-use fuels::{
-    prelude::{Address, Bech32Address, Bech32ContractId, Provider, WalletUnlocked},
-    types::ContractId,
-};
-
-use crate::{
-    interfaces::trove_manager::{trove_manager_abi, TroveManagerContract},
-    setup::common::ProtocolContracts,
-};
+use fuels::prelude::{Bech32ContractId, Provider, WalletUnlocked};
 
 const RPC: &str = "beta-3.fuel.network";
 // const RPC: &str = "http://localhost:4000";

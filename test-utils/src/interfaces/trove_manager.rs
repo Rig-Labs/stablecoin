@@ -1,9 +1,3 @@
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-    types::Identity,
-};
-
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::coll_surplus_pool::CollSurplusPool;
 use crate::interfaces::default_pool::DefaultPool;
@@ -12,6 +6,8 @@ use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
 use crate::interfaces::community_issuance::CommunityIssuance;
+use fuels::prelude::abigen;
+use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -20,7 +16,7 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::prelude::{Account, Error, LogDecoder};
+    use fuels::{prelude::{Account, Error, LogDecoder, TxParameters}, types::{Identity, ContractId}};
 
     use crate::{setup::common::wait, interfaces::community_issuance};
 
@@ -324,104 +320,13 @@ pub mod trove_manager_abi {
     //         .unwrap()
     // }
 
-    pub async fn get_borrowing_rate<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_rate()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_rate_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().set_gas_price(1);
-
-        trove_manager
-            .methods()
-            .get_borrowing_rate_with_decay()
-            .tx_params(tx_params)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_fee<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        usdf_borrowed: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_fee(usdf_borrowed)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_borrowing_fee_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        usdf_borrowed: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_borrowing_fee_with_decay(usdf_borrowed)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_fee<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        asset_drawdown: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_fee(asset_drawdown)
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_rate<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_rate()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_rate_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_rate_with_decay()
-            .call()
-            .await
-            .unwrap()
-    }
-
-    pub async fn get_redemption_fee_with_decay<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        asset_drawn: u64,
-    ) -> FuelCallResponse<u64> {
-        trove_manager
-            .methods()
-            .get_redemption_fee_with_decay(asset_drawn)
-            .call()
-            .await
-            .unwrap()
+    pub fn get_redemption_fee(asset_drawdown: u64) -> u64 {
+        return asset_drawdown * 1 / 100;
     }
 }
 
 pub mod trove_manager_utils {
-    use fuels::prelude::Account;
+    use fuels::{prelude::Account, types::{Identity, ContractId}};
 
     use crate::{
         interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
@@ -437,11 +342,12 @@ pub mod trove_manager_utils {
         debt: u64,
         prev_id: Identity,
         next_id: Identity,
+        asset: ContractId,
     ) {
         trove_manager_abi::increase_trove_coll(trove_manager, id.clone(), coll).await;
         trove_manager_abi::increase_trove_debt(trove_manager, id.clone(), debt).await;
         trove_manager_abi::set_trove_status(trove_manager, id.clone(), Status::Active).await;
-        sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id).await;
+        sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id, asset).await;
     }
 
     pub async fn assert_trove_coll<T: Account>(

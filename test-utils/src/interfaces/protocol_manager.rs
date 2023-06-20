@@ -1,5 +1,4 @@
 use fuels::prelude::abigen;
-
 use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
@@ -8,19 +7,22 @@ abigen!(Contract(
 ));
 
 pub mod protocol_manager_abi {
+    use super::*;
+    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
+    use crate::interfaces::coll_surplus_pool::CollSurplusPool;
+    use crate::interfaces::default_pool::DefaultPool;
+    use crate::interfaces::fpt_staking::FPTStaking;
+    use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::stability_pool::StabilityPool;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::interfaces::fpt_staking::FPTStaking;
-    use crate::setup::common::{wait, AssetContracts};
-    use fuels::prelude::{Account, CallParameters, LogDecoder, SettableContract};
+    use crate::setup::common::AssetContracts;
+    use fuels::prelude::{Account, CallParameters, SettableContract};
     use fuels::types::AssetId;
     use fuels::{
         prelude::{ContractId, TxParameters},
         types::Identity,
     };
-
-    use super::*;
 
     pub async fn initialize<T: Account>(
         protocol_manager: &ProtocolManager<T>,
@@ -28,13 +30,27 @@ pub mod protocol_manager_abi {
         stability_pool: ContractId,
         fpt_staking: ContractId,
         usdf: ContractId,
+        coll_surplus_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
+        sorted_troves: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         let res = protocol_manager
             .methods()
-            .initialize(borrow_operations, stability_pool, fpt_staking, usdf, admin)
+            .initialize(
+                borrow_operations,
+                stability_pool,
+                fpt_staking,
+                usdf,
+                coll_surplus_pool,
+                default_pool,
+                active_pool,
+                sorted_troves,
+                admin,
+            )
             .tx_params(tx_params)
             .call()
             .await
@@ -55,30 +71,33 @@ pub mod protocol_manager_abi {
     pub async fn register_asset<T: Account>(
         protocol_manager: &ProtocolManager<T>,
         asset: ContractId,
-        active_pool: ContractId,
         trove_manager: ContractId,
-        coll_surplus_pool: ContractId,
         oracle: ContractId,
-        sorted_troves: ContractId,
         borrow_operations: &BorrowOperations<T>,
         stability_pool: &StabilityPool<T>,
         usdf: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
+        default_pool: &DefaultPool<T>,
+        active_pool: &ActivePool<T>,
+        sorted_troves: &SortedTroves<T>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         protocol_manager
             .methods()
-            .register_asset(
-                asset,
-                active_pool,
-                trove_manager,
-                coll_surplus_pool,
-                oracle,
-                sorted_troves,
-            )
+            .register_asset(asset, trove_manager, oracle)
             .tx_params(tx_params)
-            .set_contracts(&[borrow_operations, stability_pool, usdf, fpt_staking])
+            .set_contracts(&[
+                borrow_operations,
+                stability_pool,
+                usdf,
+                fpt_staking,
+                coll_surplus_pool,
+                default_pool,
+                active_pool,
+                sorted_troves,
+            ])
             .call()
             .await
             .unwrap()
@@ -94,6 +113,10 @@ pub mod protocol_manager_abi {
         lower_partial_hint: Option<Identity>,
         usdf: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
+        default_pool: &DefaultPool<T>,
+        active_pool: &ActivePool<T>,
+        sorted_troves: &SortedTroves<T>,
         asset_contracts: &Vec<AssetContracts<T>>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default()
@@ -108,17 +131,16 @@ pub mod protocol_manager_abi {
         let mut set_contracts: Vec<&dyn SettableContract> = Vec::new();
 
         for contracts in asset_contracts.iter() {
-            set_contracts.push(&contracts.active_pool);
             set_contracts.push(&contracts.trove_manager);
-            set_contracts.push(&contracts.coll_surplus_pool);
             set_contracts.push(&contracts.oracle);
-            set_contracts.push(&contracts.sorted_troves);
-            set_contracts.push(&contracts.default_pool);
         }
 
         set_contracts.push(fpt_staking);
-
+        set_contracts.push(coll_surplus_pool);
+        set_contracts.push(default_pool);
+        set_contracts.push(active_pool);
         set_contracts.push(usdf);
+        set_contracts.push(sorted_troves);
 
         protocol_manager
             .methods()

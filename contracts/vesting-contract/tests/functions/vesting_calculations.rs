@@ -3,27 +3,11 @@ use crate::utils::setup::setup;
 use fuels::prelude::*;
 use fuels::{prelude::AssetId, types::Identity};
 
-async fn produce_block_at_height(provider: &Provider, target_height: u64) {
-    // let dt = DateTime::<Utc>::from_utc(
-    //     NaiveDateTime::from_timestamp_opt((start_timestamp).try_into().unwrap(), 0).unwrap(),
-    //     Utc,
-    // );
-
-    // let time: TimeParameters = TimeParameters {
-    //     start_time: dt,
-    //     block_time_interval: Duration::seconds(1),
-    // };
-
-    let block_height = provider.latest_block_height().await.unwrap();
-
-    let _res = provider
-        .produce_blocks(target_height - block_height, None)
-        .await;
-}
-
 mod success {
 
-    use test_utils::interfaces::vesting::{get_vesting_schedule, instantiate_vesting_contract};
+    use test_utils::interfaces::vesting::{
+        get_vesting_schedule, instantiate_vesting_contract, set_timestamp, VestingContract,
+    };
 
     use crate::utils::setup::test_helpers::init_and_mint_to_vesting;
 
@@ -40,15 +24,13 @@ mod success {
             0,
             10000,
             Identity::Address(recipient.address().into()),
-            false,
         )];
 
         let _ = instantiate_vesting_contract(
             &vest,
             &admin.address().into(),
-            &vesting_schedule.to_vec(),
             &asset.id().into(),
-            10000,
+            vesting_schedule.to_vec(),
         )
         .await;
 
@@ -86,15 +68,13 @@ mod success {
             0,
             total_amount,
             Identity::Address(recipient.address().into()),
-            false,
         )];
 
         let _ = instantiate_vesting_contract(
             &vest,
             &admin.address().into(),
-            &vesting_schedule.to_vec(),
             &asset.contract_id().into(),
-            10000,
+            vesting_schedule.to_vec(),
         )
         .await;
 
@@ -159,6 +139,8 @@ mod success {
         let total_amount = 10000;
         let cliff_amount = 3000;
 
+        let recpient_vesting = VestingContract::new(vest.contract_id().clone(), recipient.clone());
+
         let vesting_schedule = [get_vesting_schedule(
             cliff_amount,
             cliff_timestamp,
@@ -166,15 +148,13 @@ mod success {
             0,
             total_amount,
             Identity::Address(recipient.address().into()),
-            false,
         )];
 
         let _ = instantiate_vesting_contract(
             &vest,
             &admin.address().into(),
-            &vesting_schedule.to_vec(),
             &asset.contract_id().into(),
-            10000,
+            vesting_schedule.to_vec(),
         )
         .await;
 
@@ -198,31 +178,11 @@ mod success {
 
         assert_eq!(vest_balance, total_amount);
 
-        produce_block_at_height(&provider, 20).await;
+        let _ = set_timestamp(&vest, 20).await;
 
-        // let chain_info = provider.chain_info().await.unwrap();
-        // println!(
-        //     "Current Simulated time: {:?}",
-        //     chain_info.latest_block.header.time.unwrap()
-        // );
-
-        // println!(
-        //     "Current Simulated time_stamp: {:?}",
-        //     chain_info.latest_block.header.time.unwrap().timestamp()
-        // );
-        // Time before cliff, no tokens should be redeemable
-
-        // let res = vest.methods().get_current_time().call().await.unwrap();
-
-        // println!(
-        //     "Timestamp on smart contract: {} timestamp not propogating",
-        //     res.value
-        // );
-        // println!("cliff_timestamp: {}", cliff_timestamp);
-
-        let _res = vest
+        let _res = recpient_vesting
             .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .claim_vested_tokens()
             .append_variable_outputs(1)
             .call()
             .await;
@@ -234,12 +194,12 @@ mod success {
 
         assert_eq!(rec_balance, 0);
 
-        produce_block_at_height(&provider, cliff_timestamp - 1).await;
+        let _ = set_timestamp(&vest, cliff_timestamp).await;
         // Block produced then claim vested tokens happens in the next block
 
-        let _res = vest
+        let _res = recpient_vesting
             .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .claim_vested_tokens()
             .append_variable_outputs(1)
             .call()
             .await;
@@ -251,16 +211,12 @@ mod success {
 
         assert_eq!(cliff_amount, rec_balance);
 
-        produce_block_at_height(
-            &provider,
-            end_timestamp - 1 - (end_timestamp - cliff_timestamp) / 2,
-        )
-        .await;
+        let _ = set_timestamp(&vest, end_timestamp - (end_timestamp - cliff_timestamp) / 2).await;
 
         // Block produced then claim vested tokens happens in the next block
-        let _res = vest
+        let _res = recpient_vesting
             .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .claim_vested_tokens()
             .append_variable_outputs(1)
             .call()
             .await;
@@ -275,12 +231,12 @@ mod success {
             rec_balance
         );
 
-        produce_block_at_height(&provider, end_timestamp).await;
+        let _ = set_timestamp(&vest, end_timestamp).await;
         // Block produced then claim vested tokens happens in the next block
 
-        let _res = vest
+        let _res = recpient_vesting
             .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .claim_vested_tokens()
             .append_variable_outputs(1)
             .call()
             .await;
@@ -292,11 +248,12 @@ mod success {
 
         assert_eq!(total_amount, rec_balance);
 
-        produce_block_at_height(&provider, end_timestamp + 10).await;
+        set_timestamp(&vest, end_timestamp + 10).await;
+
         // Tries to claim after all tokens have been claimed
-        let _res = vest
+        let _res = recpient_vesting
             .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
+            .claim_vested_tokens()
             .append_variable_outputs(1)
             .call()
             .await;
@@ -307,95 +264,5 @@ mod success {
             .unwrap();
 
         assert_eq!(total_amount, rec_balance);
-    }
-
-    #[tokio::test]
-    async fn proper_revoking_vesting() {
-        let start_timestamp: u64 = 0;
-        // convert seconds to nano seconds;
-        let (vest, admin, recipient, asset) = setup().await;
-        let cliff_timestamp = (start_timestamp + 100) * 1;
-        let end_timestamp = (cliff_timestamp + 100) * 1;
-        let total_amount = 10000;
-        let cliff_amount = 3000;
-
-        let vesting_schedule = [get_vesting_schedule(
-            cliff_amount,
-            cliff_timestamp,
-            end_timestamp,
-            0,
-            total_amount,
-            Identity::Address(recipient.address().into()),
-            false,
-        )];
-
-        let _ = instantiate_vesting_contract(
-            &vest,
-            &admin.address().into(),
-            &vesting_schedule.to_vec(),
-            &asset.contract_id().into(),
-            10000,
-        )
-        .await;
-
-        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
-
-        let asset_id = AssetId::from(*asset.id().hash());
-
-        let provider = admin.provider().unwrap();
-
-        produce_block_at_height(&provider, cliff_timestamp - 1).await;
-        // Block produced then claim vested tokens happens in the next block
-
-        let _res = vest
-            .methods()
-            .claim_vested_tokens(Identity::Address(recipient.address().into()))
-            .append_variable_outputs(1)
-            .call()
-            .await;
-
-        let rec_balance = provider
-            .get_asset_balance(&recipient.address(), asset_id)
-            .await
-            .unwrap();
-
-        assert_eq!(cliff_amount, rec_balance);
-
-        produce_block_at_height(
-            &provider,
-            end_timestamp - 1 - (end_timestamp - cliff_timestamp) / 2,
-        )
-        .await;
-
-        // Block produced then claim vested tokens happens in the next block
-        let _res = vest
-            .methods()
-            .revoke_vesting_schedule(Identity::Address(recipient.address().into()))
-            .append_variable_outputs(1)
-            .call()
-            .await;
-
-        let rec_balance = provider
-            .get_asset_balance(&recipient.address(), asset_id)
-            .await
-            .unwrap();
-
-        assert_eq!(cliff_amount, rec_balance);
-
-        let admin_balance = provider
-            .get_asset_balance(&admin.address(), asset_id)
-            .await
-            .unwrap();
-
-        assert_eq!(total_amount - cliff_amount, admin_balance);
-
-        let vesting_schedule = vest
-            .methods()
-            .get_vesting_schedule(Identity::Address(recipient.address().into()))
-            .call()
-            .await
-            .unwrap();
-
-        assert_eq!(vesting_schedule.value, None);
     }
 }

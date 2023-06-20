@@ -6,14 +6,13 @@ abigen!(Contract(
 ));
 
 pub mod usdf_token_abi {
+    use super::*;
+    use crate::setup::common::wait;
     use fuels::{
         prelude::{Account, AssetId, CallParameters, Error, LogDecoder, TxParameters},
         types::ContractId,
     };
 
-    use crate::setup::common::wait;
-
-    use super::*;
     pub async fn initialize<T: Account>(
         instance: &USDFToken<T>,
         mut name: String,

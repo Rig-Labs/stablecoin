@@ -1,10 +1,8 @@
 use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::prelude::*;
-
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::types::Identity;
 use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
-
 use test_utils::setup::common::{deploy_sorted_troves, get_absolute_path_from_relative};
 
 abigen!(Contract(
@@ -41,12 +39,13 @@ pub async fn set_nominal_icr_and_insert(
     new_icr: u64,
     prev_id: Identity,
     next_id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id)
+        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -70,12 +69,13 @@ pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
+    asset: ContractId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().set_gas_price(1);
 
     trove_manager
         .methods()
-        .remove(id)
+        .remove(id, asset)
         .set_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -124,8 +124,9 @@ pub async fn initialize_st_and_tm(
     sorted_troves: &SortedTroves<WalletUnlocked>,
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     max_size: u64,
+    asset: ContractId,
 ) {
-    let _ = initialize(
+    initialize(
         sorted_troves,
         max_size,
         trove_manager.contract_id().into(),
@@ -145,6 +146,14 @@ pub async fn initialize_st_and_tm(
             sorted_troves.contract_id().into(),
             sorted_troves.contract_id().into(),
         )
+        .call()
+        .await
+        .unwrap();
+
+    trove_manager
+        .methods()
+        .add_asset(asset, trove_manager.contract_id().into())
+        .set_contracts(&[sorted_troves])
         .call()
         .await
         .unwrap();

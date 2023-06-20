@@ -1,6 +1,6 @@
 library data_structures;
 
-pub struct RedemptionTotals{
+pub struct RedemptionTotals {
     remaining_usdf: u64,
     total_usdf_to_redeem: u64,
     total_asset_drawn: u64,
@@ -42,7 +42,6 @@ impl SingleRedemptionValues {
     }
 }
 
-
 pub struct AssetInfo {
     assets: Vec<ContractId>,
     asset_contracts: Vec<AssetContracts>,
@@ -55,9 +54,6 @@ pub struct AssetInfo {
 
 pub struct AssetContracts {
     trove_manager: ContractId,
-    active_pool: ContractId,
-    coll_surplus_pool: ContractId,
     oracle: ContractId,
-    sorted_troves: ContractId,
-    fpt_staking: ContractId,
+    asset_address: ContractId,
 }

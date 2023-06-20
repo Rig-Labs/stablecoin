@@ -28,6 +28,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         20_000 * PRECISION,
         10_000 * PRECISION,
     )
@@ -39,6 +41,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         9_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -50,6 +54,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         8_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -61,6 +67,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         15_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -72,6 +80,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         7_000 * PRECISION,
         5_000 * PRECISION,
     )
@@ -98,10 +108,12 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet1.clone(),
     );
 
-    let pre_redemption_active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
@@ -113,18 +125,27 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         None,
         &contracts.usdf,
         &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
+        &contracts.default_pool,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
         &contracts.asset_contracts,
     )
     .await;
 
-    let active_pool_asset = active_pool_abi::get_asset(&contracts.asset_contracts[0].active_pool)
-        .await
-        .value;
+    let active_pool_asset = active_pool_abi::get_asset(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
-    let active_pool_debt =
-        active_pool_abi::get_usdf_debt(&contracts.asset_contracts[0].active_pool)
-            .await
-            .value;
+    let active_pool_debt = active_pool_abi::get_usdf_debt(
+        &contracts.active_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .value;
 
     // Total active pool asset should be reduced by the redemption amount
     //  + amount taken from the 2nd collateral type
@@ -156,25 +177,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     // TODO Replace with staking contract when implemented
     let staking_balance = provider
-        .get_contract_asset_balance(
-            &contracts.fpt_staking.contract_id(),
-            fuel_asset_id,
-        )
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await
         .unwrap();
 
     let fees2 = provider
-        .get_contract_asset_balance(
-            &contracts.fpt_staking.contract_id(),
-            st_fuel_asset_id,
-        )
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), st_fuel_asset_id)
         .await
         .unwrap();
-
-    let a = fuel_balance + st_fuel_balance;
-    let b = redemption_amount - staking_balance - fees2;
-
-    println!("fees check {} {} {}", a, b, staking_balance);
 
     assert_eq!(
         fuel_balance + st_fuel_balance,

@@ -60,14 +60,13 @@ async fn fails_unauthorized() {
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
+        ContractId::new([0; 32].into()),
     )
     .await
     .expect_err("Able to initialize stability pool with unauthorized address");
 
     stability_pool_abi::add_asset(
         &stability_pool_attacker,
-        ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
