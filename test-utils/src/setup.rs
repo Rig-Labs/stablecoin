@@ -30,7 +30,7 @@ pub mod common {
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
             oracle::oracle_abi, protocol_manager::protocol_manager_abi,
             sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::fpt_staking_abi
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::fpt_staking_abi, community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
         },
         paths::*,
     };
@@ -42,7 +42,9 @@ pub mod common {
         pub protocol_manager: ProtocolManager<T>,
         pub asset_contracts: Vec<AssetContracts<T>>,
         pub fpt_staking: FPTStaking<T>,
+        pub fpt_token: FPTToken<T>,
         pub fpt: Token<T>,
+        pub community_issuance: CommunityIssuance<T>,
     }
 
     pub struct AssetContracts<T: Account> {
@@ -90,7 +92,7 @@ pub mod common {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(6);
+        let mut pb = ProgressBar::new(8);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -98,13 +100,19 @@ pub mod common {
         let usdf = deploy_usdf_token(&wallet).await;
         pb.inc();
 
-        let fpt = deploy_token(&wallet).await;
-        pb.inc();
-
         let stability_pool = deploy_stability_pool(&wallet).await;
         pb.inc();
 
         let fpt_staking = deploy_fpt_staking(&wallet).await;
+        pb.inc();
+
+        let community_issuance = deploy_community_issuance(&wallet).await;
+        pb.inc();
+
+        let fpt_token = deploy_fpt_token(&wallet).await;
+        pb.inc();
+
+        let fpt = deploy_token(&wallet).await;
         pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
@@ -116,13 +124,36 @@ pub mod common {
             println!("Stability Pool: {}", stability_pool.contract_id());
             println!("Protocol Manager: {}", protocol_manager.contract_id());
             println!("FPT Staking: {}", fpt_staking.contract_id());
-            println!("FPT Mock Token: {}", fpt.contract_id());
+            println!("FPT Token: {}", fpt_token.contract_id());
+            println!("Mock FPT Token: {}", fpt_token.contract_id());
+            println!("Community Issuance: {}", community_issuance.contract_id());
         }
 
-        let mut pb = ProgressBar::new(6);
+        let mut pb = ProgressBar::new(8);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
+        community_issuance_abi::initialize(
+            &community_issuance,
+            stability_pool.contract_id().into(),
+            fpt_token.contract_id().into(),
+            &Identity::Address(wallet.address().into()),
+            true,
+            0
+        ).await;
+        pb.inc();
+
+        fpt_token_abi::initialize(
+            &fpt_token,
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+            &usdf, // TODO this will be the vesting contract
+            &community_issuance
+        )
+        .await;
+        pb.inc();
+
+        // mock token for testing staking
         token_abi::initialize(
             &fpt,
             1_000_000_000,
@@ -144,7 +175,6 @@ pub mod common {
         .await;
         pb.inc();
 
-        // TODO Change usdf to fpt staking
         borrow_operations_abi::initialize(
             &borrow_operations,
             usdf.contract_id().into(),
@@ -155,12 +185,11 @@ pub mod common {
         .await;
         pb.inc();
 
-        // TODO Change usdf to fpt community issuance
         stability_pool_abi::initialize(
             &stability_pool,
             borrow_operations.contract_id().into(),
             usdf.contract_id().into(),
-            usdf.contract_id().into(),
+            community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
         )
         .await
@@ -170,9 +199,9 @@ pub mod common {
         fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // this will be trove manager, don't want to deploy everything here just for that. When fuel testing gets improved there will be easier way to do this anyways most likely
+            protocol_manager.contract_id().into(), // TODO this will be trove manager
             borrow_operations.contract_id().into(),
-            fpt.contract_id().into(),
+            fpt.contract_id().into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
             usdf.contract_id().into(),
         )
         .await;
@@ -231,7 +260,9 @@ pub mod common {
             asset_contracts,
             protocol_manager,
             fpt_staking,
+            fpt_token,
             fpt,
+            community_issuance
         };
 
         return contracts;

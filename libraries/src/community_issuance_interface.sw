@@ -26,14 +26,4 @@ abi CommunityIssuance {
     #[storage(write, read)]
     fn set_current_time(time: u64);
 
-    fn get_cumulative_issuance_fraction(current_time: u64, deployment_time: u64) -> u64;
-
-    fn external_test_issue_fpt(
-        current_time: u64, 
-        deployment_time: u64, 
-        time_transition_started: u64, 
-        total_transition_time_seconds:u64, 
-        total_fpt_issued: u64, 
-        has_transitioned_rewards:bool
-    ) -> u64;
 }

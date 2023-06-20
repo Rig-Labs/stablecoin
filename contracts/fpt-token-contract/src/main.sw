@@ -33,6 +33,7 @@ storage {
         decimals: 1u8,
     },
     vesting_contract: ContractId = null_contract(),
+    community_issuance_contract: ContractId = null_contract(),
     is_initialized: bool = false,
 }
 
@@ -47,11 +48,14 @@ impl FPTToken for Contract {
     fn initialize(
         config: TokenInitializeConfig,
         vesting_contract: ContractId,
+        community_issuance_contract: ContractId,
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
         storage.vesting_contract = vesting_contract;
+        storage.community_issuance_contract = community_issuance_contract;
         storage.config = config;
-        mint_to(TOTAL_SUPPLY * DECIMAL_PRECISION, Identity::ContractId(vesting_contract));
+        mint_to(TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION, Identity::ContractId(vesting_contract));
+        mint_to(TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION, Identity::ContractId(community_issuance_contract));
         storage.is_initialized = true;
     }
 

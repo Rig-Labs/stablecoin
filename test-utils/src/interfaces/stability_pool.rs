@@ -10,6 +10,7 @@ use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
 use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
+use crate::interfaces::community_issuance::CommunityIssuance;
 
 abigen!(Contract(
     name = "StabilityPool",
@@ -74,6 +75,7 @@ pub mod stability_pool_abi {
 
     pub async fn provide_to_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
@@ -95,7 +97,7 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token])
+            .set_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
@@ -147,6 +149,7 @@ pub mod stability_pool_abi {
 
     pub async fn withdraw_from_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
@@ -158,13 +161,14 @@ pub mod stability_pool_abi {
             .withdraw_from_stability_pool(amount)
             .tx_params(tx_params)
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token])
+            .set_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
 
     pub async fn withdraw_gain_to_trove<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         trove_manager: &TroveManagerContract<T>,
@@ -190,6 +194,7 @@ pub mod stability_pool_abi {
                 sorted_troves,
                 active_pool,
                 oracle,
+                community_issuance,
             ])
             .call()
             .await

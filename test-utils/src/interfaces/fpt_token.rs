@@ -10,7 +10,9 @@ pub mod fpt_token_abi {
         prelude::{Account, AssetId, CallParameters, Error, LogDecoder, TxParameters},
         types::ContractId,
     };
-
+    use crate::interfaces::vesting::VestingContract;
+    use crate::interfaces::usdf_token::USDFToken;
+    use crate::interfaces::community_issuance::CommunityIssuance;
     use crate::{setup::common::wait, interfaces::vesting};
 
     use super::*;
@@ -18,7 +20,8 @@ pub mod fpt_token_abi {
         instance: &FPTToken<T>,
         mut name: String,
         mut symbol: String,
-        vesting_contract: ContractId,
+        vesting_contract: &USDFToken<T>,
+        community_issuance_contract: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
         name.push_str(" ".repeat(32 - name.len()).as_str());
@@ -34,21 +37,24 @@ pub mod fpt_token_abi {
             .methods()
             .initialize(
                 config,
-                vesting_contract
-            )
+                vesting_contract.contract_id().into(),
+                community_issuance_contract.contract_id().into()
+            ).set_contracts(&[vesting_contract, community_issuance_contract])
             .tx_params(tx_params)
             .append_variable_outputs(10)
             .call()
             .await;
 
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        return res.unwrap();
+
+        // // TODO: remove this workaround
+        // match res {
+        //     Ok(res) => res,
+        //     Err(_) => {
+        //         wait();
+        //         return FuelCallResponse::new((), vec![], LogDecoder::default());
+        //     }
+        // }
     }
 
     pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<u64> {

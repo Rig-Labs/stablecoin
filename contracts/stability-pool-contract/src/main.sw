@@ -9,6 +9,7 @@ use libraries::usdf_token_interface::{USDFToken};
 use libraries::active_pool_interface::{ActivePool};
 use libraries::trove_manager_interface::{TroveManager};
 use libraries::borrow_operations_interface::{BorrowOperations};
+use libraries::community_issuance_interface::{CommunityIssuance};
 use libraries::numbers::*;
 use libraries::fluid_math::{DECIMAL_PRECISION, fm_min, null_contract, null_identity_address};
 
@@ -128,7 +129,10 @@ impl StabilityPool for Contract {
         require_usdf_is_valid_and_non_zero();
 
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
-        // TODO Trigger FPT issuance
+
+        // Trigger FPT issuance
+        internal_trigger_fpt_issuance();
+
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
@@ -139,11 +143,12 @@ impl StabilityPool for Contract {
             send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_address);
             i += 1;
         }
+        internal_pay_out_fpt_gains(msg_sender().unwrap());
+
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
 
         storage.total_usdf_deposits += msg_amount();
-        // Pay out FPT gains
     }
 
      /*
@@ -158,7 +163,9 @@ impl StabilityPool for Contract {
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
 
         require_user_has_initial_deposit(initial_deposit);
-        // TODO Trigger FPT issuance
+        //Trigger FPT issuance
+        internal_trigger_fpt_issuance();
+
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
 
@@ -171,7 +178,7 @@ impl StabilityPool for Contract {
             send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_address);
             i += 1;
         }
-
+        internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
     }
@@ -196,11 +203,14 @@ impl StabilityPool for Contract {
         require_user_has_asset_gain(sender, asset_address);
         require_user_has_trove(sender, asset_contracts.trove_manager);
 
-        // TODO Trigger FPT issuance
+        // Trigger FPT issuance
+        internal_trigger_fpt_issuance();
+
         let depositor_asset_gain = internal_get_depositor_asset_gain(sender, asset_address);
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(sender);
 
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
+        internal_pay_out_fpt_gains(msg_sender().unwrap());
         internal_update_deposits_and_snapshots(sender, compounded_usdf_deposit);
 
         let mut current_asset_amount = storage.asset.get(asset_address);
@@ -225,6 +235,7 @@ impl StabilityPool for Contract {
         if total_usdf == 0 || debt_to_offset == 0 {
             return;
         }
+        internal_trigger_fpt_issuance();
 
         let asset_addresses_cache = storage.asset_contracts.get(asset_address);
 
@@ -254,6 +265,79 @@ impl StabilityPool for Contract {
     fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
         return internal_get_compounded_usdf_deposit(depositor);
     }
+}
+
+#[storage(read, write)]
+fn internal_trigger_fpt_issuance(){
+    let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_address.value);
+    let fpt_issuance = community_issuance_contract.issue_fpt();
+    internal_update_g(fpt_issuance);
+}
+
+#[storage(read, write)]
+fn internal_update_g(fpt_issuance: u64){
+    if (storage.total_usdf_deposits == 0 || fpt_issuance ==0){
+        return;
+    }
+    let fpt_per_unit_staked = internal_compute_fpt_per_unit_staked(fpt_issuance, storage.total_usdf_deposits);
+    let marginal_fpt_gain = U128::from_u64(fpt_per_unit_staked) * storage.p;
+    let current_epoch = storage.current_epoch;
+    let current_scale = storage.current_scale;
+    let new_epoch_to_scale_to_gain = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)) + marginal_fpt_gain;
+    storage.epoch_to_scale_to_gain.insert((current_epoch, current_scale), new_epoch_to_scale_to_gain);
+}
+
+/*  
+* Calculate the FPT-per-unit staked.  Division uses a "feedback" error correction, to keep the 
+* cumulative error low in the running total G:
+*
+* 1) Form a numerator which compensates for the floor division error that occurred the last time this 
+* function was called.  
+* 2) Calculate "per-unit-staked" ratio.
+* 3) Multiply the ratio back by its denominator, to reveal the current floor division error.
+* 4) Store this error for use in the next correction when this function is called.
+* 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
+*/
+#[storage(read, write)]
+fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: u64) -> u64 {
+    let fpt_numerator =U128::from_u64(fpt_issuance) * U128::from_u64(DECIMAL_PRECISION);
+    let fpt_per_unit_staked = fpt_numerator / U128::from_u64(total_usdf_deposits);
+    storage.last_fpt_error = fpt_numerator - (fpt_per_unit_staked * U128::from_u64(total_usdf_deposits));
+    fpt_per_unit_staked.as_u64().unwrap()
+}
+
+#[storage(read, write)]
+fn internal_pay_out_fpt_gains(depositor: Identity){
+    let depositor_fpt_gain = internal_get_depositor_fpt_gain(depositor);
+    if (depositor_fpt_gain > 0){
+        let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_address.value);
+        community_issuance_contract.send_fpt(depositor, depositor_fpt_gain);
+    }
+}
+
+#[storage(read, write)]
+fn internal_get_depositor_fpt_gain(depositor: Identity) -> u64 {
+    let initial_deposit = storage.deposits.get(depositor);
+    if (initial_deposit == 0) { return 0; }
+    let snapshots = storage.deposit_snapshots.get(depositor);
+    let fpt_gain = internal_get_fpt_gain_from_snapshots(initial_deposit, snapshots);
+    fpt_gain
+}
+
+#[storage(read, write)]
+fn internal_get_fpt_gain_from_snapshots(initial_stake: u64, snapshots: Snapshots) -> u64 {
+    let epoch_snapshot = snapshots.epoch;
+    let scale_snapshot = snapshots.scale;
+
+    let g_snapshot = snapshots.G;
+    let p_snapshot = snapshots.P;
+
+    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)) - g_snapshot;
+    let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)) / U128::from_u64(SCALE_FACTOR);
+
+    let gain = (U128::from_u64(initial_stake) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
+
+    return gain.as_u64().unwrap();
 }
 
 #[storage(read)]

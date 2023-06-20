@@ -91,6 +91,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet2,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         15_000 * PRECISION,
@@ -103,6 +104,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     println!("here");
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -298,6 +300,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
@@ -310,6 +313,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     let _response = trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -587,6 +591,7 @@ async fn proper_partial_liquidation_empty_sp() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,

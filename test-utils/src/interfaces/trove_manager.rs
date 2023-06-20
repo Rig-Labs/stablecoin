@@ -11,6 +11,7 @@ use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
+use crate::interfaces::community_issuance::CommunityIssuance;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -21,7 +22,7 @@ pub mod trove_manager_abi {
 
     use fuels::prelude::{Account, Error, LogDecoder};
 
-    use crate::setup::common::wait;
+    use crate::{setup::common::wait, interfaces::community_issuance};
 
     use super::*;
 
@@ -39,6 +40,7 @@ pub mod trove_manager_abi {
 
     pub async fn batch_liquidate_troves<T: Account>(
         trove_manager: &TroveManagerContract<T>,
+        community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
         sorted_troves: &SortedTroves<T>,
@@ -64,6 +66,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 coll_surplus_pool,
                 usdf,
+                community_issuance,
             ])
             .append_variable_outputs(3)
             .call()
@@ -72,6 +75,7 @@ pub mod trove_manager_abi {
 
     pub async fn liquidate<T: Account>(
         trove_manager: &TroveManagerContract<T>,
+        community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
         sorted_troves: &SortedTroves<T>,
@@ -97,6 +101,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 coll_surplus_pool,
                 usdf,
+                community_issuance,
             ])
             .append_variable_outputs(3)
             .call()

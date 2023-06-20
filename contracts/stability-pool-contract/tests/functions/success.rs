@@ -52,6 +52,7 @@ async fn proper_stability_deposit() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         600 * PRECISION,
@@ -115,6 +116,7 @@ async fn proper_stability_widthdrawl() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         600 * PRECISION,
@@ -124,6 +126,7 @@ async fn proper_stability_widthdrawl() {
 
     stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
@@ -220,6 +223,7 @@ async fn proper_one_sp_depositor_position() {
     let init_stability_deposit = 1_500 * PRECISION;
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
@@ -231,6 +235,7 @@ async fn proper_one_sp_depositor_position() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -284,6 +289,7 @@ async fn proper_one_sp_depositor_position() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         second_deposit,
@@ -384,6 +390,7 @@ async fn proper_many_depositors_distribution() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         2_000 * PRECISION,
@@ -426,6 +433,7 @@ async fn proper_many_depositors_distribution() {
 
     stability_pool_abi::provide_to_stability_pool(
         &depositor_2_sp,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
@@ -435,6 +443,7 @@ async fn proper_many_depositors_distribution() {
 
     stability_pool_abi::provide_to_stability_pool(
         &depositor_3_sp,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
@@ -446,6 +455,7 @@ async fn proper_many_depositors_distribution() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -573,6 +583,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         2_000 * PRECISION,
@@ -587,6 +598,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -620,6 +632,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
     stability_pool_abi::provide_to_stability_pool(
         &depositor_2_sp,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         500_000 * PRECISION,
@@ -705,6 +718,7 @@ async fn proper_depositor_move_gain_to_trove() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         1_500 * PRECISION,
@@ -716,6 +730,7 @@ async fn proper_depositor_move_gain_to_trove() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -742,6 +757,7 @@ async fn proper_depositor_move_gain_to_trove() {
 
     stability_pool_abi::withdraw_gain_to_trove(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         &contracts.asset_contracts[0].trove_manager,
@@ -826,6 +842,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     let init_stability_deposit = 3_000 * PRECISION;
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
@@ -838,6 +855,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -854,6 +872,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[1].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[1].oracle,
         &contracts.asset_contracts[1].sorted_troves,
@@ -915,6 +934,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         second_deposit,
@@ -1007,6 +1027,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     let init_stability_deposit = 3_000 * PRECISION;
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
@@ -1018,6 +1039,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
@@ -1074,6 +1096,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     trove_manager_abi::liquidate(
         &new_asset_contracts.trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &new_asset_contracts.oracle,
         &new_asset_contracts.sorted_troves,
@@ -1132,9 +1155,10 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     // Makes a 2nd deposit to the Stability Pool
     let second_deposit = 1_000 * PRECISION;
-
+    
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         second_deposit,

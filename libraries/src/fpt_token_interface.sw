@@ -9,7 +9,7 @@ pub struct TokenInitializeConfig {
 abi FPTToken {
     // Initialize contract
     #[storage(read, write)]
-    fn initialize(config: TokenInitializeConfig, vesting_contract: ContractId);
+    fn initialize(config: TokenInitializeConfig, vesting_contract: ContractId, community_issuance_contract: ContractId);
 
     #[storage(read)]
     fn get_vesting_contract() -> ContractId;

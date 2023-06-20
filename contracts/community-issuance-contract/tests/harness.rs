@@ -2,71 +2,321 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::PRECISION,
+    deploy::deployment::print_response,
     interfaces::{
         community_issuance::{community_issuance_abi, CommunityIssuance},
+        stability_pool::{stability_pool_abi, StabilityPool},
+        token::{token_abi},
+        borrow_operations::{borrow_operations_abi, BorrowOperations},
     },
-    setup::common::{deploy_community_issuance},
+    setup::common::{deploy_community_issuance, setup_protocol},
 };
 
-async fn get_community_issuance () -> (
-    CommunityIssuance<WalletUnlocked>,
-    WalletUnlocked,
-) {
-    // Launch a local network and deploy the contract
-    let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(2),                 /* Single wallet */
-            Some(1),                 /* Single coin (UTXO) */
-            Some(1_000 * PRECISION), /* Amount per coin */
-        ),
-        None,
-        None,
-    )
-    .await;
-    let wallet = wallets.pop().unwrap();
-
-    let instance = deploy_community_issuance(&wallet).await;
-
-    (instance, wallet)
+fn abs_dif(a:u64,b: u64) -> u64 {
+    if a > b { return a - b; } else { return b - a; }
 }
 
 #[tokio::test]
 async fn test_emissions() {
-    let (instance, wallet) = get_community_issuance().await;
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
+    let provider = admin.provider().unwrap();
+    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
 
-    // here let's basically just set one year in seconds difference and see what the issuance is. because my unit test didn't work
+    let total_emissions = provider
+    .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)
+    .await
+    .unwrap();
 
-    // community_issuance_abi::initialize(
-    //     &instance, 
-    //     instance.contract_id().into(), 
-    //     instance.contract_id().into(), 
-    //     wallet.address().into(), 
-    //     true, 
-    //     0).await;
+    println!("FPT balance community issuance STARTING {}", total_emissions);
 
-    // let fraction = community_issuance_abi::get_cumulative_issuance_fraction(
-    //     &instance,
-    //     60 * 60 * 24 * 30,
-    //     0
-    // ).await.value;
+    // stability pool depositors, change time, check issuance
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000 * PRECISION,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
 
-    // println!("done {:?}", fraction);
+    borrow_operations_abi::open_trove(
+        &contracts.borrow_operations,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        1_200 * PRECISION,
+        600 * PRECISION,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
 
-    let current_time = 60 * 60 * 24 * 30 * 12;
-    let deployment_time = 0;
-    let time_transition_started = current_time - (current_time / 24);
-    let total_transition_time_seconds = current_time / 6;
-    let total_fpt_issued = 0;
-    let has_transitioned_rewards = true;
+    stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
 
-    println!("time since transition started {:?}", current_time - time_transition_started);
-    println!("total transition time {}", total_transition_time_seconds);
-    println!("change in fpt supply cap {:?}", (current_time - time_transition_started) / total_transition_time_seconds);
+    community_issuance_abi::set_current_time(
+        &contracts.community_issuance,
+        60*60*24*30*12
+    ).await;
 
-    let res = community_issuance_abi::external_test_issue_fpt(
-        &instance,
-        current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards
-    ).await.value;
+    let res = stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        100 * PRECISION,
+    )
+    .await.unwrap();
 
-    println!("res {:?}", res);
+    print_response(&res);
+
+    let fpt_balance_community_issuance = provider
+    .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("FPT balance community issuance {}", fpt_balance_community_issuance);
+
+    let fpt_balance_user_after_claim = provider
+    .get_asset_balance(admin.address().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("user Balance fpt {}", fpt_balance_user_after_claim);
+
+    let dif = abs_dif(fpt_balance_user_after_claim, total_emissions/4);
+    assert!(dif < 100_000_000_000_000, "distributed user balance incorrect from 1 year of staking rewards");
+
+    let res = stability_pool_abi::provide_to_stability_pool(
+        &contracts.stability_pool,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        100 * PRECISION,
+    )
+    .await.unwrap();
+
+    let fpt_balance_user_after_second_claim = provider
+    .get_asset_balance(admin.address().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("user Balance fpt after second deposit (should be same) {}", fpt_balance_user_after_second_claim);
+    assert_eq!(fpt_balance_user_after_claim, fpt_balance_user_after_second_claim, "double claim staked fpt");
+
+}
+
+#[tokio::test]
+async fn test_emissions_multiple_deposits(){
+    let (contracts, admin, mut wallets) = setup_protocol(100, 4, false).await;
+    
+    let provider = admin.provider().unwrap();
+    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+
+    let total_emissions = provider
+    .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    let wallet1 = wallets.pop().unwrap();
+    let wallet2 = wallets.pop().unwrap();
+    let wallet3 = wallets.pop().unwrap();
+
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000 * PRECISION,
+        Identity::Address(wallet1.address().into()),
+    )
+    .await;
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000 * PRECISION,
+        Identity::Address(wallet2.address().into()),
+    )
+    .await;
+    token_abi::mint_to_id(
+        &contracts.asset_contracts[0].asset,
+        5_000 * PRECISION,
+        Identity::Address(wallet3.address().into()),
+    )
+    .await;
+
+
+    let borrow_operations_wallet1 = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet1.clone(),
+    );
+    let borrow_operations_wallet2 = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet2.clone(),
+    );
+    let borrow_operations_wallet3 = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet3.clone(),
+    );
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_wallet1,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        1_200 * PRECISION,
+        600 * PRECISION,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_wallet2,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        1_200 * PRECISION,
+        600 * PRECISION,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    borrow_operations_abi::open_trove(
+        &borrow_operations_wallet3,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.asset_contracts[0].sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].active_pool,
+        1_200 * PRECISION,
+        600 * PRECISION,
+        Identity::Address([0; 32].into()),
+        Identity::Address([0; 32].into()),
+    )
+    .await
+    .unwrap();
+
+    let stability_pool_wallet1 = StabilityPool::new(
+        contracts.stability_pool.contract_id().clone(),
+        wallet1.clone(),
+    );
+    let stability_pool_wallet2 = StabilityPool::new(
+        contracts.stability_pool.contract_id().clone(),
+        wallet2.clone(),
+    );
+    let stability_pool_wallet3 = StabilityPool::new(
+        contracts.stability_pool.contract_id().clone(),
+        wallet3.clone(),
+    );
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet1,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet2,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet3,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+
+    community_issuance_abi::set_current_time(
+        &contracts.community_issuance,
+        60*60*24*30*12
+    ).await;
+
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet1,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet2,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+    stability_pool_abi::provide_to_stability_pool(
+        &stability_pool_wallet3,
+        &contracts.community_issuance,
+        &contracts.usdf,
+        &contracts.asset_contracts[0].asset,
+        300 * PRECISION,
+    )
+    .await
+    .unwrap();
+
+    let fpt_balance_user_after_claim = provider
+    .get_asset_balance(wallet1.address().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("user1 Balance fpt {}", fpt_balance_user_after_claim);
+
+    let dif = abs_dif(fpt_balance_user_after_claim, total_emissions/4/3);
+    assert!(dif < 100_000_000_000_000, "distributed user balance incorrect from 1 year of staking rewards");
+
+    let fpt_balance_user_after_claim = provider
+    .get_asset_balance(wallet2.address().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("user2 Balance fpt {}", fpt_balance_user_after_claim);
+
+    let dif = abs_dif(fpt_balance_user_after_claim, total_emissions/4/3);
+    assert!(dif < 100_000_000_000_000, "distributed user balance incorrect from 1 year of staking rewards");
+
+    let fpt_balance_user_after_claim = provider
+    .get_asset_balance(wallet3.address().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    println!("user3 Balance fpt {}", fpt_balance_user_after_claim);
+
+    let dif = abs_dif(fpt_balance_user_after_claim, total_emissions/4/3);
+    assert!(dif < 100_000_000_000_000, "distributed user balance incorrect from 1 year of staking rewards");
+
 }

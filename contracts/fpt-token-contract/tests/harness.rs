@@ -5,56 +5,40 @@ use test_utils::{
     interfaces::{
         fpt_token::{fpt_token_abi, FPTToken},
     },
-    setup::common::{deploy_fpt_token},
+    setup::common::{setup_protocol},
 };
-
-async fn get_contract_instance() -> (
-    FPTToken<WalletUnlocked>,
-    FPTToken<WalletUnlocked>,
-    WalletUnlocked,
-) {
-    // Launch a local network and deploy the contract
-    let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(2),                 /* Single wallet */
-            Some(1),                 /* Single coin (UTXO) */
-            Some(1_000 * PRECISION), /* Amount per coin */
-        ),
-        None,
-        None,
-    )
-    .await;
-    let wallet = wallets.pop().unwrap();
-
-    let instance = deploy_fpt_token(&wallet).await;
-
-    let recipient = deploy_fpt_token(&wallet).await;
-    
-    (instance, recipient, wallet)
-}
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (fpt_token, recipient, _admin) = get_contract_instance().await;
-    // println!("0");
-    fpt_token_abi::initialize(
-        &fpt_token,
-        "FPT Token".to_string(),
-        "FPT".to_string(),
-        recipient.contract_id().into()
-    ).await;
-    // println!("1");
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
+    let provider = admin.provider().unwrap();
+    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+
 
     let vesting_contract = fpt_token_abi::get_vesting_contract(
-        &fpt_token,
+        &contracts.fpt_token,
     ).await.value;
 
     // println!("vesting {} {}", vesting_contract, recipient.contract_id().hash());
 
-    assert_eq!(vesting_contract, recipient.contract_id().into());
+    assert_eq!(vesting_contract, contracts.usdf.contract_id().into());
+
+    let fpt_balance_vesting = provider
+    .get_contract_asset_balance(contracts.usdf.contract_id().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    assert_eq!(fpt_balance_vesting, 68_000_000_000_000_000, "invalid vesting balance initialized");
+
+    let fpt_balance_community_issuance = provider
+    .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)
+    .await
+    .unwrap();
+
+    assert_eq!(fpt_balance_community_issuance, 32_000_000_000_000_000, "invalid community issuance balance initialized");
 
     let total_supply = fpt_token_abi::total_supply(
-        &fpt_token,
+        &contracts.fpt_token,
     ).await.value;
 
     // println!("supply {}", total_supply);

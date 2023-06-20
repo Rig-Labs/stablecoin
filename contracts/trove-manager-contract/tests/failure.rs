@@ -50,6 +50,7 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].sorted_troves,
