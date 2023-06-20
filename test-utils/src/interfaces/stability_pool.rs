@@ -1,3 +1,5 @@
+use fuels::prelude::abigen;
+
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::borrow_operations::BorrowOperations;
 use crate::interfaces::oracle::Oracle;
@@ -5,10 +7,7 @@ use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
 use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-};
+use crate::interfaces::community_issuance::CommunityIssuance;
 
 abigen!(Contract(
     name = "StabilityPool",
@@ -18,8 +17,8 @@ abigen!(Contract(
 pub mod stability_pool_abi {
     use super::*;
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, WalletUnlocked},
-        types::Identity,
+        prelude::{Account, AssetId, CallParameters, Error, WalletUnlocked, TxParameters},
+        types::{Identity, ContractId}, programs::call_response::FuelCallResponse,
     };
 
     pub async fn initialize<T: Account>(
@@ -64,6 +63,7 @@ pub mod stability_pool_abi {
 
     pub async fn provide_to_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
@@ -85,7 +85,7 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token])
+            .set_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
@@ -136,6 +136,7 @@ pub mod stability_pool_abi {
 
     pub async fn withdraw_from_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
@@ -147,13 +148,14 @@ pub mod stability_pool_abi {
             .withdraw_from_stability_pool(amount)
             .tx_params(tx_params)
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token])
+            .set_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
 
     pub async fn withdraw_gain_to_trove<T: Account>(
         stability_pool: &StabilityPool<T>,
+        community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         trove_manager: &TroveManagerContract<T>,
@@ -179,6 +181,7 @@ pub mod stability_pool_abi {
                 sorted_troves,
                 active_pool,
                 oracle,
+                community_issuance,
             ])
             .call()
             .await
@@ -188,7 +191,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::Identity,
+        types::{Identity, ContractId},
     };
 
     use crate::setup::common::assert_within_threshold;

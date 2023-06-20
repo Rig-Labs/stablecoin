@@ -35,10 +35,9 @@ pub async fn deploy() {
 
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, fpt_staking::FPTStaking,
-    oracle::Oracle, protocol_manager::ProtocolManager, sorted_troves::SortedTroves,
-    stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
-    usdf_token::USDFToken,
+    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
+    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
+    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken, fpt_staking::FPTStaking, community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
 };
 
 pub mod deployment {
@@ -56,16 +55,15 @@ pub mod deployment {
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
             coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
-            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
+            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::{self, fpt_staking_abi}, community_issuance,
         },
         setup::common::{
             deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
-            deploy_default_pool, deploy_fpt_staking, deploy_oracle, deploy_protocol_manager,
-            deploy_sorted_troves, deploy_stability_pool, deploy_token,
-            deploy_trove_manager_contract, deploy_usdf_token, AssetContracts, ProtocolContracts,
+            deploy_default_pool, deploy_oracle, deploy_protocol_manager, deploy_sorted_troves,
+            deploy_stability_pool, deploy_token, deploy_trove_manager_contract, deploy_usdf_token,
+            AssetContracts, ProtocolContracts, deploy_fpt_staking, deploy_community_issuance, deploy_fpt_token,
         },
     };
 
@@ -104,12 +102,15 @@ pub mod deployment {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(6);
+        let mut pb = ProgressBar::new(12);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
 
         let usdf = deploy_usdf_token(&wallet).await;
+        pb.inc();
+
+        let fpt_token = deploy_fpt_token(&wallet).await;
         pb.inc();
 
         let fpt = deploy_token(&wallet).await;
@@ -124,7 +125,9 @@ pub mod deployment {
         let protocol_manager = deploy_protocol_manager(&wallet).await;
         pb.inc();
 
+        let community_issuance = deploy_community_issuance(&wallet).await;
         pb.inc();
+        
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
 
         pb.inc();
@@ -139,16 +142,49 @@ pub mod deployment {
         let fuel_asset_contracts = upload_asset(wallet.clone()).await;
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
-        println!("Usdf: {}", usdf.contract_id());
+        println!("USDF Token: {}", usdf.contract_id());
         println!("Stability Pool: {}", stability_pool.contract_id());
         println!("FPT Staking: {}", fpt_staking.contract_id());
-        println!("FPT: {}", fpt.contract_id());
+        println!("FPT Token: {}", fpt_token.contract_id());
+        println!("Mock FPT Token: {}", fpt_token.contract_id());
+        println!("Community Issuance {}", community_issuance.contract_id());
         println!("Initializing contracts...");
 
-        let mut pb = ProgressBar::new(4);
+        let mut pb = ProgressBar::new(7);
 
         let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
+
+        let _ = community_issuance_abi::initialize(
+            &community_issuance,
+            stability_pool.contract_id().into(),
+            fpt_staking.contract_id().into(),
+            &Identity::Address(wallet.address().into()),
+            false,
+            0
+        ).await;
+        pb.inc();
+
+        fpt_token_abi::initialize(
+            &fpt_token,
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+            &usdf, // TODO this will be the vesting contract
+            &community_issuance
+        )
+        .await;
+        pb.inc();
+
+        // mock token for testing staking
+        token_abi::initialize(
+            &fpt,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+        )
+        .await;
+        pb.inc();
 
         let _ = usdf_token_abi::initialize(
             &usdf,
@@ -159,11 +195,12 @@ pub mod deployment {
             Identity::ContractId(borrow_operations.contract_id().into()),
         )
         .await;
+        pb.inc();
 
         let _ = borrow_operations_abi::initialize(
             &borrow_operations,
             usdf.contract_id().into(),
-            usdf.contract_id().into(),
+            fpt_staking.contract_id().into(),
             stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
@@ -178,7 +215,7 @@ pub mod deployment {
             &stability_pool,
             borrow_operations.contract_id().into(),
             usdf.contract_id().into(),
-            usdf.contract_id().into(),
+            community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
             active_pool.contract_id().into(),
         )
@@ -192,7 +229,7 @@ pub mod deployment {
             protocol_manager.contract_id().into(),
             protocol_manager.contract_id().into(), // this should be trove manager in the future
             borrow_operations.contract_id().into(),
-            fpt.contract_id().into(),
+            fpt_token.contract_id().into(),
             usdf.contract_id().into(),
         )
         .await;
@@ -306,7 +343,9 @@ pub mod deployment {
             protocol_manager,
             asset_contracts,
             fpt_staking,
+            fpt_token,
             fpt,
+            community_issuance,
             coll_surplus_pool,
             default_pool,
             sorted_troves,
@@ -316,7 +355,7 @@ pub mod deployment {
         return contracts;
     }
 
-    pub fn print_response<T>(response: FuelCallResponse<T>)
+    pub fn print_response<T>(response: &FuelCallResponse<T>)
     where
         T: std::fmt::Debug,
     {

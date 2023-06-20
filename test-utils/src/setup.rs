@@ -1,14 +1,16 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, fpt_staking::FPTStaking,
-    oracle::Oracle, protocol_manager::ProtocolManager, sorted_troves::SortedTroves,
-    stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
-    usdf_token::USDFToken, vesting::VestingContract,
+    coll_surplus_pool::CollSurplusPool, fpt_staking::FPTStaking, default_pool::DefaultPool, oracle::Oracle,
+    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
+    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
+    vesting::VestingContract, fpt_token::FPTToken, community_issuance::CommunityIssuance,
 };
 
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
 
 pub mod common {
+
+    use std::env;
 
     use super::*;
     use crate::{
@@ -19,7 +21,7 @@ pub mod common {
             fpt_staking::fpt_staking_abi, oracle::oracle_abi,
             protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
+            usdf_token::usdf_token_abi, community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
         },
         paths::*,
     };
@@ -32,7 +34,6 @@ pub mod common {
         types::Identity,
     };
     use pbr::ProgressBar;
-    use std::env;
 
     pub struct ProtocolContracts<T: Account> {
         pub borrow_operations: BorrowOperations<T>,
@@ -45,7 +46,9 @@ pub mod common {
         pub sorted_troves: SortedTroves<T>,
         pub default_pool: DefaultPool<T>,
         pub active_pool: ActivePool<T>,
+        pub fpt_token: FPTToken<T>,
         pub fpt: Token<T>,
+        pub community_issuance: CommunityIssuance<T>,
     }
 
     pub struct AssetContracts<T: Account> {
@@ -89,7 +92,7 @@ pub mod common {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(6);
+        let mut pb = ProgressBar::new(8);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -97,13 +100,28 @@ pub mod common {
         let usdf = deploy_usdf_token(&wallet).await;
         pb.inc();
 
-        let fpt = deploy_token(&wallet).await;
-        pb.inc();
-
         let stability_pool = deploy_stability_pool(&wallet).await;
         pb.inc();
 
         let fpt_staking = deploy_fpt_staking(&wallet).await;
+        pb.inc();
+
+        let community_issuance = deploy_community_issuance(&wallet).await;
+        pb.inc();
+
+        let fpt_token = deploy_fpt_token(&wallet).await;
+        pb.inc();
+
+        let fpt = deploy_token(&wallet).await;
+        pb.inc();
+
+        let community_issuance = deploy_community_issuance(&wallet).await;
+        pb.inc();
+
+        let fpt_token = deploy_fpt_token(&wallet).await;
+        pb.inc();
+
+        let fpt = deploy_token(&wallet).await;
         pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
@@ -128,15 +146,38 @@ pub mod common {
             println!("Stability Pool: {}", stability_pool.contract_id());
             println!("Protocol Manager: {}", protocol_manager.contract_id());
             println!("FPT Staking: {}", fpt_staking.contract_id());
-            println!("FPT Mock Token: {}", fpt.contract_id());
+            println!("FPT Token: {}", fpt_token.contract_id());
+            println!("Mock FPT Token: {}", fpt_token.contract_id());
+            println!("Community Issuance: {}", community_issuance.contract_id());
             println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
             println!("Default Pool: {}", default_pool.contract_id());
         }
 
-        let mut pb = ProgressBar::new(6);
+        let mut pb = ProgressBar::new(8);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
+        community_issuance_abi::initialize(
+            &community_issuance,
+            stability_pool.contract_id().into(),
+            fpt_token.contract_id().into(),
+            &Identity::Address(wallet.address().into()),
+            true,
+            0
+        ).await;
+        pb.inc();
+
+        fpt_token_abi::initialize(
+            &fpt_token,
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+            &usdf, // TODO this will be the vesting contract
+            &community_issuance
+        )
+        .await;
+        pb.inc();
+
+        // mock token for testing staking
         token_abi::initialize(
             &fpt,
             1_000_000_000,
@@ -171,12 +212,11 @@ pub mod common {
         .await;
         pb.inc();
 
-        // TODO Change usdf to fpt community issuance
         stability_pool_abi::initialize(
             &stability_pool,
             borrow_operations.contract_id().into(),
             usdf.contract_id().into(),
-            usdf.contract_id().into(),
+            community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
             active_pool.contract_id().into(),
         )
@@ -187,9 +227,9 @@ pub mod common {
         fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // this will be trove manager, don't want to deploy everything here just for that. When fuel testing gets improved there will be easier way to do this anyways most likely
+            protocol_manager.contract_id().into(), // TODO this will be trove manager
             borrow_operations.contract_id().into(),
-            fpt.contract_id().into(),
+            fpt.contract_id().into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
             usdf.contract_id().into(),
         )
         .await;
@@ -290,11 +330,13 @@ pub mod common {
             asset_contracts,
             protocol_manager,
             fpt_staking,
+            fpt_token,
             fpt,
             coll_surplus_pool,
             default_pool,
             active_pool,
             sorted_troves,
+            community_issuance
         };
 
         return contracts;
@@ -327,6 +369,37 @@ pub mod common {
                 .unwrap();
 
                 return Token::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
+
+        match id {
+            Ok(id) => return FPTToken::new(id, wallet.clone()),
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return FPTToken::new(id, wallet.clone());
             }
         }
     }
@@ -739,6 +812,39 @@ pub mod common {
                 .unwrap();
 
                 return CollSurplusPool::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_community_issuance(wallet: &WalletUnlocked) -> CommunityIssuance<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_parms = TxParameters::default().set_gas_price(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().set_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_parms)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return CommunityIssuance::new(id, wallet.clone());
+            }
+            Err(_) => {
+                wait();
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().set_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_parms)
+                .await
+                .unwrap();
+
+                return CommunityIssuance::new(id, wallet.clone());
             }
         }
     }

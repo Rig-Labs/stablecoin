@@ -73,6 +73,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
+        &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
@@ -85,6 +86,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     trove_manager_abi::batch_liquidate_troves(
         &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
         &contracts.sorted_troves,

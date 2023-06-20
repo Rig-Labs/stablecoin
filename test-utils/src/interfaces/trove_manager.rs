@@ -5,11 +5,9 @@ use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-    types::Identity,
-};
+use crate::interfaces::community_issuance::CommunityIssuance;
+use fuels::prelude::abigen;
+use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -18,9 +16,11 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
+    use fuels::{prelude::{Account, Error, LogDecoder, TxParameters}, types::{Identity, ContractId}};
+
+    use crate::{setup::common::wait, interfaces::community_issuance};
+
     use super::*;
-    use crate::setup::common::wait;
-    use fuels::prelude::{Account, Error, LogDecoder};
 
     pub async fn get_nominal_icr<T: Account>(
         trove_manager: &TroveManagerContract<T>,
@@ -36,6 +36,7 @@ pub mod trove_manager_abi {
 
     pub async fn batch_liquidate_troves<T: Account>(
         trove_manager: &TroveManagerContract<T>,
+        community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
         sorted_troves: &SortedTroves<T>,
@@ -61,6 +62,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 coll_surplus_pool,
                 usdf,
+                community_issuance,
             ])
             .append_variable_outputs(3)
             .call()
@@ -69,6 +71,7 @@ pub mod trove_manager_abi {
 
     pub async fn liquidate<T: Account>(
         trove_manager: &TroveManagerContract<T>,
+        community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
         sorted_troves: &SortedTroves<T>,
@@ -94,6 +97,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 coll_surplus_pool,
                 usdf,
+                community_issuance,
             ])
             .append_variable_outputs(3)
             .call()
@@ -322,7 +326,7 @@ pub mod trove_manager_abi {
 }
 
 pub mod trove_manager_utils {
-    use fuels::prelude::Account;
+    use fuels::{prelude::Account, types::{Identity, ContractId}};
 
     use crate::{
         interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
