@@ -226,7 +226,6 @@ pub mod common {
         fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // TODO this will be trove manager
             borrow_operations.contract_id().into(),
             fpt.contract_id().into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
             usdf.contract_id().into(),

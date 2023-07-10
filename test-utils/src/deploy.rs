@@ -226,7 +226,6 @@ pub mod deployment {
         let _ = fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // this should be trove manager in the future
             borrow_operations.contract_id().into(),
             fpt_token.contract_id().into(),
             usdf.contract_id().into(),
