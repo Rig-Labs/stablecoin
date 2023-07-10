@@ -8,11 +8,13 @@ abi CommunityIssuance {
         fpt_token_contract: ContractId,
         admin: Identity,
         debugging: bool,
-        time: u64,
     );
 
     #[storage(read, write)]
     fn start_rewards_increase_transition(total_transition_time_seconds: u64);
+
+    #[storage(read, write)]
+    fn public_start_rewards_increase_transition_after_deadline();
 
     #[storage(read, write)]
     fn issue_fpt() -> u64;

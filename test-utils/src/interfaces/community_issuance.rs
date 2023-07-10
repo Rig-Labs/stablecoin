@@ -20,14 +20,13 @@ pub mod community_issuance_abi {
         stability_pool_contract: ContractId,
         fpt_token_contract: ContractId,
         admin: &Identity,
-        debugging: bool,
-        time: u64,
+        debugging: bool
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
         let res = instance
             .methods()
-            .initialize(stability_pool_contract, fpt_token_contract, admin.clone(), debugging, time)
+            .initialize(stability_pool_contract, fpt_token_contract, admin.clone(), debugging)
             .tx_params(tx_params)
             .call()
             .await;

@@ -22,6 +22,8 @@ async fn test_emissions() {
     let provider = admin.provider().unwrap();
     let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
 
+    community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
+
     let total_emissions = provider
     .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)
     .await
@@ -122,6 +124,8 @@ async fn test_emissions_multiple_deposits(){
     
     let provider = admin.provider().unwrap();
     let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+
+    community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
     let total_emissions = provider
     .get_contract_asset_balance(contracts.community_issuance.contract_id().into(), fpt_asset_id)

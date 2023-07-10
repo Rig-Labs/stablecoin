@@ -160,8 +160,7 @@ pub mod deployment {
             stability_pool.contract_id().into(),
             fpt_staking.contract_id().into(),
             &Identity::Address(wallet.address().into()),
-            false,
-            0
+            false
         ).await;
         pb.inc();
 

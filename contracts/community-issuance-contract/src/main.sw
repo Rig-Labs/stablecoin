@@ -46,7 +46,6 @@ impl CommunityIssuance for Contract {
         fpt_token_contract: ContractId,
         admin: Identity,
         debugging: bool,
-        time: u64,
     ) {
         require(!storage.is_initialized, "Contract is already initialized");
         storage.stability_pool_contract = stability_pool_contract;
@@ -54,9 +53,6 @@ impl CommunityIssuance for Contract {
         storage.is_initialized = true;
         storage.admin = admin;
         storage.debug = debugging;
-        if (storage.debug){
-            storage.debug_timestamp = time;
-        }
         storage.deployment_time = internal_get_current_time();
     }
 
@@ -65,6 +61,17 @@ impl CommunityIssuance for Contract {
         internal_require_caller_is_admin();
         require(!storage.has_transitioned_rewards, "Rewards have already transitioned");
         require(total_transition_time_seconds > 60*60*24*7, "Total transition time must be greater than 1 week");
+        storage.has_transitioned_rewards = true;
+        storage.time_transition_started = internal_get_current_time();
+        storage.total_transition_time_seconds = total_transition_time_seconds;
+    }
+
+    #[storage(write, read)]
+    fn public_start_rewards_increase_transition_after_deadline(){
+        require(!storage.has_transitioned_rewards, "Rewards have already transitioned");
+        let time_since_started_rewards = internal_get_current_time() - storage.deployment_time;
+        require(time_since_started_rewards > 60*60*24*30*12, "Rewards can only be publicly increased after 1 year of inactivity"); // 1 year
+        let total_transition_time_seconds = 60*60*24*30*6; // 6 months
         storage.has_transitioned_rewards = true;
         storage.time_transition_started = internal_get_current_time();
         storage.total_transition_time_seconds = total_transition_time_seconds;
@@ -92,7 +99,6 @@ impl CommunityIssuance for Contract {
 
     #[storage(write, read)]
     fn set_current_time(time: u64) {
-        internal_require_caller_is_admin();
         require(storage.debug, "Debugging must be enabled to set current time");
         storage.debug_timestamp = time;
     }

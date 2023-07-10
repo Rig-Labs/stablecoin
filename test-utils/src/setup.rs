@@ -162,8 +162,7 @@ pub mod common {
             stability_pool.contract_id().into(),
             fpt_token.contract_id().into(),
             &Identity::Address(wallet.address().into()),
-            true,
-            0
+            true
         ).await;
         pb.inc();
 
