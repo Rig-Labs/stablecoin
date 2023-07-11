@@ -1,11 +1,11 @@
 contract;
 
-use libraries::fpt_token_interface::{TokenInitializeConfig, FPTToken};
-use libraries::fluid_math::{null_contract, null_identity_address, DECIMAL_PRECISION};
+use libraries::fpt_token_interface::{FPTToken, TokenInitializeConfig};
+use libraries::fluid_math::{DECIMAL_PRECISION, null_contract, null_identity_address};
 
 use std::{
     address::*,
-    auth::{ 
+    auth::{
         AuthError,
         msg_sender,
     },

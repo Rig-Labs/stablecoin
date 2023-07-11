@@ -24,7 +24,8 @@ pub fn internal_get_fpt_supply_cap(
         let supply_cap_over_2 = U128::from_u64(FPT_SUPPLY_CAP / 2);
         let transition_completed_ratio = time_diff * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(total_transition_time_seconds);
         // transition completed, without this we will eventually overflow
-        if (transition_completed_ratio > U128::from_u64(DECIMAL_PRECISION)) {
+        if (transition_completed_ratio > U128::from_u64(DECIMAL_PRECISION))
+        {
             return FPT_SUPPLY_CAP;
         }
         let current_supply_cap = supply_cap_over_2 + (supply_cap_over_2 * transition_completed_ratio / U128::from_u64(DECIMAL_PRECISION));
@@ -145,7 +146,7 @@ fn test_supply_cap_transition() {
     let supply_cap_during_transition = internal_get_fpt_supply_cap(time_transition_started, total_transition_time_seconds, current_time, has_transitioned_rewards);
 
     let time_diff = U128::from_u64(current_time - time_transition_started);
-    let expect = (FPT_SUPPLY_CAP / 2) + (FPT_SUPPLY_CAP / 2 * 3 /4);
+    let expect = (FPT_SUPPLY_CAP / 2) + (FPT_SUPPLY_CAP / 2 * 3 / 4);
     assert(supply_cap_during_transition == expect);
 
     let current_time = 60 * 60 * 24 * 30 * 12;
@@ -172,7 +173,6 @@ fn test_supply_cap_transition() {
 
 #[test]
 fn test_emissions_schedule_before_transition() {
-
     // double check math
     let current_time = 2_000;
     let deployment_time = 1;
@@ -343,5 +343,4 @@ fn test_emissions_for_overflow() {
     let total_fpt_issued = 0;
     let has_transitioned_rewards = true;
     let issuance = test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
-
 }

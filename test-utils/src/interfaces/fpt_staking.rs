@@ -97,7 +97,7 @@ pub mod fpt_staking_abi {
 
     pub async fn add_asset<T: Account>(
         fpt_staking: &FPTStaking<T>,
-        asset_address: ContractId
+        asset_address: ContractId,
     ) -> FuelCallResponse<()> {
         // let tx_params = TxParameters::default().set_gas_price(1);
 

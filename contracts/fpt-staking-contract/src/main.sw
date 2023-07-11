@@ -37,7 +37,6 @@ storage {
 }
 
 const DECIMAL_PRECISION: U128 = U128::from_u64(1_000_000_000); //todo: import from fluidmath once we switch fluidmath to u128, until then just keep it here
-
 impl FPTStaking for Contract {
     #[storage(read, write)]
     fn initialize(
