@@ -35,9 +35,10 @@ pub async fn deploy() {
 
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, default_pool::DefaultPool, oracle::Oracle,
+    coll_surplus_pool::CollSurplusPool, community_issuance::community_issuance_abi,
+    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::fpt_token_abi, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
-    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken, fpt_staking::FPTStaking, community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
+    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
 };
 
 pub mod deployment {
@@ -53,17 +54,26 @@ pub mod deployment {
     use crate::{
         data_structures::PRECISION,
         interfaces::{
-            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
-            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi, fpt_staking::{self, fpt_staking_abi}, community_issuance,
+            active_pool::active_pool_abi,
+            borrow_operations::borrow_operations_abi,
+            coll_surplus_pool::coll_surplus_pool_abi,
+            community_issuance,
+            default_pool::default_pool_abi,
+            fpt_staking::{self, fpt_staking_abi},
+            oracle::oracle_abi,
+            protocol_manager::protocol_manager_abi,
+            sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi,
+            token::token_abi,
+            trove_manager::trove_manager_abi,
+            usdf_token::usdf_token_abi,
         },
         setup::common::{
             deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
-            deploy_default_pool, deploy_oracle, deploy_protocol_manager, deploy_sorted_troves,
-            deploy_stability_pool, deploy_token, deploy_trove_manager_contract, deploy_usdf_token,
-            AssetContracts, ProtocolContracts, deploy_fpt_staking, deploy_community_issuance, deploy_fpt_token,
+            deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
+            deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
+            deploy_token, deploy_trove_manager_contract, deploy_usdf_token, AssetContracts,
+            ProtocolContracts,
         },
     };
 
@@ -127,7 +137,7 @@ pub mod deployment {
 
         let community_issuance = deploy_community_issuance(&wallet).await;
         pb.inc();
-        
+
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
 
         pb.inc();
@@ -161,8 +171,8 @@ pub mod deployment {
             fpt_staking.contract_id().into(),
             &Identity::Address(wallet.address().into()),
             false,
-            0
-        ).await;
+        )
+        .await;
         pb.inc();
 
         fpt_token_abi::initialize(
@@ -170,7 +180,7 @@ pub mod deployment {
             "FPT Token".to_string(),
             "FPT".to_string(),
             &usdf, // TODO this will be the vesting contract
-            &community_issuance
+            &community_issuance,
         )
         .await;
         pb.inc();
@@ -227,7 +237,6 @@ pub mod deployment {
         let _ = fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // this should be trove manager in the future
             borrow_operations.contract_id().into(),
             fpt_token.contract_id().into(),
             usdf.contract_id().into(),

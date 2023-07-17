@@ -60,8 +60,6 @@ storage {
     coll_surplus_pool_contract: ContractId = null_contract(),
     usdf_contract: ContractId = null_contract(),
     asset_contract: ContractId = null_contract(),
-    fpt_token: ContractId = null_contract(),
-    fpt_staking_contract: ContractId = null_contract(),
     total_stakes: u64 = 0,
     total_stakes_snapshot: u64 = 0,
     total_collateral_snapshot: u64 = 0,

@@ -17,7 +17,6 @@ pub mod fpt_staking_abi {
     pub async fn initialize<T: Account>(
         fpt_staking: &FPTStaking<T>,
         protocol_manager_address: ContractId,
-        trove_manager_address: ContractId,
         borrower_operations_address: ContractId,
         fpt_address: ContractId,
         usdf_address: ContractId,
@@ -28,7 +27,6 @@ pub mod fpt_staking_abi {
             .methods()
             .initialize(
                 protocol_manager_address,
-                trove_manager_address,
                 borrower_operations_address,
                 fpt_address,
                 usdf_address,

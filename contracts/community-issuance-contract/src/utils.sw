@@ -22,16 +22,15 @@ pub fn internal_get_fpt_supply_cap(
         // time transition started will always be less than current time
         let time_diff = U128::from_u64(current_time - time_transition_started);
         let supply_cap_over_2 = U128::from_u64(FPT_SUPPLY_CAP / 2);
-        let transition_completed_percentage = time_diff * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(total_transition_time_seconds);
+        let transition_completed_ratio = time_diff * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(total_transition_time_seconds);
         // transition completed, without this we will eventually overflow
-        if (transition_completed_percentage > U128::from_u64(DECIMAL_PRECISION)) {
+        if (transition_completed_ratio > U128::from_u64(DECIMAL_PRECISION))
+        {
             return FPT_SUPPLY_CAP;
         }
-        let supply_cap = supply_cap_over_2 + (supply_cap_over_2 * transition_completed_percentage / U128::from_u64(DECIMAL_PRECISION));
-        let supply_cap_64 = supply_cap.as_u64().unwrap();
-        let max_supply_cap = fm_min(FPT_SUPPLY_CAP, supply_cap_64);
-        log(max_supply_cap);
-        return max_supply_cap;
+        let current_supply_cap = supply_cap_over_2 + (supply_cap_over_2 * transition_completed_ratio / U128::from_u64(DECIMAL_PRECISION));
+        let current_supply_cap_64 = current_supply_cap.as_u64().unwrap();
+        return current_supply_cap_64;
     }
 }
 
@@ -76,25 +75,25 @@ fn test_issuance_factor() {
     let current_time = 60;
     let deployment_time = 0;
     let cumulative_issuance = internal_get_cumulative_issuance_fraction(current_time, deployment_time);
-    let diff = fm_abs_diff(cumulative_issuance, 1318);
+    let diff = fm_abs_diff(cumulative_issuance, 1_318);
     assert(diff <= 10);
 
     let current_time = 60 * 60;
     let deployment_time = 0;
     let cumulative_issuance = internal_get_cumulative_issuance_fraction(current_time, deployment_time);
-    let diff = fm_abs_diff(cumulative_issuance, 79123);
+    let diff = fm_abs_diff(cumulative_issuance, 79_123);
     assert(diff <= 100);
 
     let current_time = 60 * 60 * 24;
     let deployment_time = 0;
     let cumulative_issuance = internal_get_cumulative_issuance_fraction(current_time, deployment_time);
-    let diff = fm_abs_diff(cumulative_issuance, 1897231);
+    let diff = fm_abs_diff(cumulative_issuance, 1_897_231);
     assert(diff <= 1_000);
 
     let current_time = 60 * 60 * 24 * 30;
     let deployment_time = 0;
     let cumulative_issuance = internal_get_cumulative_issuance_fraction(current_time, deployment_time);
-    let diff = fm_abs_diff(cumulative_issuance, 55378538);
+    let diff = fm_abs_diff(cumulative_issuance, 55_378_538);
     assert(diff <= 100_000);
 
     let current_time = 60 * 60 * 24 * 30 * 12;
@@ -147,7 +146,7 @@ fn test_supply_cap_transition() {
     let supply_cap_during_transition = internal_get_fpt_supply_cap(time_transition_started, total_transition_time_seconds, current_time, has_transitioned_rewards);
 
     let time_diff = U128::from_u64(current_time - time_transition_started);
-    let expect = (FPT_SUPPLY_CAP / 2) + (FPT_SUPPLY_CAP / 2 * 3 /4);
+    let expect = (FPT_SUPPLY_CAP / 2) + (FPT_SUPPLY_CAP / 2 * 3 / 4);
     assert(supply_cap_during_transition == expect);
 
     let current_time = 60 * 60 * 24 * 30 * 12;
@@ -174,9 +173,8 @@ fn test_supply_cap_transition() {
 
 #[test]
 fn test_emissions_schedule_before_transition() {
-
     // double check math
-    let current_time = 2000;
+    let current_time = 2_000;
     let deployment_time = 1;
     let time_transition_started = 1;
     let total_transition_time_seconds = 1;
@@ -314,7 +312,7 @@ fn test_emissions_fpt_issuance_subtraction() {
 
 #[test]
 fn test_emissions_for_overflow() {
-    let current_time = 60 * 60 * 24 * 30 * 12 * 1000000;
+    let current_time = 60 * 60 * 24 * 30 * 12 * 1_000_000;
     let deployment_time = 0;
     let time_transition_started = 1;
     let total_transition_time_seconds = 1;
@@ -325,25 +323,24 @@ fn test_emissions_for_overflow() {
     let current_time = 60 * 60 * 24 * 30 * 12;
     let deployment_time = 0;
     let time_transition_started = 1;
-    let total_transition_time_seconds = current_time * 1000;
+    let total_transition_time_seconds = current_time * 1_000;
     let total_fpt_issued = 0;
     let has_transitioned_rewards = true;
     let issuance = test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
 
-    let current_time = 1686723344;
+    let current_time = 1_686_723_344;
     let deployment_time = 0;
     let time_transition_started = 1;
-    let total_transition_time_seconds = current_time * 1000;
+    let total_transition_time_seconds = current_time * 1_000;
     let total_fpt_issued = 0;
     let has_transitioned_rewards = true;
     let issuance = test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
 
-    let current_time = 1686723344 * 10000;
+    let current_time = 1_686_723_344 * 10_000;
     let deployment_time = 0;
     let time_transition_started = 1;
-    let total_transition_time_seconds = current_time * 1000;
+    let total_transition_time_seconds = current_time * 1_000;
     let total_fpt_issued = 0;
     let has_transitioned_rewards = true;
     let issuance = test_issue_fpt(current_time, deployment_time, time_transition_started, total_transition_time_seconds, total_fpt_issued, has_transitioned_rewards);
-
 }

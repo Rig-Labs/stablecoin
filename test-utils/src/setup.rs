@@ -1,9 +1,10 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, fpt_staking::FPTStaking, default_pool::DefaultPool, oracle::Oracle,
+    coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
+    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
-    vesting::VestingContract, fpt_token::FPTToken, community_issuance::CommunityIssuance,
+    vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
@@ -17,11 +18,11 @@ pub mod common {
         data_structures::PRECISION,
         interfaces::{
             active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
-            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi, community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
+            coll_surplus_pool::coll_surplus_pool_abi, community_issuance::community_issuance_abi,
+            default_pool::default_pool_abi, fpt_staking::fpt_staking_abi, fpt_token::fpt_token_abi,
+            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
+            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
         },
         paths::*,
     };
@@ -163,8 +164,8 @@ pub mod common {
             fpt_token.contract_id().into(),
             &Identity::Address(wallet.address().into()),
             true,
-            0
-        ).await;
+        )
+        .await;
         pb.inc();
 
         fpt_token_abi::initialize(
@@ -172,7 +173,7 @@ pub mod common {
             "FPT Token".to_string(),
             "FPT".to_string(),
             &usdf, // TODO this will be the vesting contract
-            &community_issuance
+            &community_issuance,
         )
         .await;
         pb.inc();
@@ -227,7 +228,6 @@ pub mod common {
         fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
-            protocol_manager.contract_id().into(), // TODO this will be trove manager
             borrow_operations.contract_id().into(),
             fpt.contract_id().into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
             usdf.contract_id().into(),
@@ -336,7 +336,7 @@ pub mod common {
             default_pool,
             active_pool,
             sorted_troves,
-            community_issuance
+            community_issuance,
         };
 
         return contracts;
@@ -816,7 +816,9 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_community_issuance(wallet: &WalletUnlocked) -> CommunityIssuance<WalletUnlocked> {
+    pub async fn deploy_community_issuance(
+        wallet: &WalletUnlocked,
+    ) -> CommunityIssuance<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_parms = TxParameters::default().set_gas_price(1);
