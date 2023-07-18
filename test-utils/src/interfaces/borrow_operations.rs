@@ -74,12 +74,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .open_trove(
-                usdf_amount_withdrawn,
-                upper_hint,
-                lower_hint,
-                fuel_token.contract_id().into(),
-            )
+            .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
             .call_params(call_params)
             .unwrap()
             .set_contracts(&[
@@ -119,7 +114,7 @@ pub mod borrow_operations_abi {
 
         borrow_operations
             .methods()
-            .add_coll(lower_hint, upper_hint, fuel_token.contract_id().into())
+            .add_coll(lower_hint, upper_hint)
             .call_params(call_params)
             .unwrap()
             .set_contracts(&[
