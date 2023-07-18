@@ -212,8 +212,8 @@ impl BorrowOperations for Contract {
         active_pool.send_asset(borrower, coll, asset_contract);
 
         if (debt < msg_amount()) {
-            let usdf_to_send = msg_amount() - debt;
-            transfer(usdf_to_send, usdf_contract_cache, borrower);
+            let excess_usdf_returned = msg_amount() - debt;
+            transfer(excess_usdf_returned, usdf_contract_cache, borrower);
         }
     }
 
@@ -269,7 +269,7 @@ fn internal_adjust_trove(
     if is_debt_increase {
         require_non_zero_debt_change(usdf_change);
     }
-
+    require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
     require_singular_coll_change(asset_coll_added, coll_withdrawal);
     require_non_zero_adjustment(asset_coll_added, coll_withdrawal, usdf_change);
 
@@ -297,7 +297,7 @@ fn internal_adjust_trove(
     require_at_least_mcr(vars.new_icr);
 
         // TODO if debt increase and usdf change > 0 
-    if !is_debt_increase {
+    if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }
 
