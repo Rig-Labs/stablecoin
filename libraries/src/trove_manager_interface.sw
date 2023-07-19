@@ -58,7 +58,6 @@ abi TroveManager {
     #[storage(read, write)]
     fn remove_stake(id: Identity);
 
-
     #[storage(read)]
     fn get_trove_status(id: Identity) -> Status;
 
@@ -85,7 +84,4 @@ abi TroveManager {
 
     #[storage(read, write)]
     fn decrease_trove_debt(id: Identity, value: u64) -> u64;
-
-    #[storage(read)]
-    fn get_tcr() -> u64;
 }

@@ -159,12 +159,6 @@ impl TroveManager for Contract {
         internal_get_trove_stake(id)
     }
 
-    #[storage(read)]
-    fn get_tcr() -> u64 {
-        // TODO
-        return 0
-    }
-
     #[storage(read, write)]
     fn set_trove_status(id: Identity, status: Status) {
         require_caller_is_borrow_operations_contract();
@@ -235,7 +229,6 @@ impl TroveManager for Contract {
 
         return trove.coll;
     }
-
     #[storage(read, write)]
     fn close_trove(id: Identity) {
         require_caller_is_borrow_operations_contract();
@@ -349,7 +342,6 @@ fn internal_close_trove(id: Identity, close_status: Status) {
 
     sorted_troves.remove(id, asset_contract_cache);
 }
-
 #[storage(read, write)]
 fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u64) {
     let mut trove = storage.troves.get(_borrower);
@@ -397,7 +389,6 @@ fn internal_batch_liquidate_troves(
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
 
     if (totals.total_coll_surplus > 0) {
-        // TODO Change add to coll_surplus_pool and also 
         let active_pool = abi(ActivePool, storage.active_pool_contract.into());
         active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus, asset_contract_cache);
     }
