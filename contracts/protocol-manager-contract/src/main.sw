@@ -116,7 +116,6 @@ impl ProtocolManager for Contract {
     #[storage(read, write), payable]
     fn redeem_collateral(
         max_itterations: u64,
-        max_fee_percentage: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
@@ -169,35 +168,33 @@ impl ProtocolManager for Contract {
             current_borrower = next_borrower.0;
             index = next_borrower.1;
         }
+
         let mut total_usdf_redeemed = 0;
-        let mut i = 0;
-        while (i < assets_info.assets.len()) {
-            let contracts_cache = assets_info.asset_contracts.get(i).unwrap();
+        let mut ind = 0;
+        while (ind < assets_info.assets.len()) {
+            let contracts_cache = assets_info.asset_contracts.get(ind).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
 
-            let price = assets_info.prices.get(i).unwrap();
-            let mut totals = assets_info.redemption_totals.get(i).unwrap();
+            let price = assets_info.prices.get(ind).unwrap();
+            let mut totals = assets_info.redemption_totals.get(ind).unwrap();
 
             let total_usdf_supply_at_start = usdf.total_supply();
             if (totals.total_usdf_to_redeem == 0) {
-                i += 1;
+                ind += 1;
                 continue;
             }
 
             totals.asset_fee = fm_compute_redemption_fee(totals.total_asset_drawn); 
-            // trove_manager_contract.get_redemption_fee(totals.total_asset_drawn);
             // TODO require user accepts fee
-            // TODO active pool send fee to stakers
-            // TODO fpt staking increase f_asset
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
             active_pool.send_asset(Identity::ContractId(fpt_staking_contract_cache), totals.asset_fee, contracts_cache.asset_address);
-            fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(i).unwrap());
+            fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(ind).unwrap());
 
             total_usdf_redeemed += totals.total_usdf_to_redeem;
             active_pool.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
             active_pool.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
-            i += 1;
+            ind += 1;
         }
 
         usdf.burn {
@@ -237,14 +234,14 @@ fn get_all_assets_info() -> AssetInfo {
     let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
     let length = storage.assets.len();
 
-    let mut i = 0;
-    while (i < length) {
-        assets.push(storage.assets.get(i).unwrap());
-        asset_contracts.push(storage.asset_contracts.get(assets.get(i).unwrap()));
-        i += 1;
+    let mut ind = 0;
+    while (ind < length) {
+        assets.push(storage.assets.get(ind).unwrap());
+        asset_contracts.push(storage.asset_contracts.get(assets.get(ind).unwrap()));
+        ind += 1;
     }
 
-    i = 0;
+    let mut i = 0;
     while (i < length) {
         let oracle = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
         let trove_manager = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());

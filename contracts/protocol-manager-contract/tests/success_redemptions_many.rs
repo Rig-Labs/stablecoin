@@ -120,7 +120,6 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         redemption_amount,
         20,
         0,
-        0,
         None,
         None,
         &contracts.usdf,
