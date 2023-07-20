@@ -99,7 +99,7 @@ impl ActivePool for Contract {
         let new_debt = storage.usdf_debt_amount.get(asset_id) - amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
-
+    
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64, asset_id: ContractId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();

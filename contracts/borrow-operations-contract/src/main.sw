@@ -296,7 +296,6 @@ fn internal_adjust_trove(
 
     require_at_least_mcr(vars.new_icr);
 
-        // TODO if debt increase and usdf change > 0 
     if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }

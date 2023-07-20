@@ -163,14 +163,14 @@ impl FPTStaking for Contract {
 fn internal_get_pending_asset_gain(id: Identity, asset_address: ContractId) -> u64 {
     let f_asset_snapshot = storage.asset_snapshot.get((id, asset_address));
     let asset_gain = fm_multiply_ratio(storage.stakes.get(id), storage.f_asset.get(asset_address) - f_asset_snapshot, DECIMAL_PRECISION);
-    asset_gain
+    return asset_gain
 }
 
 #[storage(read)]
 fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
     let f_usdf_snapshot = storage.usdf_snapshot.get(id);
     let usdf_gain = fm_multiply_ratio(storage.stakes.get(id), storage.f_usdf - f_usdf_snapshot, DECIMAL_PRECISION);
-    usdf_gain
+    return usdf_gain
 }
 
 #[storage(read, write)]

@@ -21,7 +21,7 @@ pub mod fpt_staking_abi {
         fpt_address: ContractId,
         usdf_address: ContractId,
     ) -> FuelCallResponse<()> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().set_gas_price(1);
 
         fpt_staking
             .methods()
@@ -31,6 +31,7 @@ pub mod fpt_staking_abi {
                 fpt_address,
                 usdf_address,
             )
+            .tx_params(tx_params)
             .call()
             .await
             .unwrap()
