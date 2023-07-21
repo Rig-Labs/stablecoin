@@ -24,7 +24,6 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations<T>,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
-        stability_pool_contract: ContractId,
         protocol_manager_contract: ContractId,
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
@@ -37,7 +36,6 @@ pub mod borrow_operations_abi {
             .initialize(
                 usdf_contract,
                 fpt_staking_contract,
-                stability_pool_contract,
                 protocol_manager_contract,
                 coll_surplus_pool_contract,
                 active_pool_contract,

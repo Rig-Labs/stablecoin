@@ -36,7 +36,6 @@ storage {
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     usdf_contract: ContractId = null_contract(),
-    stability_pool_contract: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
     active_pool_contract: ContractId = null_contract(),
@@ -50,7 +49,6 @@ impl BorrowOperations for Contract {
     fn initialize(
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
-        stability_pool_contract: ContractId,
         protocol_manager: ContractId,
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
@@ -60,7 +58,6 @@ impl BorrowOperations for Contract {
 
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
-        storage.stability_pool_contract = stability_pool_contract;
         storage.protocol_manager_contract = protocol_manager;
         storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
         storage.active_pool_contract = active_pool_contract;
@@ -147,19 +144,6 @@ impl BorrowOperations for Contract {
         asset_contract: ContractId,
     ) {
         internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, asset_contract);
-    }
-
-    #[storage(read, write), payable]
-    fn move_asset_gain_to_trove(
-        id: Identity,
-        upper_hint: Identity,
-        lower_hint: Identity,
-        asset_contract: ContractId,
-    ) {
-        require_caller_is_stability_pool();
-        require_valid_asset_id();
-
-        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write)]
@@ -296,6 +280,8 @@ fn internal_adjust_trove(
 
     require_at_least_mcr(vars.new_icr);
 
+        // TODO if debt increase and usdf change > 0 
+        // TODO if debt increase and usdf change > 0 
     if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }
@@ -315,10 +301,6 @@ fn require_is_protocol_manager() {
     require(msg_sender().unwrap() == protocol_manager, "Caller is not the protocol manager");
 }
 
-#[storage(read)]
-fn require_caller_is_stability_pool() {
-    require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract), "BorrowOperations: Caller is not Stability Pool");
-}
 
 #[storage(read)]
 fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {

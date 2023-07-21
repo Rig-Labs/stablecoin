@@ -107,7 +107,9 @@ impl CommunityIssuance for Contract {
     #[storage(read)]
     fn send_fpt(account: Identity, amount: u64) {
         internal_require_caller_is_stability_pool();
-        transfer(amount, storage.fpt_token_contract, account);
+        if amount > 0 {
+            transfer(amount, storage.fpt_token_contract, account);
+        }
     }
 
     #[storage(read)]

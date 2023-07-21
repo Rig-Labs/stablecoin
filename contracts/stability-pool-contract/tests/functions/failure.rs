@@ -60,7 +60,6 @@ async fn fails_unauthorized() {
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
         ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
     )
     .await
     .expect_err("Able to initialize stability pool with unauthorized address");

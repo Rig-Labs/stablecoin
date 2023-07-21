@@ -36,7 +36,6 @@ const SCALE_FACTOR = 1_000_000_000;
 storage {
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     active_pool_contract: ContractId = null_contract(),
-    borrow_operations_contract: ContractId = null_contract(),
     protocol_manager_address: ContractId = null_contract(),
     usdf_contract: ContractId = null_contract(),
     community_issuance_contract: ContractId = null_contract(),
@@ -83,7 +82,6 @@ storage {
 impl StabilityPool for Contract {
     #[storage(read, write)]
     fn initialize(
-        borrow_operations_contract: ContractId,
         usdf_contract: ContractId,
         community_issuance_contract: ContractId,
         protocol_manager: ContractId,
@@ -91,7 +89,6 @@ impl StabilityPool for Contract {
     ) {
         require(storage.is_initialized == false, "Contract is already initialized");
 
-        storage.borrow_operations_contract = borrow_operations_contract;
         storage.usdf_contract = usdf_contract;
         storage.community_issuance_contract = community_issuance_contract;
         storage.protocol_manager_address = protocol_manager;
@@ -128,19 +125,12 @@ impl StabilityPool for Contract {
 
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
 
-        // Trigger FPT issuance
         internal_trigger_fpt_issuance();
 
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
-        let mut i = 0;
-        while i < storage.valid_assets.len() {
-            let asset_contract = storage.valid_assets.get(i).unwrap();
-            let asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), asset_contract);
-            send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_contract);
-            i += 1;
-        }
+        internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap());
 
         let new_position = compounded_usdf_deposit + msg_amount();
@@ -161,7 +151,7 @@ impl StabilityPool for Contract {
         let initial_deposit = storage.deposits.get(msg_sender().unwrap());
 
         require_user_has_initial_deposit(initial_deposit);
-        //Trigger FPT issuance
+
         internal_trigger_fpt_issuance();
 
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
@@ -169,56 +159,10 @@ impl StabilityPool for Contract {
 
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
 
-        let mut i = 0;
-        while i < storage.valid_assets.len() {
-            let asset_contract = storage.valid_assets.get(i).unwrap();
-            let asset_gain = internal_get_depositor_asset_gain(msg_sender().unwrap(), asset_contract);
-            send_asset_gain_to_depositor(msg_sender().unwrap(), asset_gain, asset_contract);
-            i += 1;
-        }
+        internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
-    }
-
-     /* 
-    * - Triggers a FPT issuance, based on time passed since the last issuance. The FPT issuance is shared between *all* depositors
-    * - Sends all depositor's FPT gain to depositor
-    * - Transfers the depositor's entire Asset gain from the Stability Pool to the caller's trove
-    * - Leaves their compounded deposit in the Stability Pool
-    * - Updates snapshots for deposit and tagged front end stake */
-    #[storage(read, write)]
-    fn withdraw_gain_to_trove(
-        lower_hint: Identity,
-        upper_hint: Identity,
-        asset_contract: ContractId,
-    ) {
-        let sender = msg_sender().unwrap();
-        let initial_deposit = storage.deposits.get(sender);
-        let borrower_operations = abi(BorrowOperations, storage.borrow_operations_contract.value);
-        let asset_contracts_cache = storage.asset_contracts.get(asset_contract);
-        require_user_has_initial_deposit(initial_deposit);
-        require_user_has_asset_gain(sender, asset_contract);
-        require_user_has_trove(sender, asset_contracts_cache.trove_manager);
-
-        // Trigger FPT issuance
-        internal_trigger_fpt_issuance();
-
-        let depositor_asset_gain = internal_get_depositor_asset_gain(sender, asset_contract);
-        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(sender);
-
-        let usdf_loss = initial_deposit - compounded_usdf_deposit;
-        internal_pay_out_fpt_gains(msg_sender().unwrap());
-        internal_update_deposits_and_snapshots(sender, compounded_usdf_deposit);
-
-        let mut current_asset_amount = storage.asset.get(asset_contract);
-        current_asset_amount -= depositor_asset_gain;
-        storage.asset.insert(asset_contract, current_asset_amount);
-
-        borrower_operations.move_asset_gain_to_trove {
-            coins: depositor_asset_gain,
-            asset_id: asset_contract.value,
-        }(sender, lower_hint, upper_hint, asset_contract);
     }
 
     #[storage(read, write)]
@@ -265,16 +209,28 @@ impl StabilityPool for Contract {
     }
 }
 
+// --- Internal functions ---
 #[storage(read, write)]
-fn internal_trigger_fpt_issuance(){
+fn internal_pay_out_asset_gains(depositor: Identity) {
+    let mut i = 0;
+    while i < storage.valid_assets.len() {
+        let asset_contract = storage.valid_assets.get(i).unwrap();
+        let asset_gain = internal_get_depositor_asset_gain(depositor, asset_contract);
+        send_asset_gain_to_depositor(depositor, asset_gain, asset_contract);
+        i += 1;
+    }
+}
+
+#[storage(read, write)]
+fn internal_trigger_fpt_issuance() {
     let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.value);
     let fpt_issuance = community_issuance_contract.issue_fpt();
     internal_update_g(fpt_issuance);
 }
 
 #[storage(read, write)]
-fn internal_update_g(fpt_issuance: u64){
-    if (storage.total_usdf_deposits == 0 || fpt_issuance ==0){
+fn internal_update_g(fpt_issuance: u64) {
+    if (storage.total_usdf_deposits == 0 || fpt_issuance == 0) {
         return;
     }
     let fpt_per_unit_staked = internal_compute_fpt_per_unit_staked(fpt_issuance, storage.total_usdf_deposits);
@@ -298,16 +254,16 @@ fn internal_update_g(fpt_issuance: u64){
 */
 #[storage(read, write)]
 fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: u64) -> u64 {
-    let fpt_numerator =U128::from_u64(fpt_issuance) * U128::from_u64(DECIMAL_PRECISION);
+    let fpt_numerator = U128::from_u64(fpt_issuance) * U128::from_u64(DECIMAL_PRECISION) + storage.last_fpt_error;
     let fpt_per_unit_staked = fpt_numerator / U128::from_u64(total_usdf_deposits);
     storage.last_fpt_error = fpt_numerator - (fpt_per_unit_staked * U128::from_u64(total_usdf_deposits));
     fpt_per_unit_staked.as_u64().unwrap()
 }
 
 #[storage(read, write)]
-fn internal_pay_out_fpt_gains(depositor: Identity){
+fn internal_pay_out_fpt_gains(depositor: Identity) {
     let depositor_fpt_gain = internal_get_depositor_fpt_gain(depositor);
-    if (depositor_fpt_gain > 0){
+    if (depositor_fpt_gain > 0) {
         let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.value);
         community_issuance_contract.send_fpt(depositor, depositor_fpt_gain);
     }
@@ -316,7 +272,9 @@ fn internal_pay_out_fpt_gains(depositor: Identity){
 #[storage(read, write)]
 fn internal_get_depositor_fpt_gain(depositor: Identity) -> u64 {
     let initial_deposit = storage.deposits.get(depositor);
-    if (initial_deposit == 0) { return 0; }
+    if (initial_deposit == 0) {
+        return 0;
+    }
     let snapshots = storage.deposit_snapshots.get(depositor);
     let fpt_gain = internal_get_fpt_gain_from_snapshots(initial_deposit, snapshots);
     fpt_gain
@@ -404,7 +362,6 @@ fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
     if initial_deposit == 0 {
         return 0;
     }
-
     let mut snapshots = storage.deposit_snapshots.get(depositor);
 
     return get_compounded_stake_from_snapshots(initial_deposit, snapshots)
@@ -574,7 +531,6 @@ fn update_reward_sum_and_product(
     let new_sum = current_s + marginal_asset_gain;
 
     storage.epoch_to_scale_to_sum.insert((current_epoch, current_scale, asset), new_sum);
-
     if (new_product_factor == U128::from_u64(0)) {
         storage.current_epoch += 1;
         storage.current_scale = 0;

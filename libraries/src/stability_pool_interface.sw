@@ -2,7 +2,7 @@ library stability_pool_interface;
 
 abi StabilityPool {
     #[storage(read, write)]
-    fn initialize(borrow_operations_address: ContractId, usdf_address: ContractId, community_issuance_address: ContractId, protocol_manager: ContractId, active_pool: ContractId);
+    fn initialize(usdf_address: ContractId, community_issuance_address: ContractId, protocol_manager: ContractId, active_pool: ContractId);
 
     #[storage(read, write)]
     fn add_asset(trove_manager_address: ContractId, asset_address: ContractId, oracle_address: ContractId);
@@ -12,9 +12,6 @@ abi StabilityPool {
 
     #[storage(read, write)]
     fn withdraw_from_stability_pool(amount: u64);
-
-    #[storage(read, write)]
-    fn withdraw_gain_to_trove(lower_hint: Identity, upper_hint: Identity, asset_address: ContractId);
 
     #[storage(read, write)]
     fn offset(debt_to_offset: u64, coll_to_offset: u64, asset_address: ContractId);
