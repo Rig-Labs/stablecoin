@@ -7,7 +7,7 @@ use test_utils::{
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
         token::token_abi,
-        trove_manager::{trove_manager_abi, trove_manager_utils},
+        trove_manager::trove_manager_abi,
     },
     setup::common::{add_asset, assert_within_threshold, setup_protocol},
     utils::with_min_borrow_fee,

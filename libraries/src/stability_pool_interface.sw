@@ -27,4 +27,7 @@ abi StabilityPool {
 
     #[storage(read)]
     fn get_compounded_usdf_deposit(depositor: Identity) -> u64;
+
+    #[storage(read)]
+    fn get_depositor_fpt_gain(depositor: Identity) -> u64;
 }

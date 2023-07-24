@@ -134,6 +134,17 @@ pub mod stability_pool_abi {
             .await
     }
 
+    pub async fn get_depositor_fpt_gain<T: Account>(
+        stability_pool: &StabilityPool<T>,
+        depositor: Identity,
+    ) -> Result<FuelCallResponse<u64>, Error> {
+        stability_pool
+            .methods()
+            .get_depositor_fpt_gain(depositor)
+            .call()
+            .await
+    }
+
     pub async fn withdraw_from_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
         community_issuance: &CommunityIssuance<T>,

@@ -207,6 +207,11 @@ impl StabilityPool for Contract {
     fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
         return internal_get_compounded_usdf_deposit(depositor);
     }
+
+    #[storage(read)]
+    fn get_depositor_fpt_gain(depositor: Identity) -> u64 {
+        return internal_get_depositor_fpt_gain(depositor);
+    }
 }
 
 // --- Internal functions ---
@@ -269,7 +274,7 @@ fn internal_pay_out_fpt_gains(depositor: Identity) {
     }
 }
 
-#[storage(read, write)]
+#[storage(read)]
 fn internal_get_depositor_fpt_gain(depositor: Identity) -> u64 {
     let initial_deposit = storage.deposits.get(depositor);
     if (initial_deposit == 0) {
@@ -280,7 +285,7 @@ fn internal_get_depositor_fpt_gain(depositor: Identity) -> u64 {
     fpt_gain
 }
 
-#[storage(read, write)]
+#[storage(read)]
 fn internal_get_fpt_gain_from_snapshots(initial_stake: u64, snapshots: Snapshots) -> u64 {
     let epoch_snapshot = snapshots.epoch;
     let scale_snapshot = snapshots.scale;

@@ -4,7 +4,7 @@ use fuels::prelude::{Address, Provider, WalletUnlocked};
 
 // const RPC: &str = "http://localhost:4000";
 
-// #[tokio::test]
+#[tokio::test]
 pub async fn deploy() {
     const RPC: &str = "beta-3.fuel.network";
     //--------------- WALLET ---------------
@@ -149,7 +149,6 @@ pub mod deployment {
         println!("Stability Pool: {}", stability_pool.contract_id());
         println!("FPT Staking: {}", fpt_staking.contract_id());
         println!("FPT Token: {}", fpt_token.contract_id());
-        println!("Mock FPT Token: {}", fpt_token.contract_id());
         println!("Community Issuance {}", community_issuance.contract_id());
         println!("Coll Surplus Pool {}", coll_surplus_pool.contract_id());
         println!("Protocol Manager {}", protocol_manager.contract_id());
