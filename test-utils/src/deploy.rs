@@ -4,7 +4,7 @@ use fuels::prelude::{Address, Provider, WalletUnlocked};
 
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+// #[tokio::test]
 pub async fn deploy() {
     const RPC: &str = "beta-3.fuel.network";
     //--------------- WALLET ---------------

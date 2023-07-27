@@ -1,12 +1,7 @@
 use fuels::prelude::abigen;
 
-use crate::interfaces::active_pool::ActivePool;
-use crate::interfaces::borrow_operations::BorrowOperations;
 use crate::interfaces::community_issuance::CommunityIssuance;
-use crate::interfaces::oracle::Oracle;
-use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
-use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
 
 abigen!(Contract(

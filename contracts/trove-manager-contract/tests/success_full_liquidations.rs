@@ -1,4 +1,4 @@
-use fuels::types::Identity;
+use fuels::types::{AssetId, Identity};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
@@ -166,7 +166,10 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .value;
 
     // 5% Penalty on 1_000* PRECISION of debt
-    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
+    let mut asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
+    let coll_gas_fee = asset_with_min_borrow_fee / 200;
+    asset_with_min_borrow_fee -= coll_gas_fee;
+
     assert_eq!(asset, asset_with_min_borrow_fee);
 
     let active_pool_asset = active_pool_abi::get_asset(
@@ -393,9 +396,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .value;
 
     // 5% Penalty on 1_000* PRECISION of debt
+    let expected_asset_in_sp = 525 * PRECISION - 525 * PRECISION / 200;
+
     assert_eq!(
-        asset,
-        525 * PRECISION,
+        asset, expected_asset_in_sp,
         "Incorrect asset amount in stability pool"
     );
 
@@ -432,7 +436,10 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
     // 1.05 * 500_000_000
     let debt_being_redistributed = with_min_borrow_fee(1_000 * PRECISION) - 500 * PRECISION;
-    let asset_being_redistributed = with_liquidation_penalty(debt_being_redistributed);
+    let mut asset_being_redistributed = with_liquidation_penalty(debt_being_redistributed);
+    let coll_gas_fee = asset_being_redistributed / 200;
+    asset_being_redistributed -= coll_gas_fee;
+
     assert_eq!(
         default_pool_asset, asset_being_redistributed,
         "Incorrect asset amount in default pool"
@@ -484,7 +491,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_full_liquidation_empty_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(10, 5, false).await;
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
@@ -672,11 +679,24 @@ async fn proper_full_liquidation_empty_sp() {
     .value;
 
     // 1.05 * 500_000_000
-    let expected_default_pool_asset =
+    let mut expected_default_pool_asset =
         with_liquidation_penalty(with_min_borrow_fee(1_000 * PRECISION));
     let expected_default_pool_debt = with_min_borrow_fee(1_000 * PRECISION);
+    let gas_compensation = expected_default_pool_asset / 200;
+    expected_default_pool_asset -= gas_compensation;
+
     assert_eq!(default_pool_asset, expected_default_pool_asset);
     assert_eq!(default_pool_debt, expected_default_pool_debt);
+
+    // Check that the admin got the gas compensation
+    let provider = admin.provider().unwrap();
+    let asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+
+    let asset_balance = provider
+        .get_asset_balance(admin.address(), asset_id)
+        .await
+        .unwrap();
+    assert_eq!(asset_balance, gas_compensation);
 
     trove_manager_utils::assert_pending_asset_rewards(
         &contracts.asset_contracts[0].trove_manager,
@@ -716,7 +736,7 @@ async fn proper_full_liquidation_empty_sp() {
 
     assert_eq!(
         liq_coll_surplus,
-        1_100 * PRECISION - expected_default_pool_asset,
+        1_100 * PRECISION - expected_default_pool_asset - gas_compensation,
         "Liquidated wallet collateral surplus was not 50_000"
     );
 }

@@ -1,4 +1,4 @@
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
+use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
 
 abigen!(Contract(
     name = "FPTToken",
@@ -6,14 +6,12 @@ abigen!(Contract(
 ));
 
 pub mod fpt_token_abi {
+    use crate::interfaces::community_issuance::CommunityIssuance;
+    use crate::interfaces::usdf_token::USDFToken;
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, LogDecoder, TxParameters},
+        prelude::{Account, TxParameters},
         types::ContractId,
     };
-    use crate::interfaces::vesting::VestingContract;
-    use crate::interfaces::usdf_token::USDFToken;
-    use crate::interfaces::community_issuance::CommunityIssuance;
-    use crate::{setup::common::wait, interfaces::vesting};
 
     use super::*;
     pub async fn initialize<T: Account>(
@@ -38,8 +36,9 @@ pub mod fpt_token_abi {
             .initialize(
                 config,
                 vesting_contract.contract_id().into(),
-                community_issuance_contract.contract_id().into()
-            ).set_contracts(&[vesting_contract, community_issuance_contract])
+                community_issuance_contract.contract_id().into(),
+            )
+            .set_contracts(&[vesting_contract, community_issuance_contract])
             .tx_params(tx_params)
             .append_variable_outputs(10)
             .call()
@@ -61,7 +60,14 @@ pub mod fpt_token_abi {
         instance.methods().total_supply().call().await.unwrap()
     }
 
-    pub async fn get_vesting_contract<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<ContractId> {
-        instance.methods().get_vesting_contract().call().await.unwrap()
+    pub async fn get_vesting_contract<T: Account>(
+        instance: &FPTToken<T>,
+    ) -> FuelCallResponse<ContractId> {
+        instance
+            .methods()
+            .get_vesting_contract()
+            .call()
+            .await
+            .unwrap()
     }
 }

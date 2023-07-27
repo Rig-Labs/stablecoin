@@ -1,4 +1,4 @@
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
+use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
 
 abigen!(Contract(
     name = "CommunityIssuance",
@@ -6,10 +6,7 @@ abigen!(Contract(
 ));
 
 pub mod community_issuance_abi {
-    use fuels::{
-        accounts::fuel_crypto::coins_bip32::ecdsa::digest::typenum::U256,
-        prelude::{Account, LogDecoder, TxParameters},
-    };
+    use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
     use fuels::{prelude::ContractId, types::Identity};

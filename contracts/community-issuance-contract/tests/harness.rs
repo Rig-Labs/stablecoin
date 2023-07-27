@@ -144,11 +144,9 @@ async fn test_emissions() {
 
 #[tokio::test]
 async fn test_admin_start_rewards_increase_transition() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
+    let (contracts, admin, mut _wallets) = setup_protocol(10, 4, false).await;
     let provider = admin.provider().unwrap();
     let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
-
-    let wallet1 = wallets.pop().unwrap();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
