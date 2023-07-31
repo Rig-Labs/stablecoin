@@ -49,7 +49,7 @@ abi MockTroveManager {
     #[storage(read, write)]
     fn remove(id: Identity, asset: ContractId);
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn offset(debt: u64, coll: u64);
 
     #[storage(read, write)]
@@ -129,7 +129,7 @@ impl MockTroveManager for Contract {
         sorted_troves_contract.remove(id, asset);
     }
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn offset(debt: u64, coll: u64) {
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.into());
 

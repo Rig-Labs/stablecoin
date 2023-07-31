@@ -113,7 +113,7 @@ impl ProtocolManager for Contract {
         storage.admin = null_identity_address();
     }
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn redeem_collateral(
         max_itterations: u64,
         partial_redemption_hint: u64,

@@ -265,7 +265,7 @@ fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: 
     fpt_per_unit_staked.as_u64().unwrap()
 }
 
-#[storage(read, write)]
+#[storage(read)]
 fn internal_pay_out_fpt_gains(depositor: Identity) {
     let depositor_fpt_gain = internal_get_depositor_fpt_gain(depositor);
     if (depositor_fpt_gain > 0) {

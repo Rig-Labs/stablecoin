@@ -10,6 +10,6 @@ abi ProtocolManager {
     #[storage(read, write)]
     fn renounce_admin();
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn redeem_collateral(max_itterations: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity);
 }

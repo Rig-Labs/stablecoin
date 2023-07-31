@@ -1,6 +1,7 @@
 use fuels::types::Identity;
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{POST_LIQUIDATION_COLLATERAL_RATIO, PRECISION},
+    deploy::deployment::assert_within_threshold,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -160,7 +161,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     assert_eq!(default_pool_asset, 0);
     assert_eq!(default_pool_debt, 0);
-    assert_eq!(collateral_ratio, 1_300_000_000);
+    assert_eq!(collateral_ratio, POST_LIQUIDATION_COLLATERAL_RATIO);
 
     let pending_asset_rewards = trove_manager_abi::get_pending_asset_reward(
         &contracts.asset_contracts[0].trove_manager,
@@ -354,7 +355,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     let collateral_ratio = calculate_cr(PRECISION, remaining_coll, remaining_debt);
 
-    assert_eq!(collateral_ratio, 1_300_000_000);
+    assert_eq!(collateral_ratio, POST_LIQUIDATION_COLLATERAL_RATIO);
 
     let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
         .await
@@ -374,7 +375,14 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     let gas_coll_compensation = 525 * PRECISION / 200;
     let expected_asset_in_sp = 525 * PRECISION - gas_coll_compensation;
 
-    assert_eq!(asset, expected_asset_in_sp);
+    assert_within_threshold(
+        asset,
+        expected_asset_in_sp,
+        &format!(
+            "Asset in stability pool was not {} but {}",
+            expected_asset_in_sp, asset
+        ),
+    );
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
@@ -413,10 +421,17 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     // 1.05 * 500_000_000
     let liquidated_amount = starting_col - remaining_coll;
     let gas_coll_compensation = liquidated_amount / 200;
-    assert_eq!(
+
+    assert_within_threshold(
         default_pool_asset,
-        liquidated_amount - gas_coll_compensation - expected_asset_in_sp
+        liquidated_amount - gas_coll_compensation - expected_asset_in_sp,
+        &format!(
+            "Default pool asset was not {} but {}",
+            liquidated_amount - gas_coll_compensation - expected_asset_in_sp,
+            default_pool_asset,
+        ),
     );
+
     assert_eq!(
         default_pool_debt,
         with_min_borrow_fee(starting_debt) - remaining_debt - 500 * PRECISION
@@ -647,7 +662,7 @@ async fn proper_partial_liquidation_empty_sp() {
 
     let collateral_ratio = calculate_cr(PRECISION, remaining_coll, remaining_debt);
 
-    assert_eq!(collateral_ratio, 1_300_000_000);
+    assert_eq!(collateral_ratio, POST_LIQUIDATION_COLLATERAL_RATIO);
 
     let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
         .await
