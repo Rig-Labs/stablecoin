@@ -1,6 +1,9 @@
+use std::{fs::File, io::Write};
+
 use crate::setup::common::ProtocolContracts;
 use dotenv::dotenv;
 use fuels::prelude::{Address, Provider, WalletUnlocked};
+use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
 
@@ -29,8 +32,34 @@ pub async fn deploy() {
     let address = Address::from(wallet.address());
     println!("🔑 Wallet address: {}", address);
 
-    let _contracts: ProtocolContracts<WalletUnlocked> =
-        deployment::deploy_and_initialize_all(wallet, 100, true, true).await;
+    let contracts: ProtocolContracts<WalletUnlocked> =
+        deployment::deploy_and_initialize_all(wallet, 100, true).await;
+
+    // Create json with contract addresses
+    let mut file = File::create("contracts.json").unwrap();
+
+    let json = json!({
+        "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
+        "usdf": contracts.usdf.contract_id().to_string(),
+        "stability_pool": contracts.stability_pool.contract_id().to_string(),
+        "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
+        "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
+        "fpt_token": contracts.fpt_token.contract_id().to_string(),
+        "community_issuance": contracts.community_issuance.contract_id().to_string(),
+        "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
+        "default_pool": contracts.default_pool.contract_id().to_string(),
+        "active_pool": contracts.active_pool.contract_id().to_string(),
+        "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
+        "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
+            json!({
+                "oracle": asset_contracts.oracle.contract_id().to_string(),
+                "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
+                "asset": asset_contracts.asset.contract_id().to_string(),
+            })
+        }).collect::<Vec<serde_json::Value>>()
+    });
+
+    let _ = file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes());
 }
 
 use super::interfaces::{
@@ -92,8 +121,7 @@ pub mod deployment {
         .await;
         let wallet = wallets.pop().unwrap();
 
-        let contracts =
-            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset).await;
+        let contracts = deploy_and_initialize_all(wallet.clone(), max_size, deploy_2nd_asset).await;
 
         (contracts, wallet, wallets)
     }
@@ -101,7 +129,6 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
         _max_size: u64,
-        is_testnet: bool,
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
@@ -116,7 +143,7 @@ pub mod deployment {
         let fpt_token = deploy_fpt_token(&wallet).await;
         pb.inc();
 
-        let fpt = deploy_token(&wallet).await;
+        let _fpt = deploy_token(&wallet).await;
         pb.inc();
 
         let fpt_staking = deploy_fpt_staking(&wallet).await;
@@ -159,7 +186,7 @@ pub mod deployment {
 
         let mut pb = ProgressBar::new(7);
 
-        let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
 
         let _ = community_issuance_abi::initialize(
@@ -167,7 +194,7 @@ pub mod deployment {
             stability_pool.contract_id().into(),
             fpt_token.contract_id().into(),
             &Identity::Address(wallet.address().into()),
-            !is_testnet,
+            false,
         )
         .await;
         pb.inc();
@@ -178,17 +205,6 @@ pub mod deployment {
             "FPT".to_string(),
             &usdf, // TODO this will be the vesting contract
             &community_issuance,
-        )
-        .await;
-        pb.inc();
-
-        // mock token for testing staking
-        token_abi::initialize(
-            &fpt,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
-            "FPT Token".to_string(),
-            "FPT".to_string(),
         )
         .await;
         pb.inc();
@@ -307,10 +323,10 @@ pub mod deployment {
             "FUEL".to_string(),
             &default_pool,
             &active_pool,
-            fuel_asset_contracts.asset,
-            fuel_asset_contracts.trove_manager,
+            &fuel_asset_contracts.asset,
+            &fuel_asset_contracts.trove_manager,
             &sorted_troves,
-            fuel_asset_contracts.oracle,
+            &fuel_asset_contracts.oracle,
         )
         .await;
 
@@ -329,16 +345,18 @@ pub mod deployment {
                 "stFUEL".to_string(),
                 &default_pool,
                 &active_pool,
-                stfuel_asset_contracts.asset,
-                stfuel_asset_contracts.trove_manager,
+                &stfuel_asset_contracts.asset,
+                &stfuel_asset_contracts.trove_manager,
                 &sorted_troves,
-                stfuel_asset_contracts.oracle,
+                &stfuel_asset_contracts.oracle,
             )
             .await;
+
+            asset_contracts.push(stfuel_asset_contracts);
         }
         pb.finish();
 
-        // asset_contracts.push(fuel_asset_contracts);
+        asset_contracts.push(fuel_asset_contracts);
 
         let contracts = ProtocolContracts {
             borrow_operations,
@@ -348,7 +366,7 @@ pub mod deployment {
             asset_contracts,
             fpt_staking,
             fpt_token,
-            fpt,
+            fpt: _fpt,
             community_issuance,
             coll_surplus_pool,
             default_pool,
@@ -417,10 +435,10 @@ pub mod deployment {
         symbol: String,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
-        asset: Token<T>,
-        trove_manager: TroveManagerContract<T>,
+        asset: &Token<T>,
+        trove_manager: &TroveManagerContract<T>,
         sorted_troves: &SortedTroves<T>,
-        oracle: Oracle<T>,
+        oracle: &Oracle<T>,
     ) -> () {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(7);
