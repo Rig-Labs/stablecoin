@@ -15,13 +15,13 @@ pub mod coll_surplus_pool_abi {
     };
 
     pub async fn initialize<T: Account>(
-        default_pool: &CollSurplusPool<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
         borrow_operations: ContractId,
         protocol_manager: Identity,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().set_gas_price(1);
 
-        let res = default_pool
+        let res = coll_surplus_pool
             .methods()
             .initialize(borrow_operations, protocol_manager)
             .tx_params(tx_params)
