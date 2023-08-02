@@ -1,8 +1,11 @@
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, str::FromStr};
 
-use crate::setup::common::ProtocolContracts;
+use crate::setup::common::{ExistingAssetContracts, ProtocolContracts};
 use dotenv::dotenv;
-use fuels::prelude::{Address, Provider, WalletUnlocked};
+use fuels::{
+    prelude::{Address, Bech32ContractId, Provider, WalletUnlocked},
+    types::ContractId,
+};
 use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
@@ -32,8 +35,44 @@ pub async fn deploy() {
     let address = Address::from(wallet.address());
     println!("🔑 Wallet address: {}", address);
 
-    let contracts: ProtocolContracts<WalletUnlocked> =
-        deployment::deploy_and_initialize_all(wallet, 100, true).await;
+    let eth_contracts = ExistingAssetContracts {
+        asset: ContractId::from(
+            Bech32ContractId::from_str(
+                "fuel17unetj5y6ypk354m5jqt3vtl0z9n68ezftpe8st0krte64ttzlssxqfx0t",
+            )
+            .unwrap(),
+        ),
+        oracle: ContractId::from(
+            Bech32ContractId::from_str(
+                "fuel1mz3e23uzlttn2crmf5zwst6c55lzemtv5pve55v4y9e06h06p4ws94a847",
+            )
+            .unwrap(),
+        ),
+    };
+
+    let st_eth_contracts = ExistingAssetContracts {
+        asset: ContractId::from(
+            Bech32ContractId::from_str(
+                "fuel18acrkuvrh4h00g0drgd9xvtr0f9lrqn96k03p83afgrnqh9vmhustqn8em",
+            )
+            .unwrap(),
+        ),
+        oracle: ContractId::from(
+            Bech32ContractId::from_str(
+                "fuel1u4qqr558fx64m68w6f5n23puuz770e9kthxw42yzqrsc095md8dskn5dcj",
+            )
+            .unwrap(),
+        ),
+    };
+
+    let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
+        wallet,
+        100,
+        true,
+        Some(eth_contracts),
+        Some(st_eth_contracts),
+    )
+    .await;
 
     // Create json with contract addresses
     let mut file = File::create("contracts.json").unwrap();
@@ -72,11 +111,7 @@ use super::interfaces::{
 
 pub mod deployment {
 
-    use fuels::{
-        prelude::{launch_custom_provider_and_get_wallets, Account, WalletsConfig},
-        programs::call_response::FuelCallResponse,
-        types::Identity,
-    };
+    use fuels::{prelude::Account, programs::call_response::FuelCallResponse, types::Identity};
     use pbr::ProgressBar;
 
     use super::*;
@@ -99,37 +134,12 @@ pub mod deployment {
         },
     };
 
-    pub async fn setup_protocol(
-        max_size: u64,
-        num_wallets: u64,
-        deploy_2nd_asset: bool,
-    ) -> (
-        ProtocolContracts<WalletUnlocked>,
-        WalletUnlocked,
-        Vec<WalletUnlocked>,
-    ) {
-        // Launch a local network and deploy the contract
-        let mut wallets = launch_custom_provider_and_get_wallets(
-            WalletsConfig::new(
-                Some(num_wallets),   /* Single wallet */
-                Some(1),             /* Single coin (UTXO) */
-                Some(1_000_000_000), /* Amount per coin */
-            ),
-            None,
-            None,
-        )
-        .await;
-        let wallet = wallets.pop().unwrap();
-
-        let contracts = deploy_and_initialize_all(wallet.clone(), max_size, deploy_2nd_asset).await;
-
-        (contracts, wallet, wallets)
-    }
-
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
         _max_size: u64,
         deploy_2nd_asset: bool,
+        existing_eth_contracts: Option<ExistingAssetContracts>,
+        existing_st_eth_contracts: Option<ExistingAssetContracts>,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
         let mut pb = ProgressBar::new(12);
@@ -169,7 +179,7 @@ pub mod deployment {
         pb.inc();
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
-        let fuel_asset_contracts = upload_asset(wallet.clone()).await;
+        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("USDF Token: {}", usdf.contract_id());
@@ -327,11 +337,13 @@ pub mod deployment {
             &fuel_asset_contracts.trove_manager,
             &sorted_troves,
             &fuel_asset_contracts.oracle,
+            existing_eth_contracts,
         )
         .await;
 
         if deploy_2nd_asset {
-            let stfuel_asset_contracts = upload_asset(wallet.clone()).await;
+            let stfuel_asset_contracts =
+                upload_asset(wallet.clone(), &existing_st_eth_contracts).await;
 
             initialize_asset(
                 &borrow_operations,
@@ -349,6 +361,7 @@ pub mod deployment {
                 &stfuel_asset_contracts.trove_manager,
                 &sorted_troves,
                 &stfuel_asset_contracts.oracle,
+                existing_st_eth_contracts,
             )
             .await;
 
@@ -400,27 +413,42 @@ pub mod deployment {
         std::thread::sleep(std::time::Duration::from_secs(12));
     }
 
-    pub async fn upload_asset(wallet: WalletUnlocked) -> AssetContracts<WalletUnlocked> {
+    pub async fn upload_asset(
+        wallet: WalletUnlocked,
+        existing_contracts: &Option<ExistingAssetContracts>,
+    ) -> AssetContracts<WalletUnlocked> {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(3);
-
-        let oracle = deploy_oracle(&wallet).await;
-        pb.inc();
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
-        let asset = deploy_token(&wallet).await;
-        pb.inc();
 
-        println!("Deploying asset contracts... Done");
-        println!("Oracle: {}", oracle.contract_id());
-        println!("Trove Manager: {}", trove_manager.contract_id());
-        println!("Asset: {}", asset.contract_id());
+        match existing_contracts {
+            Some(contracts) => {
+                pb.finish();
+                return AssetContracts {
+                    oracle: Oracle::new(contracts.oracle.into(), wallet.clone()),
+                    asset: Token::new(contracts.asset.into(), wallet.clone()),
+                    trove_manager,
+                };
+            }
+            None => {
+                let oracle = deploy_oracle(&wallet).await;
+                pb.inc();
+                let asset = deploy_token(&wallet).await;
+                pb.inc();
 
-        return AssetContracts {
-            oracle,
-            trove_manager,
-            asset,
-        };
+                println!("Deploying asset contracts... Done");
+                println!("Oracle: {}", oracle.contract_id());
+                println!("Trove Manager: {}", trove_manager.contract_id());
+                println!("Asset: {}", asset.contract_id());
+
+                return AssetContracts {
+                    oracle,
+                    trove_manager,
+                    asset,
+                };
+            }
+        }
     }
 
     pub async fn initialize_asset<T: Account>(
@@ -439,20 +467,30 @@ pub mod deployment {
         trove_manager: &TroveManagerContract<T>,
         sorted_troves: &SortedTroves<T>,
         oracle: &Oracle<T>,
+        existing_contracts: Option<ExistingAssetContracts>,
     ) -> () {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(7);
 
-        let _ = token_abi::initialize(
-            &asset,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
-            name.to_string(),
-            symbol.to_string(),
-        )
-        .await;
-        wait();
-        pb.inc();
+        match existing_contracts {
+            Some(_) => {}
+            None => {
+                let _ = token_abi::initialize(
+                    &asset,
+                    1_000_000_000,
+                    &Identity::Address(wallet.address().into()),
+                    name.to_string(),
+                    symbol.to_string(),
+                )
+                .await;
+                wait();
+                pb.inc();
+
+                let _ = oracle_abi::set_price(&oracle, 1000 * PRECISION).await;
+                wait();
+                pb.inc();
+            }
+        }
 
         let _ = trove_manager_abi::initialize(
             &trove_manager,
@@ -468,10 +506,6 @@ pub mod deployment {
             protocol_manager.contract_id().into(),
         )
         .await;
-        wait();
-        pb.inc();
-
-        let _ = oracle_abi::set_price(&oracle, 1000 * PRECISION).await;
         wait();
         pb.inc();
 
