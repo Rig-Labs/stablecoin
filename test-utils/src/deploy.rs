@@ -294,7 +294,7 @@ pub mod deployment {
         let _ = default_pool_abi::initialize(
             &default_pool,
             Identity::ContractId(protocol_manager.contract_id().into()),
-            protocol_manager.contract_id().into(),
+            active_pool.contract_id().into(),
         )
         .await;
         wait();
