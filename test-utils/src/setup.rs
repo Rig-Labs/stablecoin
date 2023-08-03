@@ -581,7 +581,7 @@ pub mod common {
 
     pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
         let mut path = env::current_dir().unwrap();
-        println!("Current directory: {:?}", path);
+        // println!("Current directory: {:?}", path);
         let fluid_protocol_index = path
             .to_str()
             .unwrap()
