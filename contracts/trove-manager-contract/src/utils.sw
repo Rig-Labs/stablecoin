@@ -21,15 +21,20 @@ pub fn calculate_liqudated_trove_values(
             is_partial_liquidation: false,
         }
     }
+    log(2);
     let trove_debt_numerator: U128 = U128::from_u64(debt) * U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(coll) * U128::from_u64(price);
-
+    log(3);
     let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO - ONE - STABILITY_POOL_FEE);
-
+    log(4);
     let trove_debt_to_repay = (trove_debt_numerator / trove_debt_denominator).as_u64().unwrap();
-
+    let trove_debt_to_repay = fm_min(trove_debt_to_repay, debt);
+    log(5);
     let mut trove_coll_liquidated = fm_multiply_ratio(trove_debt_to_repay, ONE + STABILITY_POOL_FEE, price);
-
+    log(6);
+    log(debt);
+    log(trove_debt_to_repay);
     if debt - trove_debt_to_repay < MIN_NET_DEBT {
+        log(7);
         trove_coll_liquidated = fm_multiply_ratio(debt, ONE + STABILITY_POOL_FEE, price);
 
         return LiquidatedTroveValsInner {
@@ -38,10 +43,10 @@ pub fn calculate_liqudated_trove_values(
             is_partial_liquidation: false,
         }
     }
-
+    log(8);
     return LiquidatedTroveValsInner {
         trove_coll_liquidated: fm_min(trove_coll_liquidated, coll),
-        trove_debt_to_repay: fm_min(trove_debt_to_repay, debt),
+        trove_debt_to_repay,
         is_partial_liquidation: true,
     }
 }
@@ -57,6 +62,8 @@ pub fn get_offset_and_redistribution_vals(
     vars.entire_trove_coll = coll;
     vars.entire_trove_debt = debt;
     let liquidated_position_vals = calculate_liqudated_trove_values(coll, debt, price);
+    log(liquidated_position_vals.trove_coll_liquidated);
+    log(liquidated_position_vals.trove_debt_to_repay);
 
     if (liquidated_position_vals.is_partial_liquidation) {
         vars.is_partial_liquidation = true;
@@ -159,7 +166,7 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_empty_pool() {
     assert(liquidation_vals.coll_to_send_to_sp == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_redistribute == starting_debt);
-    assert(liquidation_vals.coll_to_redistribute == 1_050 * DECIMAL_PRECISION - coll_gas_compensation);
+    assert(liquidation_vals.coll_to_redistribute == 1_100 * DECIMAL_PRECISION - coll_gas_compensation);
     assert(liquidation_vals.coll_gas_compensation == coll_gas_compensation);
 }
 
@@ -183,7 +190,7 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_enough_pool() {
     assert(liquidation_vals.coll_to_redistribute == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_offset == 1_000 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_send_to_sp == 1_050 * DECIMAL_PRECISION - coll_gas_compensation);
+    assert(liquidation_vals.coll_to_send_to_sp == 1_100 * DECIMAL_PRECISION - coll_gas_compensation);
     assert(liquidation_vals.coll_gas_compensation == coll_gas_compensation);
 }
 
@@ -205,9 +212,9 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_partial_pool() {
     assert(liquidation_vals.remaining_trove_debt == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_offset == 500 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_send_to_sp == 525 * DECIMAL_PRECISION - coll_gas_compensation / 2);
+    assert(liquidation_vals.coll_to_send_to_sp == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2);
     assert(liquidation_vals.debt_to_redistribute == 500 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_redistribute == 525 * DECIMAL_PRECISION - coll_gas_compensation / 2);
+    assert(liquidation_vals.coll_to_redistribute == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2);
 }
 
 #[test]

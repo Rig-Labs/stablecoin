@@ -472,6 +472,7 @@ fn internal_get_totals_from_batch_liquidate(
     let mut totals = LiquidationTotals::default();
 
     while i < borrowers.len() {
+        log(i);
         vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
         if vars.icr < MCR {
@@ -480,7 +481,13 @@ fn internal_get_totals_from_batch_liquidate(
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
 
             single_liquidation = get_offset_and_redistribution_vals(position.entire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
-
+            log(single_liquidation.is_partial_liquidation);
+            log(single_liquidation.remaining_trove_coll);
+            log(single_liquidation.remaining_trove_debt);
+            log(single_liquidation.debt_to_offset);
+            // log(single_liquidation.coll_to_offset);
+            log(single_liquidation.coll_surplus);
+            log(single_liquidation.coll_gas_compensation);
             internal_apply_liquidation(vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
@@ -634,9 +641,9 @@ fn internal_get_pending_asset_reward(address: Identity) -> u64 {
         return 0;
     }
     let stake = storage.troves.get(address).stake;
-    let pending_asset_reward = (U128::from_u64(reward_per_unit_staked) * U128::from_u64(stake)) / U128::from_u64(DECIMAL_PRECISION);
+    let pending_asset_reward = fm_multiply_ratio(reward_per_unit_staked, stake, DECIMAL_PRECISION);
 
-    return pending_asset_reward.as_u64().unwrap();
+    return pending_asset_reward;
 }
 
 #[storage(read)]
@@ -650,9 +657,9 @@ fn internal_get_pending_usdf_reward(address: Identity) -> u64 {
         return 0;
     }
     let stake = storage.troves.get(address).stake;
-    let pending_usdf_reward = (U128::from_u64(reward_per_unit_staked) * U128::from_u64(stake)) / U128::from_u64(DECIMAL_PRECISION);
+    let pending_usdf_reward = fm_multiply_ratio(reward_per_unit_staked, stake, DECIMAL_PRECISION);
 
-    return pending_usdf_reward.as_u64().unwrap();
+    return pending_usdf_reward;
 }
 
 #[storage(read)]
@@ -703,7 +710,7 @@ fn internal_redeem_collateral_from_trove(
     // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
     let trove = storage.troves.get(borrower);
     single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
-    single_redemption_values.asset_lot = ((U128::from_u64(single_redemption_values.usdf_lot) * U128::from_u64(DECIMAL_PRECISION)) / U128::from_u64(price)).as_u64().unwrap();
+    single_redemption_values.asset_lot = fm_multiply_ratio(single_redemption_values.usdf_lot, DECIMAL_PRECISION, price);
     let new_debt = trove.debt - single_redemption_values.usdf_lot;
     let new_coll = trove.coll - single_redemption_values.asset_lot;
 

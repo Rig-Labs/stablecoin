@@ -642,7 +642,7 @@ async fn proper_partial_liquidation_empty_sp() {
     trove_manager_utils::assert_trove_status(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
-        Status::Active,
+        Status::ClosedByLiquidation,
     )
     .await;
 

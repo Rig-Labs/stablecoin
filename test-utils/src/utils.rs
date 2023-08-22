@@ -25,7 +25,7 @@ pub fn calculate_cr(price: u64, coll: u64, debt: u64) -> u64 {
 }
 
 pub fn with_liquidation_penalty(amount: u64) -> u64 {
-    let amount_with_penalty = amount * 1_05 / 1_00;
+    let amount_with_penalty = amount * 1_10 / 1_00;
     return amount_with_penalty;
 }
 

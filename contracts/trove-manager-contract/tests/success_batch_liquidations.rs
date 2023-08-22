@@ -163,7 +163,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .value;
 
     // 5% Penalty on 1_000* PRECISION of debt
-    let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
+    let asset_with_min_borrow_fee = 1_100 * PRECISION;
     let coll_gas_fee = asset_with_min_borrow_fee / 200;
 
     assert_eq!(asset, 2 * (asset_with_min_borrow_fee - coll_gas_fee));
@@ -212,10 +212,9 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .await
     .value;
 
-    // Prices are the same
+    // all collateral is liquidated with no surplus
     assert_eq!(
-        liq_coll_surplus,
-        asset_deposit_to_be_liquidated - with_liquidation_penalty(liquidated_net_debt),
-        "Liquidated wallet collateral surplus was not 50_000"
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
     );
 }

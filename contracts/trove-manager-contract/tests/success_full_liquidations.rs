@@ -1,6 +1,9 @@
+use std::cmp::{max, min};
+
 use fuels::types::{AssetId, Identity};
 use test_utils::{
     data_structures::PRECISION,
+    deploy::deployment::assert_within_threshold,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -165,12 +168,17 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .unwrap()
     .value;
 
-    // 5% Penalty on 1_000* PRECISION of debt
-    let mut asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
-    let coll_gas_fee = asset_with_min_borrow_fee / 200;
-    asset_with_min_borrow_fee -= coll_gas_fee;
+    // 10% Penalty on 1_000* PRECISION of debt
+    let mut liquidated_asset_amount_transfered_to_sp = with_min_borrow_fee(1_100 * PRECISION);
+    liquidated_asset_amount_transfered_to_sp = min(
+        liquidated_asset_amount_transfered_to_sp,
+        asset_deposit_to_be_liquidated,
+    );
 
-    assert_eq!(asset, asset_with_min_borrow_fee);
+    let coll_gas_fee = liquidated_asset_amount_transfered_to_sp / 200;
+    liquidated_asset_amount_transfered_to_sp -= coll_gas_fee;
+
+    assert_eq!(asset, liquidated_asset_amount_transfered_to_sp);
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
@@ -218,9 +226,8 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     // Prices are the same
     assert_eq!(
-        liq_coll_surplus,
-        asset_deposit_to_be_liquidated - with_liquidation_penalty(liquidated_net_debt),
-        "Liquidated wallet collateral surplus was not 50_000"
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
     );
 }
 
@@ -395,12 +402,14 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .unwrap()
     .value;
 
-    // 5% Penalty on 1_000* PRECISION of debt
-    let expected_asset_in_sp = 525 * PRECISION - 525 * PRECISION / 200;
+    // 10% Penalty on 1_000* PRECISION of debt
+    let mut expected_asset_in_sp = 1_100 * PRECISION * 500 / 1005;
+    expected_asset_in_sp -= expected_asset_in_sp / 200;
 
-    assert_eq!(
-        asset, expected_asset_in_sp,
-        "Incorrect asset amount in stability pool"
+    assert_within_threshold(
+        asset,
+        expected_asset_in_sp,
+        "Incorrect asset amount in stability pool",
     );
 
     let active_pool_asset = active_pool_abi::get_asset(
@@ -434,10 +443,20 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await
     .value;
 
-    // 1.05 * 500_000_000
+    let asset_amount_to_sp = stability_pool_abi::get_asset(
+        &contracts.stability_pool,
+        contracts.asset_contracts[0].asset.contract_id().into(),
+    )
+    .await
+    .unwrap()
+    .value;
+    println!("asset_amount_to_sp: {}", asset_amount_to_sp);
+
+    // 1.10 * 500_000_000
     let debt_being_redistributed = with_min_borrow_fee(1_000 * PRECISION) - 500 * PRECISION;
-    let mut asset_being_redistributed = with_liquidation_penalty(debt_being_redistributed);
-    let coll_gas_fee = asset_being_redistributed / 200;
+    let mut asset_being_redistributed = 1_100 * PRECISION - asset_amount_to_sp;
+
+    let coll_gas_fee = 1_100 * PRECISION / 200;
     asset_being_redistributed -= coll_gas_fee;
 
     assert_eq!(
@@ -483,9 +502,8 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .value;
 
     assert_eq!(
-        liq_coll_surplus,
-        1_100 * PRECISION - with_liquidation_penalty(with_min_borrow_fee(1_000 * PRECISION)),
-        "Liquidated wallet collateral surplus was not 50_000_000"
+        liq_coll_surplus, 0,
+        "Liquidated wallet collateral surplus was not 0"
     );
 }
 
@@ -678,9 +696,11 @@ async fn proper_full_liquidation_empty_sp() {
     .await
     .value;
 
-    // 1.05 * 500_000_000
+    // 1.10 * 500_000_000
     let mut expected_default_pool_asset =
         with_liquidation_penalty(with_min_borrow_fee(1_000 * PRECISION));
+    // max available to liquidate is 1_100 * PRECISION
+    expected_default_pool_asset = min(expected_default_pool_asset, 1_100 * PRECISION);
     let expected_default_pool_debt = with_min_borrow_fee(1_000 * PRECISION);
     let gas_compensation = expected_default_pool_asset / 200;
     expected_default_pool_asset -= gas_compensation;
