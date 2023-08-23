@@ -1,5 +1,4 @@
 use crate::utils::setup::setup;
-// use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use fuels::prelude::*;
 use fuels::{prelude::AssetId, types::Identity};
 
