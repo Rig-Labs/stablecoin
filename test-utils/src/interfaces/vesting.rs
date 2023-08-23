@@ -17,18 +17,12 @@ abigen!(Contract(
 
 pub async fn instantiate_vesting_contract<T: Account>(
     contract: &VestingContract<T>,
-    admin: &Address,
     asset_contract: &ContractId,
     schedules: Vec<VestingSchedule>,
 ) -> FuelCallResponse<()> {
     contract
         .methods()
-        .constructor(
-            Identity::Address(admin.clone()),
-            asset_contract.clone(),
-            schedules,
-            true,
-        )
+        .constructor(asset_contract.clone(), schedules, true)
         .call()
         .await
         .unwrap()

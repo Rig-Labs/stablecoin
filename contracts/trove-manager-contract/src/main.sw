@@ -472,7 +472,6 @@ fn internal_get_totals_from_batch_liquidate(
     let mut totals = LiquidationTotals::default();
 
     while i < borrowers.len() {
-        log(i);
         vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
         if vars.icr < MCR {
@@ -481,13 +480,7 @@ fn internal_get_totals_from_batch_liquidate(
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
 
             single_liquidation = get_offset_and_redistribution_vals(position.entire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
-            log(single_liquidation.is_partial_liquidation);
-            log(single_liquidation.remaining_trove_coll);
-            log(single_liquidation.remaining_trove_debt);
-            log(single_liquidation.debt_to_offset);
-            // log(single_liquidation.coll_to_offset);
-            log(single_liquidation.coll_surplus);
-            log(single_liquidation.coll_gas_compensation);
+
             internal_apply_liquidation(vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);

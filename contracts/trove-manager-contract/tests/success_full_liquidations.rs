@@ -1,4 +1,4 @@
-use std::cmp::{max, min};
+use std::cmp::min;
 
 use fuels::types::{AssetId, Identity};
 use test_utils::{

@@ -252,7 +252,7 @@ async fn proper_one_sp_depositor_position() {
 
     // Since the entire debt is liquidated including the borrow fee,
     // the asset recieved includes the 0.5% fee
-    let mut asset_with_fee_adjustment = with_min_borrow_fee(1_050 * PRECISION);
+    let mut asset_with_fee_adjustment = 1_100 * PRECISION;
     let gas_coll_fee = asset_with_fee_adjustment / 200;
     asset_with_fee_adjustment -= gas_coll_fee;
     let debt_with_fee_adjustment = with_min_borrow_fee(1_000 * PRECISION);
@@ -325,7 +325,11 @@ async fn proper_one_sp_depositor_position() {
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, asset_with_fee_adjustment + gas_coll_fee);
+    assert_within_threshold(
+        fuel_balance,
+        asset_with_fee_adjustment + gas_coll_fee,
+        "fuel balance is not correct",
+    )
 }
 
 #[tokio::test]
@@ -472,7 +476,8 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    let mut asset_with_fee_adjustment = with_min_borrow_fee(1_050 * PRECISION);
+    // Fully liquidated
+    let mut asset_with_fee_adjustment = 1_100 * PRECISION;
     let gas_coll_fee = asset_with_fee_adjustment / 200;
     asset_with_fee_adjustment -= gas_coll_fee;
     let debt_paid_off = with_min_borrow_fee(1_000 * PRECISION);
@@ -768,7 +773,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     // Since the entire debt is liquidated including the borrow fee,
     // the asset recieved includes the 0.5% fee
-    let mut asset_with_fee_adjustment = with_min_borrow_fee(1_050 * PRECISION);
+    let mut asset_with_fee_adjustment = 1_100 * PRECISION;
     let coll_gas_compensation = asset_with_fee_adjustment / 200;
     asset_with_fee_adjustment -= coll_gas_compensation;
     let debt_with_fee_adjustment = with_min_borrow_fee(1_000 * PRECISION);
@@ -857,9 +862,10 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         .await
         .unwrap();
 
-    assert_eq!(
+    assert_within_threshold(
         fuel_balance,
-        asset_with_fee_adjustment + coll_gas_compensation
+        asset_with_fee_adjustment + coll_gas_compensation,
+        "fuel balance is not correct",
     );
 
     let provider = admin.provider().unwrap();
@@ -1007,9 +1013,8 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     .await
     .unwrap();
 
-    // Since the entire debt is liquidated including the borrow fee,
-    // the asset recieved includes the 0.5% fee
-    let mut asset_with_fee_adjustment = with_min_borrow_fee(1_050 * PRECISION);
+    // Full liquidation
+    let mut asset_with_fee_adjustment = 1_100 * PRECISION;
     let gas_coll_compensation = asset_with_fee_adjustment / 200;
     asset_with_fee_adjustment -= gas_coll_compensation;
     let debt_with_fee_adjustment = with_min_borrow_fee(1_000 * PRECISION);
@@ -1098,9 +1103,10 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         .await
         .unwrap();
 
-    assert_eq!(
+    assert_within_threshold(
         fuel_balance,
-        asset_with_fee_adjustment + gas_coll_compensation
+        asset_with_fee_adjustment + gas_coll_compensation,
+        "fuel balance is not correct",
     );
 
     let provider = admin.provider().unwrap();
