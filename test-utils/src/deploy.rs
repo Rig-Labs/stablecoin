@@ -4,7 +4,7 @@ use fuels::prelude::{Address, Provider, WalletUnlocked};
 
 // const RPC: &str = "http://localhost:4000";
 
-// #[tokio::test]
+#[tokio::test]
 pub async fn deploy() {
     const RPC: &str = "beta-3.fuel.network";
     //--------------- WALLET ---------------
@@ -54,18 +54,11 @@ pub mod deployment {
     use crate::{
         data_structures::PRECISION,
         interfaces::{
-            active_pool::active_pool_abi,
-            borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi,
-            community_issuance,
-            default_pool::default_pool_abi,
-            fpt_staking::{self, fpt_staking_abi},
-            oracle::oracle_abi,
-            protocol_manager::protocol_manager_abi,
-            sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi,
-            token::token_abi,
-            trove_manager::trove_manager_abi,
+            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
+            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
+            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
+            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
             usdf_token::usdf_token_abi,
         },
         setup::common::{
@@ -108,7 +101,7 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
         _max_size: u64,
-        _is_testnet: bool,
+        is_testnet: bool,
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
@@ -156,8 +149,12 @@ pub mod deployment {
         println!("Stability Pool: {}", stability_pool.contract_id());
         println!("FPT Staking: {}", fpt_staking.contract_id());
         println!("FPT Token: {}", fpt_token.contract_id());
-        println!("Mock FPT Token: {}", fpt_token.contract_id());
         println!("Community Issuance {}", community_issuance.contract_id());
+        println!("Coll Surplus Pool {}", coll_surplus_pool.contract_id());
+        println!("Protocol Manager {}", protocol_manager.contract_id());
+        println!("Default Pool {}", default_pool.contract_id());
+        println!("Active Pool {}", active_pool.contract_id());
+        println!("Sorted Troves {}", sorted_troves.contract_id());
         println!("Initializing contracts...");
 
         let mut pb = ProgressBar::new(7);
@@ -168,9 +165,9 @@ pub mod deployment {
         let _ = community_issuance_abi::initialize(
             &community_issuance,
             stability_pool.contract_id().into(),
-            fpt_staking.contract_id().into(),
+            fpt_token.contract_id().into(),
             &Identity::Address(wallet.address().into()),
-            false,
+            !is_testnet,
         )
         .await;
         pb.inc();
@@ -211,7 +208,6 @@ pub mod deployment {
             &borrow_operations,
             usdf.contract_id().into(),
             fpt_staking.contract_id().into(),
-            stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             active_pool.contract_id().into(),
@@ -223,7 +219,6 @@ pub mod deployment {
 
         let _ = stability_pool_abi::initialize(
             &stability_pool,
-            borrow_operations.contract_id().into(),
             usdf.contract_id().into(),
             community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
@@ -389,22 +384,19 @@ pub mod deployment {
 
     pub async fn upload_asset(wallet: WalletUnlocked) -> AssetContracts<WalletUnlocked> {
         println!("Deploying asset contracts...");
-        let mut pb = ProgressBar::new(7);
-        let oracle = deploy_oracle(&wallet).await;
+        let mut pb = ProgressBar::new(3);
 
+        let oracle = deploy_oracle(&wallet).await;
         pb.inc();
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
         let asset = deploy_token(&wallet).await;
+        pb.inc();
 
-        pb.inc();
-        let fpt_staking = deploy_fpt_staking(&wallet).await;
-        pb.inc();
         println!("Deploying asset contracts... Done");
         println!("Oracle: {}", oracle.contract_id());
         println!("Trove Manager: {}", trove_manager.contract_id());
         println!("Asset: {}", asset.contract_id());
-        println!("FPT Staking: {}", fpt_staking.contract_id());
 
         return AssetContracts {
             oracle,

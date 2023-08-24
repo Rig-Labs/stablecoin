@@ -189,7 +189,6 @@ async fn proper_staking_multiple_positions() {
         redeem_amount,
         10,
         0,
-        0,
         None,
         None,
         &contracts.usdf,

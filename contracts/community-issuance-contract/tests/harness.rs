@@ -9,7 +9,7 @@ use test_utils::{
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
     },
-    setup::common::{deploy_community_issuance, setup_protocol},
+    setup::common::setup_protocol,
 };
 
 fn abs_dif(a: u64, b: u64) -> u64 {
@@ -117,7 +117,7 @@ async fn test_emissions() {
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 
-    let res = stability_pool_abi::provide_to_stability_pool(
+    stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
@@ -525,6 +525,7 @@ async fn test_emissions_multiple_deposits() {
     )
     .await
     .unwrap();
+
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet3,
         &contracts.community_issuance,

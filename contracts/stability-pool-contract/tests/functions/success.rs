@@ -7,7 +7,7 @@ use test_utils::{
         oracle::oracle_abi,
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
         token::token_abi,
-        trove_manager::{trove_manager_abi, trove_manager_utils},
+        trove_manager::trove_manager_abi,
     },
     setup::common::{add_asset, assert_within_threshold, setup_protocol},
     utils::with_min_borrow_fee,
@@ -655,137 +655,6 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 }
 
 #[tokio::test]
-async fn proper_depositor_move_gain_to_trove() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
-
-    let liquidated_wallet = wallets.pop().unwrap();
-
-    token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
-        6_000 * PRECISION,
-        Identity::Address(admin.address().into()),
-    )
-    .await;
-
-    token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
-        5_000 * PRECISION,
-        Identity::Address(liquidated_wallet.address().into()),
-    )
-    .await;
-
-    borrow_operations_abi::open_trove(
-        &contracts.borrow_operations,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
-        &contracts.fpt_staking,
-        &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
-        &contracts.active_pool,
-        6_000 * PRECISION,
-        3_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
-    )
-    .await
-    .unwrap();
-
-    let liq_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
-    );
-
-    borrow_operations_abi::open_trove(
-        &liq_borrow_operations,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
-        &contracts.fpt_staking,
-        &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
-        &contracts.active_pool,
-        1_100 * PRECISION,
-        1_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
-    )
-    .await
-    .unwrap();
-
-    stability_pool_abi::provide_to_stability_pool(
-        &contracts.stability_pool,
-        &contracts.community_issuance,
-        &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        1_500 * PRECISION,
-    )
-    .await
-    .unwrap();
-
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-
-    trove_manager_abi::liquidate(
-        &contracts.asset_contracts[0].trove_manager,
-        &contracts.community_issuance,
-        &contracts.stability_pool,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.sorted_troves,
-        &contracts.active_pool,
-        &contracts.default_pool,
-        &contracts.coll_surplus_pool,
-        &contracts.usdf,
-        Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
-    )
-    .await
-    .unwrap();
-
-    let asset_with_fee = with_min_borrow_fee(1_050 * PRECISION);
-
-    stability_pool_utils::assert_depositor_asset_gain(
-        &contracts.stability_pool,
-        Identity::Address(admin.address().into()),
-        asset_with_fee,
-        contracts.asset_contracts[0].asset.contract_id().into(),
-    )
-    .await;
-
-    stability_pool_abi::withdraw_gain_to_trove(
-        &contracts.stability_pool,
-        &contracts.community_issuance,
-        &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
-        &contracts.asset_contracts[0].trove_manager,
-        &contracts.borrow_operations,
-        &contracts.sorted_troves,
-        &contracts.active_pool,
-        &contracts.asset_contracts[0].oracle,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
-    )
-    .await
-    .unwrap();
-
-    stability_pool_utils::assert_depositor_asset_gain(
-        &contracts.stability_pool,
-        Identity::Address(admin.address().into()),
-        0,
-        contracts.asset_contracts[0].asset.contract_id().into(),
-    )
-    .await;
-
-    trove_manager_utils::assert_trove_coll(
-        &contracts.asset_contracts[0].trove_manager,
-        Identity::Address(admin.address().into()),
-        6_000 * PRECISION + asset_with_fee,
-    )
-    .await;
-}
-
-#[tokio::test]
 async fn proper_one_sp_depositor_position_multiple_assets() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, true).await;
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
@@ -1173,7 +1042,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     // Makes a 2nd deposit to the Stability Pool
     let second_deposit = 1_000 * PRECISION;
-    
+
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,

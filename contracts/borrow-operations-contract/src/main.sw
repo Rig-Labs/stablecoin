@@ -36,7 +36,6 @@ storage {
     asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     usdf_contract: ContractId = null_contract(),
-    stability_pool_contract: ContractId = null_contract(),
     fpt_staking_contract: ContractId = null_contract(),
     coll_surplus_pool_contract: ContractId = null_contract(),
     active_pool_contract: ContractId = null_contract(),
@@ -50,7 +49,6 @@ impl BorrowOperations for Contract {
     fn initialize(
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
-        stability_pool_contract: ContractId,
         protocol_manager: ContractId,
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
@@ -60,7 +58,6 @@ impl BorrowOperations for Contract {
 
         storage.usdf_contract = usdf_contract;
         storage.fpt_staking_contract = fpt_staking_contract;
-        storage.stability_pool_contract = stability_pool_contract;
         storage.protocol_manager_contract = protocol_manager;
         storage.coll_surplus_pool_contract = coll_surplus_pool_contract;
         storage.active_pool_contract = active_pool_contract;
@@ -86,13 +83,9 @@ impl BorrowOperations for Contract {
 
     // --- Borrower Trove Operations ---
     #[storage(read, write), payable]
-    fn open_trove(
-        usdf_amount: u64,
-        upper_hint: Identity,
-        lower_hint: Identity,
-        asset_contract: ContractId,
-    ) {
+    fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
+        let asset_contract = msg_asset_id();
         let asset_contracts = storage.asset_contracts.get(asset_contract);
         let usdf_contract = storage.usdf_contract;
         let fpt_staking_contract = storage.fpt_staking_contract;
@@ -112,12 +105,9 @@ impl BorrowOperations for Contract {
         require_trove_is_not_active(sender, asset_contracts.trove_manager);
         vars.usdf_fee = internal_trigger_borrowing_fee(vars.net_debt, usdf_contract, fpt_staking_contract);
 
-        vars.net_debt = vars.net_debt + vars.usdf_fee;
+        vars.net_debt += vars.usdf_fee;
 
         require_at_least_min_net_debt(vars.net_debt);
-
-        // ICR is based on the composite debt, i.e. the requested usdf amount
-        require(vars.net_debt > 0, "BorrowOperations: composite debt must be greater than 0");
 
         vars.icr = fm_compute_cr(msg_amount(), vars.net_debt, vars.price);
         vars.nicr = fm_compute_nominal_cr(msg_amount(), vars.net_debt);
@@ -141,13 +131,9 @@ impl BorrowOperations for Contract {
     }
 
     #[storage(read, write), payable]
-    fn add_coll(
-        upper_hint: Identity,
-        lower_hint: Identity,
-        asset_contract: ContractId,
-    ) {
+    fn add_coll(upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
-        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, upper_hint, lower_hint, asset_contract);
+        internal_adjust_trove(msg_sender().unwrap(), msg_amount(), 0, 0, false, upper_hint, lower_hint, msg_asset_id());
     }
 
     #[storage(read, write)]
@@ -158,19 +144,6 @@ impl BorrowOperations for Contract {
         asset_contract: ContractId,
     ) {
         internal_adjust_trove(msg_sender().unwrap(), 0, amount, 0, false, upper_hint, lower_hint, asset_contract);
-    }
-
-    #[storage(read, write), payable]
-    fn move_asset_gain_to_trove(
-        id: Identity,
-        upper_hint: Identity,
-        lower_hint: Identity,
-        asset_contract: ContractId,
-    ) {
-        require_caller_is_stability_pool();
-        require_valid_asset_id();
-
-        internal_adjust_trove(id, msg_amount(), 0, 0, false, upper_hint, lower_hint, asset_contract);
     }
 
     #[storage(read, write)]
@@ -223,34 +196,15 @@ impl BorrowOperations for Contract {
         active_pool.send_asset(borrower, coll, asset_contract);
 
         if (debt < msg_amount()) {
-            let usdf_to_send = msg_amount() - debt;
-            transfer(usdf_to_send, usdf_contract_cache, borrower);
+            let excess_usdf_returned = msg_amount() - debt;
+            transfer(excess_usdf_returned, usdf_contract_cache, borrower);
         }
     }
 
-    #[storage(read, write), payable]
-    fn adjust_trove(
-        coll_withdrawl: u64,
-        debt_change: u64,
-        is_debt_increase: bool,
-        upper_hint: Identity,
-        lower_hint: Identity,
-        asset: ContractId,
-    ) {}
-
-        // TODO
-        // Since you cannot attach two different assets to a single transaction, 
-        // we need to check which asset is being used, probably will remove this function
     #[storage(read)]
     fn claim_collateral(asset: ContractId) {
         let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.value);
         coll_surplus.claim_coll(msg_sender().unwrap(), asset);
-    }
-
-    // TODO
-    #[storage(read)]
-    fn get_composite_debt(id: Identity) -> u64 {
-        return 0
     }
 }
 
@@ -299,7 +253,7 @@ fn internal_adjust_trove(
     if is_debt_increase {
         require_non_zero_debt_change(usdf_change);
     }
-
+    require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
     require_singular_coll_change(asset_coll_added, coll_withdrawal);
     require_non_zero_adjustment(asset_coll_added, coll_withdrawal, usdf_change);
 
@@ -327,7 +281,8 @@ fn internal_adjust_trove(
     require_at_least_mcr(vars.new_icr);
 
         // TODO if debt increase and usdf change > 0 
-    if !is_debt_increase {
+        // TODO if debt increase and usdf change > 0 
+    if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
     }
 
@@ -346,10 +301,6 @@ fn require_is_protocol_manager() {
     require(msg_sender().unwrap() == protocol_manager, "Caller is not the protocol manager");
 }
 
-#[storage(read)]
-fn require_caller_is_stability_pool() {
-    require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract), "BorrowOperations: Caller is not Stability Pool");
-}
 
 #[storage(read)]
 fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
@@ -433,7 +384,6 @@ fn internal_get_new_icr_from_trove_change(
     let new_position = internal_get_new_trove_amounts(coll, debt, coll_change, is_coll_increase, debt_change, is_debt_increase);
 
     let new_icr = fm_compute_cr(new_position.0, new_position.1, price);
-
     return new_icr;
 }
 

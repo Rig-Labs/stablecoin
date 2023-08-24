@@ -13,7 +13,7 @@ pub fn calculate_liqudated_trove_values(
     price: u64,
 ) -> LiquidatedTroveValsInner {
     // If bad debt
-    if U128::from_u64(coll) * U128::from_u64(price) / U128::from_u64(DECIMAL_PRECISION) < U128::from_u64(debt)
+    if fm_multiply_ratio(coll, price, DECIMAL_PRECISION) < debt
     {
         return LiquidatedTroveValsInner {
             trove_coll_liquidated: coll,
@@ -23,18 +23,14 @@ pub fn calculate_liqudated_trove_values(
     }
     let trove_debt_numerator: U128 = U128::from_u64(debt) * U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(coll) * U128::from_u64(price);
 
-    let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(ONE + STABILITY_POOL_FEE);
+    let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO - ONE - STABILITY_POOL_FEE);
 
     let trove_debt_to_repay = (trove_debt_numerator / trove_debt_denominator).as_u64().unwrap();
 
-    let trove_coll_liquidated_numerator: U128 = U128::from_u64(trove_debt_to_repay) * (U128::from_u64(ONE) + U128::from_u64(STABILITY_POOL_FEE));
+    let mut trove_coll_liquidated = fm_multiply_ratio(trove_debt_to_repay, ONE + STABILITY_POOL_FEE, price);
 
-    let mut trove_coll_liquidated = (trove_coll_liquidated_numerator / U128::from_u64(price)).as_u64().unwrap();
-
-    let remaining_debt = debt - trove_debt_to_repay;
-
-    if remaining_debt < MIN_NET_DEBT {
-        trove_coll_liquidated = (U128::from_u64(debt) * U128::from_u64(ONE + STABILITY_POOL_FEE) / U128::from_u64(price)).as_u64().unwrap();
+    if debt - trove_debt_to_repay < MIN_NET_DEBT {
+        trove_coll_liquidated = fm_multiply_ratio(debt, ONE + STABILITY_POOL_FEE, price);
 
         return LiquidatedTroveValsInner {
             trove_coll_liquidated: fm_min(trove_coll_liquidated, coll),
@@ -61,24 +57,22 @@ pub fn get_offset_and_redistribution_vals(
     vars.entire_trove_coll = coll;
     vars.entire_trove_debt = debt;
     let liquidated_position_vals = calculate_liqudated_trove_values(coll, debt, price);
-
+    
     if (liquidated_position_vals.is_partial_liquidation) {
         vars.is_partial_liquidation = true;
         vars.remaining_trove_coll = coll - liquidated_position_vals.trove_coll_liquidated;
         vars.remaining_trove_debt = debt - liquidated_position_vals.trove_debt_to_repay;
     } else {
-        vars.is_partial_liquidation = false;
-        vars.remaining_trove_coll = 0;
-        vars.remaining_trove_debt = 0;
+        // if full liquidation then some of the collateral is left over
         vars.coll_surplus = coll - liquidated_position_vals.trove_coll_liquidated;
     }
+
+    // TODO add executuor fee calculation here 
     if (usdf_in_stab_pool > 0) {   
         // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
         vars.debt_to_offset = fm_min(liquidated_position_vals.trove_debt_to_repay, usdf_in_stab_pool);
         // Send collateral to the Stability Pool proportional to the amount of debt offset
-        let coll_to_send_to_sp_u128: U128 = U128::from_u64(liquidated_position_vals.trove_coll_liquidated) * U128::from_u64(vars.debt_to_offset) / U128::from_u64(liquidated_position_vals.trove_debt_to_repay);
-
-        vars.coll_to_send_to_sp = coll_to_send_to_sp_u128.as_u64().unwrap();
+        vars.coll_to_send_to_sp = fm_multiply_ratio(liquidated_position_vals.trove_coll_liquidated, vars.debt_to_offset, liquidated_position_vals.trove_debt_to_repay);
         // If stability pool doesn't have enough USDF to offset the entire debt, redistribute the remaining debt and collateral
         vars.debt_to_redistribute = liquidated_position_vals.trove_debt_to_repay - vars.debt_to_offset;
         vars.coll_to_redistribute = liquidated_position_vals.trove_coll_liquidated - vars.coll_to_send_to_sp;

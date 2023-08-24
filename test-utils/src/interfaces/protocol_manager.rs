@@ -107,7 +107,6 @@ pub mod protocol_manager_abi {
         protocol_manager: &ProtocolManager<T>,
         amount: u64,
         max_iterations: u64,
-        max_fee_percentage: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
@@ -146,7 +145,6 @@ pub mod protocol_manager_abi {
             .methods()
             .redeem_collateral(
                 max_iterations,
-                max_fee_percentage,
                 partial_redemption_hint,
                 upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
                 lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),

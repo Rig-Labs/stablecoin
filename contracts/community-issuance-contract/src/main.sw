@@ -1,7 +1,13 @@
 contract;
 dep utils;
 use libraries::community_issuance_interface::{CommunityIssuance};
-use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, null_contract, null_identity_address};
+use libraries::fluid_math::{
+    dec_pow,
+    DECIMAL_PRECISION,
+    fm_multiply_ratio,
+    null_contract,
+    null_identity_address,
+};
 use utils::*;
 
 use std::{
@@ -91,16 +97,19 @@ impl CommunityIssuance for Contract {
     #[storage(read, write)]
     fn issue_fpt() -> u64 {
         internal_require_caller_is_stability_pool();
-        let latest_total_fpt_issued = ((U128::from_u64(internal_get_fpt_supply_cap(storage.time_transition_started, storage.total_transition_time_seconds, internal_get_current_time(), storage.has_transitioned_rewards)) * U128::from_u64(internal_get_cumulative_issuance_fraction(internal_get_current_time(), storage.deployment_time))) / U128::from_u64(DECIMAL_PRECISION)).as_u64().unwrap();
+        let latest_total_fpt_issued = fm_multiply_ratio(internal_get_fpt_supply_cap(storage.time_transition_started, storage.total_transition_time_seconds, internal_get_current_time(), storage.has_transitioned_rewards), internal_get_cumulative_issuance_fraction(internal_get_current_time(), storage.deployment_time), DECIMAL_PRECISION);
         let issuance = latest_total_fpt_issued - storage.total_fpt_issued;
         storage.total_fpt_issued = latest_total_fpt_issued;
-        issuance
+
+        return issuance
     }
 
     #[storage(read)]
     fn send_fpt(account: Identity, amount: u64) {
         internal_require_caller_is_stability_pool();
-        transfer(amount, storage.fpt_token_contract, account);
+        if amount > 0 {
+            transfer(amount, storage.fpt_token_contract, account);
+        }
     }
 
     #[storage(read)]

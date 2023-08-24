@@ -190,7 +190,6 @@ pub async fn setup(
 
     stability_pool_abi::initialize(
         &stability_pool,
-        stability_pool.contract_id().into(),
         usdf_token.contract_id().into(),
         stability_pool.contract_id().into(),
         fuel_token.contract_id().into(),

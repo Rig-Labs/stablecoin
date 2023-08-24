@@ -148,7 +148,6 @@ pub mod common {
             println!("Protocol Manager: {}", protocol_manager.contract_id());
             println!("FPT Staking: {}", fpt_staking.contract_id());
             println!("FPT Token: {}", fpt_token.contract_id());
-            println!("Mock FPT Token: {}", fpt_token.contract_id());
             println!("Community Issuance: {}", community_issuance.contract_id());
             println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
             println!("Default Pool: {}", default_pool.contract_id());
@@ -204,7 +203,6 @@ pub mod common {
             &borrow_operations,
             usdf.contract_id().into(),
             fpt_staking.contract_id().into(),
-            stability_pool.contract_id().into(),
             protocol_manager.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             active_pool.contract_id().into(),
@@ -215,7 +213,6 @@ pub mod common {
 
         stability_pool_abi::initialize(
             &stability_pool,
-            borrow_operations.contract_id().into(),
             usdf.contract_id().into(),
             community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),

@@ -62,6 +62,12 @@ impl ActivePool for Contract {
         return storage.asset_amount.get(asset_id);
     }
 
+    #[storage(read)]
+    fn get_usdf_debt(asset_id: ContractId) -> u64 {
+        return storage.usdf_debt_amount.get(asset_id);
+    }
+
+    // --- Support multiple assets functionality ---
     #[storage(read, write)]
     fn add_asset(asset: ContractId, trove_manager: Identity) {
         require_is_protocol_manager();
@@ -69,11 +75,6 @@ impl ActivePool for Contract {
         storage.valid_trove_managers.insert(trove_manager, true);
         storage.asset_amount.insert(asset, 0);
         storage.usdf_debt_amount.insert(asset, 0);
-    }
-
-    #[storage(read)]
-    fn get_usdf_debt(asset_id: ContractId) -> u64 {
-        return storage.usdf_debt_amount.get(asset_id);
     }
 
     // --- Pool functionality ---
@@ -98,7 +99,7 @@ impl ActivePool for Contract {
         let new_debt = storage.usdf_debt_amount.get(asset_id) - amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
-
+    
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64, asset_id: ContractId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();

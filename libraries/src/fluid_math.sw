@@ -34,8 +34,11 @@ pub const PERCENT_DIVERSOR = 200;
 
 pub const POST_COLLATERAL_RATIO: u64 = 1_300_000_000;
 
-// 0.5% fee
+// 5% fee
 pub const STABILITY_POOL_FEE: u64 = 50_000_000;
+
+// 0.5% fee going to person who liquidates
+pub const LIQUIDATOR_EXECUTION_GAS_FEE: u64 = 5_000_000;
 
 pub const ONE: u64 = 1_000_000_000;
 
