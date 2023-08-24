@@ -3979,6 +3979,8 @@ dependencies = [
  "fuels",
  "futures",
  "pbr",
+ "serde",
+ "serde_json",
  "tokio 1.27.0",
 ]
 

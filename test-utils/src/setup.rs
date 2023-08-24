@@ -32,7 +32,7 @@ pub mod common {
             launch_custom_provider_and_get_wallets, Account, LoadConfiguration, WalletsConfig,
         },
         programs::call_response::FuelCallResponse,
-        types::Identity,
+        types::{ContractId, Identity},
     };
     use pbr::ProgressBar;
 
@@ -56,6 +56,11 @@ pub mod common {
         pub asset: Token<T>,
         pub oracle: Oracle<T>,
         pub trove_manager: TroveManagerContract<T>,
+    }
+
+    pub struct ExistingAssetContracts {
+        pub asset: ContractId,
+        pub oracle: ContractId,
     }
 
     pub async fn setup_protocol(
@@ -576,7 +581,7 @@ pub mod common {
 
     pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
         let mut path = env::current_dir().unwrap();
-        println!("Current directory: {:?}", path);
+        // println!("Current directory: {:?}", path);
         let fluid_protocol_index = path
             .to_str()
             .unwrap()

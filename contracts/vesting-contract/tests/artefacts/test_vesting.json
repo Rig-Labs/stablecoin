@@ -1,0 +1,19 @@
+
+[
+    {
+        "cliff_amount": 1,
+        "cliff_timestamp": 2,
+        "end_timestamp": 3,
+        "claimed_amount": 4,
+        "total_amount": 5,
+        "recipient": "fuel13f39l90kkteep2d5musnjytky32kaxrfpkz0l4uv6dmn6l4jcnpseh07n5"
+    },
+    {
+        "cliff_amount": 6,
+        "cliff_timestamp": 7,
+        "end_timestamp": 8,
+        "claimed_amount": 9,
+        "total_amount": 10,
+        "recipient": "fuel14m4n7zucy3d3yv3aez7scdjrx9uwmkszn8znl77jpgxartz662fqkvv8pt"
+    }
+]

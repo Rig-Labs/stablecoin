@@ -5,3 +5,4 @@ target
 *.DS_Store
 test-utils/.ENV
 *types/*
+test-utils/contracts.json

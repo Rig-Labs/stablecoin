@@ -6,7 +6,8 @@ use fuels::{prelude::AssetId, types::Identity};
 mod success {
 
     use test_utils::interfaces::vesting::{
-        get_vesting_schedule, instantiate_vesting_contract, set_timestamp, VestingContract,
+        get_vesting_schedule, instantiate_vesting_contract, load_vesting_schedules_from_json_file,
+        set_timestamp, VestingContract,
     };
 
     use crate::utils::setup::test_helpers::init_and_mint_to_vesting;
@@ -264,5 +265,25 @@ mod success {
             .unwrap();
 
         assert_eq!(total_amount, rec_balance);
+    }
+
+    #[tokio::test]
+    async fn proper_json_vesting_parsing() {
+        let vesting_schedules = load_vesting_schedules_from_json_file(
+            "/contracts/vesting-contract/tests/artefacts/test_vesting.json",
+        );
+
+        assert_eq!(vesting_schedules.len(), 2);
+        assert_eq!(vesting_schedules[0].cliff_amount, 1);
+        assert_eq!(vesting_schedules[0].cliff_timestamp, 2);
+        assert_eq!(vesting_schedules[0].end_timestamp, 3);
+        assert_eq!(vesting_schedules[0].claimed_amount, 4);
+        assert_eq!(vesting_schedules[0].total_amount, 5);
+
+        assert_eq!(vesting_schedules[1].cliff_amount, 6);
+        assert_eq!(vesting_schedules[1].cliff_timestamp, 7);
+        assert_eq!(vesting_schedules[1].end_timestamp, 8);
+        assert_eq!(vesting_schedules[1].claimed_amount, 9);
+        assert_eq!(vesting_schedules[1].total_amount, 10);
     }
 }
