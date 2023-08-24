@@ -1,11 +1,11 @@
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::coll_surplus_pool::CollSurplusPool;
+use crate::interfaces::community_issuance::CommunityIssuance;
 use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
-use crate::interfaces::community_issuance::CommunityIssuance;
 use fuels::prelude::abigen;
 use fuels::programs::call_response::FuelCallResponse;
 
@@ -16,9 +16,12 @@ abigen!(Contract(
 
 pub mod trove_manager_abi {
 
-    use fuels::{prelude::{Account, Error, LogDecoder, TxParameters}, types::{Identity, ContractId}};
+    use fuels::{
+        prelude::{Account, Error, LogDecoder, TxParameters},
+        types::{ContractId, Identity},
+    };
 
-    use crate::{setup::common::wait, interfaces::community_issuance};
+    use crate::setup::common::wait;
 
     use super::*;
 
@@ -326,7 +329,10 @@ pub mod trove_manager_abi {
 }
 
 pub mod trove_manager_utils {
-    use fuels::{prelude::Account, types::{Identity, ContractId}};
+    use fuels::{
+        prelude::Account,
+        types::{ContractId, Identity},
+    };
 
     use crate::{
         interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,

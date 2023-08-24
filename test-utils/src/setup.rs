@@ -116,15 +116,6 @@ pub mod common {
         let fpt = deploy_token(&wallet).await;
         pb.inc();
 
-        let community_issuance = deploy_community_issuance(&wallet).await;
-        pb.inc();
-
-        let fpt_token = deploy_fpt_token(&wallet).await;
-        pb.inc();
-
-        let fpt = deploy_token(&wallet).await;
-        pb.inc();
-
         let protocol_manager = deploy_protocol_manager(&wallet).await;
         pb.inc();
 

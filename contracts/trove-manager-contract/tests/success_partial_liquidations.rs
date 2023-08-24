@@ -101,7 +101,6 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
-    println!("here");
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
@@ -118,7 +117,6 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     )
     .await
     .unwrap();
-    println!("here2");
 
     let status = trove_manager_abi::get_trove_status(
         &contracts.asset_contracts[0].trove_manager,
@@ -373,7 +371,10 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     .unwrap()
     .value;
 
-    assert_eq!(asset, 525 * PRECISION);
+    let gas_coll_compensation = 525 * PRECISION / 200;
+    let expected_asset_in_sp = 525 * PRECISION - gas_coll_compensation;
+
+    assert_eq!(asset, expected_asset_in_sp);
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
@@ -410,9 +411,11 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     .value;
 
     // 1.05 * 500_000_000
+    let liquidated_amount = starting_col - remaining_coll;
+    let gas_coll_compensation = liquidated_amount / 200;
     assert_eq!(
         default_pool_asset,
-        starting_col - remaining_coll - 525 * PRECISION
+        liquidated_amount - gas_coll_compensation - expected_asset_in_sp
     );
     assert_eq!(
         default_pool_debt,
@@ -697,8 +700,13 @@ async fn proper_partial_liquidation_empty_sp() {
     .await
     .value;
 
+    let liquidated_amount = starting_col - remaining_coll;
+    let gas_coll_compensation = liquidated_amount / 200;
     // 1.05 * 500_000_000
-    assert_eq!(default_pool_asset, starting_col - remaining_coll);
+    assert_eq!(
+        default_pool_asset,
+        liquidated_amount - gas_coll_compensation
+    );
     assert_eq!(
         default_pool_debt,
         with_min_borrow_fee(starting_debt) - remaining_debt

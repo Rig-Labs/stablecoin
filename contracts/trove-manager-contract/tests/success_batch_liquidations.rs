@@ -164,7 +164,9 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     // 5% Penalty on 1_000* PRECISION of debt
     let asset_with_min_borrow_fee = with_min_borrow_fee(1_050 * PRECISION);
-    assert_eq!(asset, 2 * asset_with_min_borrow_fee);
+    let coll_gas_fee = asset_with_min_borrow_fee / 200;
+
+    assert_eq!(asset, 2 * (asset_with_min_borrow_fee - coll_gas_fee));
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,

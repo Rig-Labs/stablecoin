@@ -387,10 +387,13 @@ fn internal_batch_liquidate_troves(
 
     require(totals.total_debt_in_sequence > 0, "TM: No debt to liquidate");
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract);
+    let active_pool = abi(ActivePool, storage.active_pool_contract.into());
 
     if (totals.total_coll_surplus > 0) {
-        let active_pool = abi(ActivePool, storage.active_pool_contract.into());
         active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract), totals.total_coll_surplus, asset_contract_cache);
+    }
+    if (totals.total_coll_gas_compensation > 0) {
+        active_pool.send_asset(msg_sender().unwrap(), totals.total_coll_gas_compensation, asset_contract_cache);
     }
 
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
