@@ -241,7 +241,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         healthy_wallet2.clone(),
     );
 
-    let starting_col: u64 = 11_000 * PRECISION;
+    let starting_col: u64 = 12_000 * PRECISION;
     let starting_debt: u64 = 10_000 * PRECISION;
 
     borrow_operations_abi::open_trove(
@@ -372,15 +372,15 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     .unwrap()
     .value;
 
-    let gas_coll_compensation = 525 * PRECISION / 200;
-    let expected_asset_in_sp = 525 * PRECISION - gas_coll_compensation;
+    let gas_coll_compensation = 550 * PRECISION / 200;
+    let expected_asset_in_sp = 550 * PRECISION - gas_coll_compensation;
 
     assert_within_threshold(
         asset,
         expected_asset_in_sp,
         &format!(
-            "Asset in stability pool was not {} but {}",
-            expected_asset_in_sp, asset
+            "Asset in stability pool was not {}, but {}",
+            asset, expected_asset_in_sp
         ),
     );
 
@@ -563,7 +563,7 @@ async fn proper_partial_liquidation_empty_sp() {
         healthy_wallet2.clone(),
     );
 
-    let starting_col: u64 = 11_000 * PRECISION;
+    let starting_col: u64 = 12_000 * PRECISION;
     let starting_debt: u64 = 10_000 * PRECISION;
 
     borrow_operations_abi::open_trove(

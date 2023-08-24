@@ -20,12 +20,15 @@ pub fn calculate_icr(coll: u64, debt: u64) -> u64 {
 }
 
 pub fn calculate_cr(price: u64, coll: u64, debt: u64) -> u64 {
+    if debt == 0 {
+        return 0;
+    }
     let cr = price as u128 * coll as u128 / debt as u128;
-    return cr.try_into().unwrap();
+    return cr.try_into().unwrap_or(0);
 }
 
 pub fn with_liquidation_penalty(amount: u64) -> u64 {
-    let amount_with_penalty = amount * 1_05 / 1_00;
+    let amount_with_penalty = amount * 1_10 / 1_00;
     return amount_with_penalty;
 }
 

@@ -6,7 +6,7 @@ use data_structures::{VestingSchedule};
 
 abi VestingContract {
     #[storage(write, read)]
-    fn constructor(admin: Identity, asset: ContractId, schedules: Vec<VestingSchedule>, debugging: bool);
+    fn constructor(asset: ContractId, schedules: Vec<VestingSchedule>, debugging: bool);
 
     #[storage(read, write)]
     fn claim_vested_tokens();

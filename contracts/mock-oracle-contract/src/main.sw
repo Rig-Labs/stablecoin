@@ -7,8 +7,9 @@ storage {
     precision: u64 = 6,
 }
 
-// TODO Add migration ability
-// TODO Add renounce ownership ability
+// To the auditor: This is a mock oracle contract that is used for testing purposes.
+// It is not meant to be used in production. We are waiting for the oracle interfaces 
+// to be finalized before we implement the real oracle contract. 
 impl MockOracle for Contract {
     #[storage(read)]
     fn get_price() -> u64 {

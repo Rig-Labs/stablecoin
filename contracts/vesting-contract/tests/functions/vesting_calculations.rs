@@ -1,5 +1,4 @@
 use crate::utils::setup::setup;
-// use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use fuels::prelude::*;
 use fuels::{prelude::AssetId, types::Identity};
 
@@ -27,13 +26,8 @@ mod success {
             Identity::Address(recipient.address().into()),
         )];
 
-        let _ = instantiate_vesting_contract(
-            &vest,
-            &admin.address().into(),
-            &asset.id().into(),
-            vesting_schedule.to_vec(),
-        )
-        .await;
+        let _ = instantiate_vesting_contract(&vest, &asset.id().into(), vesting_schedule.to_vec())
+            .await;
 
         let res = vest
             .methods()
@@ -73,7 +67,6 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &admin.address().into(),
             &asset.contract_id().into(),
             vesting_schedule.to_vec(),
         )
@@ -153,7 +146,6 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &admin.address().into(),
             &asset.contract_id().into(),
             vesting_schedule.to_vec(),
         )

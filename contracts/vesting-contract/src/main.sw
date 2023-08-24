@@ -35,7 +35,6 @@ storage {
     vesting_schedules: StorageMap<Identity, Option<VestingSchedule>> = StorageMap {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
     asset: ContractId = ContractId::from(ZERO_B256),
-    admin: Identity = Identity::Address(Address::from(ZERO_B256)),
     is_initialized: bool = false,
     // timestamp is used for testing purposes only, as Fuel does not support timestamp currently in integration tests
     debug: bool = false,
@@ -45,7 +44,6 @@ storage {
 impl VestingContract for Contract {
     #[storage(write, read)]
     fn constructor(
-        admin: Identity,
         asset: ContractId,
         schedules: Vec<VestingSchedule>,
         debugging: bool,
@@ -53,7 +51,6 @@ impl VestingContract for Contract {
         require(!storage.is_initialized, "Contract is already initialized");
         // TODO Check that there are sufficient funds to cover all vesting schedules
         storage.asset = asset;
-        storage.admin = admin;
         storage.debug = debugging;
 
         let mut i = 0;
@@ -107,7 +104,6 @@ impl VestingContract for Contract {
 
     #[storage(write, read)]
     fn set_current_time(time: u64) {
-        require(msg_sender().unwrap() == storage.admin, "Only admin can set current time");
         require(storage.debug, "Debugging must be enabled to set current time");
         storage.debug_timestamp = time;
     }
