@@ -1,5 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
@@ -15,7 +16,7 @@ async fn proper_intialize() {
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        5_000_000_000,
+        5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
@@ -48,19 +49,19 @@ async fn proper_staking_deposit() {
 
     token_abi::mint_to_id(
         &contracts.fpt,
-        5_000_000_000,
+        5 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await;
 
-    fpt_staking_abi::stake(&contracts.fpt_staking, &contracts.fpt, 1_000_000_000).await;
+    fpt_staking_abi::stake(&contracts.fpt_staking, &contracts.fpt, 1 * PRECISION).await;
 
     let fpt_balance = provider
         .get_asset_balance(admin.address().into(), fpt_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(fpt_balance, 4_000_000_000, "FPT Balance is wrong");
+    assert_eq!(fpt_balance, 4 * PRECISION, "FPT Balance is wrong");
 }
 
 #[tokio::test]
@@ -79,14 +80,14 @@ async fn proper_staking_multiple_positions() {
 
     token_abi::mint_to_id(
         &contracts.fpt,
-        5_000_000_000,
+        5 * PRECISION,
         Identity::Address(healthy_wallet1.address().into()),
     )
     .await;
 
     token_abi::mint_to_id(
         &contracts.fpt,
-        5_000_000_000,
+        5 * PRECISION,
         Identity::Address(healthy_wallet2.address().into()),
     )
     .await;
@@ -101,29 +102,29 @@ async fn proper_staking_multiple_positions() {
         healthy_wallet2.clone(),
     );
 
-    fpt_staking_abi::stake(&fpt_staking_healthy_wallet1, &contracts.fpt, 1_000_000_000).await;
+    fpt_staking_abi::stake(&fpt_staking_healthy_wallet1, &contracts.fpt, 1 * PRECISION).await;
 
-    fpt_staking_abi::stake(&fpt_staking_healthy_wallet2, &contracts.fpt, 1_000_000_000).await;
+    fpt_staking_abi::stake(&fpt_staking_healthy_wallet2, &contracts.fpt, 1 * PRECISION).await;
 
     let fpt_balance_user1 = provider
         .get_asset_balance(healthy_wallet1.address().into(), fpt_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(fpt_balance_user1, 4_000_000_000, "FPT Balance is wrong");
+    assert_eq!(fpt_balance_user1, 4 * PRECISION, "FPT Balance is wrong");
 
     let fpt_balance_user1 = provider
         .get_asset_balance(healthy_wallet2.address().into(), fpt_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(fpt_balance_user1, 4_000_000_000, "FPT Balance is wrong");
+    assert_eq!(fpt_balance_user1, 4 * PRECISION, "FPT Balance is wrong");
 
     // basically we are going to open a trove, and through that generate some revenue for staking
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
-        40_000_000_000_000,
+        40_000 * PRECISION,
         Identity::Address(healthy_wallet3.address().into()),
     )
     .await;
@@ -149,8 +150,8 @@ async fn proper_staking_multiple_positions() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        40_000_000_000_000,
-        20_000_000_000_000,
+        40_000 * PRECISION,
+        20_000 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -178,7 +179,7 @@ async fn proper_staking_multiple_positions() {
 
     // println!("Asset balance user {}", asset_user_balance);
 
-    let redeem_amount = 10_000_000_000_000;
+    let redeem_amount = 10_000 * PRECISION;
 
     let protocol_manager_healthy_wallet3 = ProtocolManager::new(
         contracts.protocol_manager.contract_id().clone(),

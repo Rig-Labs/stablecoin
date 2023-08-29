@@ -1,6 +1,8 @@
 use fuels::prelude::*;
 
-use test_utils::{interfaces::fpt_token::fpt_token_abi, setup::common::setup_protocol};
+use test_utils::{
+    data_structures::PRECISION, interfaces::fpt_token::fpt_token_abi, setup::common::setup_protocol,
+};
 
 #[tokio::test]
 async fn proper_intialize() {
@@ -22,7 +24,8 @@ async fn proper_intialize() {
         .unwrap();
 
     assert_eq!(
-        fpt_balance_vesting, 68_000_000_000_000_000,
+        fpt_balance_vesting,
+        68_000_000 * PRECISION,
         "invalid vesting balance initialized"
     );
 
@@ -35,7 +38,8 @@ async fn proper_intialize() {
         .unwrap();
 
     assert_eq!(
-        fpt_balance_community_issuance, 32_000_000_000_000_000,
+        fpt_balance_community_issuance,
+        32_000_000 * PRECISION,
         "invalid community issuance balance initialized"
     );
 
@@ -45,5 +49,5 @@ async fn proper_intialize() {
 
     // println!("supply {}", total_supply);
 
-    assert_eq!(total_supply, 100_000_000 * 1_000_000_000);
+    assert_eq!(total_supply, 100_000_000 * PRECISION);
 }

@@ -11,7 +11,7 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
-    utils::{with_liquidation_penalty, with_min_borrow_fee},
+    utils::with_min_borrow_fee,
 };
 
 #[tokio::test]

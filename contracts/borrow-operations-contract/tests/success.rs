@@ -1,6 +1,5 @@
 use fuels::{prelude::*, types::Identity};
 
-// Load abi from json
 use test_utils::{
     data_structures::PRECISION,
     interfaces::borrow_operations::borrow_operations_abi,
@@ -236,7 +235,7 @@ async fn proper_decrease_collateral() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     let balance = 5000 * PRECISION;
-    let _ = token_abi::mint_to_id(
+    token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         balance,
         Identity::Address(admin.address().into()),
@@ -264,6 +263,7 @@ async fn proper_decrease_collateral() {
         Identity::Address([0; 32].into()),
     )
     .await;
+
     let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let withdraw_amount = 300 * PRECISION;
 

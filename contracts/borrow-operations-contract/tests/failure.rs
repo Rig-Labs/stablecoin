@@ -11,7 +11,7 @@ use test_utils::{
 };
 
 #[tokio::test]
-async fn fails_open_two_troves() {
+async fn fails_open_two_troves_of_same_coll_type() {
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
@@ -23,6 +23,9 @@ async fn fails_open_two_troves() {
 
     let provider = admin.provider().unwrap();
 
+    let col_amount = 1_200 * PRECISION;
+    let debt_amount = 600 * PRECISION;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -32,8 +35,8 @@ async fn fails_open_two_troves() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        600 * PRECISION,
+        col_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -49,8 +52,8 @@ async fn fails_open_two_troves() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        600 * PRECISION,
+        col_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -88,10 +91,10 @@ async fn fails_open_two_troves() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 600 * PRECISION);
+    assert_eq!(usdf_balance, debt_amount);
 
-    let expected_debt = with_min_borrow_fee(600 * PRECISION);
-    let expected_icr = calculate_icr(1_200 * PRECISION, expected_debt);
+    let expected_debt = with_min_borrow_fee(debt_amount);
+    let expected_icr = calculate_icr(col_amount, expected_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
 
@@ -109,7 +112,7 @@ async fn fails_open_two_troves() {
     .await
     .value;
 
-    assert_eq!(trove_col, 1_200 * PRECISION, "Trove Collateral is wrong");
+    assert_eq!(trove_col, col_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
@@ -127,15 +130,13 @@ async fn fails_open_two_troves() {
     .await
     .value;
     assert_eq!(
-        active_pool_col,
-        1_200 * PRECISION,
+        active_pool_col, col_amount,
         "Active Pool Collateral is wrong"
     );
 }
 
 #[tokio::test]
 async fn fails_open_trove_under_minimum_collateral_ratio() {
-    // MCR = 1_200_000
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
@@ -144,6 +145,10 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         Identity::Address(admin.address().into()),
     )
     .await;
+
+    // 120% Collateral Ratio < 130% Minimum Collateral Ratio
+    let coll_amount = 1200 * PRECISION;
+    let debt_amount = 1000 * PRECISION;
 
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -154,8 +159,8 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        1_000 * PRECISION,
+        coll_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -164,13 +169,12 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 
     assert!(
         res,
-        "Borrow operation: Should not be able to open trove with MCR < 1.2"
+        "Borrow operation: Should not be able to open trove with MCR < 130%"
     );
 }
 
 #[tokio::test]
 async fn fails_open_trove_under_min_usdf_required() {
-    // MCR = 1_200_000
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
@@ -179,6 +183,10 @@ async fn fails_open_trove_under_min_usdf_required() {
         Identity::Address(admin.address().into()),
     )
     .await;
+
+    let coll_amount = 1_200 * PRECISION;
+    let debt_amount = 400 * PRECISION;
+    // 100 USDF < 500 USDF
 
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -189,8 +197,8 @@ async fn fails_open_trove_under_min_usdf_required() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        100 * PRECISION,
+        coll_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -199,13 +207,12 @@ async fn fails_open_trove_under_min_usdf_required() {
 
     assert!(
         res,
-        "Borrow operation: Should not be able to open trove with MCR < 1.2"
+        "Borrow operation: Should not be able to open trove with debt < 500 USDF"
     );
 }
 
 #[tokio::test]
 async fn fails_reduce_debt_under_min_usdf_required() {
-    // MCR = 1_200_000
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
@@ -214,6 +221,9 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         Identity::Address(admin.address().into()),
     )
     .await;
+
+    let coll_amount = 1_200 * PRECISION;
+    let debt_amount = 600 * PRECISION;
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -224,13 +234,15 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        600 * PRECISION,
+        coll_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
     .await
     .unwrap();
+
+    // 600 USDF - 300 USDF < 500 USDF
 
     let res = borrow_operations_abi::repay_usdf(
         &contracts.borrow_operations,
@@ -255,7 +267,6 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 
 #[tokio::test]
 async fn fails_decrease_collateral_under_mcr() {
-    // MCR = 1_200_000
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     token_abi::mint_to_id(
@@ -264,6 +275,9 @@ async fn fails_decrease_collateral_under_mcr() {
         Identity::Address(admin.address().into()),
     )
     .await;
+
+    let coll_amount = 1_200 * PRECISION;
+    let debt_amount = 600 * PRECISION;
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
@@ -274,8 +288,8 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_200 * PRECISION,
-        600 * PRECISION,
+        coll_amount,
+        debt_amount,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -289,7 +303,7 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
-        1_000 * PRECISION,
+        600 * PRECISION,
         Identity::Address([0; 32].into()),
         Identity::Address([0; 32].into()),
     )
@@ -298,13 +312,12 @@ async fn fails_decrease_collateral_under_mcr() {
 
     assert!(
         res,
-        "Borrow operation: Should not be able to reduce collateral to less than 1.2 MCR"
+        "Borrow operation: Should not be able to reduce collateral to less than 130% MCR"
     );
 }
 
 #[tokio::test]
 async fn fails_incorrect_token_as_collateral_or_repayment() {
-    // MCR = 1_200_000
     let (contracts, admin, _) = setup_protocol(100, 2, false).await;
 
     let mock_fake_token = deploy_token(&admin).await;
@@ -313,8 +326,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &mock_fake_token,
         0,
         &Identity::Address(admin.address().into()),
-        "Fake Fuel".to_string(),
-        "FFUEL".to_string(),
+        "Fake Coll".to_string(),
+        "FCOL".to_string(),
     )
     .await;
 

@@ -113,7 +113,7 @@ async fn test_emissions() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions / 4);
     assert!(
-        dif < 100_000_000_000_000,
+        dif < 100_000 * PRECISION,
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 
@@ -241,7 +241,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions);
     assert!(
-        dif < 300_000_000_000_000,
+        dif < 300_000 * PRECISION,
         "distributed user balance incorrect from 100 years of staking rewards with transition"
     );
     //after 100 years with transition almost all rewards should be emitted
@@ -352,7 +352,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions);
     assert!(
-        dif < 300_000_000_000_000,
+        dif < 300_000 * PRECISION,
         "distributed user balance incorrect from 100 years of staking rewards with transition"
     );
     //after 100 years with transition almost all rewards should be emitted
@@ -543,7 +543,7 @@ async fn test_emissions_multiple_deposits() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions / 4 / 3);
     assert!(
-        dif < 100_000_000_000_000,
+        dif < 100_000 * PRECISION,
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 
@@ -556,7 +556,7 @@ async fn test_emissions_multiple_deposits() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions / 4 / 3);
     assert!(
-        dif < 100_000_000_000_000,
+        dif < 100_000 * PRECISION,
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 
@@ -569,7 +569,7 @@ async fn test_emissions_multiple_deposits() {
 
     let dif = abs_dif(fpt_balance_user_after_claim, total_emissions / 4 / 3);
     assert!(
-        dif < 100_000_000_000_000,
+        dif < 100_000 * PRECISION,
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 }
