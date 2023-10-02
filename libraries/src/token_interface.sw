@@ -34,7 +34,7 @@ abi Token {
     fn transfer_coins(coins: u64, address: Identity);
     // Transfer a specified token from the contract to a given output
     #[storage(read)]
-    fn transfer_token_to_output(coins: u64, asset_id: ContractId, address: Identity);
+    fn transfer_token_to_output(coins: u64, asset_id: AssetId, address: Identity);
     // Method called from address to mint coins
     #[storage(read, write)]
     fn mint();    
