@@ -85,10 +85,10 @@ async fn proper_intialize() {
         .value;
     assert_eq!(debt, 0);
 
-    let asset_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
+    let aswith_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, 0);
+    assert_eq!(aswith_amount, 0);
 }
 
 #[tokio::test]
@@ -132,10 +132,10 @@ async fn proper_adjust_asset_col() {
     .await
     .unwrap();
 
-    let asset_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
+    let aswith_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, 1 * PRECISION);
+    assert_eq!(aswith_amount, 1 * PRECISION);
 
     default_pool_abi::send_asset_to_active_pool(
         &default_pool,
@@ -145,8 +145,8 @@ async fn proper_adjust_asset_col() {
     )
     .await;
 
-    let asset_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
+    let aswith_amount = default_pool_abi::get_asset(&default_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, PRECISION / 2);
+    assert_eq!(aswith_amount, PRECISION / 2);
 }

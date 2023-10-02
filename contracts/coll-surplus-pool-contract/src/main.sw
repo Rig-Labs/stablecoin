@@ -18,7 +18,7 @@ use std::{
 storage {
     protocol_manager: Identity = null_identity_address(),
     borrow_operations_contract: ContractId = null_contract(),
-    asset_amount: StorageMap<ContractId, u64> = StorageMap {},
+    aswith_amount: StorageMap<ContractId, u64> = StorageMap {},
     balances: StorageMap<(Identity, ContractId), u64> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
@@ -43,7 +43,7 @@ impl CollSurplusPool for Contract {
         require_is_protocol_manager();
         storage.valid_asset_ids.insert(asset, true);
         storage.valid_trove_managers.insert(trove_manager, true);
-        storage.asset_amount.insert(asset, 0);
+        storage.aswith_amount.insert(asset, 0);
     }
 
     #[storage(read, write)]
@@ -54,8 +54,8 @@ impl CollSurplusPool for Contract {
         let balance = storage.balances.get((account, asset));
         if balance > 0 {
             storage.balances.insert((account, asset), 0);
-            let asset_amount = storage.asset_amount.get(asset);
-            storage.asset_amount.insert(asset, asset_amount - balance);
+            let aswith_amount = storage.aswith_amount.get(asset);
+            storage.aswith_amount.insert(asset, aswith_amount - balance);
 
             transfer(balance, asset, account);
         }
@@ -66,8 +66,8 @@ impl CollSurplusPool for Contract {
         require_is_trove_manager();
         require_is_valid_asset_id(asset);
 
-        let current_asset_amount = storage.asset_amount.get(asset);
-        storage.asset_amount.insert(asset, current_asset_amount + amount);
+        let current_aswith_amount = storage.aswith_amount.get(asset);
+        storage.aswith_amount.insert(asset, current_aswith_amount + amount);
 
         let mut balance = storage.balances.get((account, asset));
         balance += amount;
@@ -76,7 +76,7 @@ impl CollSurplusPool for Contract {
 
     #[storage(read)]
     fn get_asset(asset: ContractId) -> u64 {
-        storage.asset_amount.get(asset)
+        storage.aswith_amount.get(asset)
     }
 
     #[storage(read)]

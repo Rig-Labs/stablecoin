@@ -1,4 +1,4 @@
-library utils;
+library;
 
 dep data_structures;
 use data_structures::{LiquidatedTroveValsInner, LiquidationTotals, LiquidationValues};

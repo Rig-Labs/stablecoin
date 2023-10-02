@@ -1,4 +1,4 @@
-library default_pool_interface;
+library;
 
 abi DefaultPool {
     #[storage(read, write)]

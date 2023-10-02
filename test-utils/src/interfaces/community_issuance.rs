@@ -9,6 +9,7 @@ pub mod community_issuance_abi {
     use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
+    use fuels::prelude::Error;
     use fuels::{prelude::ContractId, types::Identity};
 
     use super::*;
@@ -18,8 +19,8 @@ pub mod community_issuance_abi {
         fpt_token_contract: ContractId,
         admin: &Identity,
         debugging: bool,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -33,21 +34,14 @@ pub mod community_issuance_abi {
             .call()
             .await;
 
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        return res;
     }
 
     pub async fn set_current_time<T: Account>(
         instance: &CommunityIssuance<T>,
         time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -62,7 +56,7 @@ pub mod community_issuance_abi {
     pub async fn public_start_rewards_increase_transition_after_deadline<T: Account>(
         instance: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -78,7 +72,7 @@ pub mod community_issuance_abi {
         instance: &CommunityIssuance<T>,
         transition_time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = instance
             .methods()

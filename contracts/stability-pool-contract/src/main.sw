@@ -34,7 +34,7 @@ use std::{
 const SCALE_FACTOR = 1_000_000_000;
 
 storage {
-    asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
+    aswith_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     active_pool_contract: ContractId = null_contract(),
     protocol_manager_address: ContractId = null_contract(),
     usdf_contract: ContractId = null_contract(),
@@ -107,7 +107,7 @@ impl StabilityPool for Contract {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_contract);
         storage.last_asset_error_offset.insert(asset_contract, U128::from_u64(0));
-        storage.asset_contracts.insert(asset_contract, AssetContracts {
+        storage.aswith_contracts.insert(asset_contract, AssetContracts {
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,
         });
@@ -179,7 +179,7 @@ impl StabilityPool for Contract {
         }
         internal_trigger_fpt_issuance();
 
-        let asset_contractes_cache = storage.asset_contracts.get(asset_contract);
+        let asset_contractes_cache = storage.aswith_contracts.get(asset_contract);
 
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_contract);
 
@@ -406,9 +406,9 @@ fn internal_decrease_usdf(total_usdf_to_decrease: u64) {
 
 #[storage(read, write)]
 fn internal_increase_asset(total_asset_to_increase: u64, asset_contract: ContractId) {
-    let mut asset_amount = storage.asset.get(asset_contract);
-    asset_amount += total_asset_to_increase;
-    storage.asset.insert(asset_contract, asset_amount);
+    let mut aswith_amount = storage.asset.get(asset_contract);
+    aswith_amount += total_asset_to_increase;
+    storage.asset.insert(asset_contract, aswith_amount);
 }
 
 #[storage(read, write)]
@@ -450,9 +450,9 @@ fn send_asset_gain_to_depositor(depositor: Identity, gain: u64, asset_contract: 
     if (gain == 0) {
         return;
     }
-    let mut asset_amount = storage.asset.get(asset_contract);
-    asset_amount -= gain;
-    storage.asset.insert(asset_contract, asset_amount);
+    let mut aswith_amount = storage.asset.get(asset_contract);
+    aswith_amount -= gain;
+    storage.asset.insert(asset_contract, aswith_amount);
     transfer(gain, asset_contract, depositor);
 }
 
@@ -477,7 +477,7 @@ fn require_caller_is_trove_manager() {
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap();
-        let trove_manager_contract = Identity::ContractId(storage.asset_contracts.get(asset).trove_manager);
+        let trove_manager_contract = Identity::ContractId(storage.aswith_contracts.get(asset).trove_manager);
         if (msg_sender().unwrap() == trove_manager_contract) {
             return;
         }

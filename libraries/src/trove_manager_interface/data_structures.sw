@@ -1,4 +1,4 @@
-library data_structures;
+library;
 
 pub struct SingleRedemptionValues {
     usdf_lot: u64,

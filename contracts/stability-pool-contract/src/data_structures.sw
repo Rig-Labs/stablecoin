@@ -1,4 +1,4 @@
-library data_structures;
+library;
 use libraries::numbers::*;
 use std::{u128::U128};
 

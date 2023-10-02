@@ -1,4 +1,4 @@
-library data_structures;
+library;
 
 pub struct RedemptionTotals {
     remaining_usdf: u64,
@@ -44,7 +44,7 @@ impl SingleRedemptionValues {
 
 pub struct AssetInfo {
     assets: Vec<ContractId>,
-    asset_contracts: Vec<AssetContracts>,
+    aswith_contracts: Vec<AssetContracts>,
     prices: Vec<u64>,
     system_debts: Vec<u64>,
     redemption_totals: Vec<RedemptionTotals>,

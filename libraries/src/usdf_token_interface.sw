@@ -1,4 +1,4 @@
-library usdf_token_interface;
+library;
 
 pub struct TokenInitializeConfig {
     name: str[32],

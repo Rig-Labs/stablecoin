@@ -10,9 +10,9 @@ use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
 
-// #[tokio::test]
+#[tokio::test]
 pub async fn deploy() {
-    const RPC: &str = "beta-3.fuel.network";
+    const RPC: &str = "beta-4.fuel.network";
     //--------------- WALLET ---------------
     let provider = match Provider::connect(RPC).await {
         Ok(p) => p,
@@ -65,14 +65,8 @@ pub async fn deploy() {
         ),
     };
 
-    let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
-        wallet,
-        100,
-        true,
-        Some(eth_contracts),
-        Some(st_eth_contracts),
-    )
-    .await;
+    let contracts: ProtocolContracts<WalletUnlocked> =
+        deployment::deploy_and_initialize_all(wallet, 100, true, None, None).await;
 
     // Create json with contract addresses
     let mut file = File::create("contracts.json").unwrap();
@@ -89,11 +83,11 @@ pub async fn deploy() {
         "default_pool": contracts.default_pool.contract_id().to_string(),
         "active_pool": contracts.active_pool.contract_id().to_string(),
         "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
-        "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
+        "aswith_contracts" : contracts.aswith_contracts.iter().map(|aswith_contracts| {
             json!({
-                "oracle": asset_contracts.oracle.contract_id().to_string(),
-                "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
-                "asset": asset_contracts.asset.contract_id().to_string(),
+                "oracle": aswith_contracts.oracle.contract_id().to_string(),
+                "trove_manager": aswith_contracts.trove_manager.contract_id().to_string(),
+                "asset": aswith_contracts.asset.contract_id().to_string(),
             })
         }).collect::<Vec<serde_json::Value>>()
     });
@@ -179,7 +173,7 @@ pub mod deployment {
         pb.inc();
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
-        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
+        let fuel_aswith_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("USDF Token: {}", usdf.contract_id());
@@ -196,7 +190,7 @@ pub mod deployment {
 
         let mut pb = ProgressBar::new(7);
 
-        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let mut aswith_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
 
         let _ = community_issuance_abi::initialize(
@@ -333,16 +327,16 @@ pub mod deployment {
             "FUEL".to_string(),
             &default_pool,
             &active_pool,
-            &fuel_asset_contracts.asset,
-            &fuel_asset_contracts.trove_manager,
+            &fuel_aswith_contracts.asset,
+            &fuel_aswith_contracts.trove_manager,
             &sorted_troves,
-            &fuel_asset_contracts.oracle,
+            &fuel_aswith_contracts.oracle,
             existing_eth_contracts,
         )
         .await;
 
         if deploy_2nd_asset {
-            let stfuel_asset_contracts =
+            let stfuel_aswith_contracts =
                 upload_asset(wallet.clone(), &existing_st_eth_contracts).await;
 
             initialize_asset(
@@ -357,26 +351,26 @@ pub mod deployment {
                 "stFUEL".to_string(),
                 &default_pool,
                 &active_pool,
-                &stfuel_asset_contracts.asset,
-                &stfuel_asset_contracts.trove_manager,
+                &stfuel_aswith_contracts.asset,
+                &stfuel_aswith_contracts.trove_manager,
                 &sorted_troves,
-                &stfuel_asset_contracts.oracle,
+                &stfuel_aswith_contracts.oracle,
                 existing_st_eth_contracts,
             )
             .await;
 
-            asset_contracts.push(stfuel_asset_contracts);
+            aswith_contracts.push(stfuel_aswith_contracts);
         }
         pb.finish();
 
-        asset_contracts.push(fuel_asset_contracts);
+        aswith_contracts.push(fuel_aswith_contracts);
 
         let contracts = ProtocolContracts {
             borrow_operations,
             usdf,
             stability_pool,
             protocol_manager,
-            asset_contracts,
+            aswith_contracts,
             fpt_staking,
             fpt_token,
             fpt: _fpt,
@@ -426,8 +420,8 @@ pub mod deployment {
             Some(contracts) => {
                 pb.finish();
                 return AssetContracts {
-                    oracle: Oracle::new(contracts.oracle.into(), wallet.clone()),
-                    asset: Token::new(contracts.asset.into(), wallet.clone()),
+                    oracle: Oracle::new(contracts.oracle, wallet.clone()),
+                    asset: Token::new(contracts.asset, wallet.clone()),
                     trove_manager,
                 };
             }

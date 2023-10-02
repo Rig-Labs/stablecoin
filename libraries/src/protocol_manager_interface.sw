@@ -1,4 +1,4 @@
-library protocol_manager_interface;
+library;
 
 abi ProtocolManager {
     #[storage(read, write)]

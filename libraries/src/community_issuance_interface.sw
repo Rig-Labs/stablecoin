@@ -1,4 +1,4 @@
-library community_issuance_interface;
+library;
 
 abi CommunityIssuance {
     // Initialize contract

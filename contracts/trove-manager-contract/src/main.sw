@@ -733,7 +733,7 @@ fn internal_redeem_collateral_from_trove(
 }
 
 #[storage(read, write)]
-fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amount: u64) {
+fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, aswith_amount: u64) {
     let asset_contract = storage.asset_contract;
     let coll_surplus_pool_contract = storage.coll_surplus_pool_contract;
 
@@ -747,8 +747,8 @@ fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amoun
     }();
 
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
-    coll_surplus_pool.account_surplus(borrower, asset_amount, asset_contract);
-    active_pool.send_asset(Identity::ContractId(coll_surplus_pool_contract), asset_amount, asset_contract);
+    coll_surplus_pool.account_surplus(borrower, aswith_amount, asset_contract);
+    active_pool.send_asset(Identity::ContractId(coll_surplus_pool_contract), aswith_amount, asset_contract);
 }
 
 #[storage(read)]

@@ -1,4 +1,4 @@
-library borrow_operations_interface;
+library;
 
 abi BorrowOperations {
     #[storage(read, write)]

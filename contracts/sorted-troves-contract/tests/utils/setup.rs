@@ -7,7 +7,7 @@ use test_utils::setup::common::{deploy_sorted_troves, get_absolute_path_from_rel
 
 abigen!(Contract(
     name = "MockTroveManagerContract",
-    abi = "contracts/sorted-troves-contract/tests/artifacts/out/debug/mock-trove-manager-contract-abi.json"
+    abi = "contracts/tests-artifacts-sorted-troves-contract/out/debug/mock-trove-manager-contract-abi.json"
 ));
 
 const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
@@ -18,11 +18,11 @@ pub async fn deploy_mock_trove_manager_contract(
 ) -> MockTroveManagerContract<WalletUnlocked> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
-    let tx_parms = TxParameters::default().set_gas_price(1);
+    let tx_parms = TxParameters::default().with_gas_price(1);
 
     let id = Contract::load_from(
         &get_absolute_path_from_relative(MOCK_TROVE_MANAGER_BINARY_PATH),
-        LoadConfiguration::default().set_salt(salt),
+        LoadConfiguration::default().with_salt(salt),
     )
     .unwrap()
     .deploy(&wallet.clone(), tx_parms)
@@ -41,12 +41,12 @@ pub async fn set_nominal_icr_and_insert(
     next_id: Identity,
     asset: ContractId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::default().set_gas_price(1);
+    let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
         .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
-        .set_contracts(&[sorted_troves])
+        .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
         .await
@@ -71,12 +71,12 @@ pub async fn remove(
     id: Identity,
     asset: ContractId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::default().set_gas_price(1);
+    let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
         .remove(id, asset)
-        .set_contracts(&[sorted_troves])
+        .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
         .await
@@ -132,19 +132,20 @@ pub async fn initialize_st_and_tm(
         trove_manager.contract_id().into(),
         trove_manager.contract_id().into(),
     )
-    .await;
+    .await
+    .unwrap();
 
     trove_manager
         .methods()
         .initialize(
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            sorted_troves.contract_id().into(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
+            sorted_troves.contract_id(),
         )
         .call()
         .await
@@ -152,8 +153,8 @@ pub async fn initialize_st_and_tm(
 
     trove_manager
         .methods()
-        .add_asset(asset, trove_manager.contract_id().into())
-        .set_contracts(&[sorted_troves])
+        .add_asset(asset, trove_manager.contract_id())
+        .with_contracts(&[sorted_troves])
         .call()
         .await
         .unwrap();

@@ -43,7 +43,7 @@ async fn test_emissions() {
 
     // stability pool depositors, change time, check issuance
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
@@ -51,12 +51,12 @@ async fn test_emissions() {
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -70,7 +70,7 @@ async fn test_emissions() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -83,7 +83,7 @@ async fn test_emissions() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         100 * PRECISION,
     )
     .await
@@ -121,7 +121,7 @@ async fn test_emissions() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         100 * PRECISION,
     )
     .await
@@ -160,7 +160,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
     // stability pool depositors, change time, check issuance
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
@@ -168,12 +168,12 @@ async fn test_admin_start_rewards_increase_transition() {
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -187,7 +187,7 @@ async fn test_admin_start_rewards_increase_transition() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -211,7 +211,7 @@ async fn test_admin_start_rewards_increase_transition() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         100 * PRECISION,
     )
     .await
@@ -267,7 +267,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     // stability pool depositors, change time, check issuance
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
@@ -275,12 +275,12 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -294,7 +294,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -322,7 +322,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         100 * PRECISION,
     )
     .await
@@ -380,19 +380,19 @@ async fn test_emissions_multiple_deposits() {
     let wallet3 = wallets.pop().unwrap();
 
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(wallet1.address().into()),
     )
     .await;
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(wallet2.address().into()),
     )
     .await;
     token_abi::mint_to_id(
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(wallet3.address().into()),
     )
@@ -413,12 +413,12 @@ async fn test_emissions_multiple_deposits() {
 
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -430,12 +430,12 @@ async fn test_emissions_multiple_deposits() {
 
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -447,12 +447,12 @@ async fn test_emissions_multiple_deposits() {
 
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet3,
-        &contracts.asset_contracts[0].oracle,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].oracle,
+        &contracts.aswith_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
@@ -478,7 +478,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet1,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -487,7 +487,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet2,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -496,7 +496,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet3,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -509,7 +509,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet1,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -518,7 +518,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet2,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await
@@ -528,7 +528,7 @@ async fn test_emissions_multiple_deposits() {
         &stability_pool_wallet3,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         300 * PRECISION,
     )
     .await

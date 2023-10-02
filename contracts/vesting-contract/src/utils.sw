@@ -1,4 +1,4 @@
-library utils;
+library;
 
 dep data_structures;
 

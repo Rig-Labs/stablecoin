@@ -1,3 +1,4 @@
+use fuels::programs::call_utils::TxDependencyExtension;
 use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
 
 abigen!(Contract(
@@ -20,8 +21,8 @@ pub mod usdf_token_abi {
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().with_gas_price(1);
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
@@ -31,7 +32,7 @@ pub mod usdf_token_abi {
             decimals: 6,
         };
 
-        let res = instance
+        instance
             .methods()
             .initialize(
                 config,
@@ -41,16 +42,7 @@ pub mod usdf_token_abi {
             )
             .tx_params(tx_params)
             .call()
-            .await;
-
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+            .await
     }
 
     pub async fn mint<T: Account>(
@@ -70,22 +62,27 @@ pub mod usdf_token_abi {
         usdf_token: &USDFToken<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
         let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
 
         let call_params: CallParameters = CallParameters::default()
-            .set_amount(amount)
-            .set_asset_id(usdf_asset_id);
+            .with_amount(amount)
+            .with_asset_id(usdf_asset_id);
 
-        usdf_token
-            .methods()
-            .burn()
+        let call_handler = usdf_token.methods().burn().append_variable_outputs(1);
+
+        call_handler
             .call_params(call_params)
             .unwrap()
             .tx_params(tx_params)
-            .append_variable_outputs(1)
             .call()
             .await
+
+        // .call_params(call_params)
+        // .unwrap()
+        // .tx_params(tx_params)
+        // .call()
+        // .await
     }
 
     pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> FuelCallResponse<u64> {

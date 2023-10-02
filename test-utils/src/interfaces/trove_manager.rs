@@ -8,6 +8,7 @@ use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
 use fuels::prelude::abigen;
 use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -51,13 +52,13 @@ pub mod trove_manager_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .batch_liquidate_troves(ids, upper_hint, lower_hint)
             .tx_params(tx_params)
-            .set_contracts(&[
+            .with_contracts(&[
                 stability_pool,
                 oracle,
                 sorted_troves,
@@ -86,13 +87,13 @@ pub mod trove_manager_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .liquidate(id, upper_hint, lower_hint)
             .tx_params(tx_params)
-            .set_contracts(&[
+            .with_contracts(&[
                 stability_pool,
                 oracle,
                 sorted_troves,
@@ -112,7 +113,7 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
@@ -128,7 +129,7 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
@@ -144,7 +145,7 @@ pub mod trove_manager_abi {
         id: Identity,
         status: Status,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
@@ -167,8 +168,8 @@ pub mod trove_manager_abi {
         usdf: ContractId,
         asset: ContractId,
         protocol_manager: ContractId,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = trove_manager
             .methods()
@@ -189,20 +190,14 @@ pub mod trove_manager_abi {
             .await;
 
         // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        return res;
     }
 
     pub async fn get_trove_coll<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
@@ -217,7 +212,7 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<(u64, u64, u64, u64)> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         trove_manager
             .methods()
@@ -288,13 +283,13 @@ pub mod trove_manager_abi {
     //     default_pool: &DefaultPool<T>,
     // ) -> FuelCallResponse<()> {
     //     let tx_params = TxParameters::default()
-    //         .set_gas_price(1)
-    //         .set_gas_limit(2000000);
+    //         .with_gas_price(1)
+    //         .with_gas_limit(2000000);
     //     let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
 
     //     let call_params: CallParameters = CallParameters::default()
-    //         .set_amount(amount)
-    //         .set_asset_id(usdf_asset_id);
+    //         .with_amount(amount)
+    //         .with_asset_id(usdf_asset_id);
 
     //     trove_manager
     //         .methods()
@@ -308,7 +303,7 @@ pub mod trove_manager_abi {
     //         .tx_params(tx_params)
     //         .call_params(call_params)
     //         .unwrap()
-    //         .set_contracts(&[
+    //         .with_contracts(&[
     //             sorted_troves,
     //             active_pool,
     //             fuel,

@@ -1,6 +1,6 @@
-library trove_manager_interface;
+library;
 
-dep data_structures;
+pub mod data_structures;
 use data_structures::{SingleRedemptionValues, Status, Trove};
 
 abi TroveManager {

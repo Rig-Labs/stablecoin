@@ -27,7 +27,7 @@ storage {
     stability_pool_contract: Identity = null_identity_address(),
     default_pool_contract: ContractId = null_contract(),
     protocol_manager_contract: Identity = null_identity_address(),
-    asset_amount: StorageMap<ContractId, u64> = StorageMap {},
+    aswith_amount: StorageMap<ContractId, u64> = StorageMap {},
     usdf_debt_amount: StorageMap<ContractId, u64> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
@@ -59,7 +59,7 @@ impl ActivePool for Contract {
     */
     #[storage(read)]
     fn get_asset(asset_id: ContractId) -> u64 {
-        return storage.asset_amount.get(asset_id);
+        return storage.aswith_amount.get(asset_id);
     }
 
     #[storage(read)]
@@ -73,7 +73,7 @@ impl ActivePool for Contract {
         require_is_protocol_manager();
         storage.valid_asset_ids.insert(asset, true);
         storage.valid_trove_managers.insert(trove_manager, true);
-        storage.asset_amount.insert(asset, 0);
+        storage.aswith_amount.insert(asset, 0);
         storage.usdf_debt_amount.insert(asset, 0);
     }
 
@@ -81,8 +81,8 @@ impl ActivePool for Contract {
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64, asset_id: ContractId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        let new_amount = storage.asset_amount.get(asset_id) - amount;
-        storage.asset_amount.insert(asset_id, new_amount);
+        let new_amount = storage.aswith_amount.get(asset_id) - amount;
+        storage.aswith_amount.insert(asset_id, new_amount);
         transfer(amount, asset_id, address);
     }
 
@@ -99,12 +99,12 @@ impl ActivePool for Contract {
         let new_debt = storage.usdf_debt_amount.get(asset_id) - amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
-    
+
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64, asset_id: ContractId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        let new_amount = storage.asset_amount.get(asset_id) - amount;
-        storage.asset_amount.insert(asset_id, new_amount);
+        let new_amount = storage.aswith_amount.get(asset_id) - amount;
+        storage.aswith_amount.insert(asset_id, new_amount);
         let dafault_pool = abi(ActivePool, storage.default_pool_contract.value);
 
         dafault_pool.recieve {
@@ -120,15 +120,15 @@ impl ActivePool for Contract {
         require_caller_is_borrow_operations_or_default_pool();
         let asset_id = msg_asset_id();
         require_is_asset_id(asset_id);
-        let new_amount = storage.asset_amount.get(asset_id) + msg_amount();
-        storage.asset_amount.insert(asset_id, new_amount);
+        let new_amount = storage.aswith_amount.get(asset_id) + msg_amount();
+        storage.aswith_amount.insert(asset_id, new_amount);
     }
 }
 
 // --- Helper functions ---
 #[storage(read)]
 fn require_is_asset_id(asset_id: ContractId) {
-    let valid_asset_id = storage.valid_asset_ids.get(asset_id);
+    let valid_asset_id = storage.valid_asset_ids.get(asset_id).try_read().unwrap_or(false);
     require(valid_asset_id, "Asset ID is not correct");
 }
 
@@ -136,7 +136,7 @@ fn require_is_asset_id(asset_id: ContractId) {
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract;
-    let valid_trove_manager = storage.valid_trove_managers.get(caller);
+    let valid_trove_manager = storage.valid_trove_managers.get(caller).try_read().unwrap();
     let stability_pool_contract = storage.stability_pool_contract;
     let protocol_manager_contract = storage.protocol_manager_contract;
     require(caller == protocol_manager_contract || caller == borrow_operations_contract || valid_trove_manager || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager, ProtocolManager, or DefaultPool");

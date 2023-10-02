@@ -15,8 +15,8 @@ use test_utils::{
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.aswith_contracts[0].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.aswith_contracts[1].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -24,7 +24,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet1.clone(),
-        &contracts.asset_contracts[0],
+        &contracts.aswith_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -37,7 +37,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet2.clone(),
-        &contracts.asset_contracts[0],
+        &contracts.aswith_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -50,7 +50,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet3.clone(),
-        &contracts.asset_contracts[0],
+        &contracts.aswith_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -63,7 +63,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet2.clone(),
-        &contracts.asset_contracts[1],
+        &contracts.aswith_contracts[1],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -76,7 +76,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet3.clone(),
-        &contracts.asset_contracts[1],
+        &contracts.aswith_contracts[1],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -98,8 +98,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1 * PRECISION).await;
+    oracle_abi::set_price(&contracts.aswith_contracts[0].oracle, 1 * PRECISION).await;
+    oracle_abi::set_price(&contracts.aswith_contracts[1].oracle, 1 * PRECISION).await;
 
     let redemption_amount: u64 = 8_000 * PRECISION;
 
@@ -110,7 +110,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.aswith_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -128,20 +128,20 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         &contracts.default_pool,
         &contracts.active_pool,
         &contracts.sorted_troves,
-        &contracts.asset_contracts,
+        &contracts.aswith_contracts,
     )
     .await;
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.aswith_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.aswith_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -161,8 +161,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
-    let st_fuel_asset_id = AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());
+    let fuel_asset_id = AssetId::from(*contracts.aswith_contracts[0].asset.contract_id().hash());
+    let st_fuel_asset_id = AssetId::from(*contracts.aswith_contracts[1].asset.contract_id().hash());
 
     let fuel_balance = provider
         .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
@@ -192,14 +192,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     // Started with 8k portion obsorved by the 2nd collateral type
     trove_manager_utils::assert_trove_coll(
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
         8_000 * PRECISION + st_fuel_balance + fees2 - redemption_amount,
     )
     .await;
 
     trove_manager_utils::assert_trove_debt(
-        &contracts.asset_contracts[0].trove_manager,
+        &contracts.aswith_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
         with_min_borrow_fee(5_000 * PRECISION) + st_fuel_balance + fees2 - redemption_amount,
     )

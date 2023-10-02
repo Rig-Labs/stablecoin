@@ -36,7 +36,7 @@ async fn fails_fake_usdf_deposit() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &fake_usdf,
-        &contracts.asset_contracts[0].asset,
+        &contracts.aswith_contracts[0].asset,
         600 * PRECISION,
     )
     .await

@@ -1,6 +1,6 @@
-library fluid_math;
+library;
 
-dep numbers;
+pub mod numbers;
 use numbers::*;
 use std::{u128::U128, u256::U256};
 

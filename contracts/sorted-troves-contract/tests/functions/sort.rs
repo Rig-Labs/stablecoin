@@ -59,7 +59,7 @@ async fn proper_head_and_tails_after_insert() {
 
     assert_eq!(result.value, false);
 
-    let tx_params = TxParameters::default().set_gas_price(1);
+    let tx_params = TxParameters::default().with_gas_price(1);
 
     let result = sorted_troves
         .methods()
@@ -69,7 +69,7 @@ async fn proper_head_and_tails_after_insert() {
             Identity::Address([0; 32].into()),
             asset,
         )
-        .set_contracts(&[&trove_manager])
+        .with_contracts(&[&trove_manager])
         .tx_params(tx_params)
         .simulate()
         .await

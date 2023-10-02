@@ -28,7 +28,7 @@ use std::{
 storage {
     protocol_manager: Identity = null_identity_address(),
     active_pool_contract: ContractId = null_contract(),
-    asset_amount: StorageMap<ContractId, u64> = StorageMap {},
+    aswith_amount: StorageMap<ContractId, u64> = StorageMap {},
     usdf_debt_amount: StorageMap<ContractId, u64> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap {},
@@ -49,9 +49,9 @@ impl DefaultPool for Contract {
     fn send_asset_to_active_pool(amount: u64, asset_id: ContractId) {
         require_is_trove_manager();
         let active_pool = abi(ActivePool, storage.active_pool_contract.value);
-        let new_amount = storage.asset_amount.get(asset_id) - amount;
+        let new_amount = storage.aswith_amount.get(asset_id) - amount;
 
-        storage.asset_amount.insert(asset_id, new_amount);
+        storage.aswith_amount.insert(asset_id, new_amount);
         active_pool.recieve {
             coins: amount,
             asset_id: asset_id.into(),
@@ -63,13 +63,13 @@ impl DefaultPool for Contract {
         require_is_protocol_manager();
         storage.valid_asset_ids.insert(asset, true);
         storage.valid_trove_managers.insert(trove_manager, true);
-        storage.asset_amount.insert(asset, 0);
+        storage.aswith_amount.insert(asset, 0);
         storage.usdf_debt_amount.insert(asset, 0);
     }
 
     #[storage(read)]
     fn get_asset(asset_id: ContractId) -> u64 {
-        return storage.asset_amount.get(asset_id);
+        return storage.aswith_amount.get(asset_id);
     }
 
     #[storage(read)]
@@ -95,8 +95,8 @@ impl DefaultPool for Contract {
     fn recieve() {
         require_is_active_pool_contract();
         require_is_asset_id();
-        let new_amount = storage.asset_amount.get(msg_asset_id()) + msg_amount();
-        storage.asset_amount.insert(msg_asset_id(), new_amount);
+        let new_amount = storage.aswith_amount.get(msg_asset_id()) + msg_amount();
+        storage.aswith_amount.insert(msg_asset_id(), new_amount);
     }
 }
 

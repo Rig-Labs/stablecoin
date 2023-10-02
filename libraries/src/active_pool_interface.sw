@@ -1,4 +1,4 @@
-library active_pool_interface;
+library;
 
 abi ActivePool {
     #[storage(read, write)]

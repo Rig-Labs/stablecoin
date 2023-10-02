@@ -1,4 +1,4 @@
-library data_structures;
+library;
 
 use libraries::data_structures::{Status};
 

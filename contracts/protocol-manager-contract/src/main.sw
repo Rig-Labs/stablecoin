@@ -42,7 +42,7 @@ storage {
     default_pool_contract: ContractId = null_contract(),
     active_pool_contract: ContractId = null_contract(),
     sorted_troves_contract: ContractId = null_contract(),
-    asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
+    aswith_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     assets: StorageVec<ContractId> = StorageVec {},
     is_initialized: bool = false,
 }
@@ -90,7 +90,7 @@ impl ProtocolManager for Contract {
         let active_pool = abi(ActivePool, storage.active_pool_contract.value);
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.value);
 
-        storage.asset_contracts.insert(asset_address, AssetContracts {
+        storage.aswith_contracts.insert(asset_address, AssetContracts {
             trove_manager,
             oracle,
             asset_address,
@@ -139,7 +139,7 @@ impl ProtocolManager for Contract {
 
         let mut remaining_itterations = max_itterations;
         while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_itterations > 0) {
-            let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
+            let contracts_cache = assets_info.aswith_contracts.get(index).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
 
             let price = assets_info.prices.get(index).unwrap();
@@ -172,7 +172,7 @@ impl ProtocolManager for Contract {
         let mut total_usdf_redeemed = 0;
         let mut ind = 0;
         while (ind < assets_info.assets.len()) {
-            let contracts_cache = assets_info.asset_contracts.get(ind).unwrap();
+            let contracts_cache = assets_info.aswith_contracts.get(ind).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
 
             let price = assets_info.prices.get(ind).unwrap();
@@ -225,7 +225,7 @@ fn require_valid_usdf_id() {
 #[storage(read)]
 fn get_all_assets_info() -> AssetInfo {
     let mut assets: Vec<ContractId> = Vec::new();
-    let mut asset_contracts: Vec<AssetContracts> = Vec::new();
+    let mut aswith_contracts: Vec<AssetContracts> = Vec::new();
     let mut prices: Vec<u64> = Vec::new();
     let mut system_debt: Vec<u64> = Vec::new();
     let mut redemption_totals: Vec<RedemptionTotals> = Vec::new();
@@ -237,14 +237,14 @@ fn get_all_assets_info() -> AssetInfo {
     let mut ind = 0;
     while (ind < length) {
         assets.push(storage.assets.get(ind).unwrap());
-        asset_contracts.push(storage.asset_contracts.get(assets.get(ind).unwrap()));
+        aswith_contracts.push(storage.aswith_contracts.get(assets.get(ind).unwrap()));
         ind += 1;
     }
 
     let mut i = 0;
     while (i < length) {
-        let oracle = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
-        let trove_manager = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
+        let oracle = abi(MockOracle, aswith_contracts.get(i).unwrap().oracle.into());
+        let trove_manager = abi(TroveManager, aswith_contracts.get(i).unwrap().trove_manager.into());
 
         let asset = assets.get(i).unwrap();
         let price = oracle.get_price();
@@ -267,7 +267,7 @@ fn get_all_assets_info() -> AssetInfo {
 
     AssetInfo {
         assets: assets,
-        asset_contracts: asset_contracts,
+        aswith_contracts: aswith_contracts,
         prices: prices,
         system_debts: system_debt,
         redemption_totals: redemption_totals,

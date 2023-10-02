@@ -1,4 +1,4 @@
-library stability_pool_interface;
+library;
 
 abi StabilityPool {
     #[storage(read, write)]

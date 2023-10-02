@@ -1,4 +1,4 @@
-library sorted_troves_interface;
+library;
 
 abi SortedTroves {
     #[storage(read, write)]

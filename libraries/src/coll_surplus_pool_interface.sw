@@ -1,4 +1,4 @@
-library coll_surplus_pool_interface;
+library;
 
 abi CollSurplusPool {
     #[storage(read, write)]

@@ -1,5 +1,6 @@
 use fuels::prelude::abigen;
 use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "CollSurplusPool",
@@ -9,6 +10,7 @@ abigen!(Contract(
 pub mod coll_surplus_pool_abi {
     use super::*;
     use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
+    use fuels::prelude::Error;
     use fuels::{
         prelude::{Account, ContractId, LogDecoder, TxParameters, WalletUnlocked},
         types::Identity,
@@ -18,8 +20,8 @@ pub mod coll_surplus_pool_abi {
         coll_surplus_pool: &CollSurplusPool<T>,
         borrow_operations: ContractId,
         protocol_manager: Identity,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = coll_surplus_pool
             .methods()
@@ -28,15 +30,7 @@ pub mod coll_surplus_pool_abi {
             .call()
             .await;
 
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(err) => {
-                wait();
-                println!("Error: {:?}", err);
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        return res;
     }
 
     pub async fn get_asset<T: Account>(
@@ -60,7 +54,7 @@ pub mod coll_surplus_pool_abi {
         default_pool
             .methods()
             .claim_coll(acount, asset.clone())
-            .set_contracts(&[active_pool])
+            .with_contracts(&[active_pool])
             .append_variable_outputs(1)
             .call()
             .await

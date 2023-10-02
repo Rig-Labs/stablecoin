@@ -65,10 +65,10 @@ async fn proper_intialize() {
         .value;
     assert_eq!(debt, 0);
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+    let aswith_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, 0);
+    assert_eq!(aswith_amount, 0);
 }
 
 #[tokio::test]
@@ -103,10 +103,10 @@ async fn proper_adjust_asset_col() {
 
     active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+    let aswith_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, 1_000_000);
+    assert_eq!(aswith_amount, 1_000_000);
 
     let provdier = admin.provider().unwrap();
 
@@ -124,10 +124,10 @@ async fn proper_adjust_asset_col() {
     )
     .await;
 
-    let asset_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
+    let aswith_amount = active_pool_abi::get_asset(&active_pool, mock_fuel.contract_id().into())
         .await
         .value;
-    assert_eq!(asset_amount, 500_000);
+    assert_eq!(aswith_amount, 500_000);
 
     let balance_after = provdier
         .get_asset_balance(admin.address().into(), asset_id)

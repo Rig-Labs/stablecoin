@@ -1,4 +1,4 @@
-library utils;
+library;
 
 use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_abs_diff, fm_min};
 use libraries::numbers::*;

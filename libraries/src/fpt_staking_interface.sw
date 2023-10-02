@@ -1,5 +1,4 @@
-library fpt_staking_interface;
-use std::{storage::{StorageMap, StorageVec}};
+library;
 
 pub struct ReadStorage {
     f_usdf: u64,

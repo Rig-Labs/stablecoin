@@ -9,11 +9,10 @@ abigen!(Contract(
 pub mod oracle_abi {
 
     use super::*;
-    use crate::setup::common::wait;
-    use fuels::prelude::{Account, LogDecoder, TxParameters};
+    use fuels::prelude::{Account, TxParameters};
 
     pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = oracle
             .methods()
@@ -22,17 +21,18 @@ pub mod oracle_abi {
             .call()
             .await;
 
+        return res.unwrap();
         // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
     }
 
     pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> FuelCallResponse<u64> {
-        oracle.methods().get_price().call().await.unwrap()
+        let tx_params = TxParameters::default().with_gas_price(1);
+        oracle
+            .methods()
+            .get_price()
+            .tx_params(tx_params)
+            .call()
+            .await
+            .unwrap()
     }
 }
