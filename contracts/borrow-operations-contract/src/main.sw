@@ -316,8 +316,8 @@ fn require_trove_is_active(borrower: Identity, trove_manage_contract: ContractId
 }
 
 #[storage(read)]
-fn require_non_zero_adjustment(aswith_amount: u64, coll_withdrawl: u64, usdf_change: u64) {
-    require(aswith_amount > 0 || coll_withdrawl > 0 || usdf_change > 0, "BorrowOperations: coll withdrawal and debt change must be greater than 0");
+fn require_non_zero_adjustment(asset_amount: u64, coll_withdrawl: u64, usdf_change: u64) {
+    require(asset_amount > 0 || coll_withdrawl > 0 || usdf_change > 0, "BorrowOperations: coll withdrawal and debt change must be greater than 0");
 }
 
 fn require_at_least_min_net_debt(_net_debt: u64) {

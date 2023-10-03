@@ -406,9 +406,9 @@ fn internal_decrease_usdf(total_usdf_to_decrease: u64) {
 
 #[storage(read, write)]
 fn internal_increase_asset(total_asset_to_increase: u64, asset_contract: ContractId) {
-    let mut aswith_amount = storage.asset.get(asset_contract);
-    aswith_amount += total_asset_to_increase;
-    storage.asset.insert(asset_contract, aswith_amount);
+    let mut asset_amount = storage.asset.get(asset_contract);
+    asset_amount += total_asset_to_increase;
+    storage.asset.insert(asset_contract, asset_amount);
 }
 
 #[storage(read, write)]
@@ -450,9 +450,9 @@ fn send_asset_gain_to_depositor(depositor: Identity, gain: u64, asset_contract: 
     if (gain == 0) {
         return;
     }
-    let mut aswith_amount = storage.asset.get(asset_contract);
-    aswith_amount -= gain;
-    storage.asset.insert(asset_contract, aswith_amount);
+    let mut asset_amount = storage.asset.get(asset_contract);
+    asset_amount -= gain;
+    storage.asset.insert(asset_contract, asset_amount);
     transfer(gain, asset_contract, depositor);
 }
 

@@ -173,7 +173,7 @@ pub mod stability_pool_utils {
 
     pub async fn assert_pool_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
-        expected_aswith_amount: u64,
+        expected_asset_amount: u64,
         asset_address: ContractId,
     ) {
         let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address)
@@ -181,7 +181,7 @@ pub mod stability_pool_utils {
             .unwrap()
             .value;
 
-        assert_eq!(pool_asset, expected_aswith_amount);
+        assert_eq!(pool_asset, expected_asset_amount);
     }
 
     pub async fn assert_total_usdf_deposits<T: Account>(

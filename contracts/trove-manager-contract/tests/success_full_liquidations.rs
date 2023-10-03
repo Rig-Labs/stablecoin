@@ -169,16 +169,16 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .value;
 
     // 10% Penalty on 1_000* PRECISION of debt
-    let mut liquidated_aswith_amount_transfered_to_sp = with_min_borrow_fee(1_100 * PRECISION);
-    liquidated_aswith_amount_transfered_to_sp = min(
-        liquidated_aswith_amount_transfered_to_sp,
+    let mut liquidated_asset_amount_transfered_to_sp = with_min_borrow_fee(1_100 * PRECISION);
+    liquidated_asset_amount_transfered_to_sp = min(
+        liquidated_asset_amount_transfered_to_sp,
         asset_deposit_to_be_liquidated,
     );
 
-    let coll_gas_fee = liquidated_aswith_amount_transfered_to_sp / 200;
-    liquidated_aswith_amount_transfered_to_sp -= coll_gas_fee;
+    let coll_gas_fee = liquidated_asset_amount_transfered_to_sp / 200;
+    liquidated_asset_amount_transfered_to_sp -= coll_gas_fee;
 
-    assert_eq!(asset, liquidated_aswith_amount_transfered_to_sp);
+    assert_eq!(asset, liquidated_asset_amount_transfered_to_sp);
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
@@ -443,18 +443,18 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await
     .value;
 
-    let aswith_amount_to_sp = stability_pool_abi::get_asset(
+    let asset_amount_to_sp = stability_pool_abi::get_asset(
         &contracts.stability_pool,
         contracts.aswith_contracts[0].asset.contract_id().into(),
     )
     .await
     .unwrap()
     .value;
-    println!("aswith_amount_to_sp: {}", aswith_amount_to_sp);
+    println!("asset_amount_to_sp: {}", asset_amount_to_sp);
 
     // 1.10 * 500_000_000
     let debt_being_redistributed = with_min_borrow_fee(1_000 * PRECISION) - 500 * PRECISION;
-    let mut asset_being_redistributed = 1_100 * PRECISION - aswith_amount_to_sp;
+    let mut asset_being_redistributed = 1_100 * PRECISION - asset_amount_to_sp;
 
     let coll_gas_fee = 1_100 * PRECISION / 200;
     asset_being_redistributed -= coll_gas_fee;

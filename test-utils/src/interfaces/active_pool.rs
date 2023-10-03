@@ -118,7 +118,7 @@ pub mod active_pool_abi {
         token: &Token<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
-        let fuel_asset_id = AssetId::from(*token.contract_id().hash());
+        let fuel_asset_id = token.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
@@ -130,7 +130,7 @@ pub mod active_pool_abi {
             .call_params(call_params)
             .unwrap()
             .with_contracts(&[token])
-            .append_variable_outputs(1)
+            .append_variable_outputs(2)
             .call()
             .await
             .unwrap()
