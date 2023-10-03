@@ -33,7 +33,8 @@ async fn get_contract_instance() -> (
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     (asset, wallet, wallets)
 }

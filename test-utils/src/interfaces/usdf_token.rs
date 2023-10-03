@@ -1,5 +1,8 @@
 use fuels::programs::call_utils::TxDependencyExtension;
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
+use fuels::{
+    prelude::abigen, prelude::BASE_ASSET_ID, programs::call_response::FuelCallResponse,
+    types::Identity,
+};
 
 abigen!(Contract(
     name = "USDFToken",
@@ -8,9 +11,8 @@ abigen!(Contract(
 
 pub mod usdf_token_abi {
     use super::*;
-    use crate::setup::common::wait;
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, LogDecoder, TxParameters},
+        prelude::{Account, CallParameters, Error, TxParameters},
         types::ContractId,
     };
 
@@ -63,7 +65,10 @@ pub mod usdf_token_abi {
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
-        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+        let usdf_asset_id = usdf_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
