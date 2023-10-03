@@ -326,7 +326,7 @@ pub mod trove_manager_abi {
 pub mod trove_manager_utils {
     use fuels::{
         prelude::Account,
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::{
@@ -343,7 +343,7 @@ pub mod trove_manager_utils {
         debt: u64,
         prev_id: Identity,
         next_id: Identity,
-        asset: ContractId,
+        asset: AssetId,
     ) {
         trove_manager_abi::increase_trove_coll(trove_manager, id.clone(), coll).await;
         trove_manager_abi::increase_trove_debt(trove_manager, id.clone(), debt).await;

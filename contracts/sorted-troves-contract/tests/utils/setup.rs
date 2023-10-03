@@ -11,7 +11,7 @@ abigen!(Contract(
 ));
 
 const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
-    "contracts/sorted-troves-contract/tests/artifacts/out/debug/mock-trove-manager-contract.bin";
+    "contracts/tests-artifacts-sorted-troves-contract/out/debug/mock-trove-manager-contract.bin";
 
 pub async fn deploy_mock_trove_manager_contract(
     wallet: &WalletUnlocked,
@@ -39,13 +39,13 @@ pub async fn set_nominal_icr_and_insert(
     new_icr: u64,
     prev_id: Identity,
     next_id: Identity,
-    asset: ContractId,
+    asset: AssetId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
-        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
+        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset.into())
         .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -69,13 +69,13 @@ pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
-    asset: ContractId,
+    asset: AssetId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
-        .remove(id, asset)
+        .remove(id, asset.into())
         .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -124,7 +124,7 @@ pub async fn initialize_st_and_tm(
     sorted_troves: &SortedTroves<WalletUnlocked>,
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     max_size: u64,
-    asset: ContractId,
+    asset: AssetId,
 ) {
     initialize(
         sorted_troves,
@@ -153,7 +153,7 @@ pub async fn initialize_st_and_tm(
 
     trove_manager
         .methods()
-        .add_asset(asset, trove_manager.contract_id())
+        .add_asset(asset.into(), trove_manager.contract_id())
         .with_contracts(&[sorted_troves])
         .call()
         .await

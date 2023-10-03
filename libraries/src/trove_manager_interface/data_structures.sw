@@ -61,12 +61,6 @@ pub struct Asset {
     amount: u64,
 }
 
-pub struct Node {
-    exists: bool,
-    next_id: Identity,
-    prev_id: Identity,
-}
-
 impl Asset {
     pub fn new(id: ContractId, amount: u64) -> Self {
         Self { id, amount }
