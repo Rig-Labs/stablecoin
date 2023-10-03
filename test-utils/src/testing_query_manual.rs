@@ -1,5 +1,5 @@
 use crate::interfaces::oracle::{oracle_abi, Oracle};
-use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
+// use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
 use dotenv::dotenv;
 use fuels::prelude::{Bech32ContractId, Provider, WalletUnlocked};
 
