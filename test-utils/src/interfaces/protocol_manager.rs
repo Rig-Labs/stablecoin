@@ -71,7 +71,7 @@ pub mod protocol_manager_abi {
 
     pub async fn register_asset<T: Account>(
         protocol_manager: &ProtocolManager<T>,
-        asset: ContractId,
+        asset: AssetId,
         trove_manager: ContractId,
         oracle: ContractId,
         borrow_operations: &BorrowOperations<T>,
@@ -87,7 +87,7 @@ pub mod protocol_manager_abi {
 
         protocol_manager
             .methods()
-            .register_asset(asset, trove_manager, oracle)
+            .register_asset(asset.into(), trove_manager, oracle)
             .tx_params(tx_params)
             .with_contracts(&[
                 borrow_operations,

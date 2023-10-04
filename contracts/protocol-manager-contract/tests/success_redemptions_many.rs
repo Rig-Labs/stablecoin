@@ -1,4 +1,4 @@
-use fuels::{prelude::AssetId, types::Identity};
+use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
@@ -110,7 +110,11 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
@@ -134,14 +138,22 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;

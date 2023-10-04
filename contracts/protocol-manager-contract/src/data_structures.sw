@@ -43,8 +43,8 @@ impl SingleRedemptionValues {
 }
 
 pub struct AssetInfo {
-    assets: Vec<ContractId>,
-    aswith_contracts: Vec<AssetContracts>,
+    assets: Vec<AssetId>,
+    asset_contracts: Vec<AssetContracts>,
     prices: Vec<u64>,
     system_debts: Vec<u64>,
     redemption_totals: Vec<RedemptionTotals>,
@@ -55,5 +55,5 @@ pub struct AssetInfo {
 pub struct AssetContracts {
     trove_manager: ContractId,
     oracle: ContractId,
-    asset_address: ContractId,
+    asset_address: AssetId,
 }

@@ -664,7 +664,7 @@ pub mod common {
 
         protocol_manager_abi::register_asset(
             &protocol_manager,
-            asset.contract_id().into(),
+            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
             borrow_operations,

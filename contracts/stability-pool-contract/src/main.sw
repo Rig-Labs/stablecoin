@@ -34,7 +34,7 @@ use std::{
 const SCALE_FACTOR = 1_000_000_000;
 
 storage {
-    aswith_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
+    asset_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
     usdf_contract: ContractId = ContractId::from(ZERO_B256),
@@ -107,7 +107,7 @@ impl StabilityPool for Contract {
         require_is_protocol_manager();
         storage.valid_assets.push(asset_contract);
         storage.last_asset_error_offset.insert(asset_contract, U128::from_u64(0));
-        storage.aswith_contracts.insert(asset_contract, AssetContracts {
+        storage.asset_contracts.insert(asset_contract, AssetContracts {
             trove_manager: trove_manager_contract,
             oracle: oracle_contract,
         });
@@ -179,7 +179,7 @@ impl StabilityPool for Contract {
         }
         internal_trigger_fpt_issuance();
 
-        let asset_contractes_cache = storage.aswith_contracts.get(asset_contract);
+        let asset_contractes_cache = storage.asset_contracts.get(asset_contract);
 
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_contract);
 
@@ -477,7 +477,7 @@ fn require_caller_is_trove_manager() {
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap();
-        let trove_manager_contract = Identity::ContractId(storage.aswith_contracts.get(asset).trove_manager);
+        let trove_manager_contract = Identity::ContractId(storage.asset_contracts.get(asset).trove_manager);
         if (msg_sender().unwrap() == trove_manager_contract) {
             return;
         }

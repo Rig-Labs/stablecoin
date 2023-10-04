@@ -5,7 +5,7 @@ abi StabilityPool {
     fn initialize(usdf_address: ContractId, community_issuance_address: ContractId, protocol_manager: ContractId, active_pool: ContractId);
 
     #[storage(read, write)]
-    fn add_asset(trove_manager_address: ContractId, asset_address: ContractId, oracle_address: ContractId);
+    fn add_asset(trove_manager_address: ContractId, asset_address: AssetId, oracle_address: ContractId);
 
     #[storage(read, write), payable]
     fn provide_to_stability_pool();
