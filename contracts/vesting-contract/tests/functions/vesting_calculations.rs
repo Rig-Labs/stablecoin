@@ -1,6 +1,6 @@
 use crate::utils::setup::setup;
 use fuels::prelude::*;
-use fuels::{prelude::AssetId, types::Identity};
+use fuels::types::Identity;
 
 mod success {
 
@@ -26,8 +26,12 @@ mod success {
             Identity::Address(recipient.address().into()),
         )];
 
-        let _ = instantiate_vesting_contract(&vest, &asset.id().into(), vesting_schedule.to_vec())
-            .await;
+        let _ = instantiate_vesting_contract(
+            &vest,
+            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            vesting_schedule.to_vec(),
+        )
+        .await;
 
         let res = vest
             .methods()
@@ -36,16 +40,13 @@ mod success {
             .await
             .unwrap();
 
-        assert_eq!(res.value.unwrap(), vesting_schedule[0]);
+        assert_eq!(res.value, vesting_schedule[0]);
 
-        let res = vest
-            .methods()
+        vest.methods()
             .get_vesting_schedule(Identity::Address(admin.address().into()))
             .call()
             .await
-            .unwrap();
-
-        assert_eq!(res.value, Option::None);
+            .unwrap_err();
     }
 
     #[tokio::test]
@@ -67,14 +68,14 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &asset.contract_id().into(),
+            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
             vesting_schedule.to_vec(),
         )
         .await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
-        let asset_id = AssetId::from(*asset.id().hash());
+        let asset_id = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let provider = admin.provider().unwrap();
 
@@ -146,14 +147,14 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &asset.contract_id().into(),
+            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
             vesting_schedule.to_vec(),
         )
         .await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
-        let asset_id = AssetId::from(*asset.id().hash());
+        let asset_id = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let provider = admin.provider().unwrap();
 
