@@ -8,7 +8,11 @@ use test_utils::{
 async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt_token
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     let vesting_contract = fpt_token_abi::get_vesting_contract(&contracts.fpt_token)
         .await
