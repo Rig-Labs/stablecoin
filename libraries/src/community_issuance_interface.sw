@@ -5,7 +5,7 @@ abi CommunityIssuance {
     #[storage(read, write)]
     fn initialize(
         stability_pool_contract: ContractId,
-        fpt_token_contract: ContractId,
+        fpt_token_asset_id: AssetId,
         admin: Identity,
         debugging: bool,
     );

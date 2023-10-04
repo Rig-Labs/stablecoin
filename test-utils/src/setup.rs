@@ -28,9 +28,7 @@ pub mod common {
     };
     use fuels::{
         accounts::fuel_crypto::rand::{self, Rng},
-        prelude::{
-            launch_custom_provider_and_get_wallets, Account, LoadConfiguration, WalletsConfig,
-        },
+        prelude::*,
         programs::call_response::FuelCallResponse,
         types::{ContractId, Identity},
     };
@@ -41,7 +39,7 @@ pub mod common {
         pub usdf: USDFToken<T>,
         pub stability_pool: StabilityPool<T>,
         pub protocol_manager: ProtocolManager<T>,
-        pub aswith_contracts: Vec<AssetContracts<T>>,
+        pub asset_contracts: Vec<AssetContracts<T>>,
         pub fpt_staking: FPTStaking<T>,
         pub coll_surplus_pool: CollSurplusPool<T>,
         pub sorted_troves: SortedTroves<T>,
@@ -151,12 +149,15 @@ pub mod common {
 
         let mut pb = ProgressBar::new(8);
 
-        let mut aswith_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
+        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
         community_issuance_abi::initialize(
             &community_issuance,
             stability_pool.contract_id().into(),
-            fpt_token.contract_id().into(),
+            fpt_token
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
             &Identity::Address(wallet.address().into()),
             true,
         )
@@ -225,8 +226,8 @@ pub mod common {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt.contract_id().into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
-            usdf.contract_id().into(),
+            fpt.contract_id().asset_id(&BASE_ASSET_ID.into()).into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
+            usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
         )
         .await;
         pb.inc();
@@ -281,7 +282,7 @@ pub mod common {
         .await
         .unwrap();
 
-        let fuel_aswith_contracts = add_asset(
+        let fuel_asset_contracts = add_asset(
             &borrow_operations,
             &stability_pool,
             &protocol_manager,
@@ -299,7 +300,7 @@ pub mod common {
         .await;
 
         if deploy_2nd_asset {
-            let usdf_aswith_contracts = add_asset(
+            let usdf_asset_contracts = add_asset(
                 &borrow_operations,
                 &stability_pool,
                 &protocol_manager,
@@ -317,17 +318,17 @@ pub mod common {
             .await;
             pb.finish();
 
-            aswith_contracts.push(usdf_aswith_contracts);
+            asset_contracts.push(usdf_asset_contracts);
         }
         pb.finish();
 
-        aswith_contracts.push(fuel_aswith_contracts);
+        asset_contracts.push(fuel_asset_contracts);
 
         let contracts = ProtocolContracts {
             borrow_operations,
             usdf,
             stability_pool,
-            aswith_contracts,
+            asset_contracts,
             protocol_manager,
             fpt_staking,
             fpt_token,

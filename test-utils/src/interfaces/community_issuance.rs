@@ -1,4 +1,5 @@
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
+use fuels::prelude::abigen;
+use fuels::programs::call_response::FuelCallResponse;
 
 abigen!(Contract(
     name = "CommunityIssuance",
@@ -9,14 +10,13 @@ pub mod community_issuance_abi {
     use fuels::prelude::{Account, LogDecoder, TxParameters};
 
     use crate::setup::common::wait;
-    use fuels::prelude::Error;
-    use fuels::{prelude::ContractId, types::Identity};
+    use fuels::{prelude::ContractId, prelude::Error, types::AssetId, types::Identity};
 
     use super::*;
     pub async fn initialize<T: Account>(
         instance: &CommunityIssuance<T>,
         stability_pool_contract: ContractId,
-        fpt_token_contract: ContractId,
+        fpt_token_asset_id: AssetId,
         admin: &Identity,
         debugging: bool,
     ) -> Result<FuelCallResponse<()>, Error> {
@@ -26,7 +26,7 @@ pub mod community_issuance_abi {
             .methods()
             .initialize(
                 stability_pool_contract,
-                fpt_token_contract,
+                fpt_token_asset_id.into(),
                 admin.clone(),
                 debugging,
             )

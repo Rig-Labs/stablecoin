@@ -35,12 +35,12 @@ use std::{
 storage {
     aswith_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
     valid_asset_ids: StorageMap<ContractId, bool> = StorageMap {},
-    usdf_contract: ContractId = null_contract(),
-    fpt_staking_contract: ContractId = null_contract(),
-    coll_surplus_pool_contract: ContractId = null_contract(),
-    active_pool_contract: ContractId = null_contract(),
-    protocol_manager_contract: ContractId = null_contract(),
-    sorted_troves_contract: ContractId = null_contract(),
+    usdf_contract: ContractId = ContractId::from(ZERO_B256),
+    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
+    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    protocol_manager_contract: ContractId = ContractId::from(ZERO_B256),
+    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 

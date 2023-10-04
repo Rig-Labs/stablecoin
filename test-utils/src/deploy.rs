@@ -2,10 +2,7 @@ use std::{fs::File, io::Write, str::FromStr};
 
 use crate::setup::common::{ExistingAssetContracts, ProtocolContracts};
 use dotenv::dotenv;
-use fuels::{
-    prelude::{Address, Bech32ContractId, Provider, WalletUnlocked},
-    types::ContractId,
-};
+use fuels::{prelude::*, types::ContractId};
 use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
@@ -196,7 +193,10 @@ pub mod deployment {
         let _ = community_issuance_abi::initialize(
             &community_issuance,
             stability_pool.contract_id().into(),
-            fpt_token.contract_id().into(),
+            fpt_token
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
             &Identity::Address(wallet.address().into()),
             false,
         )
@@ -253,8 +253,11 @@ pub mod deployment {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt_token.contract_id().into(),
-            usdf.contract_id().into(),
+            fpt_token
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
+            usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
         )
         .await;
         wait();

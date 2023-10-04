@@ -1,7 +1,6 @@
 library;
 
 use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_abs_diff, fm_min};
-use libraries::numbers::*;
 use std::{logging::log, u128::U128};
 
 // 32_000_000 * 1_000_000_000

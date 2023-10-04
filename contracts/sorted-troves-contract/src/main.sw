@@ -186,7 +186,7 @@ fn internal_get_last(asset: AssetId) -> Identity {
 fn internal_get_next(id: Identity, asset: AssetId) -> Identity {
     match storage.nodes.get((id, asset)).try_read() {
         Some(node) => return node.next_id,
-        None => return null_identity_address(),
+        None => return Identity::Address(Address::from(ZERO_B256)),
     }
 }
 
@@ -194,7 +194,7 @@ fn internal_get_next(id: Identity, asset: AssetId) -> Identity {
 fn internal_get_prev(id: Identity, asset: AssetId) -> Identity {
     match storage.nodes.get((id, asset)).try_read() {
         Some(node) => return node.prev_id,
-        None => return null_identity_address(),
+        None => return Identity::Address(Address::from(ZERO_B256)),
     }
 }
 
@@ -236,7 +236,7 @@ fn internal_contains(id: Identity, asset: AssetId) -> bool {
 fn internal_get_head(asset: AssetId) -> Identity {
     match storage.head.get(asset).try_read() {
         Some(head) => return head,
-        None => return null_identity_address(),
+        None => return Identity::Address(Address::from(ZERO_B256)),
     }
 }
 
@@ -244,7 +244,7 @@ fn internal_get_head(asset: AssetId) -> Identity {
 fn internal_get_tail(asset: AssetId) -> Identity {
     match storage.tail.get(asset).try_read() {
         Some(tail) => return tail,
-        None => return null_identity_address(),
+        None => return Identity::Address(Address::from(ZERO_B256)),
     }
 }
 
@@ -347,7 +347,7 @@ fn internal_descend_list(
     if (internal_get_head(asset) == start_id
         && nicr >= trove_manager.get_nominal_icr(start_id))
     {
-        return (null_identity_address(), start_id);
+        return (Identity::Address(Address::from(ZERO_B256)), start_id);
     }
 
     let mut prev_id = start_id;
@@ -400,7 +400,6 @@ fn internal_insert(
     require(null_identity_address() != id, "ST: id must not be zero");
     require(nicr > 0, "ST: icr must be greater than 0");
 
-
     let mut next_id: Identity = hint_next_id;
     let mut prev_id: Identity = hint_prev_id;
     log(111);
@@ -420,8 +419,8 @@ fn internal_insert(
 
     let mut new_node = Node {
         exists: true,
-        prev_id: null_identity_address(),
-        next_id: null_identity_address(),
+        prev_id: Identity::Address(Address::from(ZERO_B256)),
+        next_id: Identity::Address(Address::from(ZERO_B256)),
     };
 
     if (prev_id == null_identity_address() && next_id == null_identity_address()) {

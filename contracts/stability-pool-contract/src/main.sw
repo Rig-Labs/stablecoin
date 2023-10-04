@@ -35,10 +35,10 @@ const SCALE_FACTOR = 1_000_000_000;
 
 storage {
     aswith_contracts: StorageMap<ContractId, AssetContracts> = StorageMap {},
-    active_pool_contract: ContractId = null_contract(),
-    protocol_manager_address: ContractId = null_contract(),
-    usdf_contract: ContractId = null_contract(),
-    community_issuance_contract: ContractId = null_contract(),
+    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
+    usdf_contract: ContractId = ContractId::from(ZERO_B256),
+    community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     // List of assets tracked by the Stability Pool
     valid_assets: StorageVec<ContractId> = StorageVec {},
     // Asset amounts held by the Stability Pool to be claimed

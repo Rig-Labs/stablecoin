@@ -13,7 +13,7 @@ use test_utils::{
 #[tokio::test]
 async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
-
+    println!("admin address {:?}", admin.address());
     token_abi::mint_to_id(
         &contracts.aswith_contracts[0].asset,
         5_000 * PRECISION,
@@ -32,7 +32,11 @@ async fn proper_intialize() {
     let pending_rewards_asset = fpt_staking_abi::get_pending_asset_gain(
         &contracts.fpt_staking,
         Identity::Address(admin.address().into()),
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.aswith_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;

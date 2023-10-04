@@ -32,8 +32,8 @@ storage {
         symbol: "        ",
         decimals: 1u8,
     },
-    vesting_contract: ContractId = null_contract(),
-    community_issuance_contract: ContractId = null_contract(),
+    vesting_contract: ContractId = ContractId::from(ZERO_B256),
+    community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 
