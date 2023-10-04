@@ -14,13 +14,13 @@ use test_utils::{
 async fn fails_to_liquidate_trove_not_under_mcr() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.aswith_contracts[0].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let wallet1 = wallets.pop().unwrap();
 
     let balance = 25_000 * PRECISION;
     token_abi::mint_to_id(
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         balance,
         Identity::Address(wallet1.address().into()),
     )
@@ -33,12 +33,12 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
 
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
-        &contracts.aswith_contracts[0].oracle,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
@@ -49,10 +49,10 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
     .unwrap();
 
     trove_manager_abi::liquidate(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
-        &contracts.aswith_contracts[0].oracle,
+        &contracts.asset_contracts[0].oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,

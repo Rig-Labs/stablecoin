@@ -18,7 +18,7 @@ use test_utils::{
 async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.aswith_contracts[0].oracle, 10 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let liquidated_wallet2 = wallets.pop().unwrap();
@@ -29,7 +29,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         liquidated_wallet.clone(),
-        &contracts.aswith_contracts[0],
+        &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -42,7 +42,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         liquidated_wallet2.clone(),
-        &contracts.aswith_contracts[0],
+        &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -55,7 +55,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet1.clone(),
-        &contracts.aswith_contracts[0],
+        &contracts.asset_contracts[0],
         &contracts.borrow_operations,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -75,20 +75,20 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &stability_pool_healthy_wallet1,
         &contracts.community_issuance,
         &contracts.usdf,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
     )
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.aswith_contracts[0].oracle, 1 * PRECISION).await;
+    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
     // 2 wallets has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
     trove_manager_abi::batch_liquidate_troves(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
-        &contracts.aswith_contracts[0].oracle,
+        &contracts.asset_contracts[0].oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -105,42 +105,42 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .unwrap();
 
     trove_manager_utils::assert_trove_status(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
         Status::ClosedByLiquidation,
     )
     .await;
 
     trove_manager_utils::assert_trove_coll(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
         0,
     )
     .await;
 
     trove_manager_utils::assert_trove_debt(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet.address().into()),
         0,
     )
     .await;
 
     trove_manager_utils::assert_trove_coll(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet2.address().into()),
         0,
     )
     .await;
 
     trove_manager_utils::assert_trove_debt(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet2.address().into()),
         0,
     )
     .await;
 
     trove_manager_utils::assert_trove_status(
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         Identity::Address(liquidated_wallet2.address().into()),
         Status::ClosedByLiquidation,
     )
@@ -156,7 +156,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .unwrap()
@@ -170,14 +170,14 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -189,14 +189,14 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let default_pool_asset = default_pool_abi::get_asset(
         &contracts.default_pool,
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(
         &contracts.default_pool,
-        contracts.aswith_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;
@@ -207,7 +207,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        &contracts.aswith_contracts[0].asset.contract_id().into(),
+        &contracts.asset_contracts[0].asset.contract_id().into(),
     )
     .await
     .value;

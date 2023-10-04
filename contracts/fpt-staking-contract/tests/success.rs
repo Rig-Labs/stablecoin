@@ -15,7 +15,7 @@ async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
     println!("admin address {:?}", admin.address());
     token_abi::mint_to_id(
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
@@ -32,7 +32,7 @@ async fn proper_intialize() {
     let pending_rewards_asset = fpt_staking_abi::get_pending_asset_gain(
         &contracts.fpt_staking,
         Identity::Address(admin.address().into()),
-        contracts.aswith_contracts[0]
+        contracts.asset_contracts[0]
             .asset
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
@@ -76,7 +76,7 @@ async fn proper_staking_multiple_positions() {
 
     let fpt_asset_id = AssetId::from(*contracts.fpt.contract_id().hash());
     let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
-    let asset_id = AssetId::from(*contracts.aswith_contracts[0].asset.contract_id().hash());
+    let asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -127,7 +127,7 @@ async fn proper_staking_multiple_positions() {
     // basically we are going to open a trove, and through that generate some revenue for staking
 
     token_abi::mint_to_id(
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         40_000 * PRECISION,
         Identity::Address(healthy_wallet3.address().into()),
     )
@@ -147,12 +147,12 @@ async fn proper_staking_multiple_positions() {
 
     let _open_trove = borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
-        &contracts.aswith_contracts[0].oracle,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
-        &contracts.aswith_contracts[0].trove_manager,
+        &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         40_000 * PRECISION,
         20_000 * PRECISION,
@@ -202,7 +202,7 @@ async fn proper_staking_multiple_positions() {
         &contracts.default_pool,
         &contracts.active_pool,
         &contracts.sorted_troves,
-        &contracts.aswith_contracts,
+        &contracts.asset_contracts,
     )
     .await;
 
@@ -216,7 +216,7 @@ async fn proper_staking_multiple_positions() {
     let _res1 = fpt_staking_abi::unstake(
         &fpt_staking_healthy_wallet1,
         &contracts.usdf,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         &contracts.fpt,
         500_000_000,
     )
@@ -225,7 +225,7 @@ async fn proper_staking_multiple_positions() {
     let _res2 = fpt_staking_abi::unstake(
         &fpt_staking_healthy_wallet2,
         &contracts.usdf,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         &contracts.fpt,
         500_000_000,
     )
