@@ -14,17 +14,17 @@ abi BorrowOperations {
     fn add_coll(upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read, write)]
-    fn withdraw_coll(amount: u64, upper_hint: Identity, lower_hint: Identity, asset: ContractId);
+    fn withdraw_coll(amount: u64, upper_hint: Identity, lower_hint: Identity, asset: AssetId);
 
     #[storage(read, write)]
-    fn withdraw_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity, asset: ContractId);
+    fn withdraw_usdf(amount: u64, upper_hint: Identity, lower_hint: Identity, asset: AssetId);
 
     #[storage(read, write), payable]
-    fn repay_usdf(upper_hint: Identity, lower_hint: Identity, asset: ContractId);
+    fn repay_usdf(upper_hint: Identity, lower_hint: Identity, asset: AssetId);
 
     #[storage(read, write), payable]
-    fn close_trove(asset: ContractId);
+    fn close_trove(asset: AssetId);
 
     #[storage(read)]
-    fn claim_collateral(asset: ContractId);
+    fn claim_collateral(asset: AssetId);
 }

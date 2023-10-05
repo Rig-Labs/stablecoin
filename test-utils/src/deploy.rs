@@ -499,7 +499,7 @@ pub mod deployment {
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
-            asset.contract_id().into(),
+            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
             protocol_manager.contract_id().into(),
         )
         .await;

@@ -1,9 +1,7 @@
+use fuels::prelude::abigen;
+use fuels::prelude::BASE_ASSET_ID;
+use fuels::programs::call_response::FuelCallResponse;
 use fuels::programs::call_utils::TxDependencyExtension;
-use fuels::{
-    prelude::{abigen, ContractId, TxParameters},
-    programs::call_response::FuelCallResponse,
-    types::Identity,
-};
 abigen!(Contract(
     name = "BorrowOperations",
     abi = "contracts/borrow-operations-contract/out/debug/borrow-operations-contract-abi.json"
@@ -18,7 +16,9 @@ pub mod borrow_operations_abi {
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
-    use fuels::prelude::{Account, AssetId, CallParameters, Error};
+    use fuels::prelude::Account;
+    use fuels::prelude::{CallParameters, ContractId, Error, TxParameters};
+    use fuels::types::{AssetId, Identity};
 
     pub async fn initialize<T: Account>(
         borrow_operations: &BorrowOperations<T>,
@@ -64,13 +64,16 @@ pub mod borrow_operations_abi {
         let tx_params = TxParameters::default()
             .with_gas_price(1)
             .with_gas_limit(2000000);
-        let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
+        let fuel_asset_id = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fuel_amount_deposit)
             .with_asset_id(fuel_asset_id);
 
-        borrow_operations
+        return borrow_operations
             .methods()
             .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
             .call_params(call_params)
@@ -87,7 +90,7 @@ pub mod borrow_operations_abi {
             .append_variable_outputs(3)
             .tx_params(tx_params)
             .call()
-            .await
+            .await;
     }
 
     pub async fn add_coll<T: Account>(
@@ -104,7 +107,10 @@ pub mod borrow_operations_abi {
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
-        let fuel_asset_id = AssetId::from(*fuel_token.contract_id().hash());
+        let fuel_asset_id: AssetId = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
@@ -142,9 +148,14 @@ pub mod borrow_operations_abi {
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
+        let fuel_asset_id: AssetId = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
         borrow_operations
             .methods()
-            .withdraw_coll(amount, lower_hint, upper_hint, fuel_token.contract_id())
+            .withdraw_coll(amount, lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
                 fuel_token,
@@ -173,9 +184,14 @@ pub mod borrow_operations_abi {
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
+        let fuel_asset_id: AssetId = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
         borrow_operations
             .methods()
-            .withdraw_usdf(amount, lower_hint, upper_hint, fuel_token.contract_id())
+            .withdraw_usdf(amount, lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
                 fuel_token,
@@ -205,15 +221,23 @@ pub mod borrow_operations_abi {
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
-        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+        let usdf_asset_id = usdf_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
+        let fuel_asset_id: AssetId = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
         borrow_operations
             .methods()
-            .repay_usdf(lower_hint, upper_hint, fuel_token.contract_id())
+            .repay_usdf(lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
                 fuel_token,
@@ -242,15 +266,23 @@ pub mod borrow_operations_abi {
         amount: u64,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().with_gas_price(1);
-        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+        let usdf_asset_id = usdf_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
+        let fuel_asset_id: AssetId = fuel_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
         borrow_operations
             .methods()
-            .close_trove(fuel_token.contract_id())
+            .close_trove(fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
                 fuel_token,
@@ -273,21 +305,22 @@ pub mod borrow_operations_abi {
         borrow_operations: BorrowOperations<T>,
         oracle: ContractId,
         trove_manager: ContractId,
-        asset: ContractId,
+        asset: AssetId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
-        borrow_operations
+        return borrow_operations
             .methods()
-            .add_asset(asset, trove_manager, oracle)
+            .add_asset(asset.into(), trove_manager, oracle)
             .tx_params(tx_params)
             .call()
-            .await
+            .await;
     }
 }
 
 pub mod borrow_operations_utils {
     use fuels::prelude::{Account, WalletUnlocked};
+    use fuels::types::Identity;
 
     use super::*;
     use crate::interfaces::active_pool;

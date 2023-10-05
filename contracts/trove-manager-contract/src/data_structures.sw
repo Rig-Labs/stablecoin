@@ -1,6 +1,6 @@
 library;
 
-use libraries::data_structures::{Status};
+use libraries::trove_manager_interface::data_structures::{Status};
 
 pub struct Trove {
     debt: u64,

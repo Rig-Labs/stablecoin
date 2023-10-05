@@ -19,7 +19,7 @@ pub mod trove_manager_abi {
 
     use fuels::{
         prelude::{Account, Error, LogDecoder, TxParameters},
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::setup::common::wait;
@@ -166,7 +166,7 @@ pub mod trove_manager_abi {
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
         usdf: ContractId,
-        asset: ContractId,
+        asset: AssetId,
         protocol_manager: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
@@ -182,7 +182,7 @@ pub mod trove_manager_abi {
                 active_pool,
                 coll_surplus_pool,
                 usdf,
-                asset,
+                asset.into(),
                 protocol_manager,
             )
             .tx_params(tx_params)

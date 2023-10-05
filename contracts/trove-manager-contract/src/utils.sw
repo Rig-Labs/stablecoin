@@ -1,10 +1,8 @@
 library;
 
-dep data_structures;
-use data_structures::{LiquidatedTroveValsInner, LiquidationTotals, LiquidationValues};
-use libraries::fluid_math::*;
-use libraries::numbers::*;
+use ::data_structures::{LiquidatedTroveValsInner, LiquidationTotals, LiquidationValues};
 
+use libraries::fluid_math::*;
 use std::{logging::log, u128::U128};
 
 pub fn calculate_liqudated_trove_values(
@@ -69,7 +67,7 @@ pub fn get_offset_and_redistribution_vals(
     vars.coll_gas_compensation = liquidated_position_vals.trove_coll_liquidated / 200;
     let pending_liquidated_col = liquidated_position_vals.trove_coll_liquidated - vars.coll_gas_compensation;
 
-    if (usdf_in_stab_pool > 0) {   
+    if (usdf_in_stab_pool > 0) {
         // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
         vars.debt_to_offset = fm_min(liquidated_position_vals.trove_debt_to_repay, usdf_in_stab_pool);
         // Send collateral to the Stability Pool proportional to the amount of debt offset
@@ -210,7 +208,7 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_partial_pool() {
 
 #[test]
 fn test_get_offset_and_redistribution_vals_partial_liquidation_empty_pool() {
-     // Partial liquidation, Empty Stability Pool
+    // Partial liquidation, Empty Stability Pool
     let starting_coll = 12_000 * DECIMAL_PRECISION;
     let starting_debt = 10_000 * DECIMAL_PRECISION;
     let price = DECIMAL_PRECISION;

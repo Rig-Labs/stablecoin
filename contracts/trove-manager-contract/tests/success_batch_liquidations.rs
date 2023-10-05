@@ -1,3 +1,4 @@
+use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
     data_structures::PRECISION,
@@ -170,14 +171,22 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
@@ -189,14 +198,22 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let default_pool_asset = default_pool_abi::get_asset(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
@@ -207,7 +224,11 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        &contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
