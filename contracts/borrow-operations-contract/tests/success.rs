@@ -23,7 +23,6 @@ async fn proper_creating_trove() {
     .await;
 
     let provider = admin.provider().unwrap();
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
@@ -49,7 +48,11 @@ async fn proper_creating_trove() {
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
-            AssetId::from(*contracts.usdf.contract_id().hash()),
+            contracts
+                .usdf
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
         )
         .await
         .unwrap();
@@ -161,7 +164,6 @@ async fn proper_increase_collateral() {
         Identity::Address(admin.address().into()),
     )
     .await;
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -304,8 +306,6 @@ async fn proper_decrease_collateral() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
-
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
     let _ = borrow_operations_abi::open_trove(
@@ -324,7 +324,6 @@ async fn proper_decrease_collateral() {
     )
     .await;
 
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
     let withdraw_amount = 300 * PRECISION;
 
     borrow_operations_abi::withdraw_coll(
@@ -410,7 +409,10 @@ async fn proper_decrease_collateral() {
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
-        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .get_asset_balance(
+            admin.address().into(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 
@@ -458,9 +460,12 @@ async fn proper_increase_debt() {
     .await;
 
     let provider = admin.provider().unwrap();
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
-    let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
+
+    let usdf_asset_id: AssetId = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -561,7 +566,10 @@ async fn proper_increase_debt() {
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
-        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .get_asset_balance(
+            admin.address().into(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 
@@ -576,11 +584,7 @@ async fn proper_increase_debt() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -588,11 +592,7 @@ async fn proper_increase_debt() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -617,8 +617,11 @@ async fn proper_decrease_debt() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
-    let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
+    let usdf_asset_id = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 800 * PRECISION;
@@ -723,7 +726,10 @@ async fn proper_decrease_debt() {
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
     let admin_balance = provider
-        .get_asset_balance(admin.address().into(), fuel_asset_id)
+        .get_asset_balance(
+            admin.address().into(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 
@@ -786,8 +792,6 @@ async fn proper_open_multiple_troves() {
         Identity::Address(wallet2.address().into()),
     )
     .await;
-
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
 
     let borrow_operations_wallet1 = BorrowOperations::new(
         contracts.borrow_operations.contract_id().clone(),
@@ -956,7 +960,11 @@ async fn proper_close_trove() {
     .unwrap();
 
     // Transfering to cover the fee
-    let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
+    let usdf_asset_id: AssetId = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
     let amount = borrow_amount1 / 200;
     let tx_parms = TxParameters::default();
 
@@ -1000,11 +1008,9 @@ async fn proper_close_trove() {
     .await;
 
     let provider = admin.provider().unwrap();
-    let fuel_asset_id: AssetId =
-        AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
 
     let wallet2_balance = provider
-        .get_asset_balance(&wallet2.address(), fuel_asset_id)
+        .get_asset_balance(&wallet2.address(), contracts.asset_contracts[0].asset_id)
         .await
         .unwrap();
 
@@ -1014,35 +1020,22 @@ async fn proper_close_trove() {
         "Wallet 2 balance is wrong"
     );
 
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
-
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
+
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -1053,11 +1046,7 @@ async fn proper_close_trove() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -1065,11 +1054,7 @@ async fn proper_close_trove() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -1136,12 +1121,14 @@ async fn proper_creating_trove_with_2nd_asset() {
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
-            AssetId::from(*contracts.usdf.contract_id().hash()),
+            contracts
+                .usdf
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
         )
         .await
         .unwrap();
-
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
@@ -1298,12 +1285,15 @@ async fn proper_creating_trove_with_2nd_asset() {
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
-            AssetId::from(*contracts.usdf.contract_id().hash()),
+            contracts
+                .usdf
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
         )
         .await
         .unwrap();
 
-    let asset: ContractId = contracts.asset_contracts[1].asset.contract_id().into();
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
         contracts.asset_contracts[1]

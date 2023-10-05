@@ -22,7 +22,8 @@ async fn fails_fake_usdf_deposit() {
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     usdf_token_abi::mint(
         &fake_usdf,

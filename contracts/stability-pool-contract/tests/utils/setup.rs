@@ -177,7 +177,8 @@ pub async fn setup(
         "Fuel".to_string(),
         "FUEL".to_string(),
     )
-    .await;
+    .await
+    .unwrap();
 
     token_abi::initialize(
         &usdf_token,
@@ -186,7 +187,8 @@ pub async fn setup(
         "USDF".to_string(),
         "USDF".to_string(),
     )
-    .await;
+    .await
+    .unwrap();
 
     stability_pool_abi::initialize(
         &stability_pool,

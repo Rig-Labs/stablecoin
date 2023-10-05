@@ -68,9 +68,7 @@ impl SortedTroves for Contract {
         hint_next_id: Identity,
         asset: AssetId,
     ) {
-        log(55);
         require_is_bo_or_tm();
-        log(44);
         internal_insert(id, nicr, hint_prev_id, hint_next_id, asset);
     }
 
@@ -290,7 +288,8 @@ fn require_is_trove_manager() {
 fn require_is_bo_or_tm() {
     let sender = msg_sender().unwrap();
     let borrow_operations = Identity::ContractId(storage.borrower_operations_contract.read());
-    let is_trove_manager = storage.valid_trove_manager.get(sender).read();
+    let is_trove_manager = storage.valid_trove_manager.get(sender).try_read().unwrap_or(false);
+
     require(borrow_operations == sender || is_trove_manager, "ST: Not BO or TM");
 }
 
@@ -402,20 +401,21 @@ fn internal_insert(
 
     let mut next_id: Identity = hint_next_id;
     let mut prev_id: Identity = hint_prev_id;
-    log(111);
+
 
     if (!internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-        log(12);
+        log(11);
         // Sender's hint was not a valid insert position
         // Use sender's hint to find a valid insert position
         let res = internal_find_insert_position(nicr, prev_id, next_id, asset, trove_manager_contract);
 
+        log(12);
+
         prev_id = res.0;
         next_id = res.1;
     }
-    log(1);
-    log(prev_id);
-    log(next_id);
+
+    log(13);
 
     let mut new_node = Node {
         exists: true,
@@ -427,6 +427,8 @@ fn internal_insert(
         // Insert as head and tail
         storage.head.insert(asset, id);
         storage.tail.insert(asset, id);
+
+        log(14);
     } else if (prev_id == null_identity_address()) {
         // Insert before `prev_id` as the head
         new_node.next_id = internal_get_head(asset);
@@ -450,6 +452,7 @@ fn internal_insert(
 
         edit_node_neighbors(next_id, Option::Some(id), Option::None, asset);
     }
+    log(15);
 
     storage.nodes.insert((id, asset), new_node);
     let new_size = internal_get_size(asset) + 1;

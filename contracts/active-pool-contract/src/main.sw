@@ -83,7 +83,7 @@ impl ActivePool for Contract {
     #[storage(read, write)]
     fn increase_usdf_debt(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm();
-        let new_debt = storage.usdf_debt_amount.get(asset_id).read() + amount;
+        let new_debt = storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0) + amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
 
@@ -114,7 +114,7 @@ impl ActivePool for Contract {
         require_caller_is_borrow_operations_or_default_pool();
         let asset_id = msg_asset_id();
         require_is_asset_id(asset_id);
-        let new_amount = storage.asset_amount.get(asset_id).read() + msg_amount();
+        let new_amount = storage.asset_amount.get(asset_id).try_read().unwrap_or(0) + msg_amount();
         storage.asset_amount.insert(asset_id, new_amount);
     }
 }
@@ -130,7 +130,7 @@ fn require_is_asset_id(asset_id: AssetId) {
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract.read();
-    let valid_trove_manager = storage.valid_trove_managers.get(caller).try_read().unwrap();
+    let valid_trove_manager = storage.valid_trove_managers.get(caller).try_read().unwrap_or(false);
     let stability_pool_contract = storage.stability_pool_contract.read();
     let protocol_manager_contract = storage.protocol_manager_contract.read();
     require(caller == protocol_manager_contract || caller == borrow_operations_contract || valid_trove_manager || caller == stability_pool_contract, "Caller is not BorrowOperations, TroveManager, ProtocolManager, or DefaultPool");
@@ -140,7 +140,7 @@ fn require_caller_is_bo_or_tm_or_sp_or_pm() {
 fn require_caller_is_bo_or_tm() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = storage.borrow_operations_contract.read();
-    let valid_trove_manager = storage.valid_trove_managers.get(caller).read();
+    let valid_trove_manager = storage.valid_trove_managers.get(caller).try_read().unwrap_or(false);
 
     require(caller == borrow_operations_contract || valid_trove_manager, "Caller is not BorrowOperations or TroveManager");
 }

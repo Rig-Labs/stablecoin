@@ -67,7 +67,7 @@ impl USDFToken for Contract { //////////////////////////////////////
     fn mint(amount: u64, address: Identity) {
         require_caller_is_borrower_operations();
         mint_to(address, ZERO_B256, amount);
-        storage.total_supply.write(storage.total_supply.read() + amount);
+        storage.total_supply.write(storage.total_supply.try_read().unwrap_or(0) + amount);
     }
 
     #[storage(read, write), payable]

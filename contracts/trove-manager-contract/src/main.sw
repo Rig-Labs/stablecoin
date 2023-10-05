@@ -101,9 +101,10 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64 {
-        let trove = storage.troves.get(id).read();
-
-        return fm_compute_nominal_cr(trove.coll, trove.debt);
+        match storage.troves.get(id).try_read() {
+            Some(trove) => return fm_compute_nominal_cr(trove.coll, trove.debt),
+            None => return fm_compute_nominal_cr(0, 0),
+        }
     }
 
     #[storage(read, write)]
@@ -161,9 +162,18 @@ impl TroveManager for Contract {
     fn set_trove_status(id: Identity, status: Status) {
         require_caller_is_borrow_operations_contract();
 
-        let mut trove = storage.troves.get(id).read();
-        trove.status = status;
-        storage.troves.insert(id, trove);
+        match storage.troves.get(id).try_read() {
+            Some(trove) => {
+                let mut new_trove = trove;
+                new_trove.status = status;
+                storage.troves.insert(id, new_trove);
+            },
+            None => {
+                let mut trove = Trove::default();
+                trove.status = status;
+                storage.troves.insert(id, trove);
+            }
+        }
     }
 
     #[storage(read, write)]
@@ -239,9 +249,10 @@ impl TroveManager for Contract {
 
     #[storage(read)]
     fn get_trove_status(id: Identity) -> Status {
-        let trove = storage.troves.get(id).read();
-
-        return trove.status;
+    match storage.troves.get(id).try_read() {
+        Some(trove) => return trove.status,
+        None => return Status::NonExistent,
+    }
     }
     #[storage(read, write)]
     fn batch_liquidate_troves(
@@ -293,10 +304,10 @@ impl TroveManager for Contract {
 
 #[storage(read, write)]
 fn internal_update_trove_reward_snapshots(id: Identity) {
-    let mut reward_snapshot = storage.reward_snapshots.get(id).read();
-
-    reward_snapshot.asset = storage.l_asset.read();
-    reward_snapshot.usdf_debt = storage.l_usdf.read();
+    let reward_snapshot = RewardSnapshot {
+        asset: storage.l_asset.read(),
+        usdf_debt: storage.l_usdf.read(),
+    };
 
     storage.reward_snapshots.insert(id, reward_snapshot);
 }
@@ -597,15 +608,21 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 
 #[storage(read, write)]
 fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
+    log(1);
     let mut trove = storage.troves.get(address).read();
+    log(2);
     let new_stake = internal_compute_new_stake(trove.coll);
+    log(3);
 
     let old_stake = trove.stake;
     trove.stake = new_stake;
     storage.troves.insert(address, trove);
+    log(4);
 
     let old_total_stakes = storage.total_stakes.read();
+    log(5);
     storage.total_stakes.write(old_total_stakes + new_stake - old_stake);
+    log(6);
     return new_stake;
 }
 

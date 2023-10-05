@@ -64,6 +64,7 @@ pub mod borrow_operations_abi {
         let tx_params = TxParameters::default()
             .with_gas_price(1)
             .with_gas_limit(2000000);
+
         let fuel_asset_id = fuel_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())

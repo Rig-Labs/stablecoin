@@ -158,7 +158,11 @@ async fn proper_adjust_asset_col() {
 
     let provdier = admin.provider().unwrap();
 
-    let asset_id = AssetId::from(*mock_fuel.contract_id().hash());
+    let asset_id = mock_fuel
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
+
     let balance_before = provdier
         .get_asset_balance(admin.address().into(), asset_id)
         .await

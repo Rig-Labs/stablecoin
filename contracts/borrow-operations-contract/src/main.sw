@@ -114,8 +114,10 @@ impl BorrowOperations for Contract {
 
         require_at_least_mcr(vars.icr);
 
+
         // Set the trove struct's properties
         trove_manager.set_trove_status(sender, Status::Active);
+
         let _ = trove_manager.increase_trove_coll(sender, msg_amount());
         let _ = trove_manager.increase_trove_debt(sender, vars.net_debt);
 
@@ -124,6 +126,7 @@ impl BorrowOperations for Contract {
 
         sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint, asset_contract);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
+
 
         // Move the ether to the Active Pool, and mint the USDF to the borrower
         internal_active_pool_add_coll(msg_amount(), asset_contract, active_pool_contract);
