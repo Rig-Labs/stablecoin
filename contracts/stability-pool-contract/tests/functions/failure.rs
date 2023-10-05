@@ -36,7 +36,7 @@ async fn fails_fake_usdf_deposit() {
         &contracts.stability_pool,
         &contracts.community_issuance,
         &fake_usdf,
-        &contracts.aswith_contracts[0].asset,
+        &contracts.asset_contracts[0].asset,
         600 * PRECISION,
     )
     .await
@@ -67,7 +67,7 @@ async fn fails_unauthorized() {
     stability_pool_abi::add_asset(
         &stability_pool_attacker,
         ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
+        [0; 32].into(),
         ContractId::new([0; 32].into()),
     )
     .await

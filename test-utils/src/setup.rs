@@ -54,6 +54,7 @@ pub mod common {
         pub asset: Token<T>,
         pub oracle: Oracle<T>,
         pub trove_manager: TroveManagerContract<T>,
+        pub asset_id: AssetId,
     }
 
     pub struct ExistingAssetContracts {
@@ -678,10 +679,13 @@ pub mod common {
         )
         .await;
 
+        let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+
         return AssetContracts {
             oracle,
             trove_manager,
             asset,
+            asset_id,
         };
     }
 

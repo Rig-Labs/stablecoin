@@ -61,6 +61,7 @@ impl BorrowOperations for Contract {
         storage.coll_surplus_pool_contract.write(coll_surplus_pool_contract);
         storage.active_pool_contract.write(active_pool_contract);
         storage.sorted_troves_contract.write(sorted_troves_contract);
+        storage.usdf_asset_id.write(get_default_asset_id(usdf_contract));
         storage.is_initialized.write(true);
     }
 

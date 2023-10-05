@@ -102,7 +102,10 @@ use super::interfaces::{
 
 pub mod deployment {
 
-    use fuels::{prelude::Account, programs::call_response::FuelCallResponse, types::Identity};
+    use fuels::{
+        prelude::Account, programs::call_response::FuelCallResponse, tx::ContractIdExt,
+        types::Identity,
+    };
     use pbr::ProgressBar;
 
     use super::*;
@@ -422,10 +425,14 @@ pub mod deployment {
         match existing_contracts {
             Some(contracts) => {
                 pb.finish();
+                let asset = Token::new(contracts.asset, wallet.clone());
+                let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+
                 return AssetContracts {
                     oracle: Oracle::new(contracts.oracle, wallet.clone()),
-                    asset: Token::new(contracts.asset, wallet.clone()),
+                    asset,
                     trove_manager,
+                    asset_id,
                 };
             }
             None => {
@@ -433,6 +440,8 @@ pub mod deployment {
                 pb.inc();
                 let asset = deploy_token(&wallet).await;
                 pb.inc();
+
+                let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
                 println!("Deploying asset contracts... Done");
                 println!("Oracle: {}", oracle.contract_id());
@@ -443,6 +452,7 @@ pub mod deployment {
                     oracle,
                     trove_manager,
                     asset,
+                    asset_id,
                 };
             }
         }

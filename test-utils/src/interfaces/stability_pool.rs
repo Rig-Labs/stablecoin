@@ -44,14 +44,14 @@ pub mod stability_pool_abi {
     pub async fn add_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         trove_manager: ContractId,
-        asset_address: ContractId,
+        asset_address: AssetId,
         oracle_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
         stability_pool
             .methods()
-            .add_asset(trove_manager, asset_address, oracle_address)
+            .add_asset(trove_manager, asset_address.into(), oracle_address)
             .tx_params(tx_params)
             .call()
             .await
@@ -88,11 +88,11 @@ pub mod stability_pool_abi {
 
     pub async fn get_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
-            .get_asset(asset_address)
+            .get_asset(asset_address.into())
             .call()
             .await
     }
@@ -110,11 +110,11 @@ pub mod stability_pool_abi {
     pub async fn get_depositor_asset_gain<T: Account>(
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
-        asset_address: ContractId,
+        asset_id: AssetId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
-            .get_depositor_asset_gain(depositor, asset_address)
+            .get_depositor_asset_gain(depositor, asset_id.into())
             .call()
             .await
     }
@@ -164,7 +164,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::setup::common::assert_within_threshold;
@@ -174,9 +174,9 @@ pub mod stability_pool_utils {
     pub async fn assert_pool_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         expected_asset_amount: u64,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) {
-        let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address)
+        let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address.into())
             .await
             .unwrap()
             .value;
@@ -201,12 +201,12 @@ pub mod stability_pool_utils {
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
         expected_asset_gain: u64,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) {
         let depositor_asset_gain = super::stability_pool_abi::get_depositor_asset_gain(
             stability_pool,
             depositor,
-            asset_address,
+            asset_address.into(),
         )
         .await
         .unwrap()

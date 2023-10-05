@@ -2,7 +2,7 @@ library;
 
 pub mod numbers;
 use numbers::*;
-use std::{u128::U128, u256::U256};
+use std::{u128::U128, u256::U256, hash::*};
 
 pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 // Using Precision 6 until u128 is available
@@ -43,6 +43,10 @@ pub const LIQUIDATOR_EXECUTION_GAS_FEE: u64 = 5_000_000;
 pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
+
+pub fn get_default_asset_id(contract_id: ContractId) -> AssetId {
+    sha256((contract_id, ZERO_B256))
+}
 
 // 0.5% one-time borrow fee
 pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
