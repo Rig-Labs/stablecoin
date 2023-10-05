@@ -17,7 +17,9 @@ use test_utils::{
 async fn proper_initialization() {
     let (stability_pool, _, fuel, _, _, _) = setup(Some(4)).await;
 
-    stability_pool_utils::assert_pool_asset(&stability_pool, 0, fuel.contract_id().into()).await;
+    let fuel_asset_id: AssetId = fuel.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+
+    stability_pool_utils::assert_pool_asset(&stability_pool, 0, fuel_asset_id).await;
 
     stability_pool_utils::assert_total_usdf_deposits(&stability_pool, 0).await;
 }

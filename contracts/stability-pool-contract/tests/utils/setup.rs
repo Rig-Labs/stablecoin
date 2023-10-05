@@ -12,11 +12,11 @@ use test_utils::setup::common::{
 
 abigen!(Contract(
     name = "MockTroveManagerContract",
-    abi = "contracts/stability-pool-contract/tests/artifacts/out/debug/mock-trove-manager-sp-contract-abi.json"
+    abi = "contracts/tests-artifacts-stability-pool-contract/out/debug/mock-trove-manager-sp-contract-abi.json"
 ));
 
 const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
-    "contracts/stability-pool-contract/tests/artifacts/out/debug/mock-trove-manager-sp-contract.bin";
+    "contracts/tests-artifacts-stability-pool-contract/out/debug/mock-trove-manager-sp-contract.bin";
 
 pub fn get_relative_path(path: String) -> String {
     let current_dir = std::env::current_dir().unwrap();
@@ -50,13 +50,13 @@ pub async fn set_nominal_icr_and_insert(
     new_icr: u64,
     prev_id: Identity,
     next_id: Identity,
-    asset: ContractId,
+    asset: AssetId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
-        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset)
+        .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset.into())
         .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
@@ -116,13 +116,13 @@ pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
-    asset: ContractId,
+    asset: AssetId,
 ) -> FuelCallResponse<()> {
     let tx_params = TxParameters::default().with_gas_price(1);
 
     trove_manager
         .methods()
-        .remove(id, asset)
+        .remove(id, asset.into())
         .with_contracts(&[sorted_troves])
         .tx_params(tx_params)
         .call()
