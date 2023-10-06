@@ -12,6 +12,7 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use super::*;
+    use fuels::prelude::BASE_ASSET_ID;
     use fuels::{
         prelude::{Account, AssetId, CallParameters, Error, TxParameters, WalletUnlocked},
         programs::call_response::FuelCallResponse,
@@ -68,7 +69,7 @@ pub mod stability_pool_abi {
             .with_gas_price(1)
             .with_gas_limit(2_000_000);
 
-        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+        let usdf_asset_id = usdf_token.contract_id().asset_id(&BASE_ASSET_ID.into());
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)

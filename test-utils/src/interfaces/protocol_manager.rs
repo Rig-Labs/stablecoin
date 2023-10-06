@@ -1,7 +1,7 @@
 use fuels::prelude::abigen;
+use fuels::prelude::BASE_ASSET_ID;
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::programs::call_utils::TxDependencyExtension;
-
 abigen!(Contract(
     name = "ProtocolManager",
     abi = "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-abi.json"
@@ -122,7 +122,7 @@ pub mod protocol_manager_abi {
         let tx_params = TxParameters::default()
             .with_gas_price(1)
             .with_gas_limit(2000000);
-        let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
+        let usdf_asset_id = usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)

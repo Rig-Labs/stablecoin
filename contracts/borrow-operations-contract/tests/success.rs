@@ -7,7 +7,7 @@ use test_utils::{
     interfaces::sorted_troves::sorted_troves_abi,
     interfaces::trove_manager::trove_manager_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
-    setup::common::setup_protocol,
+    setup::common::{print_response, setup_protocol},
     utils::{calculate_icr, with_min_borrow_fee},
 };
 
@@ -89,6 +89,7 @@ async fn proper_creating_trove() {
     )
     .await
     .value;
+
     let icr = trove_manager_abi::get_nominal_icr(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(admin.address().into()),
@@ -666,7 +667,7 @@ async fn proper_decrease_debt() {
     .await
     .value;
 
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
+    let _asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
 
     let trove_debt = trove_manager_abi::get_trove_debt(
         &contracts.asset_contracts[0].trove_manager,
@@ -994,7 +995,7 @@ async fn proper_close_trove() {
 
     let expected_debt = with_min_borrow_fee(borrow_amount2);
 
-    borrow_operations_abi::close_trove(
+    let res = borrow_operations_abi::close_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
@@ -1006,6 +1007,7 @@ async fn proper_close_trove() {
         expected_debt,
     )
     .await;
+    print_response(&res);
 
     let provider = admin.provider().unwrap();
 
@@ -1150,6 +1152,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await
     .value;
+
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
         contracts.asset_contracts[0]
@@ -1160,6 +1163,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await
     .value;
+
     let icr = trove_manager_abi::get_nominal_icr(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(admin.address().into()),
@@ -1340,11 +1344,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[1]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[1].asset_id,
     )
     .await
     .value;
@@ -1370,7 +1370,17 @@ async fn proper_creating_trove_with_2nd_asset() {
         "Active Pool Collateral is wrong"
     );
 
-    borrow_operations_abi::close_trove(
+    let usdf_asset_id =
+        borrow_operations_abi::get_usdf_asset_id(&contracts.borrow_operations).await;
+
+    println!("USDF Asset ID: {:?}", usdf_asset_id);
+
+    println!(
+        "Expected: {:?}",
+        contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into())
+    );
+
+    let res = borrow_operations_abi::close_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[1].oracle,
         &contracts.asset_contracts[1].asset,
@@ -1382,4 +1392,5 @@ async fn proper_creating_trove_with_2nd_asset() {
         with_min_borrow_fee(borrow_amount1),
     )
     .await;
+    print_response(&res);
 }

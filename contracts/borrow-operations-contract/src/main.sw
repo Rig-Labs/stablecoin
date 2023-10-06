@@ -19,7 +19,6 @@ use libraries::fluid_math::*;
 use std::{
     auth::msg_sender,
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
@@ -114,7 +113,6 @@ impl BorrowOperations for Contract {
 
         require_at_least_mcr(vars.icr);
 
-
         // Set the trove struct's properties
         trove_manager.set_trove_status(sender, Status::Active);
 
@@ -126,7 +124,6 @@ impl BorrowOperations for Contract {
 
         sorted_troves.insert(sender, vars.nicr, upper_hint, lower_hint, asset_contract);
         vars.array_index = trove_manager.add_trove_owner_to_array(sender);
-
 
         // Move the ether to the Active Pool, and mint the USDF to the borrower
         internal_active_pool_add_coll(msg_amount(), asset_contract, active_pool_contract);
@@ -208,6 +205,11 @@ impl BorrowOperations for Contract {
     fn claim_collateral(asset: AssetId) {
         let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().value);
         coll_surplus.claim_coll(msg_sender().unwrap(), asset);
+    }
+
+    #[storage(read)]
+    fn get_usdf_asset_id() -> AssetId {
+        return storage.usdf_asset_id.read();
     }
 }
 
@@ -301,7 +303,7 @@ fn internal_adjust_trove(
 #[storage(read)]
 fn require_is_protocol_manager() {
     let protocol_manager = Identity::ContractId(storage.protocol_manager_contract.read());
-    require(msg_sender().unwrap() == protocol_manager, "Caller is not the protocol manager");
+    require(msg_sender().unwrap() == protocol_manager, "BO: Caller is not the protocol manager");
 }
 
 #[storage(read)]
@@ -332,7 +334,7 @@ fn require_non_zero_debt_change(debt_change: u64) {
 }
 
 fn require_at_least_mcr(icr: u64) {
-    require(icr > MCR, "Minimum collateral ratio not met");
+    require(icr > MCR, "BO: Minimum collateral ratio not met");
 }
 
 #[storage(read)]
@@ -342,12 +344,17 @@ fn require_singular_coll_change(coll_added_amount: u64, coll_withdrawl: u64) {
 
 #[storage(read)]
 fn require_valid_asset_id() {
-    require(storage.valid_asset_ids.get(msg_asset_id()).read(), "Invalid asset being transfered");
+    require(storage.valid_asset_ids.get(msg_asset_id()).read(), "BO: Invalid collateral asset being transfered");
 }
 
 #[storage(read)]
 fn require_valid_usdf_id(recieved_asset: AssetId) {
-    require(recieved_asset == storage.usdf_asset_id.read(), "Invalid asset being transfered");
+    log(1);
+    log(storage.usdf_asset_id.read());
+    log(2);
+    log(recieved_asset);
+    require(recieved_asset == get_default_asset_id(storage.usdf_contract.read()), "BO: Invalid USDF asset being transfered");
+    log(333);
 }
 
 #[storage(read)]
@@ -476,7 +483,7 @@ fn internal_repay_usdf(
 
     usdf.burn {
         coins: usdf_amount,
-        asset_id: usdf_contract.value,
+        asset_id: storage.usdf_asset_id.read(),
     }();
 
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);

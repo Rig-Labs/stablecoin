@@ -27,4 +27,7 @@ abi BorrowOperations {
 
     #[storage(read)]
     fn claim_collateral(asset: AssetId);
+
+    #[storage(read)]
+    fn get_usdf_asset_id() -> AssetId;
 }

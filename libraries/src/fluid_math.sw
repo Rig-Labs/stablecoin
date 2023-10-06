@@ -2,7 +2,7 @@ library;
 
 pub mod numbers;
 use numbers::*;
-use std::{u128::U128, u256::U256, hash::*};
+use std::{hash::*, u128::U128, u256::U256};
 
 pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 // Using Precision 6 until u128 is available
@@ -28,9 +28,7 @@ pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
 // min debt is 500 USDF
-pub const MIN_NET_DEBT: u64 = 500_000_000_000;
-
-pub const PERCENT_DIVERSOR = 200;
+pub const MIN_NET_DEBT: u64 = 500_000_000_000; /*  */ pub const PERCENT_DIVERSOR = 200;
 
 pub const POST_COLLATERAL_RATIO: u64 = 1_500_000_000;
 
@@ -44,8 +42,8 @@ pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 
-pub fn get_default_asset_id(contract_id: ContractId) -> AssetId {
-    sha256((contract_id, ZERO_B256))
+pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
+    sha256((temp_contract, ZERO_B256))
 }
 
 // 0.5% one-time borrow fee

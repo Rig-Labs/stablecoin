@@ -163,7 +163,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()
@@ -417,7 +417,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()
@@ -482,7 +482,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 
     let asset_amount_to_sp = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()
@@ -698,7 +698,7 @@ async fn proper_full_liquidation_empty_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()

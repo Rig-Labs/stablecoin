@@ -379,7 +379,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()
@@ -706,7 +706,7 @@ async fn proper_partial_liquidation_empty_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()

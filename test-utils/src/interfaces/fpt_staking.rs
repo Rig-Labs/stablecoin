@@ -1,7 +1,7 @@
+use fuels::prelude::BASE_ASSET_ID;
 use fuels::prelude::{abigen, TxParameters};
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::programs::call_utils::TxDependencyExtension;
-
 abigen!(Contract(
     name = "FPTStaking",
     abi = "contracts/fpt-staking-contract/out/debug/fpt-staking-contract-abi.json"
@@ -59,7 +59,10 @@ pub mod fpt_staking_abi {
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
-        let fpt_asset_id = AssetId::from(*fpt_token.contract_id().hash());
+        let fpt_asset_id = fpt_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fpt_deposit_amount)

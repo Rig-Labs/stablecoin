@@ -157,7 +157,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
 
     let asset = stability_pool_abi::get_asset(
         &contracts.stability_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .unwrap()

@@ -18,7 +18,7 @@ pub mod borrow_operations_abi {
     use crate::interfaces::usdf_token::USDFToken;
     use fuels::prelude::Account;
     use fuels::prelude::{CallParameters, ContractId, Error, TxParameters};
-    use fuels::types::{AssetId, Identity};
+    use fuels::types::{AssetId, Bits256, Identity};
 
     pub async fn initialize<T: Account>(
         borrow_operations: &BorrowOperations<T>,
@@ -267,7 +267,7 @@ pub mod borrow_operations_abi {
         amount: u64,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().with_gas_price(1);
-        let usdf_asset_id = usdf_token
+        let usdf_asset_id: AssetId = usdf_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
             .into();
@@ -293,7 +293,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
                 fpt_staking,
             ])
-            .append_variable_outputs(1)
+            .append_variable_outputs(3)
             .tx_params(tx_params)
             .call_params(call_params)
             .unwrap()
@@ -316,6 +316,16 @@ pub mod borrow_operations_abi {
             .tx_params(tx_params)
             .call()
             .await;
+    }
+
+    pub async fn get_usdf_asset_id<T: Account>(borrow_operations: &BorrowOperations<T>) -> Bits256 {
+        borrow_operations
+            .methods()
+            .get_usdf_asset_id()
+            .call()
+            .await
+            .unwrap()
+            .value
     }
 }
 
