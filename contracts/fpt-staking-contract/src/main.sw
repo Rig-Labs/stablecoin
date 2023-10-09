@@ -33,8 +33,8 @@ storage {
     total_fpt_staked: u64 = 0,
     protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
     borrower_operations_address: ContractId = ContractId::from(ZERO_B256),
-    fpt_address: AssetId = ZERO_B256,
-    usdf_address: AssetId = ZERO_B256,
+    fpt_address: AssetId = AssetId::from(ZERO_B256),
+    usdf_address: AssetId = AssetId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 

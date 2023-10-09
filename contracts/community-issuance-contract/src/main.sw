@@ -39,7 +39,6 @@ use std::{
     token::transfer,
     u128::U128,
     u256::U256,
-
 };
 
 const ONE_WEEK_IN_SECONDS: u64 = 604800;
@@ -48,7 +47,7 @@ const ONE_YEAR_IN_SECONDS: u64 = 31104000;
 
 storage {
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_token_contract: AssetId = ZERO_B256,
+    fpt_token_contract: AssetId = AssetId::from(ZERO_B256),
     is_initialized: bool = false,
     total_fpt_issued: u64 = 0,
     deployment_time: u64 = 0,
@@ -112,7 +111,7 @@ impl CommunityIssuance for Contract {
     fn send_fpt(account: Identity, amount: u64) {
         internal_require_caller_is_stability_pool();
         if amount > 0 {
-            transfer(account , storage.fpt_token_contract.read(), amount);
+            transfer(account, storage.fpt_token_contract.read(), amount);
         }
     }
 

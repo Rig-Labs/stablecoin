@@ -202,7 +202,7 @@ impl ProtocolManager for Contract {
 
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
-            transfer( msg_sender().unwrap(), get_default_asset_id(usdf_contract_cache),remaining_usdf);
+            transfer(msg_sender().unwrap(), get_default_asset_id(usdf_contract_cache), remaining_usdf);
         }
     }
 }
@@ -289,8 +289,4 @@ fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) ->
         i += 1;
     }
     (min_borrower, min_index)
-}
-
-fn get_default_asset_id(contract_id: ContractId) -> AssetId {
-    sha256((contract_id, ZERO_B256))
 }

@@ -27,11 +27,11 @@ use std::{
 };
 
 storage {
-    config: TokenInitializeConfig = TokenInitializeConfig {
-        name: "                                ",
-        symbol: "        ",
-        decimals: 1u8,
-    },
+    // config: TokenInitializeConfig = TokenInitializeConfig {
+    //     name: "                                ",
+    //     symbol: "        ",
+    //     decimals: 1u8,
+    // },
     vesting_contract: ContractId = ContractId::from(ZERO_B256),
     community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
@@ -53,9 +53,9 @@ impl FPTToken for Contract {
         require(storage.is_initialized.read() == false, "Contract is already initialized");
         storage.vesting_contract.write(vesting_contract);
         storage.community_issuance_contract.write(community_issuance_contract);
-        storage.config.write(config);
-        mint_to(Identity::ContractId(vesting_contract), ZERO_B256 ,TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION );
-        mint_to(Identity::ContractId(community_issuance_contract),ZERO_B256,TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION);
+        // storage.config.write(config);
+        mint_to(Identity::ContractId(vesting_contract), ZERO_B256, TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION);
+        mint_to(Identity::ContractId(community_issuance_contract), ZERO_B256, TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION);
         storage.is_initialized.write(true);
     }
 
@@ -71,8 +71,8 @@ impl FPTToken for Contract {
         TOTAL_SUPPLY * DECIMAL_PRECISION
     }
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig {
-        storage.config.read()
-    }
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig {
+    //     storage.config.read()
+    // }
 }

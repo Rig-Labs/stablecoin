@@ -24,7 +24,7 @@ use std::{
     context::{
         msg_amount,
     },
-    hash::Hash,
+    hash::*,
     logging::log,
     token::transfer,
 };
@@ -38,7 +38,7 @@ storage {
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     protocol_manager_contract: ContractId = ContractId::from(ZERO_B256),
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_asset_id: AssetId = ZERO_B256,
+    usdf_asset_id: AssetId = AssetId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 
@@ -467,7 +467,7 @@ fn internal_active_pool_add_coll(coll_change: u64, asset: AssetId, active_pool: 
 
     active_pool.recieve {
         coins: coll_change,
-        asset_id: asset,
+        asset_id: asset.value,
     }();
 }
 
@@ -483,7 +483,7 @@ fn internal_repay_usdf(
 
     usdf.burn {
         coins: usdf_amount,
-        asset_id: storage.usdf_asset_id.read(),
+        asset_id: storage.usdf_asset_id.read().value,
     }();
 
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);

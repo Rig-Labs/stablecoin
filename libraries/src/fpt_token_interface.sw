@@ -16,6 +16,6 @@ abi FPTToken {
 
     fn total_supply() -> u64;
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig;
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig;
 }

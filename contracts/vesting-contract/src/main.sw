@@ -33,7 +33,7 @@ const ZERO_B256 = 0x000000000000000000000000000000000000000000000000000000000000
 storage {
     vesting_schedules: StorageMap<Identity, VestingSchedule> = StorageMap::<Identity, VestingSchedule> {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
-    asset: AssetId = ZERO_B256,
+    asset: AssetId = AssetId::from(ZERO_B256),
     is_initialized: bool = false,
     // timestamp is used for testing purposes only, as Fuel does not support timestamp currently in integration tests
     debug: bool = false,

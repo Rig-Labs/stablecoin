@@ -10,10 +10,7 @@ abigen!(Contract(
 pub mod sorted_troves_abi {
     use super::*;
     use crate::setup::common::wait;
-    use fuels::{
-        prelude::{Account, Error, LogDecoder, TxParameters},
-        types::AssetId,
-    };
+    use fuels::prelude::{Account, Error, LogDecoder, TxParameters};
 
     pub async fn initialize<T: Account>(
         sorted_troves: &SortedTroves<T>,

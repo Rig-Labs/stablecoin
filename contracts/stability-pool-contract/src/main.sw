@@ -43,7 +43,7 @@ storage {
     active_pool_contract: ContractId = ContractId::from(ZERO_B256),
     protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
     usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_asset_id: AssetId = ZERO_B256,
+    usdf_asset_id: AssetId = AssetId::from(ZERO_B256),
     community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     // List of assets tracked by the Stability Pool
     valid_assets: StorageVec<AssetId> = StorageVec {},
@@ -559,7 +559,7 @@ fn internal_move_offset_coll_and_debt(
 
     usdf_contract.burn {
         coins: debt_to_offset,
-        asset_id: storage.usdf_asset_id.read(),
+        asset_id: storage.usdf_asset_id.read().value,
     }();
 
     active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add, asset_contract);

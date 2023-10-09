@@ -45,7 +45,7 @@ impl DefaultPool for Contract {
         storage.asset_amount.insert(asset_id, new_amount);
         active_pool.recieve {
             coins: amount,
-            asset_id: asset_id,
+            asset_id: asset_id.value,
         }();
     }
 

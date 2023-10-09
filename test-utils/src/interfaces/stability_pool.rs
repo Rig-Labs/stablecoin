@@ -14,7 +14,7 @@ pub mod stability_pool_abi {
     use super::*;
     use fuels::prelude::BASE_ASSET_ID;
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, TxParameters, WalletUnlocked},
+        prelude::{Account, CallParameters, Error, TxParameters, WalletUnlocked},
         programs::call_response::FuelCallResponse,
         types::{ContractId, Identity},
     };
@@ -93,7 +93,7 @@ pub mod stability_pool_abi {
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
-            .get_asset(asset_address.into())
+            .get_asset(asset_address)
             .call()
             .await
     }
@@ -165,7 +165,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::{AssetId, ContractId, Identity},
+        types::{ContractId, Identity},
     };
 
     use crate::setup::common::assert_within_threshold;
@@ -207,7 +207,7 @@ pub mod stability_pool_utils {
         let depositor_asset_gain = super::stability_pool_abi::get_depositor_asset_gain(
             stability_pool,
             depositor,
-            asset_address.into(),
+            asset_address,
         )
         .await
         .unwrap()

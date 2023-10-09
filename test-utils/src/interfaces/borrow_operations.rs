@@ -272,6 +272,8 @@ pub mod borrow_operations_abi {
             .asset_id(&BASE_ASSET_ID.into())
             .into();
 
+        println!("usdf_asset_id: {:?}", usdf_asset_id);
+
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);

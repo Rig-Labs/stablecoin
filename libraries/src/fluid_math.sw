@@ -43,7 +43,7 @@ pub const ONE: u64 = 1_000_000_000;
 pub const BETA: u64 = 2;
 
 pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
-    sha256((temp_contract, ZERO_B256))
+    AssetId::from(sha256((temp_contract, ZERO_B256)))
 }
 
 // 0.5% one-time borrow fee

@@ -28,11 +28,11 @@ use std::{
 };
 
 storage {
-    config: TokenInitializeConfig = TokenInitializeConfig {
-        name: "                                ",
-        symbol: "        ",
-        decimals: 1u8,
-    },
+    // config: TokenInitializeConfig = TokenInitializeConfig {
+    //     name: "                                ",
+    //     symbol: "        ",
+    //     decimals: 1u8,
+    // },
     trove_managers: StorageVec<ContractId> = StorageVec {},
     protocol_manager: ContractId = ContractId::from(ZERO_B256),
     stability_pool: Identity = Identity::Address(Address::from(ZERO_B256)),
@@ -59,7 +59,7 @@ impl USDFToken for Contract { //////////////////////////////////////
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
         storage.borrower_operations.write(borrower_operations);
-        storage.config.write(config);
+        // storage.config.write(config);
         storage.is_initialized.write(true);
     }
 
@@ -92,10 +92,15 @@ impl USDFToken for Contract { //////////////////////////////////////
         storage.total_supply.try_read().unwrap_or(0)
     }
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig {
-        storage.config.read()
-    }
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig {
+    //     // storage.config.read()
+    //     TokenInitializeConfig {
+    //         name: "                                ",
+    //         symbol: "        ",
+    //         decimals: 1u8,
+    //     }
+    // }
 }
 
 #[storage(read)]

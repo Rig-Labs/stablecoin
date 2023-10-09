@@ -39,8 +39,8 @@ abi Token {
     #[storage(read, write)]
     fn mint();    
     // Config of token
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig;
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig;
     // Is user already minted test token
     #[storage(read)]
     fn already_minted(address: Identity) -> bool;

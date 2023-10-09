@@ -1,4 +1,7 @@
-use fuels::{prelude::*, types::Identity};
+use fuels::{
+    prelude::*,
+    types::{Bits256, Identity},
+};
 
 use test_utils::{
     data_structures::PRECISION,
@@ -1375,6 +1378,10 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     println!("USDF Asset ID: {:?}", usdf_asset_id);
 
+    let hex_string = usdf_asset_id.to_hex();
+
+    println!("{:?}", hex_string);
+
     println!(
         "Expected: {:?}",
         contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into())
@@ -1393,4 +1400,14 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
     print_response(&res);
+}
+
+trait Bits256Ext {
+    fn to_hex(&self) -> String;
+}
+
+impl Bits256Ext for Bits256 {
+    fn to_hex(&self) -> String {
+        self.0.iter().map(|byte| format!("{:02x}", byte)).collect()
+    }
 }

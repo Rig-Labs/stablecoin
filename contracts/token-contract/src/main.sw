@@ -25,11 +25,11 @@ use std::{
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 storage {
-    config: TokenInitializeConfig = TokenInitializeConfig {
-        name: "                                ",
-        symbol: "        ",
-        decimals: 1u8,
-    },
+    // config: TokenInitializeConfig = TokenInitializeConfig {
+    //     name: "                                ",
+    //     symbol: "        ",
+    //     decimals: 1u8,
+    // },
     owner: Identity = Identity::Address(Address::from(ZERO_B256)),
     mint_amount: u64 = 0,
     mint_list: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
@@ -58,7 +58,7 @@ impl Token for Contract {
         require(storage.owner.read() == Identity::Address(Address::from(ZERO_B256)), Error::CannotReinitialize);
         storage.owner.write(owner);
         storage.mint_amount.write(mint_amount);
-        storage.config.write(config);
+        // storage.config.write(config);
     }
     #[storage(read)]
     fn mint_to_id(amount: u64, address: Identity) {
@@ -117,10 +117,10 @@ impl Token for Contract {
         return 0
     }
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig {
-        storage.config.read()
-    }
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig {
+    //     storage.config.read()
+    // }
     #[storage(read)]
     fn already_minted(address: Identity) -> bool {
         storage.mint_list.get(address).read()

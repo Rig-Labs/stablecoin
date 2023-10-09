@@ -103,7 +103,7 @@ impl ActivePool for Contract {
 
         dafault_pool.recieve {
             coins: amount,
-            asset_id: asset_id,
+            asset_id: asset_id.value,
         }();
     }
 
