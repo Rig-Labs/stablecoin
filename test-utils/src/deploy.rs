@@ -2,12 +2,15 @@ use std::{fs::File, io::Write, str::FromStr};
 
 use crate::setup::common::{ExistingAssetContracts, ProtocolContracts};
 use dotenv::dotenv;
-use fuels::{prelude::*, types::ContractId};
+use fuels::{
+    prelude::*,
+    types::{bech32, ContractId},
+};
 use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
 
-#[tokio::test]
+// #[tokio::test]
 pub async fn deploy() {
     const RPC: &str = "beta-4.fuel.network";
     //--------------- WALLET ---------------
@@ -29,7 +32,7 @@ pub async fn deploy() {
     )
     .unwrap();
 
-    let address = Address::from(wallet.address());
+    let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
     let eth_contracts = ExistingAssetContracts {

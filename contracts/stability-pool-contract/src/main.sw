@@ -128,25 +128,25 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write), payable]
     fn provide_to_stability_pool() {
-        log(1);
+        
         require_usdf_is_valid_and_non_zero();
-        log(2);
+        
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
-        log(3);
+        
         internal_trigger_fpt_issuance();
-        log(4);
+        
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-        log(5);
+        
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
-        log(6);
+        
         internal_pay_out_fpt_gains(msg_sender().unwrap());
-        log(7);
+        
 
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
-        log(8);
+        
 
         storage.total_usdf_deposits.write(storage.total_usdf_deposits.read() + msg_amount());
     }
@@ -242,9 +242,9 @@ fn internal_pay_out_asset_gains(depositor: Identity) {
 fn internal_trigger_fpt_issuance() {
     let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().value);
     let fpt_issuance = community_issuance_contract.issue_fpt();
-    log(9);
+    
     internal_update_g(fpt_issuance);
-    log(10);
+    
 }
 
 #[storage(read, write)]

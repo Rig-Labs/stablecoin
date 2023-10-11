@@ -158,14 +158,14 @@ impl FPTStaking for Contract {
 #[storage(read)]
 fn internal_get_pending_asset_gain(id: Identity, asset_address: AssetId) -> u64 {
     let f_asset_snapshot = storage.asset_snapshot.get((id, asset_address)).try_read().unwrap_or(0);
-    let asset_gain = fm_multiply_ratio(storage.stakes.get(id).read(), storage.f_asset.get(asset_address).try_read().unwrap_or(0) - f_asset_snapshot, DECIMAL_PRECISION);
+    let asset_gain = fm_multiply_ratio(storage.stakes.get(id).try_read().unwrap_or(0), storage.f_asset.get(asset_address).try_read().unwrap_or(0) - f_asset_snapshot, DECIMAL_PRECISION);
     return asset_gain
 }
 
 #[storage(read)]
 fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
     let f_usdf_snapshot = storage.usdf_snapshot.get(id).try_read().unwrap_or(0);
-    let usdf_gain = fm_multiply_ratio(storage.stakes.get(id).read(), storage.f_usdf.read() - f_usdf_snapshot, DECIMAL_PRECISION);
+    let usdf_gain = fm_multiply_ratio(storage.stakes.get(id).try_read().unwrap_or(0), storage.f_usdf.read() - f_usdf_snapshot, DECIMAL_PRECISION);
     return usdf_gain
 }
 
@@ -176,7 +176,7 @@ fn update_user_snapshots(id: Identity) {
     let mut ind = 0;
     while ind < storage.valid_assets.len() {
         let current_asset_address = storage.valid_assets.get(ind).unwrap().read();
-        let f_asset = storage.f_asset.get(current_asset_address).read();
+        let f_asset = storage.f_asset.get(current_asset_address).try_read().unwrap_or(0);
         storage.asset_snapshot.insert((id, current_asset_address), f_asset);
         ind += 1;
     }

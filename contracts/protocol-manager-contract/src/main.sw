@@ -125,6 +125,7 @@ impl ProtocolManager for Contract {
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
+        
 
         let usdf = abi(USDFToken, usdf_contract_cache.value);
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
@@ -135,6 +136,7 @@ impl ProtocolManager for Contract {
         let mut remaining_usdf = msg_amount();
         
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
+        
         
 
         let mut remaining_itterations = max_itterations;
@@ -159,7 +161,11 @@ impl ProtocolManager for Contract {
             totals.total_asset_drawn += single_redemption.asset_lot;
             remaining_usdf -= single_redemption.usdf_lot;
 
-            let next_cr = trove_manager_contract.get_current_icr(next_user_to_check, price);
+            let mut next_cr = MAX_U64;
+            if (next_user_to_check != null_identity_address()) {
+                next_cr = trove_manager_contract.get_current_icr(next_user_to_check, price);
+            }
+
             assets_info.current_crs.set(index, next_cr);
             assets_info.current_borrowers.set(index, next_user_to_check);
             assets_info.redemption_totals.set(index, totals);
@@ -169,7 +175,7 @@ impl ProtocolManager for Contract {
             index = next_borrower.1;
         }
         
-
+        
         let mut total_usdf_redeemed = 0;
         let mut ind = 0;
         while (ind < assets_info.assets.len()) {
@@ -205,7 +211,7 @@ impl ProtocolManager for Contract {
         }();
 
         
-
+        
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
             transfer(msg_sender().unwrap(), get_default_asset_id(usdf_contract_cache), remaining_usdf);

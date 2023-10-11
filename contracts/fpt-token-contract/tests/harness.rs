@@ -18,8 +18,6 @@ async fn proper_intialize() {
         .await
         .value;
 
-    // println!("vesting {} {}", vesting_contract, recipient.contract_id().hash());
-
     assert_eq!(vesting_contract, contracts.usdf.contract_id().into());
 
     let fpt_balance_vesting = provider
