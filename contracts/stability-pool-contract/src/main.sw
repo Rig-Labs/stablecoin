@@ -128,21 +128,25 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write), payable]
     fn provide_to_stability_pool() {
+        log(1);
         require_usdf_is_valid_and_non_zero();
-
+        log(2);
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
-
+        log(3);
         internal_trigger_fpt_issuance();
-
+        log(4);
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-
+        log(5);
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
+        log(6);
         internal_pay_out_fpt_gains(msg_sender().unwrap());
+        log(7);
 
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
+        log(8);
 
         storage.total_usdf_deposits.write(storage.total_usdf_deposits.read() + msg_amount());
     }
@@ -188,16 +192,12 @@ impl StabilityPool for Contract {
         internal_trigger_fpt_issuance();
 
         let asset_contractes_cache = storage.asset_contracts.get(asset_contract).read();
-        log(11);
 
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_contract);
-        log(12);
 
         update_reward_sum_and_product(per_unit_staked_changes.0, per_unit_staked_changes.1, asset_contract);
-        log(13);
 
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_contract, asset_contractes_cache);
-        log(14);
     }
 
     #[storage(read)]
@@ -242,7 +242,9 @@ fn internal_pay_out_asset_gains(depositor: Identity) {
 fn internal_trigger_fpt_issuance() {
     let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().value);
     let fpt_issuance = community_issuance_contract.issue_fpt();
+    log(9);
     internal_update_g(fpt_issuance);
+    log(10);
 }
 
 #[storage(read, write)]
@@ -254,7 +256,7 @@ fn internal_update_g(fpt_issuance: u64) {
     let marginal_fpt_gain = U128::from_u64(fpt_per_unit_staked) * storage.p.read();
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
-    let new_epoch_to_scale_to_gain = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).read() + marginal_fpt_gain;
+    let new_epoch_to_scale_to_gain = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::from_u64(0)) + marginal_fpt_gain;
     storage.epoch_to_scale_to_gain.insert((current_epoch, current_scale), new_epoch_to_scale_to_gain);
 }
 
@@ -557,19 +559,14 @@ fn internal_move_offset_coll_and_debt(
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
     let usdf_contract = abi(USDFToken, storage.usdf_contract.read().value);
-    log(111);
+
     internal_decrease_usdf(debt_to_offset);
-    log(112);
     internal_increase_asset(coll_to_add, asset_contract);
-    log(113);
     active_pool.decrease_usdf_debt(debt_to_offset, asset_contract);
-    log(114);
 
     usdf_contract.burn {
         coins: debt_to_offset,
         asset_id: storage.usdf_asset_id.read().value,
     }();
-    log(115);
     active_pool.send_asset(Identity::ContractId(contract_id()), coll_to_add, asset_contract);
-    log(116);
 }

@@ -173,8 +173,8 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
-    let st_fuel_asset_id = AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());
+    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
+    let st_fuel_asset_id = contracts.asset_contracts[1].asset_id;
 
     let fuel_balance = provider
         .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)

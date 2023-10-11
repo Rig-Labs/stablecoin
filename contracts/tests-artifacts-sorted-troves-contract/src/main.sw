@@ -89,13 +89,13 @@ impl TroveManager for Contract {
         next_id: Identity,
         asset: AssetId,
     ) {
-        log(1);
+        
         storage.nominal_icr.insert(id, value);
-        log(2);
+        
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.read().value);
-        log(3);
+        
         sorted_troves_contract.insert(id, value, prev_id, next_id, asset);
-        log(4);
+        
     }
 
     #[storage(read, write)]

@@ -150,7 +150,11 @@ async fn test_emissions() {
 async fn test_admin_start_rewards_increase_transition() {
     let (contracts, admin, mut _wallets) = setup_protocol(10, 4, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt_token
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
@@ -255,7 +259,11 @@ async fn test_admin_start_rewards_increase_transition() {
 async fn test_public_start_rewards_increase_transition_after_deadline() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt_token
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     let wallet1 = wallets.pop().unwrap();
 
@@ -367,7 +375,11 @@ async fn test_emissions_multiple_deposits() {
     let (contracts, admin, mut wallets) = setup_protocol(100, 4, false).await;
 
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = AssetId::from(*contracts.fpt_token.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt_token
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 

@@ -32,11 +32,7 @@ async fn proper_intialize() {
     let pending_rewards_asset = fpt_staking_abi::get_pending_asset_gain(
         &contracts.fpt_staking,
         Identity::Address(admin.address().into()),
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;

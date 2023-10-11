@@ -120,6 +120,7 @@ impl ProtocolManager for Contract {
     ) {
         // TODO Require functions
         // TODO Require bootstrap mode
+        
         require_valid_usdf_id();
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
         let usdf_contract_cache = storage.usdf_token_contract.read();
@@ -129,11 +130,12 @@ impl ProtocolManager for Contract {
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
         let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
         let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.value);
-
+        
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
-
+        
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
+        
 
         let mut remaining_itterations = max_itterations;
         while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_itterations > 0) {
@@ -166,6 +168,7 @@ impl ProtocolManager for Contract {
             current_borrower = next_borrower.0;
             index = next_borrower.1;
         }
+        
 
         let mut total_usdf_redeemed = 0;
         let mut ind = 0;
@@ -194,15 +197,19 @@ impl ProtocolManager for Contract {
             active_pool.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
             ind += 1;
         }
-
+        
+        log(total_usdf_redeemed);
         usdf.burn {
             coins: total_usdf_redeemed,
-            asset_id: storage.usdf_token_contract.read().value,
+            asset_id: get_default_asset_id(usdf_contract_cache).value,
         }();
+
+        
 
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
             transfer(msg_sender().unwrap(), get_default_asset_id(usdf_contract_cache), remaining_usdf);
+            
         }
     }
 }
@@ -233,25 +240,34 @@ fn get_all_assets_info() -> AssetInfo {
     let length = storage.assets.len();
 
     let mut ind = 0;
+    
     while (ind < length) {
         assets.push(storage.assets.get(ind).unwrap().read());
         asset_contracts.push(storage.asset_contracts.get(assets.get(ind).unwrap()).read());
         ind += 1;
     }
-
+    
     let mut i = 0;
     while (i < length) {
         let oracle = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
         let trove_manager = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
 
         let asset = assets.get(i).unwrap();
+        
         let price = oracle.get_price();
+        
         let mut current_borrower = sorted_troves.get_last(asset);
-        let mut current_cr = trove_manager.get_current_icr(current_borrower, price);
+        
+        let mut current_cr = MAX_U64;
+        if (current_borrower != null_identity_address()) {
+            current_cr = trove_manager.get_current_icr(current_borrower, price);
+        }
+        
 
         prices.push(price);
         system_debt.push(trove_manager.get_entire_system_debt());
         redemption_totals.push(RedemptionTotals::default());
+        
 
         while (current_borrower != null_identity_address() && current_cr < MCR) {
             current_borrower = sorted_troves.get_prev(current_borrower, asset);
@@ -261,7 +277,9 @@ fn get_all_assets_info() -> AssetInfo {
         current_borrowers.push(current_borrower);
         current_crs.push(current_cr);
         i += 1;
+        
     }
+    
 
     AssetInfo {
         assets: assets,
