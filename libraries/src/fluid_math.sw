@@ -1,10 +1,10 @@
-library fluid_math;
+library;
 
-dep numbers;
+pub mod numbers;
 use numbers::*;
-use std::{u128::U128, u256::U256};
+use std::{hash::*, u128::U128, u256::U256};
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 // Using Precision 6 until u128 is available
 pub const PCT_100: u64 = 1_000_000_000;
 
@@ -28,9 +28,7 @@ pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
 // min debt is 500 USDF
-pub const MIN_NET_DEBT: u64 = 500_000_000_000;
-
-pub const PERCENT_DIVERSOR = 200;
+pub const MIN_NET_DEBT: u64 = 500_000_000_000; /*  */ pub const PERCENT_DIVERSOR = 200;
 
 pub const POST_COLLATERAL_RATIO: u64 = 1_500_000_000;
 
@@ -43,6 +41,10 @@ pub const LIQUIDATOR_EXECUTION_GAS_FEE: u64 = 5_000_000;
 pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
+
+pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
+    AssetId::from(sha256((temp_contract, ZERO_B256)))
+}
 
 // 0.5% one-time borrow fee
 pub fn fm_compute_borrow_fee(debt: u64) -> u64 {

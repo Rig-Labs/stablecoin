@@ -1,11 +1,11 @@
-library trove_manager_interface;
+library;
 
-dep data_structures;
+pub mod data_structures;
 use data_structures::{SingleRedemptionValues, Status, Trove};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId, asset_contract: ContractId, protocol_manager: ContractId);
+    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId, asset_contract: AssetId, protocol_manager: ContractId);
 
     #[storage(read, write)]
     fn redeem_collateral_from_trove(borrower: Identity, max_usdf_amount: u64, price: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity) -> SingleRedemptionValues;

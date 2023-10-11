@@ -1,5 +1,6 @@
-library data_structures;
-use libraries::numbers::*;
+library;
+
+use libraries::fluid_math::numbers::*;
 use std::{u128::U128};
 
 pub struct AssetContracts {

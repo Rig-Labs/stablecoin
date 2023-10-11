@@ -1,11 +1,11 @@
-library community_issuance_interface;
+library;
 
 abi CommunityIssuance {
     // Initialize contract
     #[storage(read, write)]
     fn initialize(
         stability_pool_contract: ContractId,
-        fpt_token_contract: ContractId,
+        fpt_token_asset_id: AssetId,
         admin: Identity,
         debugging: bool,
     );

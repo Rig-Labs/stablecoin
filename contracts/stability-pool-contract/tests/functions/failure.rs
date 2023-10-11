@@ -22,7 +22,8 @@ async fn fails_fake_usdf_deposit() {
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     usdf_token_abi::mint(
         &fake_usdf,
@@ -67,7 +68,7 @@ async fn fails_unauthorized() {
     stability_pool_abi::add_asset(
         &stability_pool_attacker,
         ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
+        [0; 32].into(),
         ContractId::new([0; 32].into()),
     )
     .await

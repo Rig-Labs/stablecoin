@@ -1,4 +1,4 @@
-library data_structures;
+library;
 
 pub struct SingleRedemptionValues {
     usdf_lot: u64,
@@ -59,12 +59,6 @@ pub struct Asset {
     id: ContractId,
     /// Amount of asset that can represent reserve amount, deposit amount, withdraw amount and more depending on the context
     amount: u64,
-}
-
-pub struct Node {
-    exists: bool,
-    next_id: Identity,
-    prev_id: Identity,
 }
 
 impl Asset {

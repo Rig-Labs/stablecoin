@@ -3,6 +3,7 @@ use fuels::prelude::abigen;
 use crate::interfaces::community_issuance::CommunityIssuance;
 use crate::interfaces::token::Token;
 use crate::interfaces::usdf_token::USDFToken;
+use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "StabilityPool",
@@ -11,10 +12,11 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use super::*;
+    use fuels::prelude::BASE_ASSET_ID;
     use fuels::{
-        prelude::{Account, AssetId, CallParameters, Error, TxParameters, WalletUnlocked},
+        prelude::{Account, CallParameters, Error, TxParameters, WalletUnlocked},
         programs::call_response::FuelCallResponse,
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     pub async fn initialize<T: Account>(
@@ -25,7 +27,7 @@ pub mod stability_pool_abi {
         protocol_manager_contract: ContractId,
         active_pool: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         stability_pool
             .methods()
@@ -43,14 +45,14 @@ pub mod stability_pool_abi {
     pub async fn add_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         trove_manager: ContractId,
-        asset_address: ContractId,
+        asset_address: AssetId,
         oracle_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         stability_pool
             .methods()
-            .add_asset(trove_manager, asset_address, oracle_address)
+            .add_asset(trove_manager, asset_address.into(), oracle_address)
             .tx_params(tx_params)
             .call()
             .await
@@ -64,14 +66,14 @@ pub mod stability_pool_abi {
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default()
-            .set_gas_price(1)
-            .set_gas_limit(2_000_000);
+            .with_gas_price(1)
+            .with_gas_limit(2_000_000);
 
-        let usdf_asset_id = AssetId::from(*usdf_token.contract_id().hash());
+        let usdf_asset_id = usdf_token.contract_id().asset_id(&BASE_ASSET_ID.into());
 
         let call_params: CallParameters = CallParameters::default()
-            .set_amount(amount)
-            .set_asset_id(usdf_asset_id);
+            .with_amount(amount)
+            .with_asset_id(usdf_asset_id);
 
         stability_pool
             .methods()
@@ -80,14 +82,14 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token, community_issuance])
+            .with_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
 
     pub async fn get_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
@@ -109,11 +111,11 @@ pub mod stability_pool_abi {
     pub async fn get_depositor_asset_gain<T: Account>(
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
-        asset_address: ContractId,
+        asset_id: AssetId,
     ) -> Result<FuelCallResponse<u64>, Error> {
         stability_pool
             .methods()
-            .get_depositor_asset_gain(depositor, asset_address)
+            .get_depositor_asset_gain(depositor, asset_id.into())
             .call()
             .await
     }
@@ -147,14 +149,14 @@ pub mod stability_pool_abi {
         fuel_token: &Token<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         stability_pool
             .methods()
             .withdraw_from_stability_pool(amount)
             .tx_params(tx_params)
             .append_variable_outputs(2)
-            .set_contracts(&[usdf_token, fuel_token, community_issuance])
+            .with_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
     }
@@ -163,7 +165,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::setup::common::assert_within_threshold;
@@ -173,9 +175,9 @@ pub mod stability_pool_utils {
     pub async fn assert_pool_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         expected_asset_amount: u64,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) {
-        let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address)
+        let pool_asset = super::stability_pool_abi::get_asset(stability_pool, asset_address.into())
             .await
             .unwrap()
             .value;
@@ -200,7 +202,7 @@ pub mod stability_pool_utils {
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
         expected_asset_gain: u64,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) {
         let depositor_asset_gain = super::stability_pool_abi::get_depositor_asset_gain(
             stability_pool,

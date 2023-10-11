@@ -1,6 +1,7 @@
 use fuels::prelude::abigen;
+use fuels::prelude::BASE_ASSET_ID;
 use fuels::programs::call_response::FuelCallResponse;
-
+use fuels::programs::call_utils::TxDependencyExtension;
 abigen!(Contract(
     name = "ProtocolManager",
     abi = "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-abi.json"
@@ -36,7 +37,7 @@ pub mod protocol_manager_abi {
         sorted_troves: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = protocol_manager
             .methods()
@@ -70,7 +71,7 @@ pub mod protocol_manager_abi {
 
     pub async fn register_asset<T: Account>(
         protocol_manager: &ProtocolManager<T>,
-        asset: ContractId,
+        asset: AssetId,
         trove_manager: ContractId,
         oracle: ContractId,
         borrow_operations: &BorrowOperations<T>,
@@ -82,13 +83,13 @@ pub mod protocol_manager_abi {
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         protocol_manager
             .methods()
-            .register_asset(asset, trove_manager, oracle)
+            .register_asset(asset.into(), trove_manager, oracle)
             .tx_params(tx_params)
-            .set_contracts(&[
+            .with_contracts(&[
                 borrow_operations,
                 stability_pool,
                 usdf,
@@ -116,30 +117,30 @@ pub mod protocol_manager_abi {
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
-        asset_contracts: &Vec<AssetContracts<T>>,
+        aswith_contracts: &Vec<AssetContracts<T>>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default()
-            .set_gas_price(1)
-            .set_gas_limit(2000000);
-        let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
+            .with_gas_price(1)
+            .with_gas_limit(2000000);
+        let usdf_asset_id = usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let call_params: CallParameters = CallParameters::default()
-            .set_amount(amount)
-            .set_asset_id(usdf_asset_id);
+            .with_amount(amount)
+            .with_asset_id(usdf_asset_id);
 
-        let mut set_contracts: Vec<&dyn SettableContract> = Vec::new();
+        let mut with_contracts: Vec<&dyn SettableContract> = Vec::new();
 
-        for contracts in asset_contracts.iter() {
-            set_contracts.push(&contracts.trove_manager);
-            set_contracts.push(&contracts.oracle);
+        for contracts in aswith_contracts.iter() {
+            with_contracts.push(&contracts.trove_manager);
+            with_contracts.push(&contracts.oracle);
         }
 
-        set_contracts.push(fpt_staking);
-        set_contracts.push(coll_surplus_pool);
-        set_contracts.push(default_pool);
-        set_contracts.push(active_pool);
-        set_contracts.push(usdf);
-        set_contracts.push(sorted_troves);
+        with_contracts.push(fpt_staking);
+        with_contracts.push(coll_surplus_pool);
+        with_contracts.push(default_pool);
+        with_contracts.push(active_pool);
+        with_contracts.push(usdf);
+        with_contracts.push(sorted_troves);
 
         protocol_manager
             .methods()
@@ -152,7 +153,7 @@ pub mod protocol_manager_abi {
             .tx_params(tx_params)
             .call_params(call_params)
             .unwrap()
-            .set_contracts(&set_contracts)
+            .with_contracts(&with_contracts)
             .append_variable_outputs(10)
             .call()
             .await

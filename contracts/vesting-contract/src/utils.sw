@@ -1,10 +1,7 @@
-library utils;
+library;
 
-dep data_structures;
-
-use data_structures::VestingSchedule;
+use ::data_structures::VestingSchedule;
 use std::{u128::U128};
-use libraries::numbers::*;
 use libraries::fluid_math::fm_multiply_ratio;
 
 pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingSchedule) -> u64 {

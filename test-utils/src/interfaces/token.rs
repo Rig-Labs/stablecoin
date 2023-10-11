@@ -1,3 +1,4 @@
+use fuels::programs::call_utils::TxDependencyExtension;
 use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
 
 abigen!(Contract(
@@ -8,7 +9,7 @@ abigen!(Contract(
 pub mod token_abi {
     use super::*;
     use crate::setup::common::wait;
-    use fuels::prelude::{Account, LogDecoder, TxParameters};
+    use fuels::prelude::{Account, Error, LogDecoder, TxParameters};
 
     pub async fn initialize<T: Account>(
         instance: &Token<T>,
@@ -16,8 +17,8 @@ pub mod token_abi {
         admin: &Identity,
         mut name: String,
         mut symbol: String,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+    ) -> Result<FuelCallResponse<()>, Error> {
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
@@ -35,14 +36,7 @@ pub mod token_abi {
             .call()
             .await;
 
-        // TODO: remove this workaround
-        match res {
-            Ok(res) => res,
-            Err(_) => {
-                wait();
-                return FuelCallResponse::new((), vec![], LogDecoder::default());
-            }
-        }
+        return res;
     }
 
     pub async fn mint_to_id<T: Account>(

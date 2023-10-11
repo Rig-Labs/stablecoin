@@ -1,5 +1,5 @@
+use fuels::programs::call_utils::TxDependencyExtension;
 use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
-
 abigen!(Contract(
     name = "FPTToken",
     abi = "contracts/fpt-token-contract/out/debug/fpt-token-contract-abi.json"
@@ -21,7 +21,7 @@ pub mod fpt_token_abi {
         vesting_contract: &USDFToken<T>,
         community_issuance_contract: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
@@ -35,10 +35,10 @@ pub mod fpt_token_abi {
             .methods()
             .initialize(
                 config,
-                vesting_contract.contract_id().into(),
-                community_issuance_contract.contract_id().into(),
+                vesting_contract.contract_id(),
+                community_issuance_contract.contract_id(),
             )
-            .set_contracts(&[vesting_contract, community_issuance_contract])
+            .with_contracts(&[vesting_contract, community_issuance_contract])
             .tx_params(tx_params)
             .append_variable_outputs(10)
             .call()

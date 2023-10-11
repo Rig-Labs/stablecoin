@@ -35,14 +35,16 @@ async fn get_contract_instance() -> (
         "Fuel".to_string(),
         "FUEL".to_string(),
     )
-    .await;
+    .await
+    .unwrap();
 
     coll_surplus_pool_abi::initialize(
         &coll_pool,
         asset.contract_id().into(),
         Identity::Address(wallet.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     (coll_pool, asset, wallet)
 }
@@ -51,16 +53,24 @@ async fn get_contract_instance() -> (
 async fn proper_intialize() {
     let (coll_surplus_pool, mock_fuel, admin) = get_contract_instance().await;
 
-    let coll =
-        coll_surplus_pool_abi::get_asset(&coll_surplus_pool, &mock_fuel.contract_id().into())
-            .await
-            .value;
+    let coll = coll_surplus_pool_abi::get_asset(
+        &coll_surplus_pool,
+        mock_fuel
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
+    )
+    .await
+    .value;
     assert_eq!(coll, 0);
 
     let balance = coll_surplus_pool_abi::get_collateral(
         &coll_surplus_pool,
         Identity::Address(admin.address().into()),
-        &mock_fuel.contract_id().into(),
+        mock_fuel
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await;
 

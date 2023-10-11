@@ -1,6 +1,6 @@
 contract;
 
-use libraries::{MockOracle};
+use libraries::mock_oracle_interface::{MockOracle};
 
 storage {
     price: u64 = 0,
@@ -13,16 +13,16 @@ storage {
 impl MockOracle for Contract {
     #[storage(read)]
     fn get_price() -> u64 {
-        storage.price
+        storage.price.read()
     }
 
     #[storage(read)]
     fn get_precision() -> u64 {
-        storage.precision
+        storage.precision.read()
     }
 
     #[storage(write)]
-    fn set_price(_price: u64) {
-        storage.price = _price
+    fn set_price(price: u64) {
+        storage.price.write(price)
     }
 }

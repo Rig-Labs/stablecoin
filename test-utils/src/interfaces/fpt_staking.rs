@@ -1,6 +1,7 @@
+use fuels::prelude::BASE_ASSET_ID;
 use fuels::prelude::{abigen, TxParameters};
 use fuels::programs::call_response::FuelCallResponse;
-
+use fuels::programs::call_utils::TxDependencyExtension;
 abigen!(Contract(
     name = "FPTStaking",
     abi = "contracts/fpt-staking-contract/out/debug/fpt-staking-contract-abi.json"
@@ -18,18 +19,18 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
-        fpt_address: ContractId,
-        usdf_address: ContractId,
+        fpt_address: AssetId,
+        usdf_address: AssetId,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
             .initialize(
                 protocol_manager_address,
                 borrower_operations_address,
-                fpt_address,
-                usdf_address,
+                fpt_address.into(),
+                usdf_address.into(),
             )
             .tx_params(tx_params)
             .call()
@@ -40,7 +41,7 @@ pub mod fpt_staking_abi {
     pub async fn get_storage<T: Account>(
         fpt_staking: &FPTStaking<T>,
     ) -> FuelCallResponse<fpt_staking_abi::ReadStorage> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
@@ -56,13 +57,16 @@ pub mod fpt_staking_abi {
         fpt_token: &Token<T>,
         fpt_deposit_amount: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().set_gas_price(1);
+        let tx_params = TxParameters::default().with_gas_price(1);
 
-        let fpt_asset_id = AssetId::from(*fpt_token.contract_id().hash());
+        let fpt_asset_id = fpt_token
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
-            .set_amount(fpt_deposit_amount)
-            .set_asset_id(fpt_asset_id);
+            .with_amount(fpt_deposit_amount)
+            .with_asset_id(fpt_asset_id);
 
         fpt_staking
             .methods()
@@ -83,14 +87,14 @@ pub mod fpt_staking_abi {
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default()
-            .set_gas_price(1)
-            .set_gas_limit(2000000);
+            .with_gas_price(1)
+            .with_gas_limit(2000000);
 
         fpt_staking
             .methods()
             .unstake(amount)
             .tx_params(tx_params)
-            .set_contracts(&[usdf_token, fuel_token, fpt_token])
+            .with_contracts(&[usdf_token, fuel_token, fpt_token])
             .append_variable_outputs(10)
             .call()
             .await
@@ -98,13 +102,13 @@ pub mod fpt_staking_abi {
 
     pub async fn add_asset<T: Account>(
         fpt_staking: &FPTStaking<T>,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) -> FuelCallResponse<()> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        // let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
-            .add_asset(asset_address)
+            .add_asset(asset_address.into())
             .call()
             .await
             .unwrap()
@@ -113,13 +117,13 @@ pub mod fpt_staking_abi {
     pub async fn get_pending_asset_gain<T: Account>(
         fpt_staking: &FPTStaking<T>,
         id: Identity,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) -> FuelCallResponse<u64> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        // let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
-            .get_pending_asset_gain(id, asset_address)
+            .get_pending_asset_gain(id, asset_address.into())
             .call()
             .await
             .unwrap()
@@ -129,7 +133,7 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        // let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
@@ -143,7 +147,7 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         usdf_fee_amount: u64,
     ) -> FuelCallResponse<()> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        // let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
@@ -156,13 +160,13 @@ pub mod fpt_staking_abi {
     pub async fn increase_f_asset<T: Account>(
         fpt_staking: &FPTStaking<T>,
         asset_fee_amount: u64,
-        asset_address: ContractId,
+        asset_address: AssetId,
     ) -> FuelCallResponse<()> {
-        // let tx_params = TxParameters::default().set_gas_price(1);
+        // let tx_params = TxParameters::default().with_gas_price(1);
 
         fpt_staking
             .methods()
-            .increase_f_asset(asset_fee_amount, asset_address)
+            .increase_f_asset(asset_fee_amount, asset_address.into())
             .call()
             .await
             .unwrap()

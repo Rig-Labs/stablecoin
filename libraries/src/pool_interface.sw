@@ -1,4 +1,4 @@
-library pool_interface;
+library;
 
 abi Pool {
     #[storage(read)]

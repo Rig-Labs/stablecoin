@@ -65,22 +65,45 @@ async fn fails_open_two_troves_of_same_coll_type() {
     let usdf_balance = provider
         .get_asset_balance(
             admin.address().into(),
-            AssetId::from(*contracts.usdf.contract_id().hash()),
+            contracts
+                .usdf
+                .contract_id()
+                .asset_id(&BASE_ASSET_ID.into())
+                .into(),
         )
         .await
         .unwrap();
 
-    let asset: ContractId = contracts.asset_contracts[0].asset.contract_id().into();
-
-    let first = sorted_troves_abi::get_first(&contracts.sorted_troves, asset)
-        .await
-        .value;
-    let last = sorted_troves_abi::get_last(&contracts.sorted_troves, asset)
-        .await
-        .value;
-    let size = sorted_troves_abi::get_size(&contracts.sorted_troves, asset)
-        .await
-        .value;
+    let first = sorted_troves_abi::get_first(
+        &contracts.sorted_troves,
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
+    )
+    .await
+    .value;
+    let last = sorted_troves_abi::get_last(
+        &contracts.sorted_troves,
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
+    )
+    .await
+    .value;
+    let size = sorted_troves_abi::get_size(
+        &contracts.sorted_troves,
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
+    )
+    .await
+    .value;
     let icr = trove_manager_abi::get_nominal_icr(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(admin.address().into()),
@@ -117,7 +140,11 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
@@ -125,7 +152,11 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;
@@ -329,7 +360,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         "Fake Coll".to_string(),
         "FCOL".to_string(),
     )
-    .await;
+    .await
+    .unwrap();
 
     token_abi::mint_to_id(
         &mock_fake_token,
@@ -415,7 +447,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )
-    .await;
+    .await
+    .unwrap();
 
     usdf_token_abi::mint(
         &fake_usdf_token,

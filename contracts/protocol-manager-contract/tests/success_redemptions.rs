@@ -1,5 +1,6 @@
-use fuels::{prelude::AssetId, types::Identity};
+use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
+use test_utils::deploy::deployment::print_response;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::{
     interfaces::{
@@ -125,12 +126,12 @@ async fn proper_redemption_from_partially_closed() {
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
 
-    protocol_manager_abi::redeem_collateral(
+    let res = protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
         redemption_amount,
         10,
@@ -146,31 +147,40 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts,
     )
     .await;
+    print_response(&res);
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
 
-    assert_eq!(active_pool_asset, 24_000 * PRECISION);
+    println!("active_pool_asset: {}", active_pool_asset);
+    println!("active_pool_debt: {}", active_pool_debt);
+    println!(
+        "pre_redemption_active_pool_debt: {}",
+        pre_redemption_active_pool_debt
+    );
+    println!("redemption_amount: {}", redemption_amount);
 
     assert_eq!(
         active_pool_debt,
         pre_redemption_active_pool_debt - redemption_amount
     );
 
+    assert_eq!(active_pool_asset, 24_000 * PRECISION);
+
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
 
     let fuel_balance = provider
         .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
@@ -324,7 +334,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
         redemption_amount,
-        3,
+        10,
         0,
         None,
         None,
@@ -340,14 +350,14 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await
     .value;
@@ -365,7 +375,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
 
     let fuel_balance = provider
         .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
@@ -424,7 +434,11 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     let coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(healthy_wallet3.address().into()),
-        &contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0]
+            .asset
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into(),
     )
     .await
     .value;

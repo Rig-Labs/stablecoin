@@ -1,4 +1,4 @@
-library token_interface;
+library;
 
 pub struct TokenInitializeConfig {
     name: str[32],
@@ -34,13 +34,13 @@ abi Token {
     fn transfer_coins(coins: u64, address: Identity);
     // Transfer a specified token from the contract to a given output
     #[storage(read)]
-    fn transfer_token_to_output(coins: u64, asset_id: ContractId, address: Identity);
+    fn transfer_token_to_output(coins: u64, asset_id: AssetId, address: Identity);
     // Method called from address to mint coins
     #[storage(read, write)]
     fn mint();    
     // Config of token
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig;
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig;
     // Is user already minted test token
     #[storage(read)]
     fn already_minted(address: Identity) -> bool;

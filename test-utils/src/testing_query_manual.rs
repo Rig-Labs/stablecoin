@@ -1,8 +1,9 @@
-use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
+use crate::interfaces::oracle::{oracle_abi, Oracle};
+// use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
 use dotenv::dotenv;
 use fuels::prelude::{Bech32ContractId, Provider, WalletUnlocked};
 
-const RPC: &str = "beta-3.fuel.network";
+const RPC: &str = "beta-4.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
 // #[tokio::test]
@@ -26,17 +27,13 @@ pub async fn testing_query() {
     .unwrap();
 
     println!("Wallet address: {}", wallet.address());
-    let id: Bech32ContractId = "fuel12tcdetv8lgj0mceq5pk75r9d7lcrj7hju76urt90ras3f3yqj8hss2yvxq"
+    let id: Bech32ContractId = "fuel1xaep9urp7ududltl74ej25lw9gvqd0qfsy3taljwx6ts089exevqskucmh"
         .parse()
         .expect("Invalid ID");
 
-    let trove_manager = TroveManagerContract::new(id.into(), wallet.clone());
+    let oracle = Oracle::new(id, wallet.clone());
 
-    let res = trove_manager_abi::get_entire_debt_and_coll(
-        &trove_manager,
-        fuels::types::Identity::Address(wallet.address().into()),
-    )
-    .await;
+    let res = oracle_abi::get_price(&oracle).await;
 
     println!("Result: {:#?}", res.value);
 }

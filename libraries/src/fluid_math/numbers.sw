@@ -1,4 +1,4 @@
-library numbers;
+library;
 use std::{u128::U128, u256::U256};
 
 impl U256 {

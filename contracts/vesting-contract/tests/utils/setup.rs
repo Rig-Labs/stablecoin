@@ -48,8 +48,11 @@ pub mod test_helpers {
         amount: u64,
         admin: &WalletUnlocked,
     ) {
-        let instance = Token::new(contract.id().clone(), admin.clone());
-        let asset_id = AssetId::from(*instance.id().hash());
+        let instance = Token::new(contract.contract_id().clone(), admin.clone());
+        let asset_id = instance
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
         let name = "Fluid Protocol Test Token".to_string();
         let symbol = "FPTT".to_string();
 
@@ -66,7 +69,7 @@ pub mod test_helpers {
 
         let _res = admin
             .force_transfer_to_contract(
-                &vesting_contract.id(),
+                &vesting_contract.contract_id(),
                 amount,
                 asset_id,
                 TxParameters::default(),

@@ -1,7 +1,7 @@
 contract;
 
 use libraries::fpt_token_interface::{FPTToken, TokenInitializeConfig};
-use libraries::fluid_math::{DECIMAL_PRECISION, null_contract, null_identity_address};
+use libraries::fluid_math::{DECIMAL_PRECISION, null_contract, null_identity_address, ZERO_B256};
 
 use std::{
     address::*,
@@ -27,13 +27,13 @@ use std::{
 };
 
 storage {
-    config: TokenInitializeConfig = TokenInitializeConfig {
-        name: "                                ",
-        symbol: "        ",
-        decimals: 1u8,
-    },
-    vesting_contract: ContractId = null_contract(),
-    community_issuance_contract: ContractId = null_contract(),
+    // config: TokenInitializeConfig = TokenInitializeConfig {
+    //     name: "                                ",
+    //     symbol: "        ",
+    //     decimals: 1u8,
+    // },
+    vesting_contract: ContractId = ContractId::from(ZERO_B256),
+    community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 
@@ -50,13 +50,13 @@ impl FPTToken for Contract {
         vesting_contract: ContractId,
         community_issuance_contract: ContractId,
     ) {
-        require(storage.is_initialized == false, "Contract is already initialized");
-        storage.vesting_contract = vesting_contract;
-        storage.community_issuance_contract = community_issuance_contract;
-        storage.config = config;
-        mint_to(TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION, Identity::ContractId(vesting_contract));
-        mint_to(TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION, Identity::ContractId(community_issuance_contract));
-        storage.is_initialized = true;
+        require(storage.is_initialized.read() == false, "Contract is already initialized");
+        storage.vesting_contract.write(vesting_contract);
+        storage.community_issuance_contract.write(community_issuance_contract);
+        // storage.config.write(config);
+        mint_to(Identity::ContractId(vesting_contract), ZERO_B256, TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION);
+        mint_to(Identity::ContractId(community_issuance_contract), ZERO_B256, TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION);
+        storage.is_initialized.write(true);
     }
 
     //////////////////////////////////////
@@ -64,15 +64,15 @@ impl FPTToken for Contract {
     //////////////////////////////////////#[storage(read)]
     #[storage(read)]
     fn get_vesting_contract() -> ContractId {
-        storage.vesting_contract
+        storage.vesting_contract.read()
     }
 
     fn total_supply() -> u64 {
         TOTAL_SUPPLY * DECIMAL_PRECISION
     }
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig {
-        storage.config
-    }
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig {
+    //     storage.config.read()
+    // }
 }

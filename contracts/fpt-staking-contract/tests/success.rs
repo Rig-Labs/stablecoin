@@ -13,7 +13,7 @@ use test_utils::{
 #[tokio::test]
 async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
-
+    println!("admin address {:?}", admin.address());
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
@@ -32,7 +32,7 @@ async fn proper_intialize() {
     let pending_rewards_asset = fpt_staking_abi::get_pending_asset_gain(
         &contracts.fpt_staking,
         Identity::Address(admin.address().into()),
-        contracts.asset_contracts[0].asset.contract_id().into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -45,7 +45,11 @@ async fn proper_staking_deposit() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = AssetId::from(*contracts.fpt.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     token_abi::mint_to_id(
         &contracts.fpt,
@@ -70,9 +74,16 @@ async fn proper_staking_multiple_positions() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = AssetId::from(*contracts.fpt.contract_id().hash());
-    let usdf_asset_id = AssetId::from(*contracts.usdf.contract_id().hash());
-    let asset_id = AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+    let fpt_asset_id = contracts
+        .fpt
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
+    let usdf_asset_id = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -203,7 +214,10 @@ async fn proper_staking_multiple_positions() {
     .await;
 
     let asset_in_staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), asset_id)
+        .get_contract_asset_balance(
+            &contracts.fpt_staking.contract_id(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 
@@ -273,14 +287,20 @@ async fn proper_staking_multiple_positions() {
     );
 
     let asset_user1_balance = provider
-        .get_asset_balance(healthy_wallet1.address().into(), asset_id)
+        .get_asset_balance(
+            healthy_wallet1.address().into(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 
     // println!("Asset balance user {}", asset_user1_balance);
 
     let asset_user2_balance = provider
-        .get_asset_balance(healthy_wallet2.address().into(), asset_id)
+        .get_asset_balance(
+            healthy_wallet2.address().into(),
+            contracts.asset_contracts[0].asset_id,
+        )
         .await
         .unwrap();
 

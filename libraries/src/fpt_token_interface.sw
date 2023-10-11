@@ -1,4 +1,4 @@
-library fpt_token_interface;
+library;
 
 pub struct TokenInitializeConfig {
     name: str[32],
@@ -13,9 +13,9 @@ abi FPTToken {
 
     #[storage(read)]
     fn get_vesting_contract() -> ContractId;
-    
+
     fn total_supply() -> u64;
 
-    #[storage(read)]
-    fn config() -> TokenInitializeConfig;
+    // #[storage(read)]
+    // fn config() -> TokenInitializeConfig;
 }
