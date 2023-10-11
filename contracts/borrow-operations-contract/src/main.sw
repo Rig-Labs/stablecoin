@@ -349,12 +349,7 @@ fn require_valid_asset_id() {
 
 #[storage(read)]
 fn require_valid_usdf_id(recieved_asset: AssetId) {
-    log(1);
-    log(storage.usdf_asset_id.read());
-    log(2);
-    log(recieved_asset);
     require(recieved_asset == get_default_asset_id(storage.usdf_contract.read()), "BO: Invalid USDF asset being transfered");
-    log(333);
 }
 
 #[storage(read)]

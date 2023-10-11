@@ -53,7 +53,7 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
-    let res = stability_pool_abi::provide_to_stability_pool(
+    let _res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
@@ -63,7 +63,7 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
-    print_response(&res);
+    // print_response(&res);
 
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
@@ -335,8 +335,7 @@ async fn proper_one_sp_depositor_position() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id: AssetId =
-        AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+    let fuel_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
     let fuel_balance = provider
         .get_asset_balance(admin.address(), fuel_asset_id)
@@ -422,7 +421,11 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
+    let usdf_asset_id: AssetId = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
     let tx_params = TxParameters::default().with_gas_price(1);
 
     admin
@@ -618,7 +621,11 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = AssetId::from(*contracts.usdf.contract_id().hash());
+    let usdf_asset_id: AssetId = contracts
+        .usdf
+        .contract_id()
+        .asset_id(&BASE_ASSET_ID.into())
+        .into();
     let tx_params = TxParameters::default().with_gas_price(1);
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
@@ -887,8 +894,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     let provider = admin.provider().unwrap();
 
-    let st_fuel_asset_id: AssetId =
-        AssetId::from(*contracts.asset_contracts[1].asset.contract_id().hash());
+    let st_fuel_asset_id: AssetId = contracts.asset_contracts[1].asset_id;
 
     let st_fuel_balance = provider
         .get_asset_balance(admin.address(), st_fuel_asset_id)
@@ -1112,8 +1118,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id: AssetId =
-        AssetId::from(*contracts.asset_contracts[0].asset.contract_id().hash());
+    let fuel_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
     let fuel_balance = provider
         .get_asset_balance(admin.address(), fuel_asset_id)
@@ -1128,7 +1133,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     let provider = admin.provider().unwrap();
 
-    let st_fuel_asset_id: AssetId = AssetId::from(*new_asset_contracts.asset.contract_id().hash());
+    let st_fuel_asset_id: AssetId = new_asset_contracts.asset_id;
 
     let st_fuel_balance = provider
         .get_asset_balance(admin.address(), st_fuel_asset_id)

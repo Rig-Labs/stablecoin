@@ -260,11 +260,11 @@ id: Identity) -> u64 {
     ) {
         internal_batch_liquidate_troves(borrowers, upper_partial_hint, lower_partial_hint);
     }
+
     #[storage(read, write)]
     fn liquidate(
         id: Identity,
-        upper_partial_hint: 
-Identity,
+        upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     ) {
         require_trove_is_active(id);
@@ -288,11 +288,11 @@ Identity,
         internal_update_trove_reward_snapshots(id);
     }
     #[storage(read)]
-    fn get_pending_usdf_rewards(
-address: Identity) -> u64
- {
+    fn get_pending_usdf_rewards(address: Identity) -> u64
+    {
         internal_get_pending_usdf_reward(address)
     }
+
     #[storage(read)]
     fn get_pending_asset_rewards(id: Identity) -> u64
  {
@@ -376,32 +376,35 @@ fn require_trove_is_active(id: Identity) {
 #[storage(read, write)]
 fn internal_batch_liquidate_troves(
     borrowers: Vec<Identity>,
-    upper_partial_hint: 
-Identity,
+    upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
     require(borrowers.len() > 0, "TM: No borrowers to liquidate");
+    log(1);
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
-    let oracle = abi(MockOracle, storage
-.oracle_contract.read().into());
+    let oracle = abi(MockOracle, storage.oracle_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
     vars.price = oracle.get_price();
-    let stability_pool = abi(StabilityPool
-, storage.stability_pool_contract.read().into());
+    log(2);
+    let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().into());
     let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
     let totals = internal_get_totals_from_batch_liquidate(vars.price, total_usdf_in_sp, borrowers, upper_partial_hint, lower_partial_hint);
-    require(
-totals.total_debt_in_sequence > 0, "TM: No debt to liquidate");
+    log(3);
+    require(totals.total_debt_in_sequence > 0, "TM: No debt to liquidate");  
+
     stability_pool.offset(totals.total_debt_to_offset, totals.total_coll_to_send_to_sp, storage.asset_contract.read());
+    log(4);
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
     if (totals.total_coll_surplus > 0) {
-        active_pool.send_asset(Identity::ContractId(storage.
-coll_surplus_pool_contract.read()), totals.total_coll_surplus, asset_contract_cache);
+        active_pool.send_asset(Identity::ContractId(storage.coll_surplus_pool_contract.read()), totals.total_coll_surplus, asset_contract_cache);
     }
+    log(5);
     if (totals.total_coll_gas_compensation > 0) {
         active_pool.send_asset(msg_sender().unwrap(), totals.total_coll_gas_compensation, asset_contract_cache);
     }
+    log(6);
     internal_redistribute_debt_and_coll(totals.total_debt_to_redistribute, totals.total_coll_to_redistribute);
+    log(7);
 }
 #[storage(read
 )]
@@ -420,15 +423,13 @@ fn require_caller_is_protocol_manager_contract() {
 }
 #[storage(read)]
 fn require_caller_is_borrow_operations_contract_or_protocol_manager() {
-    let caller = msg_sender
-().unwrap();
+    let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract.read());
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract.read());
     require(caller == borrow_operations_contract || caller == protocol_manager_contract, "TM: Caller is not the Borrow Operations or Protocol Manager contract");
 }
 #[storage(read, write)]
-fn internal_increase_trove_coll(id: Identity, coll:
- u64) -> u64 {
+fn internal_increase_trove_coll(id: Identity, coll: u64) -> u64 {
     let mut trove = storage.troves.get(id).read();
     trove.coll += coll;
     storage.troves.insert(id, trove);
@@ -465,8 +466,7 @@ fn internal_decrease_trove_debt
 fn internal_get_totals_from_batch_liquidate
 (
     price: u64,
-    usdf_in_stability_pool: 
-u64,
+    usdf_in_stability_pool: u64,
     borrowers: Vec<Identity>,
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
@@ -477,18 +477,14 @@ u64,
     let mut i = 0;
     let mut totals = LiquidationTotals::default();
     while i < borrowers.len() {
-        vars.borrower = borrowers.get
-(i).unwrap();
+        vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
         if vars.icr < MCR {
             let position = internal_get_entire_debt_and_coll(vars.borrower);
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
-            single_liquidation = get_offset_and_redistribution_vals(position.e
-ntire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
-            internal_apply_liquidation(
-vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
-            vars.remaining_usdf_in_stability_pool -= single_liquidation.
-debt_to_offset;
+            single_liquidation = get_offset_and_redistribution_vals(position.entire_trove_coll, position.entire_trove_debt, usdf_in_stability_pool, price);
+            internal_apply_liquidation(vars.borrower, single_liquidation, upper_partial_hint, lower_partial_hint);
+            vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
         } else {
             break;
@@ -551,75 +547,68 @@ fn internal_get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndCo
 #[storage(read, write)]
 fn internal_apply_liquidation(
     borrower: Identity,
-    liquidation_values: 
-LiquidationValues,
+    liquidation_values: LiquidationValues,
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
     let asset_contract_cache = storage.asset_contract.read();
     if (liquidation_values.is_partial_liquidation) {
-        let mut trove = storage.troves.get
-(borrower).read();
+        log(999);
+        let mut trove = storage.troves.get(borrower).read();
         trove.coll = liquidation_values.remaining_trove_coll;
         trove.debt = liquidation_values.remaining_trove_debt;
         storage.troves.insert(borrower, trove);
         let _ = internal_update_stake_and_total_stakes(borrower);
-        let new_ncr = fm_compute_nominal_cr(trove.coll,
- trove.debt);
-        let sorted_troves_contract =
- abi(SortedTroves, storage.sorted_troves_contract.read().into());
+        let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
+        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.read().into());
         sorted_troves_contract.re_insert(borrower, new_ncr, upper_partial_hint, lower_partial_hint, asset_contract_cache);
     } else {
+        log(888);
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().into());
         internal_remove_stake(borrower);
+        internal_close_trove(borrower, Status::ClosedByLiquidation);
         coll_surplus_contract.account_surplus(borrower, liquidation_values.coll_surplus, asset_contract_cache);
     }
 }
 #[storage(read, write)]
-fn internal_redistribute_debt_and_coll(debt: u64, coll:
- u64) {
+fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
     let asset_contract_cache = storage.asset_contract.read();
     if (debt == 0) {
         return;
     }
-    let asset_numerator: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64
-(storage.last_asset_error_redistribution.read());
+    log(11);
+    let asset_numerator: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_asset_error_redistribution.read());
     let usdf_numerator: U128 = U128::from_u64(debt) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_usdf_error_redistribution.read());
     let asset_reward_per_unit_staked = asset_numerator / U128::from_u64(storage.total_stakes.read());
+    log(12);
 
     let usdf_reward_per_unit_staked = usdf_numerator / U128::from_u64(storage.total_stakes.read());
-    storage.last_asset_error_redistribution.write((asset_numerator - (asset_reward_per_unit_staked * U128::from_u64(storage.
-total_stakes.read()))).as_u64().unwrap());
+    storage.last_asset_error_redistribution.write((asset_numerator - (asset_reward_per_unit_staked * U128::from_u64(storage.total_stakes.read()))).as_u64().unwrap());
     storage.last_usdf_error_redistribution.write((usdf_numerator - (usdf_reward_per_unit_staked * U128::from_u64(storage.total_stakes.read()))).as_u64().unwrap());
-    storage.l_asset.write(storage.l_asset.read() + asset_reward_per_unit_staked.
-as_u64().unwrap());
+    storage.l_asset.write(storage.l_asset.read() + asset_reward_per_unit_staked.as_u64().unwrap());
     storage.l_usdf.write(storage.l_usdf.read() + usdf_reward_per_unit_staked.as_u64().unwrap());
-    let active_pool = abi(ActivePool, storage.active_pool_contract.read().into
-());
+    log(13);
+
+    let active_pool = abi(  ActivePool, storage.active_pool_contract.read().into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.read().into());
     active_pool.decrease_usdf_debt(debt, asset_contract_cache);
+    log(14);
     default_pool.increase_usdf_debt(debt, asset_contract_cache);
+    log(15);
 
     active_pool.send_asset_to_default_pool(coll, asset_contract_cache);
+    log(16);
 }
 #[storage(read, write)]
-fn internal_update_stake_and_total_stakes(address: Identity) ->
- u64 {
-    log(1);
+fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address).read();
-    log(2);
     let new_stake = internal_compute_new_stake(trove.coll);
-    log(3);
     let old_stake = trove.stake;
     trove.stake = new_stake;
-    storage.troves
-.insert(address, trove);
-    log(4);
+    storage.troves.insert(address, trove);
     let old_total_stakes = storage.total_stakes.read();
-    log(5);
 
     storage.total_stakes.write(old_total_stakes + new_stake - old_stake);
-    log(6);
     return new_stake;
 }
 #[storage(read)]
@@ -701,8 +690,7 @@ fn internal_get_entire_system_debt() -> u64 {
 #[storage(read, write)]
 fn internal_redeem_collateral_from_trove(
     borrower: Identity,
-    max_usdf_amount: 
-u64,
+    max_usdf_amount: u64,
     price: u64,
     partial_redemption_hint: u64,
     upper_partial_hint: Identity,
@@ -719,11 +707,12 @@ u64,
     let new_coll = trove.coll - single_redemption_values.asset_lot;
     // If the Trove is now empty, close it
     if (new_debt == 0) {
+        log(777);
         internal_remove_stake(borrower);
-        internal_close_trove(borrower, Status::ClosedByRedemption
-);
+        internal_close_trove(borrower, Status::ClosedByRedemption);
         internal_redeem_close_trove(borrower, 0, new_coll);
     } else {
+        log(666);
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
         // TODO Consider removing this check
         if (new_debt < MIN_NET_DEBT) {
@@ -742,20 +731,17 @@ u64,
 }
 #[storage
 (read, write)]
-fn internal_redeem_close_trove(borrower:
- Identity, usdf_amount: 
-u64, asset_amount: u64) {
+fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amount: u64) {
     let asset_contract = storage.asset_contract.read();
     let coll_surplus_pool_contract = storage.coll_surplus_pool_contract.read();
-    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().into
-());
+    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
     let coll_surplus_pool = abi(CollSurplusPool, coll_surplus_pool_contract.into());
     usdf_contract.burn {
         coins: usdf_amount,
-        asset_id: storage.usdf_contract.read().
-value,
+        asset_id: storage.usdf_contract.read().value,
     }();
+
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
     coll_surplus_pool.account_surplus(borrower, asset_amount, asset_contract)
 ;

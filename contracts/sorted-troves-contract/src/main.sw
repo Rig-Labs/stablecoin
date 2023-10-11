@@ -404,18 +404,13 @@ fn internal_insert(
 
 
     if (!internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-        log(11);
         // Sender's hint was not a valid insert position
         // Use sender's hint to find a valid insert position
         let res = internal_find_insert_position(nicr, prev_id, next_id, asset, trove_manager_contract);
 
-        log(12);
-
         prev_id = res.0;
         next_id = res.1;
     }
-
-    log(13);
 
     let mut new_node = Node {
         exists: true,
@@ -428,7 +423,6 @@ fn internal_insert(
         storage.head.insert(asset, id);
         storage.tail.insert(asset, id);
 
-        log(14);
     } else if (prev_id == null_identity_address()) {
         // Insert before `prev_id` as the head
         new_node.next_id = internal_get_head(asset);
@@ -452,7 +446,6 @@ fn internal_insert(
 
         edit_node_neighbors(next_id, Option::Some(id), Option::None, asset);
     }
-    log(15);
 
     storage.nodes.insert((id, asset), new_node);
     let new_size = internal_get_size(asset) + 1;
