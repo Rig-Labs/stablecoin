@@ -102,10 +102,7 @@ use super::interfaces::{
 
 pub mod deployment {
 
-    use fuels::{
-        prelude::Account, programs::call_response::FuelCallResponse, tx::ContractIdExt,
-        types::Identity,
-    };
+    use fuels::{prelude::Account, programs::call_response::FuelCallResponse, types::Identity};
     use pbr::ProgressBar;
 
     use super::*;

@@ -998,7 +998,7 @@ async fn proper_close_trove() {
 
     let expected_debt = with_min_borrow_fee(borrow_amount2);
 
-    let res = borrow_operations_abi::close_trove(
+    let _res = borrow_operations_abi::close_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].asset,
@@ -1010,7 +1010,7 @@ async fn proper_close_trove() {
         expected_debt,
     )
     .await;
-    print_response(&res);
+    // print_response(&res);
 
     let provider = admin.provider().unwrap();
 
@@ -1373,21 +1373,21 @@ async fn proper_creating_trove_with_2nd_asset() {
         "Active Pool Collateral is wrong"
     );
 
-    let usdf_asset_id =
-        borrow_operations_abi::get_usdf_asset_id(&contracts.borrow_operations).await;
+    // let usdf_asset_id =
+    //     borrow_operations_abi::get_usdf_asset_id(&contracts.borrow_operations).await;
 
-    println!("USDF Asset ID: {:?}", usdf_asset_id);
+    // println!("USDF Asset ID: {:?}", usdf_asset_id);
 
-    let hex_string = usdf_asset_id.to_hex();
+    // let hex_string = usdf_asset_id.to_hex();
 
-    println!("{:?}", hex_string);
+    // println!("{:?}", hex_string);
 
     println!(
         "Expected: {:?}",
         contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into())
     );
 
-    let res = borrow_operations_abi::close_trove(
+    let _res = borrow_operations_abi::close_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[1].oracle,
         &contracts.asset_contracts[1].asset,
@@ -1399,7 +1399,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         with_min_borrow_fee(borrow_amount1),
     )
     .await;
-    print_response(&res);
+    // print_response(&res);
 }
 
 trait Bits256Ext {

@@ -19,7 +19,7 @@ pub mod trove_manager_abi {
 
     use fuels::{
         prelude::{Account, Error, LogDecoder, TxParameters},
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::setup::common::wait;
@@ -326,7 +326,7 @@ pub mod trove_manager_abi {
 pub mod trove_manager_utils {
     use fuels::{
         prelude::Account,
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::{

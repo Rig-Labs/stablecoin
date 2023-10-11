@@ -319,16 +319,6 @@ pub mod borrow_operations_abi {
             .call()
             .await;
     }
-
-    pub async fn get_usdf_asset_id<T: Account>(borrow_operations: &BorrowOperations<T>) -> Bits256 {
-        borrow_operations
-            .methods()
-            .get_usdf_asset_id()
-            .call()
-            .await
-            .unwrap()
-            .value
-    }
 }
 
 pub mod borrow_operations_utils {

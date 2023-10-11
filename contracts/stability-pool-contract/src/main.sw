@@ -130,18 +130,25 @@ impl StabilityPool for Contract {
     fn provide_to_stability_pool() {
         require_usdf_is_valid_and_non_zero();
 
-        let initial_deposit = storage.deposits.get(msg_sender().unwrap()).read();
+        let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
+        log(1);
 
         internal_trigger_fpt_issuance();
+        log(2);
 
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
+
+        log(3);
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
 
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
+        log(4);
         internal_pay_out_fpt_gains(msg_sender().unwrap());
+        log(5);
 
         let new_position = compounded_usdf_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
+        log(6);
 
         storage.total_usdf_deposits.write(storage.total_usdf_deposits.read() + msg_amount());
     }
@@ -155,21 +162,29 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write)]
     fn withdraw_from_stability_pool(amount: u64) {
-        let initial_deposit = storage.deposits.get(msg_sender().unwrap()).read();
+        let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
 
         require_user_has_initial_deposit(initial_deposit);
+        log(1);
 
         internal_trigger_fpt_issuance();
+        log(2);
 
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
+        log(3);
         let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
+        log(4);
 
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
 
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
+        log(5);
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
+        log(6);
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
+        log(7);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
+        log(8);
     }
 
     #[storage(read, write)]
@@ -272,11 +287,11 @@ fn internal_pay_out_fpt_gains(depositor: Identity) {
 
 #[storage(read)]
 fn internal_get_depositor_fpt_gain(depositor: Identity) -> u64 {
-    let initial_deposit = storage.deposits.get(depositor).read();
+    let initial_deposit = storage.deposits.get(depositor).try_read().unwrap_or(0);
     if (initial_deposit == 0) {
         return 0;
     }
-    let snapshots = storage.deposit_snapshots.get(depositor).read();
+    let snapshots = storage.deposit_snapshots.get(depositor).try_read().unwrap_or(Snapshots::default());
     let fpt_gain = internal_get_fpt_gain_from_snapshots(initial_deposit, snapshots);
     fpt_gain
 }
@@ -289,8 +304,8 @@ fn internal_get_fpt_gain_from_snapshots(initial_stake: u64, snapshots: Snapshots
     let g_snapshot = snapshots.G;
     let p_snapshot = snapshots.P;
 
-    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).read() - g_snapshot;
-    let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)).read() / U128::from_u64(SCALE_FACTOR);
+    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).try_read().unwrap_or(U128::from_u64(0)) - g_snapshot;
+    let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)).try_read().unwrap_or(U128::from_u64(0)) / U128::from_u64(SCALE_FACTOR);
 
     let gain = (U128::from_u64(initial_stake) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
 
@@ -319,14 +334,14 @@ fn require_user_has_trove(address: Identity, trove_manager_contract: ContractId)
 // --- Reward calculator functions for depositor and front end ---
 #[storage(read)]
 fn internal_get_depositor_asset_gain(depositor: Identity, asset: AssetId) -> u64 {
-    let initial_deposit = storage.deposits.get(depositor).read();
+    let initial_deposit = storage.deposits.get(depositor).try_read().unwrap_or(0);
 
     if initial_deposit == 0 {
         return 0;
     }
 
-    let s_snapshot = storage.deposit_snapshot_s_per_asset.get((depositor, asset)).read();
-    let mut snapshots = storage.deposit_snapshots.get(depositor).read();
+    let s_snapshot = storage.deposit_snapshot_s_per_asset.get((depositor, asset)).try_read().unwrap_or(U128::from_u64(0));
+    let mut snapshots = storage.deposit_snapshots.get(depositor).try_read().unwrap_or(Snapshots::default());
 
     return internal_get_asset_gain_from_snapshots(initial_deposit, snapshots, s_snapshot, asset);
 }
@@ -343,8 +358,8 @@ fn internal_get_asset_gain_from_snapshots(
 
     let p_snapshot = snapshots.P;
 
-    let first_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot, asset)).read() - s_snapshot;
-    let second_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot + 1, asset)).read() / U128::from_u64(SCALE_FACTOR);
+    let first_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot, asset)).try_read().unwrap_or(U128::from_u64(0)) - s_snapshot;
+    let second_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot + 1, asset)).try_read().unwrap_or(U128::from_u64(0)) / U128::from_u64(SCALE_FACTOR);
 
     let gain = (U128::from_u64(initial_deposit) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
 
@@ -353,7 +368,7 @@ fn internal_get_asset_gain_from_snapshots(
 
 #[storage(read)]
 fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
-    let initial_deposit = storage.deposits.get(depositor).read();
+    let initial_deposit = storage.deposits.get(depositor).try_read().unwrap_or(0);
 
     if initial_deposit == 0 {
         return 0;
@@ -406,6 +421,7 @@ fn internal_increase_asset(total_asset_to_increase: u64, asset_contract: AssetId
 #[storage(read, write)]
 fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposits.insert(depositor, amount);
+    log(11);
 
     if (amount == 0) {
         // TODO use storage remove when available
@@ -416,7 +432,8 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let current_scale = storage.current_scale.read();
     let current_p = storage.p.read();
 
-    let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).read();
+    let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::from_u64(0));
+    log(12);
 
     let snapshots = Snapshots {
         epoch: current_epoch,
@@ -429,11 +446,11 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap().read();
-        let current_s: U128 = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).read();
+        let current_s: U128 = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::from_u64(0));
         storage.deposit_snapshot_s_per_asset.insert((depositor, asset), current_s);
         i += 1;
     }
-
+    log(13);
     storage.deposit_snapshots.insert(depositor, snapshots);
 }
 

@@ -2,6 +2,7 @@ use crate::utils::setup::setup;
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::PRECISION,
+    deploy::deployment::print_response,
     interfaces::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
         oracle::oracle_abi,
@@ -52,7 +53,7 @@ async fn proper_stability_deposit() {
     .await
     .unwrap();
 
-    stability_pool_abi::provide_to_stability_pool(
+    let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
@@ -61,6 +62,8 @@ async fn proper_stability_deposit() {
     )
     .await
     .unwrap();
+
+    print_response(&res);
 
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
@@ -87,11 +90,7 @@ async fn proper_stability_deposit() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        contracts.asset_contracts[0].asset_id,
     )
     .await;
 }
@@ -134,7 +133,7 @@ async fn proper_stability_widthdrawl() {
     .await
     .unwrap();
 
-    stability_pool_abi::withdraw_from_stability_pool(
+    let res = stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
@@ -143,6 +142,7 @@ async fn proper_stability_widthdrawl() {
     )
     .await
     .unwrap();
+    print_response(&res);
 
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,

@@ -16,7 +16,7 @@ pub mod stability_pool_abi {
     use fuels::{
         prelude::{Account, CallParameters, Error, TxParameters, WalletUnlocked},
         programs::call_response::FuelCallResponse,
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     pub async fn initialize<T: Account>(
@@ -165,7 +165,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::{ContractId, Identity},
+        types::{AssetId, ContractId, Identity},
     };
 
     use crate::setup::common::assert_within_threshold;
