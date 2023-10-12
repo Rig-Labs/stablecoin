@@ -94,7 +94,6 @@ impl BorrowOperations for Contract {
         let oracle = abi(MockOracle, asset_contracts.oracle.value);
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
         let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
-        let usdf = abi(Token, storage.usdf_contract.read().value);
 
         let mut vars = LocalVariables_OpenTrove::new();
         let sender = msg_sender().unwrap();
@@ -175,11 +174,9 @@ impl BorrowOperations for Contract {
         let active_pool_contract_cache = storage.active_pool_contract.read();
         let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.value);
         let active_pool = abi(ActivePool, active_pool_contract_cache.value);
-        let oracle = abi(MockOracle, asset_contracts_cache.oracle.value);
         let borrower = msg_sender().unwrap();
 
         require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
-        let price = oracle.get_price();
         trove_manager.apply_pending_rewards(borrower);
 
         let coll = trove_manager.get_trove_coll(borrower);
@@ -368,11 +365,11 @@ fn internal_withdraw_usdf(
     usdf.mint(amount, recipient);
 }
 
-fn internal_get_coll_change(_coll_recieved: u64, _requested_coll_withdrawn: u64) -> (u64, bool) {
-    if (_coll_recieved != 0) {
-        return (_coll_recieved, true);
+fn internal_get_coll_change(coll_recieved: u64, requested_coll_withdrawn: u64) -> (u64, bool) {
+    if (coll_recieved != 0) {
+        return (coll_recieved, true);
     } else {
-        return (_requested_coll_withdrawn, false);
+        return (requested_coll_withdrawn, false);
     }
 }
 

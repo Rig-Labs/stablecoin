@@ -2,10 +2,7 @@ use std::{fs::File, io::Write, str::FromStr};
 
 use crate::setup::common::{ExistingAssetContracts, ProtocolContracts};
 use dotenv::dotenv;
-use fuels::{
-    prelude::*,
-    types::{bech32, ContractId},
-};
+use fuels::{prelude::*, types::ContractId};
 use serde_json::json;
 
 // const RPC: &str = "http://localhost:4000";
@@ -35,7 +32,7 @@ pub async fn deploy() {
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
-    let eth_contracts = ExistingAssetContracts {
+    let _eth_contracts = ExistingAssetContracts {
         asset: ContractId::from(
             Bech32ContractId::from_str(
                 "fuel17unetj5y6ypk354m5jqt3vtl0z9n68ezftpe8st0krte64ttzlssxqfx0t",
@@ -50,7 +47,7 @@ pub async fn deploy() {
         ),
     };
 
-    let st_eth_contracts = ExistingAssetContracts {
+    let _st_eth_contracts = ExistingAssetContracts {
         asset: ContractId::from(
             Bech32ContractId::from_str(
                 "fuel18acrkuvrh4h00g0drgd9xvtr0f9lrqn96k03p83afgrnqh9vmhustqn8em",

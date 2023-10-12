@@ -37,7 +37,7 @@ abi Token {
     fn transfer_token_to_output(coins: u64, asset_id: AssetId, address: Identity);
     // Method called from address to mint coins
     #[storage(read, write)]
-    fn mint();    
+    fn mint();
     // Config of token
     // #[storage(read)]
     // fn config() -> TokenInitializeConfig;

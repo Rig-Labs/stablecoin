@@ -10,7 +10,7 @@ use test_utils::{
     interfaces::sorted_troves::sorted_troves_abi,
     interfaces::trove_manager::trove_manager_abi,
     interfaces::{active_pool::active_pool_abi, token::token_abi},
-    setup::common::{print_response, setup_protocol},
+    setup::common::setup_protocol,
     utils::{calculate_icr, with_min_borrow_fee},
 };
 

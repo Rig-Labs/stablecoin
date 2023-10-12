@@ -1,8 +1,7 @@
 use std::cmp::min;
 
 use fuels::prelude::*;
-use fuels::types::{AssetId, Identity};
-use test_utils::deploy::deployment::print_response;
+use fuels::types::Identity;
 use test_utils::{
     data_structures::PRECISION,
     deploy::deployment::assert_within_threshold,

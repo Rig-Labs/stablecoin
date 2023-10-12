@@ -3,12 +3,7 @@ library;
 abi CommunityIssuance {
     // Initialize contract
     #[storage(read, write)]
-    fn initialize(
-        stability_pool_contract: ContractId,
-        fpt_token_asset_id: AssetId,
-        admin: Identity,
-        debugging: bool,
-    );
+    fn initialize(stability_pool_contract: ContractId, fpt_token_asset_id: AssetId, admin: Identity, debugging: bool);
 
     #[storage(read, write)]
     fn start_rewards_increase_transition(total_transition_time_seconds: u64);
@@ -27,5 +22,4 @@ abi CommunityIssuance {
 
     #[storage(write, read)]
     fn set_current_time(time: u64);
-
 }
