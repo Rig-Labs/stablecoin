@@ -2,17 +2,9 @@ contract;
 
 mod utils;
 
-use libraries::community_issuance_interface::{CommunityIssuance};
-use libraries::fluid_math::{
-    dec_pow,
-    DECIMAL_PRECISION,
-    fm_multiply_ratio,
-    null_contract,
-    null_identity_address,
-    ZERO_B256,
-};
+use libraries::community_issuance_interface::CommunityIssuance;
+use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_multiply_ratio, ZERO_B256};
 use ::utils::*;
-
 use std::{
     auth::{
         AuthError,
@@ -40,11 +32,9 @@ use std::{
     u128::U128,
     u256::U256,
 };
-
 const ONE_WEEK_IN_SECONDS: u64 = 604800;
 const SIX_MONTHS_IN_SECONDS: u64 = 15780000;
 const ONE_YEAR_IN_SECONDS: u64 = 31104000;
-
 storage {
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     fpt_token_contract: AssetId = AssetId::from(ZERO_B256),
@@ -58,7 +48,6 @@ storage {
     time_transition_started: u64 = 0,
     total_transition_time_seconds: u64 = 0,
 }
-
 impl CommunityIssuance for Contract {
     #[storage(read, write)]
     fn initialize(
@@ -100,10 +89,10 @@ impl CommunityIssuance for Contract {
     #[storage(read, write)]
     fn issue_fpt() -> u64 {
         internal_require_caller_is_stability_pool();
+
         let latest_total_fpt_issued = fm_multiply_ratio(internal_get_fpt_supply_cap(storage.time_transition_started.read(), storage.total_transition_time_seconds.read(), internal_get_current_time(), storage.has_transitioned_rewards.read()), internal_get_cumulative_issuance_fraction(internal_get_current_time(), storage.deployment_time.read()), DECIMAL_PRECISION);
         let issuance = latest_total_fpt_issued - storage.total_fpt_issued.read();
         storage.total_fpt_issued.write(latest_total_fpt_issued);
-
         return issuance
     }
 
@@ -126,7 +115,6 @@ impl CommunityIssuance for Contract {
         storage.debug_timestamp.write(time);
     }
 }
-
 #[storage(read)]
 fn internal_require_caller_is_stability_pool() {
     require(msg_sender().unwrap() == Identity::ContractId(storage.stability_pool_contract.read()), "Caller must be stability pool");

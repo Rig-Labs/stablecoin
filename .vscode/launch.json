@@ -11,8 +11,6 @@
       "program": "${workspaceFolder}/<executable file>",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "rust-analyzer.cargo.features": [],
-      "rust-analyzer.runnables.extraArgs": [],
     }
   ]
 }

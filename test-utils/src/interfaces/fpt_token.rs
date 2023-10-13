@@ -8,10 +8,7 @@ abigen!(Contract(
 pub mod fpt_token_abi {
     use crate::interfaces::community_issuance::CommunityIssuance;
     use crate::interfaces::usdf_token::USDFToken;
-    use fuels::{
-        prelude::{Account, TxParameters},
-        types::ContractId,
-    };
+    use fuels::{prelude::*, types::ContractId};
 
     use super::*;
     pub async fn initialize<T: Account>(
@@ -25,16 +22,9 @@ pub mod fpt_token_abi {
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
-        let config = TokenInitializeConfig {
-            name: fuels::types::SizedAsciiString::<32>::new(name.clone()).unwrap(),
-            symbol: fuels::types::SizedAsciiString::<8>::new(symbol.clone()).unwrap(),
-            decimals: 6,
-        };
-
         let res = instance
             .methods()
             .initialize(
-                config,
                 vesting_contract.contract_id(),
                 community_issuance_contract.contract_id(),
             )
@@ -56,8 +46,18 @@ pub mod fpt_token_abi {
         // }
     }
 
-    pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<u64> {
-        instance.methods().total_supply().call().await.unwrap()
+    pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<Option<u64>> {
+        let fpt_token_asset_id = instance
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
+        instance
+            .methods()
+            .total_supply(fpt_token_asset_id)
+            .call()
+            .await
+            .unwrap()
     }
 
     pub async fn get_vesting_contract<T: Account>(

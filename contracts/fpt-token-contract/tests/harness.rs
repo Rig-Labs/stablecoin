@@ -51,5 +51,5 @@ async fn proper_intialize() {
 
     // println!("supply {}", total_supply);
 
-    assert_eq!(total_supply, 100_000_000 * PRECISION);
+    assert_eq!(total_supply, Some(100_000_000 * PRECISION));
 }

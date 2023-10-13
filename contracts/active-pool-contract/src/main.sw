@@ -1,7 +1,7 @@
 contract;
 
 use libraries::active_pool_interface::ActivePool;
-use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
+use libraries::fluid_math::{ZERO_B256};
 
 use std::{
     auth::msg_sender,
