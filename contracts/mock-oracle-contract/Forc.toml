@@ -6,3 +6,5 @@ name = "mock-oracle-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

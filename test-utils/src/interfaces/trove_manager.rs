@@ -18,11 +18,9 @@ abigen!(Contract(
 pub mod trove_manager_abi {
 
     use fuels::{
-        prelude::{Account, Error, LogDecoder, TxParameters},
+        prelude::{Account, Error, TxParameters},
         types::{AssetId, ContractId, Identity},
     };
-
-    use crate::setup::common::wait;
 
     use super::*;
 
@@ -326,7 +324,7 @@ pub mod trove_manager_abi {
 pub mod trove_manager_utils {
     use fuels::{
         prelude::Account,
-        types::{AssetId, ContractId, Identity},
+        types::{AssetId, Identity},
     };
 
     use crate::{

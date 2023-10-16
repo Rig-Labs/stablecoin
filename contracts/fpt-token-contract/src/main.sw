@@ -64,10 +64,14 @@ impl FPTToken for Contract {
     fn get_vesting_contract() -> ContractId {
         storage.vesting_contract.read()
     }
+    //////////////////////////////////////
+    // SRC-20 Read-Only methods
+    //////////////////////////////////////
     #[storage(read)]
     fn total_assets() -> u64 {
         return 1;
     }
+
     #[storage(read)]
     fn total_supply(asset: AssetId) -> Option<u64> {
         if asset == storage.default_asset.read() {
@@ -75,6 +79,7 @@ impl FPTToken for Contract {
         }
         return None;
     }
+
     #[storage(read)]
     fn name(asset: AssetId) -> Option<String> {
         if asset == storage.default_asset.read() {
@@ -90,6 +95,7 @@ impl FPTToken for Contract {
         }
         return None;
     }
+
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
         if asset == storage.default_asset.read() {

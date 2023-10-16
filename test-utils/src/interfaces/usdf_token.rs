@@ -28,16 +28,9 @@ pub mod usdf_token_abi {
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
-        let config = TokenInitializeConfig {
-            name: fuels::types::SizedAsciiString::<32>::new(name.clone()).unwrap(),
-            symbol: fuels::types::SizedAsciiString::<8>::new(symbol.clone()).unwrap(),
-            decimals: 6,
-        };
-
         instance
             .methods()
             .initialize(
-                config,
                 protocol_manager,
                 stability_pool.clone(),
                 borrow_operations.clone(),
@@ -90,7 +83,19 @@ pub mod usdf_token_abi {
         // .await
     }
 
-    pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> FuelCallResponse<u64> {
-        instance.methods().total_supply().call().await.unwrap()
+    pub async fn total_supply<T: Account>(
+        instance: &USDFToken<T>,
+    ) -> FuelCallResponse<Option<u64>> {
+        let usdf_asset_id = instance
+            .contract_id()
+            .asset_id(&BASE_ASSET_ID.into())
+            .into();
+
+        instance
+            .methods()
+            .total_supply(usdf_asset_id)
+            .call()
+            .await
+            .unwrap()
     }
 }

@@ -9,9 +9,9 @@ abigen!(Contract(
 
 pub mod default_pool_abi {
     use super::*;
+    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::token::Token;
-    use crate::{interfaces::active_pool::ActivePool, setup::common::wait};
-    use fuels::prelude::{Account, LogDecoder};
+    use fuels::prelude::Account;
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, Error, TxParameters},
         types::Identity,

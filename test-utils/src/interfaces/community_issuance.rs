@@ -7,9 +7,8 @@ abigen!(Contract(
 ));
 
 pub mod community_issuance_abi {
-    use fuels::prelude::{Account, LogDecoder, TxParameters};
+    use fuels::prelude::{Account, TxParameters};
 
-    use crate::setup::common::wait;
     use fuels::{prelude::ContractId, prelude::Error, types::AssetId, types::Identity};
 
     use super::*;

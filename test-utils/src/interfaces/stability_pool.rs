@@ -165,7 +165,7 @@ pub mod stability_pool_abi {
 pub mod stability_pool_utils {
     use fuels::{
         prelude::{Account, WalletUnlocked},
-        types::{AssetId, ContractId, Identity},
+        types::{AssetId, Identity},
     };
 
     use crate::setup::common::assert_within_threshold;

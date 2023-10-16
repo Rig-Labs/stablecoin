@@ -1,8 +1,7 @@
 contract;
 
-use libraries::usdf_token_interface::{TokenInitializeConfig, USDFToken};
-use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
-
+use libraries::usdf_token_interface::USDFToken;
+use libraries::fluid_math::{get_default_asset_id, null_contract, null_identity_address, ZERO_B256};
 use std::{
     address::*,
     auth::{
@@ -24,33 +23,26 @@ use std::{
     },
     revert::require,
     storage::storage_vec::*,
+    string::String,
     token::*,
 };
-
 storage {
-    // config: TokenInitializeConfig = TokenInitializeConfig {
-    //     name: "                                ",
-    //     symbol: "        ",
-    //     decimals: 1u8,
-    // },
     trove_managers: StorageVec<ContractId> = StorageVec {},
     protocol_manager: ContractId = ContractId::from(ZERO_B256),
     stability_pool: Identity = Identity::Address(Address::from(ZERO_B256)),
     borrower_operations: Identity = Identity::Address(Address::from(ZERO_B256)),
+    default_asset: AssetId = AssetId::from(ZERO_B256),
     total_supply: u64 = 0,
     is_initialized: bool = false,
 }
-
 enum Error {
     NotAuthorized: (),
 }
-
 impl USDFToken for Contract { //////////////////////////////////////
     // Owner methods
     //////////////////////////////////////
     #[storage(read, write)]
     fn initialize(
-        config: TokenInitializeConfig,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrower_operations: Identity,
@@ -59,17 +51,16 @@ impl USDFToken for Contract { //////////////////////////////////////
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
         storage.borrower_operations.write(borrower_operations);
+        storage.default_asset.write(get_default_asset_id(contract_id()));
         // storage.config.write(config);
         storage.is_initialized.write(true);
     }
-
     #[storage(read, write)]
     fn mint(amount: u64, address: Identity) {
         require_caller_is_borrower_operations();
         mint_to(address, ZERO_B256, amount);
         storage.total_supply.write(storage.total_supply.try_read().unwrap_or(0) + amount);
     }
-
     #[storage(read, write), payable]
     fn burn() {
         require_caller_is_bo_or_tm_or_sp_or_pm();
@@ -77,47 +68,61 @@ impl USDFToken for Contract { //////////////////////////////////////
         burn(ZERO_B256, burn_amount);
         storage.total_supply.write(storage.total_supply.read() - burn_amount);
     }
-
     #[storage(read, write)]
     fn add_trove_manager(trove_manager: ContractId) {
         require_caller_is_protocol_manager();
         storage.trove_managers.push(trove_manager);
     }
-
     //////////////////////////////////////
-    // Read-Only methods
-    //////////////////////////////////////#[storage(read)]
+    // SRC-20 Read-Only methods
+    //////////////////////////////////////
     #[storage(read)]
-    fn total_supply() -> u64 {
-        storage.total_supply.try_read().unwrap_or(0)
+    fn total_assets() -> u64 {
+        return 1;
     }
 
-    // #[storage(read)]
-    // fn config() -> TokenInitializeConfig {
-    //     // storage.config.read()
-    //     TokenInitializeConfig {
-    //         name: "                                ",
-    //         symbol: "        ",
-    //         decimals: 1u8,
-    //     }
-    // }
-}
+    #[storage(read)]
+    fn total_supply(asset: AssetId) -> Option<u64> {
+        if asset == storage.default_asset.read() {
+            return Some(storage.total_supply.try_read().unwrap_or(0))
+        }
+        return None;
+    }
 
+    #[storage(read)]
+    fn name(asset: AssetId) -> Option<String> {
+        if asset == storage.default_asset.read() {
+            return Some(String::from_ascii_str("USDF"));
+        }
+        return None;
+    }
+    #[storage(read)]
+    fn symbol(asset: AssetId) -> Option<String> {
+        if asset == storage.default_asset.read() {
+            return Some(String::from_ascii_str("USDF"));
+        }
+        return None;
+    }
+    #[storage(read)]
+    fn decimals(asset: AssetId) -> Option<u8> {
+        if asset == storage.default_asset.read() {
+            return Some(9);
+        }
+        return None;
+    }
+}
 #[storage(read)]
 fn require_caller_is_protocol_manager() {
     require(msg_sender().unwrap() == Identity::ContractId(storage.protocol_manager.read()), Error::NotAuthorized);
 }
-
 #[storage(read)]
 fn require_caller_is_borrower_operations() {
     require(msg_sender().unwrap() == storage.borrower_operations.read(), Error::NotAuthorized);
 }
-
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let sender = msg_sender().unwrap();
     let protocol_manager_id = Identity::ContractId(storage.protocol_manager.read());
-
     let mut i = 0;
     while i < storage.trove_managers.len() {
         let manager = Identity::ContractId(storage.trove_managers.get(i).unwrap().read());

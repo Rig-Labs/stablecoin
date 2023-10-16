@@ -9,9 +9,9 @@ abigen!(Contract(
 
 pub mod sorted_troves_abi {
     use super::*;
-    use crate::setup::common::wait;
+
     use fuels::{
-        prelude::{Account, Error, LogDecoder, TxParameters},
+        prelude::{Account, Error, TxParameters},
         types::AssetId,
     };
 

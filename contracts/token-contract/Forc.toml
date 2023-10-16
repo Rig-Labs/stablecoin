@@ -6,3 +6,5 @@ name = "token-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]
