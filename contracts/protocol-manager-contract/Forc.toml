@@ -6,3 +6,5 @@ name = "protocol-manager-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

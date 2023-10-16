@@ -4,8 +4,7 @@ entry = "main.sw"
 license = "Apache-2.0"
 name = "borrow-operations-contract"
 
-[constants]
-
-
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

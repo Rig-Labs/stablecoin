@@ -18,7 +18,7 @@ pub mod borrow_operations_abi {
     use crate::interfaces::usdf_token::USDFToken;
     use fuels::prelude::Account;
     use fuels::prelude::{CallParameters, ContractId, Error, TxParameters};
-    use fuels::types::{AssetId, Bits256, Identity};
+    use fuels::types::{AssetId, Identity};
 
     pub async fn initialize<T: Account>(
         borrow_operations: &BorrowOperations<T>,

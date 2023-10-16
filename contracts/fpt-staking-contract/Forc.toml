@@ -6,3 +6,5 @@ name = "fpt-staking-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader, str::FromStr};
 use fuels::prelude::{Address, Bech32Address};
 use fuels::types::AssetId;
 use fuels::{
-    prelude::{abigen, Account, ContractId},
+    prelude::{abigen, Account},
     programs::call_response::FuelCallResponse,
     types::Identity,
 };

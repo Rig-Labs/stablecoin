@@ -6,3 +6,5 @@ name = "stability-pool-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

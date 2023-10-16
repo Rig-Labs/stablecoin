@@ -1,4 +1,3 @@
-use fuels::programs::call_utils::TxDependencyExtension;
 use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
 abigen!(Contract(
     name = "FPTToken",

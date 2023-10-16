@@ -8,8 +8,7 @@ abigen!(Contract(
 
 pub mod token_abi {
     use super::*;
-    use crate::setup::common::wait;
-    use fuels::prelude::{Account, Error, LogDecoder, TxParameters};
+    use fuels::prelude::{Account, Error, TxParameters};
 
     pub async fn initialize<T: Account>(
         instance: &Token<T>,

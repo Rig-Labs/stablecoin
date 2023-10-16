@@ -6,3 +6,5 @@ name = "mock-trove-manager-sp-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[constants]

@@ -2445,6 +2445,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock-trove-manager-sp-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "tokio",
+]
+
+[[package]]
 name = "multer"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
