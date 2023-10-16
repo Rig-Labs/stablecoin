@@ -43,7 +43,7 @@ async fn get_contract_instance() -> (
 async fn proper_intialize() {
     let (usdf, _admin, _) = get_contract_instance().await;
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value;
+    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
 
     assert_eq!(total_supply, 0);
 }
@@ -58,7 +58,7 @@ async fn proper_mint() {
         .await
         .unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value;
+    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
 
     assert_eq!(total_supply, 100);
 }
@@ -71,13 +71,13 @@ async fn proper_burn() {
         .await
         .unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value;
+    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
 
     assert_eq!(total_supply, 100);
 
     usdf_token_abi::burn(&usdf, 50).await.unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value;
+    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
 
     assert_eq!(total_supply, 50);
 }
