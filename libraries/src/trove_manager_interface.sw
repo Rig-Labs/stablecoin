@@ -14,6 +14,12 @@ abi TroveManager {
     fn get_entire_system_debt() -> u64;
 
     #[storage(read)]
+    fn get_trove_owners_count() -> u64;
+
+    #[storage(read)]
+    fn get_trove_owner_by_index(index: u64) -> Identity;
+
+    #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;
 
     #[storage(read)]
