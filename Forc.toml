@@ -15,6 +15,7 @@ members = [
   "./contracts/fpt-staking-contract",
   "./contracts/fpt-token-contract",
   "./contracts/community-issuance-contract",
+  "./contracts/hint-helper-contract",
   "./contracts/tests-artifacts-sorted-troves-contract",
   "./contracts/tests-artifacts-stability-pool-contract",
 ]

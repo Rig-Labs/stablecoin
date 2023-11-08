@@ -1,0 +1,82 @@
+contract;
+
+use libraries::trove_manager_interface::TroveManager;
+use libraries::sorted_troves_interface::SortedTroves;
+use libraries::fluid_math::*;
+use std::{
+    auth::msg_sender,
+    call_frames::{
+        msg_asset_id,
+    },
+    context::{
+        msg_amount,
+    },
+    hash::Hasher,
+    logging::log,
+    token::transfer,
+};
+storage {
+    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
+    is_initialized: bool = false,
+}
+abi HintHelper {
+    #[storage(read, write)]
+    fn initialize(sorted_troves_contract: ContractId);
+    #[storage(read, write)]
+    fn get_approx_hint(asset: AssetId, trove_manager_contract: ContractId, cr: u64, num_trials: u64, input_random_seed: u64) -> (Identity, u64, u64);
+}
+impl HintHelper for Contract {
+    #[storage(read, write)]
+    fn initialize(sorted_troves_contract: ContractId) {
+        require(storage.is_initialized.read() == false, "Already initialized");
+        storage.sorted_troves_contract.write(sorted_troves_contract);
+        storage.is_initialized.write(true);
+    }
+    #[storage(read, write)]
+    fn get_approx_hint(
+        asset: AssetId,
+        trove_manager_contract: ContractId,
+        cr: u64,
+        num_trials: u64,
+        input_random_seed: u64,
+    ) -> (Identity, u64, u64) {
+        let sorted_troves_contract = storage.sorted_troves_contract.read();
+        let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
+        let trove_manager = abi(TroveManager, trove_manager_contract.value);
+
+        let array_length = trove_manager.get_trove_owners_count();
+
+        if array_length == 0 {
+            return (Identity::Address(Address::from(ZERO_B256)), 0, 0);
+        }
+
+        let mut hint_address = sorted_troves.get_last(asset);
+        let mut diff = fm_abs_diff(trove_manager.get_nominal_icr(hint_address), cr);
+        let mut latest_random_seed = input_random_seed;
+
+        let mut i = 1;
+        let mut hasher = Hasher::new();
+
+        while i < num_trials {
+            latest_random_seed.hash(hasher);
+            latest_random_seed = decompose(hasher.keccak256()).0;
+
+            let index = latest_random_seed % array_length;
+            let address = trove_manager.get_trove_owner_by_index(index);
+            let icr = trove_manager.get_nominal_icr(address);
+            let new_diff = fm_abs_diff(icr, cr);
+            if new_diff < diff {
+                diff = new_diff;
+                hint_address = address;
+                latest_random_seed = latest_random_seed;
+            }
+            i += 1;
+        }
+
+        return (hint_address, diff, latest_random_seed);
+    }
+}
+
+fn decompose(val: b256) -> (u64, u64, u64, u64) {
+    asm(r1: __addr_of(val)) { r1: (u64, u64, u64, u64) }
+}

@@ -50,7 +50,7 @@ pub mod borrow_operations_abi {
     pub async fn open_trove<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
-        fuel_token: &Token<T>,
+        asset_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
         sorted_troves: &SortedTroves<T>,
@@ -65,14 +65,14 @@ pub mod borrow_operations_abi {
             .with_gas_price(1)
             .with_gas_limit(2000000);
 
-        let fuel_asset_id = fuel_token
+        let asset_id = asset_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
             .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fuel_amount_deposit)
-            .with_asset_id(fuel_asset_id);
+            .with_asset_id(asset_id);
 
         return borrow_operations
             .methods()
@@ -82,7 +82,7 @@ pub mod borrow_operations_abi {
             .with_contracts(&[
                 oracle,
                 active_pool,
-                fuel_token,
+                asset_token,
                 usdf_token,
                 sorted_troves,
                 trove_manager,
@@ -334,7 +334,7 @@ pub mod borrow_operations_utils {
 
     pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,
-        aswith_contracts: &AssetContracts<WalletUnlocked>,
+        asset_contracts: &AssetContracts<WalletUnlocked>,
         borrow_operations: &BorrowOperations<T>,
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
@@ -344,7 +344,7 @@ pub mod borrow_operations_utils {
         usdf_amount: u64,
     ) {
         token_abi::mint_to_id(
-            &aswith_contracts.asset,
+            &asset_contracts.asset,
             amount,
             Identity::Address(wallet.address().into()),
         )
@@ -355,12 +355,12 @@ pub mod borrow_operations_utils {
 
         borrow_operations_abi::open_trove(
             &borrow_operations_healthy_wallet1,
-            &aswith_contracts.oracle,
-            &aswith_contracts.asset,
+            &asset_contracts.oracle,
+            &asset_contracts.asset,
             &usdf,
             fpt_staking,
             &sorted_troves,
-            &aswith_contracts.trove_manager,
+            &asset_contracts.trove_manager,
             &active_pool,
             amount,
             usdf_amount,

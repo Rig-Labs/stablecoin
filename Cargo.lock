@@ -2014,6 +2014,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hint-helper-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
+]
+
+[[package]]
 name = "hmac"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

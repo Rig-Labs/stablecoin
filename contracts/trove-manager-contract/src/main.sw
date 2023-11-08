@@ -111,6 +111,17 @@ impl TroveManager for Contract {
     fn has_pending_rewards(id: Identity) -> bool {
         internal_has_pending_rewards(id)
     }
+
+    #[storage(read)]
+    fn get_trove_owners_count() -> u64 {
+        return storage.trove_owners.len();
+    }
+
+    #[storage(read)]
+    fn get_trove_owner_by_index(index: u64) -> Identity {
+        return storage.trove_owners.get(index).unwrap().read();
+    }
+
     #[storage(read, write)]
     fn redeem_collateral_from_trove(
         borrower: Identity,
