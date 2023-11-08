@@ -9,7 +9,7 @@ on:
     types: [published]
 
 env:
-  RUST_VERSION: 1.68.1
+  RUST_VERSION: 1.72.1
 
 jobs:
   lint-toml-files:
@@ -56,9 +56,9 @@ jobs:
       # - name: Check Sway formatting
       #   run: |
       #     forc fmt --check
-      # - name: Check Rust formatting
-      #   run: |
-      #     cargo fmt --verbose --check
+      - name: Check Rust formatting
+        run: |
+          cargo fmt --verbose --check
 
       - name: Build Sway
         run: |
@@ -67,6 +67,6 @@ jobs:
       # - name: Test Sway
       #   run: |
       #     forc test
-      # - name: Run Rust tests
-      #   run: |
-      #     cargo test
+      - name: Run Rust tests
+        run: |
+          cargo test
