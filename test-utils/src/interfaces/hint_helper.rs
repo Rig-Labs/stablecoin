@@ -18,14 +18,14 @@ pub mod hint_helper_abi {
 
     pub async fn initialize<T: Account>(
         hint_helper: &HintHelper<T>,
-        trove_manager: ContractId,
+
         sorted_troves: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
 
         let res = hint_helper
             .methods()
-            .initialize(trove_manager, sorted_troves)
+            .initialize(sorted_troves)
             .tx_params(tx_params)
             .call()
             .await;
@@ -44,7 +44,13 @@ pub mod hint_helper_abi {
     ) -> FuelCallResponse<(Identity, u64, u64)> {
         hint_helper
             .methods()
-            .get_approx_hint(asset_id.clone(), cr, num_itterations, random_seed)
+            .get_approx_hint(
+                asset_id.clone(),
+                trove_manager.contract_id(),
+                cr,
+                num_itterations,
+                random_seed,
+            )
             .with_contracts(&[sorted_troves, trove_manager])
             .call()
             .await

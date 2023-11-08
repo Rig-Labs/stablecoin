@@ -17,34 +17,29 @@ use std::{
 };
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    trove_manager_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
 }
 abi HintHelper {
     #[storage(read, write)]
-    fn initialize(trove_manager_contract: ContractId, sorted_troves_contract: ContractId);
+    fn initialize(sorted_troves_contract: ContractId);
     #[storage(read, write)]
-    fn get_approx_hint(asset: AssetId, cr: u64, num_trials: u64, input_random_seed: u64) -> (Identity, u64, u64);
+    fn get_approx_hint(asset: AssetId, trove_manager_contract: ContractId, cr: u64, num_trials: u64, input_random_seed: u64) -> (Identity, u64, u64);
 }
 impl HintHelper for Contract {
     #[storage(read, write)]
-    fn initialize(
-        trove_manager_contract: ContractId,
-        sorted_troves_contract: ContractId,
-    ) {
+    fn initialize(sorted_troves_contract: ContractId) {
         require(storage.is_initialized.read() == false, "Already initialized");
-        storage.trove_manager_contract.write(trove_manager_contract);
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
     }
     #[storage(read, write)]
     fn get_approx_hint(
         asset: AssetId,
+        trove_manager_contract: ContractId,
         cr: u64,
         num_trials: u64,
         input_random_seed: u64,
     ) -> (Identity, u64, u64) {
-        let trove_manager_contract = storage.trove_manager_contract.read();
         let sorted_troves_contract = storage.sorted_troves_contract.read();
         let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
         let trove_manager = abi(TroveManager, trove_manager_contract.value);
