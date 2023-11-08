@@ -1,199 +1,91 @@
 use fuels::{prelude::*, types::Identity};
+use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::{
-    interfaces::active_pool::{active_pool_abi, ActivePool},
-    interfaces::token::{token_abi, Token},
-    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
+    data_structures::PRECISION,
+    interfaces::hint_helper::hint_helper_abi,
+    setup::common::{deploy_hint_helper, setup_protocol},
 };
-
-async fn get_contract_instance() -> (
-    ActivePool<WalletUnlocked>,
-    Token<WalletUnlocked>,
-    WalletUnlocked,
-) {
-    // Launch a local network and deploy the contract
-    let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(2),             /* Single wallet */
-            Some(1),             /* Single coin (UTXO) */
-            Some(1_000_000_000), /* Amount per coin */
-        ),
-        None,
-        None,
-    )
-    .await;
-    let wallet = wallets.pop().unwrap();
-
-    let instance = deploy_active_pool(&wallet).await;
-    let default_pool = deploy_default_pool(&wallet).await;
-
-    let asset = deploy_token(&wallet).await;
-
-    token_abi::initialize(
-        &asset,
-        1_000_000_000,
-        &Identity::Address(wallet.address().into()),
-        "Fuel".to_string(),
-        "FUEL".to_string(),
-    )
-    .await
-    .unwrap();
-
-    active_pool_abi::initialize(
-        &instance,
-        Identity::Address(wallet.address().into()),
-        Identity::Address(wallet.address().into()),
-        default_pool.contract_id().into(),
-        Identity::Address(wallet.address().into()),
-    )
-    .await
-    .unwrap();
-
-    active_pool_abi::add_asset(
-        &instance,
-        asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
-        Identity::Address(wallet.address().into()),
-    )
-    .await;
-
-    (instance, asset, wallet)
-}
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
+    // let (active_pool, _admin) = get_contract_instance().await;
+    let (contracts, _admin, mut wallets) = setup_protocol(100, 20, false).await;
+    let wallet = wallets.pop().unwrap();
 
-    let debt = active_pool_abi::get_usdf_debt(
-        &active_pool,
-        mock_fuel
+    let hint_helper = deploy_hint_helper(&wallet).await;
+
+    hint_helper_abi::initialize(
+        &hint_helper,
+        contracts.asset_contracts[0]
+            .trove_manager
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
             .into(),
+        contracts.sorted_troves.contract_id().into(),
     )
     .await
-    .value;
-    assert_eq!(debt, 0);
+    .unwrap();
 
-    let asset_amount = active_pool_abi::get_asset(
-        &active_pool,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await
-    .value;
-    assert_eq!(asset_amount, 0);
-}
+    // create 15 troves each with 600 USDF debt and n * 1000 collateral
+    let mut target_address = Identity::Address(wallet.address().into());
+    let mut target_address2 = Identity::Address(wallet.address().into());
 
-#[tokio::test]
-async fn proper_adjust_debt() {
-    let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
+    for i in 1..=15 {
+        let wallet = wallets.pop().unwrap();
+        let amount = i * 1000 * PRECISION;
+        let usdf_amount = 600 * PRECISION;
 
-    active_pool_abi::increase_usdf_debt(
-        &active_pool,
-        1000,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+        if i == 5 {
+            target_address = Identity::Address(wallet.address().into());
+        }
+
+        if i == 10 {
+            target_address2 = Identity::Address(wallet.address().into());
+        }
+
+        borrow_operations_utils::mint_token_and_open_trove(
+            wallet.clone(),
+            &contracts.asset_contracts[0],
+            &contracts.borrow_operations,
+            &contracts.usdf,
+            &contracts.fpt_staking,
+            &contracts.active_pool,
+            &contracts.sorted_troves,
+            amount,
+            usdf_amount,
+        )
+        .await;
+    }
+
+    let num_itterations = 25;
+    let random_seed = 0;
+
+    let res = hint_helper_abi::get_approx_hint(
+        &hint_helper,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+        5000 * PRECISION / 600,
+        num_itterations,
+        random_seed,
     )
     .await;
 
-    let debt = active_pool_abi::get_usdf_debt(
-        &active_pool,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await
-    .value;
-    assert_eq!(debt, 1000);
+    let id = res.value.0;
 
-    active_pool_abi::decrease_usdf_debt(
-        &active_pool,
-        500,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
+    assert_eq!(id, target_address);
+
+    let res = hint_helper_abi::get_approx_hint(
+        &hint_helper,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+        10000 * PRECISION / 600,
+        num_itterations,
+        random_seed + 1,
     )
     .await;
 
-    let debt = active_pool_abi::get_usdf_debt(
-        &active_pool,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await
-    .value;
-    assert_eq!(debt, 500);
-}
+    let id = res.value.0;
 
-#[tokio::test]
-async fn proper_adjust_asset_col() {
-    let (active_pool, mock_fuel, admin) = get_contract_instance().await;
-
-    token_abi::mint_to_id(
-        &mock_fuel,
-        1_000_000,
-        Identity::Address(admin.address().into()),
-    )
-    .await;
-
-    active_pool_abi::recieve(&active_pool, &mock_fuel, 1_000_000).await;
-
-    let asset_amount = active_pool_abi::get_asset(
-        &active_pool,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await
-    .value;
-    assert_eq!(asset_amount, 1_000_000);
-
-    let provdier = admin.provider().unwrap();
-
-    let asset_id = mock_fuel
-        .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
-        .into();
-
-    let balance_before = provdier
-        .get_asset_balance(admin.address().into(), asset_id)
-        .await
-        .unwrap();
-
-    active_pool_abi::send_asset(
-        &active_pool,
-        Identity::Address(admin.address().into()),
-        500_000,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await;
-
-    let asset_amount = active_pool_abi::get_asset(
-        &active_pool,
-        mock_fuel
-            .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
-            .into(),
-    )
-    .await
-    .value;
-    assert_eq!(asset_amount, 500_000);
-
-    let balance_after = provdier
-        .get_asset_balance(admin.address().into(), asset_id)
-        .await
-        .unwrap();
-
-    assert_eq!(balance_before + 500_000, balance_after);
+    assert_eq!(id, target_address2);
 }

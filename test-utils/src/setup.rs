@@ -1,10 +1,10 @@
 use super::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
-    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
-    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
-    token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
-    vesting::VestingContract,
+    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
+    hint_helper::HintHelper, oracle::Oracle, protocol_manager::ProtocolManager,
+    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
+    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
@@ -922,6 +922,22 @@ pub mod common {
                 return USDFToken::new(id, wallet.clone());
             }
         }
+    }
+
+    pub async fn deploy_hint_helper(wallet: &WalletUnlocked) -> HintHelper<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(HINT_HELPER_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().with_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), TxParameters::default().with_gas_price(1))
+        .await
+        .unwrap();
+
+        HintHelper::new(id, wallet.clone())
     }
 
     pub fn print_response<T>(response: &FuelCallResponse<T>)

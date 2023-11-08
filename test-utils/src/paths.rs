@@ -35,7 +35,6 @@ pub const ACTIVE_POOL_CONTRACT_STORAGE_PATH: &str =
 
 pub const STABILITY_POOL_CONTRACT_BINARY_PATH: &str =
     "contracts/stability-pool-contract/out/debug/stability-pool-contract.bin";
-
 pub const STABILITY_POOL_CONTRACT_STORAGE_PATH: &str =
     "contracts/stability-pool-contract/out/debug/stability-pool-contract-storage_slots.json";
 
@@ -51,27 +50,28 @@ pub const COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH: &str =
 
 pub const USDF_TOKEN_CONTRACT_BINARY_PATH: &str =
     "contracts/usdf-token-contract/out/debug/usdf-token-contract.bin";
+pub const USDF_TOKEN_CONTRACT_STORAGE_PATH: &str =
+    "contracts/usdf-token-contract/out/debug/usdf-token-contract-storage_slots.json";
 
 pub const FPT_TOKEN_CONTRACT_BINARY_PATH: &str =
     "contracts/fpt-token-contract/out/debug/fpt-token-contract.bin";
+pub const FPT_TOKEN_CONTRACT_STORAGE_PATH: &str =
+    "contracts/fpt-token-contract/out/debug/fpt-token-contract-storage_slots.json";
 
 pub const FPT_STAKING_CONTRACT_BINARY_PATH: &str =
     "contracts/fpt-staking-contract/out/debug/fpt-staking-contract.bin";
 
-pub const USDF_TOKEN_CONTRACT_STORAGE_PATH: &str =
-    "contracts/usdf-token-contract/out/debug/usdf-token-contract-storage_slots.json";
-
-pub const FPT_TOKEN_CONTRACT_STORAGE_PATH: &str =
-    "contracts/fpt-token-contract/out/debug/fpt-token-contract-storage_slots.json";
-
 pub const PROTCOL_MANAGER_CONTRACT_BINARY_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract.bin";
-
 pub const PROTCOL_MANAGER_CONTRACT_STORAGE_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-storage_slots.json";
 
 pub const COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH: &str =
     "contracts/community-issuance-contract/out/debug/community-issuance-contract.bin";
-
 pub const COMMUNITY_ISSUANCE_CONTRACT_STORAGE_PATH: &str =
     "contracts/community-issuance-contract/out/debug/community-issuance-contract-storage_slots.json";
+
+pub const HINT_HELPER_CONTRACT_BINARY_PATH: &str =
+    "contracts/hint-helper-contract/out/debug/hint-helper-contract.bin";
+pub const HINT_HELPER_CONTRACT_STORAGE_PATH: &str =
+    "contracts/hint-helper-contract/out/debug/hint-helper-contract-storage_slots.json";
