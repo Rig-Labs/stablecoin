@@ -1,14 +1,10 @@
-use std::borrow::Borrow;
-
 use crate::data_structures::PRECISION;
-use crate::interfaces::borrow_operations::{
-    borrow_operations_abi, borrow_operations_utils, BorrowOperations,
-};
+use crate::interfaces::borrow_operations::{borrow_operations_abi, BorrowOperations};
 use crate::interfaces::oracle::{oracle_abi, Oracle};
 // use crate::interfaces::trove_manager::{trove_manager_abi, TroveManagerContract};
 use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::fpt_staking::FPTStaking;
-use crate::interfaces::sorted_troves::{self, SortedTroves};
+use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
 use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
@@ -19,7 +15,7 @@ use fuels::types::{Address, Identity};
 const RPC: &str = "beta-4.fuel.network";
 // const RPC: &str = "http://localhost:4000";
 
-// #[tokio::test]
+#[tokio::main]
 pub async fn testing_query() {
     let provider = match Provider::connect(RPC).await {
         Ok(p) => p,
@@ -103,7 +99,7 @@ pub async fn testing_query() {
     let fuel_amount_deposit = 2 * PRECISION;
     let usdf_amount_withdrawn = 600 * PRECISION;
 
-    let res = borrow_operations_abi::open_trove(
+    let _res = borrow_operations_abi::open_trove(
         &borrow_operations,
         &oracle,
         &asset_token,
