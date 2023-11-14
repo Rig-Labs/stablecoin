@@ -10,7 +10,6 @@ abi FPTToken {
     #[storage(read)]
     fn get_vesting_contract() -> ContractId;
 
-    #[storage(read)]
     fn total_assets() -> u64;
 
     #[storage(read)]

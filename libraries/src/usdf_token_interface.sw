@@ -18,7 +18,6 @@ abi USDFToken {
     #[storage(read, write), payable]
     fn burn();
 
-    #[storage(read)]
     fn total_assets() -> u64;
 
     #[storage(read)]

@@ -223,7 +223,10 @@ impl TroveManager for Contract {
         internal_close_trove(id, Status::ClosedByOwner);
     }
     #[storage(read, write)]
-    fn remove_stake(id: Identity) {}
+    fn remove_stake(id: Identity) {
+        require_caller_is_borrow_operations_contract();
+        internal_remove_stake(id);
+    }
 
     #[storage(read)]
     fn get_trove_status(id: Identity) -> Status {

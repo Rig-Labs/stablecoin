@@ -67,7 +67,6 @@ impl FPTToken for Contract {
     //////////////////////////////////////
     // SRC-20 Read-Only methods
     //////////////////////////////////////
-    #[storage(read)]
     fn total_assets() -> u64 {
         return 1;
     }

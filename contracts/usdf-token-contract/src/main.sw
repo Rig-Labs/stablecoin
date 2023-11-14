@@ -52,7 +52,6 @@ impl USDFToken for Contract { //////////////////////////////////////
         storage.protocol_manager.write(protocol_manager);
         storage.borrower_operations.write(borrower_operations);
         storage.default_asset.write(get_default_asset_id(contract_id()));
-        // storage.config.write(config);
         storage.is_initialized.write(true);
     }
     #[storage(read, write)]
@@ -76,7 +75,6 @@ impl USDFToken for Contract { //////////////////////////////////////
     //////////////////////////////////////
     // SRC-20 Read-Only methods
     //////////////////////////////////////
-    #[storage(read)]
     fn total_assets() -> u64 {
         return 1;
     }
