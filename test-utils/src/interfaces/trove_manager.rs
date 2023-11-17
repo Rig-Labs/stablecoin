@@ -187,7 +187,6 @@ pub mod trove_manager_abi {
             .call()
             .await;
 
-        // TODO: remove this workaround
         return res;
     }
 
@@ -263,58 +262,6 @@ pub mod trove_manager_abi {
             .await
             .unwrap()
     }
-
-    // pub async fn redeem_collateral(
-    //     trove_manager: &TroveManagerContract<T>,
-    //     amount: u64,
-    //     max_iterations: u64,
-    //     max_fee_percentage: u64,
-    //     partial_redemption_hint: u64,
-    //     upper_partial_hint: Option<Identity>,
-    //     lower_partial_hint: Option<Identity>,
-    //     usdf: &USDFToken<T>,
-    //     fuel: &Token,
-    //     sorted_troves: &SortedTroves<T>,
-    //     active_pool: &ActivePool<T>,
-    //     coll_surplus_pool: &CollSurplusPool<T>,
-    //     oracle: &Oracle<T>,
-    //     default_pool: &DefaultPool<T>,
-    // ) -> FuelCallResponse<()> {
-    //     let tx_params = TxParameters::default()
-    //         .with_gas_price(1)
-    //         .with_gas_limit(2000000);
-    //     let usdf_asset_id = AssetId::from(*usdf.contract_id().hash());
-
-    //     let call_params: CallParameters = CallParameters::default()
-    //         .with_amount(amount)
-    //         .with_asset_id(usdf_asset_id);
-
-    //     trove_manager
-    //         .methods()
-    //         .redeem_collateral(
-    //             max_iterations,
-    //             max_fee_percentage,
-    //             partial_redemption_hint,
-    //             upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-    //             lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-    //         )
-    //         .tx_params(tx_params)
-    //         .call_params(call_params)
-    //         .unwrap()
-    //         .with_contracts(&[
-    //             sorted_troves,
-    //             active_pool,
-    //             fuel,
-    //             usdf,
-    //             coll_surplus_pool,
-    //             oracle,
-    //             default_pool,
-    //         ])
-    //         .append_variable_outputs(10)
-    //         .call()
-    //         .await
-    //         .unwrap()
-    // }
 
     pub fn get_redemption_fee(asset_drawdown: u64) -> u64 {
         return asset_drawdown * 1 / 100;

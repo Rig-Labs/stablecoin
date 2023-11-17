@@ -186,7 +186,6 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         .await
         .unwrap();
 
-    // TODO Replace with staking contract when implemented
     let staking_balance = provider
         .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await

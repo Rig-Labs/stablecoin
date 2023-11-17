@@ -58,15 +58,6 @@ pub mod protocol_manager_abi {
             .unwrap();
 
         return res;
-
-        // TODO: remove this workaround
-        // match res {
-        //     Ok(res) => res,
-        //     Err(_) => {
-        //         wait();
-        //         return FuelCallResponse::new((), vec![], LogDecoder::default());
-        //     }
-        // }
     }
 
     pub async fn register_asset<T: Account>(

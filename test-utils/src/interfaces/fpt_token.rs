@@ -34,15 +34,6 @@ pub mod fpt_token_abi {
             .await;
 
         return res.unwrap();
-
-        // // TODO: remove this workaround
-        // match res {
-        //     Ok(res) => res,
-        //     Err(_) => {
-        //         wait();
-        //         return FuelCallResponse::new((), vec![], LogDecoder::default());
-        //     }
-        // }
     }
 
     pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<Option<u64>> {

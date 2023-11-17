@@ -22,7 +22,6 @@ pub mod oracle_abi {
             .await;
 
         return res.unwrap();
-        // TODO: remove this workaround
     }
 
     pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> FuelCallResponse<u64> {
