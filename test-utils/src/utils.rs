@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use fuels::programs::call_response::FuelCallResponse;
+
 const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
 // 0.5% min borrow fee
@@ -68,4 +70,23 @@ pub fn resolve_relative_path(path: &str) -> String {
 
     // Return modified resolved path as a string
     resolved_str
+}
+
+pub fn print_response<T>(response: &FuelCallResponse<T>)
+where
+    T: std::fmt::Debug,
+{
+    response.receipts.iter().for_each(|r| match r.ra() {
+        Some(r) => println!("{:?}", r),
+        _ => (),
+    });
+}
+
+pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
+    let threshold = a / 100000;
+    assert!(
+        a >= b.saturating_sub(threshold) && a <= b.saturating_add(threshold),
+        "{}",
+        comment
+    );
 }

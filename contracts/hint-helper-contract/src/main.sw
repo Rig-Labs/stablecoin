@@ -1,5 +1,7 @@
 contract;
 
+// To the auditor: This contract is not used in the system. It is only used for querying the system.
+
 use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::*;

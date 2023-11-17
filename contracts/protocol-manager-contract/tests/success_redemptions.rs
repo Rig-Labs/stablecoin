@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
-use test_utils::deploy::deployment::print_response;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
+use test_utils::utils::print_response;
 use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
@@ -187,7 +187,6 @@ async fn proper_redemption_from_partially_closed() {
         .await
         .unwrap();
 
-    // TODO Replace with staking contract when implemented
     let staking_balance = provider
         .get_contract_asset_balance(contracts.fpt_staking.contract_id(), fuel_asset_id)
         .await

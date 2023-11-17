@@ -10,9 +10,6 @@ use super::interfaces::{
 use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
 
 pub mod common {
-
-    use std::env;
-
     use super::*;
     use crate::{
         data_structures::PRECISION,
@@ -33,6 +30,7 @@ pub mod common {
         types::{ContractId, Identity},
     };
     use pbr::ProgressBar;
+    use std::env;
 
     pub struct ProtocolContracts<T: Account> {
         pub borrow_operations: BorrowOperations<T>,
@@ -48,6 +46,7 @@ pub mod common {
         pub fpt_token: FPTToken<T>,
         pub fpt: Token<T>,
         pub community_issuance: CommunityIssuance<T>,
+        pub vesting_contract: VestingContract<T>,
     }
 
     pub struct AssetContracts<T: Account> {
@@ -134,6 +133,9 @@ pub mod common {
         pb.inc();
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
+        let vesting_contract = deploy_vesting_contract(&wallet).await;
+        pb.inc();
+
         pb.finish_println("Parent Contracts deployed");
 
         if is_testnet {
@@ -170,7 +172,7 @@ pub mod common {
             &fpt_token,
             "FPT Token".to_string(),
             "FPT".to_string(),
-            &usdf, // TODO this will be the vesting contract
+            &vesting_contract,
             &community_issuance,
         )
         .await;
@@ -339,6 +341,7 @@ pub mod common {
             active_pool,
             sorted_troves,
             community_issuance,
+            vesting_contract,
         };
 
         return contracts;

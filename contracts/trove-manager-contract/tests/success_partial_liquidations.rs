@@ -2,7 +2,6 @@ use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
     data_structures::{POST_LIQUIDATION_COLLATERAL_RATIO, PRECISION},
-    deploy::deployment::assert_within_threshold,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -14,7 +13,7 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
-    utils::{calculate_cr, with_min_borrow_fee},
+    utils::{assert_within_threshold, calculate_cr, with_min_borrow_fee},
 };
 
 #[tokio::test]

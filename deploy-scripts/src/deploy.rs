@@ -1,142 +1,152 @@
 use std::{fs::File, io::Write, str::FromStr};
 
-use crate::setup::common::{ExistingAssetContracts, ProtocolContracts};
 use dotenv::dotenv;
 use fuels::{prelude::*, types::ContractId};
 use serde_json::json;
-
-// const RPC: &str = "http://localhost:4000";
-
-#[tokio::main]
-pub async fn deploy() {
-    const RPC: &str = "beta-4.fuel.network";
-    //--------------- WALLET ---------------
-    let provider = match Provider::connect(RPC).await {
-        Ok(p) => p,
-        Err(error) => panic!("❌ Problem creating provider: {:#?}", error),
-    };
-
-    dotenv().ok();
-    let secret = match std::env::var("SECRET") {
-        Ok(s) => s,
-        Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
-    };
-
-    let wallet = WalletUnlocked::new_from_mnemonic_phrase_with_path(
-        &secret,
-        Some(provider.clone()),
-        "m/44'/1179993420'/0'/0/0",
-    )
-    .unwrap();
-
-    let address = wallet.address();
-    println!("🔑 Wallet address: {}", address);
-
-    let _eth_contracts = ExistingAssetContracts {
-        asset: ContractId::from(
-            Bech32ContractId::from_str(
-                "fuel17unetj5y6ypk354m5jqt3vtl0z9n68ezftpe8st0krte64ttzlssxqfx0t",
-            )
-            .unwrap(),
-        ),
-        oracle: ContractId::from(
-            Bech32ContractId::from_str(
-                "fuel1mz3e23uzlttn2crmf5zwst6c55lzemtv5pve55v4y9e06h06p4ws94a847",
-            )
-            .unwrap(),
-        ),
-    };
-
-    let _st_eth_contracts = ExistingAssetContracts {
-        asset: ContractId::from(
-            Bech32ContractId::from_str(
-                "fuel18acrkuvrh4h00g0drgd9xvtr0f9lrqn96k03p83afgrnqh9vmhustqn8em",
-            )
-            .unwrap(),
-        ),
-        oracle: ContractId::from(
-            Bech32ContractId::from_str(
-                "fuel1u4qqr558fx64m68w6f5n23puuz770e9kthxw42yzqrsc095md8dskn5dcj",
-            )
-            .unwrap(),
-        ),
-    };
-
-    let contracts: ProtocolContracts<WalletUnlocked> =
-        deployment::deploy_and_initialize_all(wallet, 100, true, None, None).await;
-
-    // Create json with contract addresses
-    let mut file = File::create("contracts.json").unwrap();
-
-    let json = json!({
-        "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
-        "usdf": contracts.usdf.contract_id().to_string(),
-        "usdf_asset_id": contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
-        "stability_pool": contracts.stability_pool.contract_id().to_string(),
-        "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
-        "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
-        "fpt_token": contracts.fpt_token.contract_id().to_string(),
-        "fpt_asset_id": contracts.fpt_token.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
-        "community_issuance": contracts.community_issuance.contract_id().to_string(),
-        "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
-        "default_pool": contracts.default_pool.contract_id().to_string(),
-        "active_pool": contracts.active_pool.contract_id().to_string(),
-        "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
-        "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
-            json!({
-                "oracle": asset_contracts.oracle.contract_id().to_string(),
-                "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
-                "asset_contract": asset_contracts.asset.contract_id().to_string(),
-                "asset_id": asset_contracts.asset_id.to_string(),
-            })
-        }).collect::<Vec<serde_json::Value>>()
-    });
-
-    let _ = file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes());
-}
-
-use super::interfaces::{
+use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::community_issuance_abi,
     default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::fpt_token_abi, oracle::Oracle,
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
 };
+use test_utils::setup::common::ExistingAssetContracts;
 
 pub mod deployment {
 
-    use fuels::{prelude::Account, programs::call_response::FuelCallResponse, types::Identity};
+    use fuels::{prelude::Account, types::Identity};
     use pbr::ProgressBar;
 
     use super::*;
-    use crate::{
-        data_structures::PRECISION,
-        interfaces::{
-            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
-            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
-        },
-        setup::common::{
-            deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
-            deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
-            deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
-            deploy_token, deploy_trove_manager_contract, deploy_usdf_token, AssetContracts,
-            ProtocolContracts,
-        },
+
+    use test_utils::data_structures::PRECISION;
+    use test_utils::interfaces::{
+        active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
+        coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
+        fpt_staking::fpt_staking_abi, oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+        sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
+        trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
     };
+    use test_utils::setup::common::{
+        deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
+        deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
+        deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
+        deploy_token, deploy_trove_manager_contract, deploy_usdf_token, deploy_vesting_contract,
+        AssetContracts, ProtocolContracts,
+    };
+
+    pub async fn deploy() {
+        dotenv().ok();
+        let rpc = match std::env::var("RPC") {
+            Ok(s) => s,
+            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
+        };
+
+        //--------------- WALLET ---------------
+        let provider = match Provider::connect(rpc).await {
+            Ok(p) => p,
+            Err(error) => panic!("❌ Problem creating provider: {:#?}", error),
+        };
+
+        let secret = match std::env::var("SECRET") {
+            Ok(s) => s,
+            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
+        };
+
+        let wallet = WalletUnlocked::new_from_mnemonic_phrase_with_path(
+            &secret,
+            Some(provider.clone()),
+            "m/44'/1179993420'/0'/0/0",
+        )
+        .unwrap();
+
+        let address = wallet.address();
+        println!("🔑 Wallet address: {}", address);
+
+        //--------------- Assets ---------------
+
+        let eth_contracts = ExistingAssetContracts {
+            asset: ContractId::from(
+                Bech32ContractId::from_str(
+                    "fuel1ql6d5vjmuqs0v2tev7su73zjrpajffy9cjccvll38mxmamaeteuqml4pxl",
+                )
+                .unwrap(),
+            ),
+            oracle: ContractId::from(
+                Bech32ContractId::from_str(
+                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
+                )
+                .unwrap(),
+            ),
+        };
+
+        let st_eth_contracts = ExistingAssetContracts {
+            asset: ContractId::from(
+                Bech32ContractId::from_str(
+                    "fuel1hud0p86m45k2qvhqpqwlz6c2h2pgj32w8tqhq0240dp6y2q26pvqg802xv",
+                )
+                .unwrap(),
+            ),
+            oracle: ContractId::from(
+                Bech32ContractId::from_str(
+                    "fuel1apa7t7dhpajrxg8xt4thmmaqq6378j4g8femnsz6u6etu3aeajksjzsdld",
+                )
+                .unwrap(),
+            ),
+        };
+
+        //--------------- Deploy ---------------
+
+        let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
+            wallet,
+            100_000,
+            true,
+            Some(eth_contracts),
+            Some(st_eth_contracts),
+        )
+        .await;
+
+        //--------------- Write to file ---------------
+        let mut file = File::create("contracts.json").unwrap();
+
+        let json = json!({
+            "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
+            "usdf": contracts.usdf.contract_id().to_string(),
+            "usdf_asset_id": contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
+            "stability_pool": contracts.stability_pool.contract_id().to_string(),
+            "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
+            "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
+            "fpt_token": contracts.fpt_token.contract_id().to_string(),
+            "fpt_asset_id": contracts.fpt_token.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
+            "community_issuance": contracts.community_issuance.contract_id().to_string(),
+            "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
+            "default_pool": contracts.default_pool.contract_id().to_string(),
+            "active_pool": contracts.active_pool.contract_id().to_string(),
+            "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
+            "vesting_contract": contracts.vesting_contract.contract_id().to_string(),
+            "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
+                json!({
+                    "oracle": asset_contracts.oracle.contract_id().to_string(),
+                    "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
+                    "asset_contract": asset_contracts.asset.contract_id().to_string(),
+                    "asset_id": asset_contracts.asset_id.to_string(),
+                })
+            }).collect::<Vec<serde_json::Value>>()
+        });
+
+        file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes())
+            .unwrap();
+    }
 
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
-        _max_size: u64,
+        max_size: u64,
         deploy_2nd_asset: bool,
         existing_eth_contracts: Option<ExistingAssetContracts>,
         existing_st_eth_contracts: Option<ExistingAssetContracts>,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(12);
+        let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -163,17 +173,19 @@ pub mod deployment {
         pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-
         pb.inc();
+
         let default_pool = deploy_default_pool(&wallet).await;
-
         pb.inc();
+
         let active_pool = deploy_active_pool(&wallet).await;
-
         pb.inc();
-        let sorted_troves = deploy_sorted_troves(&wallet).await;
 
-        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
+        let sorted_troves = deploy_sorted_troves(&wallet).await;
+        pb.inc();
+
+        let vesting_contract = deploy_vesting_contract(&wallet).await;
+        pb.inc();
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("USDF Token: {}", usdf.contract_id());
@@ -187,6 +199,8 @@ pub mod deployment {
         println!("Active Pool {}", active_pool.contract_id());
         println!("Sorted Troves {}", sorted_troves.contract_id());
         println!("Initializing contracts...");
+
+        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
 
         let mut pb = ProgressBar::new(7);
 
@@ -210,7 +224,7 @@ pub mod deployment {
             &fpt_token,
             "FPT Token".to_string(),
             "FPT".to_string(),
-            &usdf, // TODO this will be the vesting contract
+            &vesting_contract, // TODO this will be the vesting contract
             &community_issuance,
         )
         .await;
@@ -311,9 +325,10 @@ pub mod deployment {
         wait();
         pb.inc();
 
+        // TODO: Verify max size is correct
         let _ = sorted_troves_abi::initialize(
             &sorted_troves,
-            100,
+            max_size,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
         )
@@ -385,32 +400,15 @@ pub mod deployment {
             default_pool,
             sorted_troves,
             active_pool,
+            vesting_contract,
         };
 
         return contracts;
     }
 
-    pub fn print_response<T>(response: &FuelCallResponse<T>)
-    where
-        T: std::fmt::Debug,
-    {
-        response.receipts.iter().for_each(|r| match r.ra() {
-            Some(r) => println!("{:?}", r),
-            _ => (),
-        });
-    }
-
-    pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
-        let threshold = a / 100000;
-        assert!(
-            a >= b.saturating_sub(threshold) && a <= b.saturating_add(threshold),
-            "{}",
-            comment
-        );
-    }
-
     pub fn wait() {
-        std::thread::sleep(std::time::Duration::from_secs(12));
+        // Necessary for random instances where the 'UTXO' cannot be found
+        std::thread::sleep(std::time::Duration::from_secs(15));
     }
 
     pub async fn upload_asset(
@@ -493,7 +491,7 @@ pub mod deployment {
                 wait();
                 pb.inc();
 
-                let _ = oracle_abi::set_price(&oracle, 1000 * PRECISION).await;
+                let _ = oracle_abi::set_price(&oracle, 1_000 * PRECISION).await;
                 wait();
                 pb.inc();
             }
