@@ -6,7 +6,7 @@ abigen!(Contract(
 
 pub mod fpt_token_abi {
     use crate::interfaces::community_issuance::CommunityIssuance;
-    use crate::interfaces::usdf_token::USDFToken;
+    use crate::interfaces::vesting::VestingContract;
     use fuels::{prelude::*, types::ContractId};
 
     use super::*;
@@ -14,7 +14,7 @@ pub mod fpt_token_abi {
         instance: &FPTToken<T>,
         mut name: String,
         mut symbol: String,
-        vesting_contract: &USDFToken<T>,
+        vesting_contract: &VestingContract<T>,
         community_issuance_contract: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxParameters::default().with_gas_price(1);

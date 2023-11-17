@@ -3,8 +3,6 @@ use std::{fs::File, io::Write, str::FromStr};
 use dotenv::dotenv;
 use fuels::{prelude::*, types::ContractId};
 use serde_json::json;
-use test_utils::setup::common::ExistingAssetContracts;
-
 use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::community_issuance_abi,
@@ -12,6 +10,7 @@ use test_utils::interfaces::{
     protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
     token::Token, trove_manager::TroveManagerContract, usdf_token::USDFToken,
 };
+use test_utils::setup::common::ExistingAssetContracts;
 
 pub mod deployment {
 
@@ -32,8 +31,8 @@ pub mod deployment {
         deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
         deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
         deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
-        deploy_token, deploy_trove_manager_contract, deploy_usdf_token, AssetContracts,
-        ProtocolContracts,
+        deploy_token, deploy_trove_manager_contract, deploy_usdf_token, deploy_vesting_contract,
+        AssetContracts, ProtocolContracts,
     };
 
     pub async fn deploy() {
@@ -64,40 +63,50 @@ pub mod deployment {
         let address = wallet.address();
         println!("🔑 Wallet address: {}", address);
 
-        let _eth_contracts = ExistingAssetContracts {
+        //--------------- Assets ---------------
+
+        let eth_contracts = ExistingAssetContracts {
             asset: ContractId::from(
                 Bech32ContractId::from_str(
-                    "fuel17unetj5y6ypk354m5jqt3vtl0z9n68ezftpe8st0krte64ttzlssxqfx0t",
+                    "fuel1ql6d5vjmuqs0v2tev7su73zjrpajffy9cjccvll38mxmamaeteuqml4pxl",
                 )
                 .unwrap(),
             ),
             oracle: ContractId::from(
                 Bech32ContractId::from_str(
-                    "fuel1mz3e23uzlttn2crmf5zwst6c55lzemtv5pve55v4y9e06h06p4ws94a847",
+                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
                 )
                 .unwrap(),
             ),
         };
 
-        let _st_eth_contracts = ExistingAssetContracts {
+        let st_eth_contracts = ExistingAssetContracts {
             asset: ContractId::from(
                 Bech32ContractId::from_str(
-                    "fuel18acrkuvrh4h00g0drgd9xvtr0f9lrqn96k03p83afgrnqh9vmhustqn8em",
+                    "fuel1hud0p86m45k2qvhqpqwlz6c2h2pgj32w8tqhq0240dp6y2q26pvqg802xv",
                 )
                 .unwrap(),
             ),
             oracle: ContractId::from(
                 Bech32ContractId::from_str(
-                    "fuel1u4qqr558fx64m68w6f5n23puuz770e9kthxw42yzqrsc095md8dskn5dcj",
+                    "fuel1apa7t7dhpajrxg8xt4thmmaqq6378j4g8femnsz6u6etu3aeajksjzsdld",
                 )
                 .unwrap(),
             ),
         };
 
-        let contracts: ProtocolContracts<WalletUnlocked> =
-            deployment::deploy_and_initialize_all(wallet, 100, true, None, None).await;
+        //--------------- Deploy ---------------
 
-        // Create json with contract addresses
+        let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
+            wallet,
+            100_000,
+            true,
+            Some(eth_contracts),
+            Some(st_eth_contracts),
+        )
+        .await;
+
+        //--------------- Write to file ---------------
         let mut file = File::create("contracts.json").unwrap();
 
         let json = json!({
@@ -114,6 +123,7 @@ pub mod deployment {
             "default_pool": contracts.default_pool.contract_id().to_string(),
             "active_pool": contracts.active_pool.contract_id().to_string(),
             "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
+            "vesting_contract": contracts.vesting_contract.contract_id().to_string(),
             "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
                 json!({
                     "oracle": asset_contracts.oracle.contract_id().to_string(),
@@ -124,18 +134,19 @@ pub mod deployment {
             }).collect::<Vec<serde_json::Value>>()
         });
 
-        let _ = file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes());
+        file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes())
+            .unwrap();
     }
 
     pub async fn deploy_and_initialize_all(
         wallet: WalletUnlocked,
-        _max_size: u64,
+        max_size: u64,
         deploy_2nd_asset: bool,
         existing_eth_contracts: Option<ExistingAssetContracts>,
         existing_st_eth_contracts: Option<ExistingAssetContracts>,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(12);
+        let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -171,8 +182,10 @@ pub mod deployment {
         pb.inc();
 
         let sorted_troves = deploy_sorted_troves(&wallet).await;
+        pb.inc();
 
-        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
+        let vesting_contract = deploy_vesting_contract(&wallet).await;
+        pb.inc();
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("USDF Token: {}", usdf.contract_id());
@@ -186,6 +199,8 @@ pub mod deployment {
         println!("Active Pool {}", active_pool.contract_id());
         println!("Sorted Troves {}", sorted_troves.contract_id());
         println!("Initializing contracts...");
+
+        let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
 
         let mut pb = ProgressBar::new(7);
 
@@ -209,7 +224,7 @@ pub mod deployment {
             &fpt_token,
             "FPT Token".to_string(),
             "FPT".to_string(),
-            &usdf, // TODO this will be the vesting contract
+            &vesting_contract, // TODO this will be the vesting contract
             &community_issuance,
         )
         .await;
@@ -310,9 +325,10 @@ pub mod deployment {
         wait();
         pb.inc();
 
+        // TODO: Verify max size is correct
         let _ = sorted_troves_abi::initialize(
             &sorted_troves,
-            100,
+            max_size,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
         )
@@ -384,6 +400,7 @@ pub mod deployment {
             default_pool,
             sorted_troves,
             active_pool,
+            vesting_contract,
         };
 
         return contracts;
@@ -474,7 +491,7 @@ pub mod deployment {
                 wait();
                 pb.inc();
 
-                let _ = oracle_abi::set_price(&oracle, 1000 * PRECISION).await;
+                let _ = oracle_abi::set_price(&oracle, 1_000 * PRECISION).await;
                 wait();
                 pb.inc();
             }

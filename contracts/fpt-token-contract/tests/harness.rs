@@ -18,10 +18,16 @@ async fn proper_intialize() {
         .await
         .value;
 
-    assert_eq!(vesting_contract, contracts.usdf.contract_id().into());
+    assert_eq!(
+        vesting_contract,
+        contracts.vesting_contract.contract_id().into()
+    );
 
     let fpt_balance_vesting = provider
-        .get_contract_asset_balance(contracts.usdf.contract_id().into(), fpt_asset_id)
+        .get_contract_asset_balance(
+            contracts.vesting_contract.contract_id().into(),
+            fpt_asset_id,
+        )
         .await
         .unwrap();
 
