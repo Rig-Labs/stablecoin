@@ -1,11 +1,11 @@
 use std::{fs::File, io::Write, str::FromStr};
 
-use crate::setup::common::ExistingAssetContracts;
 use dotenv::dotenv;
 use fuels::{prelude::*, types::ContractId};
 use serde_json::json;
+use test_utils::setup::common::ExistingAssetContracts;
 
-use super::interfaces::{
+use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::community_issuance_abi,
     default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::fpt_token_abi, oracle::Oracle,
@@ -15,32 +15,29 @@ use super::interfaces::{
 
 pub mod deployment {
 
-    use fuels::{prelude::Account, programs::call_response::FuelCallResponse, types::Identity};
+    use fuels::{prelude::Account, types::Identity};
     use pbr::ProgressBar;
 
     use super::*;
-    use crate::{
-        data_structures::PRECISION,
-        interfaces::{
-            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
-            fpt_staking::fpt_staking_abi, oracle::oracle_abi,
-            protocol_manager::protocol_manager_abi, sorted_troves::sorted_troves_abi,
-            stability_pool::stability_pool_abi, token::token_abi, trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
-        },
-        setup::common::{
-            deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
-            deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
-            deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
-            deploy_token, deploy_trove_manager_contract, deploy_usdf_token, AssetContracts,
-            ProtocolContracts,
-        },
+
+    use test_utils::data_structures::PRECISION;
+    use test_utils::interfaces::{
+        active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
+        coll_surplus_pool::coll_surplus_pool_abi, default_pool::default_pool_abi,
+        fpt_staking::fpt_staking_abi, oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+        sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
+        trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
+    };
+    use test_utils::setup::common::{
+        deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
+        deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
+        deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
+        deploy_token, deploy_trove_manager_contract, deploy_usdf_token, AssetContracts,
+        ProtocolContracts,
     };
 
     pub async fn deploy() {
         dotenv().ok();
-        // const RPC: &str = "beta-4.fuel.network";
         let rpc = match std::env::var("RPC") {
             Ok(s) => s,
             Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
@@ -165,14 +162,14 @@ pub mod deployment {
         pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-
         pb.inc();
+
         let default_pool = deploy_default_pool(&wallet).await;
-
         pb.inc();
+
         let active_pool = deploy_active_pool(&wallet).await;
-
         pb.inc();
+
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
         let fuel_asset_contracts = upload_asset(wallet.clone(), &existing_eth_contracts).await;
@@ -392,27 +389,9 @@ pub mod deployment {
         return contracts;
     }
 
-    pub fn print_response<T>(response: &FuelCallResponse<T>)
-    where
-        T: std::fmt::Debug,
-    {
-        response.receipts.iter().for_each(|r| match r.ra() {
-            Some(r) => println!("{:?}", r),
-            _ => (),
-        });
-    }
-
-    pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
-        let threshold = a / 100000;
-        assert!(
-            a >= b.saturating_sub(threshold) && a <= b.saturating_add(threshold),
-            "{}",
-            comment
-        );
-    }
-
     pub fn wait() {
-        std::thread::sleep(std::time::Duration::from_secs(12));
+        // Necessary for random instances where the 'UTXO' cannot be found
+        std::thread::sleep(std::time::Duration::from_secs(15));
     }
 
     pub async fn upload_asset(

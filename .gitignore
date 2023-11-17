@@ -3,6 +3,6 @@ target
 *.lock
 .DS_Store
 *.DS_Store
-test-utils/.ENV
+*.ENV
 *types/*
-test-utils/contracts.json
+*/contracts.json

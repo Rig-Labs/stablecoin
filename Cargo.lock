@@ -989,6 +989,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "deploy-scripts"
+version = "0.0.0"
+dependencies = [
+ "dotenv",
+ "fuels",
+ "futures",
+ "pbr",
+ "serde",
+ "serde_json",
+ "test-utils",
+ "tokio",
+]
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

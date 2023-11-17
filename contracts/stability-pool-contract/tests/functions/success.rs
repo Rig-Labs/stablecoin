@@ -2,7 +2,6 @@ use crate::utils::setup::setup;
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::PRECISION,
-    deploy::deployment::print_response,
     interfaces::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
         oracle::oracle_abi,
@@ -11,7 +10,7 @@ use test_utils::{
         trove_manager::trove_manager_abi,
     },
     setup::common::{add_asset, assert_within_threshold, setup_protocol},
-    utils::with_min_borrow_fee,
+    utils::{print_response, with_min_borrow_fee},
 };
 
 #[tokio::test]

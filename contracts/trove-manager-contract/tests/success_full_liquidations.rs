@@ -4,7 +4,6 @@ use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
     data_structures::PRECISION,
-    deploy::deployment::assert_within_threshold,
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -16,7 +15,7 @@ use test_utils::{
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
     setup::common::setup_protocol,
-    utils::{with_liquidation_penalty, with_min_borrow_fee},
+    utils::{assert_within_threshold, with_liquidation_penalty, with_min_borrow_fee},
 };
 
 #[tokio::test]

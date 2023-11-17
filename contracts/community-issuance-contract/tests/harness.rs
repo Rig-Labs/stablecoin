@@ -2,7 +2,6 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::PRECISION,
-    deploy::deployment::print_response,
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         community_issuance::{community_issuance_abi, CommunityIssuance},
@@ -10,6 +9,7 @@ use test_utils::{
         token::token_abi,
     },
     setup::common::setup_protocol,
+    utils::print_response,
 };
 
 fn abs_dif(a: u64, b: u64) -> u64 {

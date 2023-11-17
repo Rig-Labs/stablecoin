@@ -20,4 +20,5 @@ members = [
     "./contracts/tests-artifacts-sorted-troves-contract",
     "./contracts/tests-artifacts-stability-pool-contract",
     "./test-utils",
+    "./deploy-scripts",
 ]

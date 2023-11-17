@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
-use test_utils::deploy::deployment::print_response;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
+use test_utils::utils::print_response;
 use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
