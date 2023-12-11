@@ -1,7 +1,7 @@
 library;
 
 pub mod data_structures;
-use data_structures::{SingleRedemptionValues, Status, Trove};
+use data_structures::{SingleRedemptionValues, Status, Trove, RewardSnapshot};
 
 abi TroveManager {
     #[storage(read, write)]
@@ -18,6 +18,9 @@ abi TroveManager {
 
     #[storage(read)]
     fn get_trove_owner_by_index(index: u64) -> Identity;
+
+    #[storage(read)]
+    fn get_trove_rewards_snapshot(id: Identity) -> RewardSnapshot;
 
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64;

@@ -96,7 +96,7 @@ pub mod deployment {
         };
 
         //--------------- Deploy ---------------
-
+        // TODO: Figure out max size
         let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
             wallet,
             100_000,
@@ -224,7 +224,7 @@ pub mod deployment {
             &fpt_token,
             "FPT Token".to_string(),
             "FPT".to_string(),
-            &vesting_contract, // TODO this will be the vesting contract
+            &vesting_contract,
             &community_issuance,
         )
         .await;

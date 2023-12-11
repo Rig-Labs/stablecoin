@@ -66,3 +66,17 @@ impl Asset {
         Self { id, amount }
     }
 }
+
+pub struct RewardSnapshot {
+    asset: u64,
+    usdf_debt: u64,
+}
+
+impl RewardSnapshot {
+    pub fn default() -> Self {
+        RewardSnapshot {
+            asset: 0,
+            usdf_debt: 0,
+        }
+    }
+}

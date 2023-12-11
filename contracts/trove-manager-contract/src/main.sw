@@ -11,7 +11,6 @@ use ::data_structures::{
     LocalVariablesLiquidationSequence,
     LocalVariablesOuterLiquidationFunction,
     RedemptionTotals,
-    RewardSnapshot,
     Trove,
 };
 
@@ -23,7 +22,7 @@ use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
 use libraries::mock_oracle_interface::MockOracle;
-use libraries::trove_manager_interface::data_structures::{SingleRedemptionValues, Status};
+use libraries::trove_manager_interface::data_structures::{SingleRedemptionValues, Status, RewardSnapshot};
 use libraries::fluid_math::*;
 use std::{
     address::Address,
@@ -120,6 +119,11 @@ impl TroveManager for Contract {
     #[storage(read)]
     fn get_trove_owner_by_index(index: u64) -> Identity {
         return storage.trove_owners.get(index).unwrap().read();
+    }
+
+    #[storage(read)]
+    fn get_trove_rewards_snapshot(id: Identity) -> RewardSnapshot {
+        return storage.reward_snapshots.get(id).read();
     }
 
     #[storage(read, write)]

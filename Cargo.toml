@@ -19,6 +19,7 @@ members = [
     "./contracts/hint-helper-contract",
     "./contracts/tests-artifacts-sorted-troves-contract",
     "./contracts/tests-artifacts-stability-pool-contract",
-    "./test-utils",
+    "./contracts/multi-trove-getter-contract",
     "./deploy-scripts",
+    "./test-utils",
 ]

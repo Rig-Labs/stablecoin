@@ -2494,6 +2494,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "multi-trove-getter-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
