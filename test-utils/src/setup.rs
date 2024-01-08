@@ -96,7 +96,7 @@ pub mod common {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(8);
+        let mut pb = ProgressBar::new(12);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
         pb.inc();
@@ -150,7 +150,7 @@ pub mod common {
             println!("Default Pool: {}", default_pool.contract_id());
         }
 
-        let mut pb = ProgressBar::new(8);
+        let mut pb = ProgressBar::new(12);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
@@ -168,14 +168,7 @@ pub mod common {
         .unwrap();
         pb.inc();
 
-        fpt_token_abi::initialize(
-            &fpt_token,
-            "FPT Token".to_string(),
-            "FPT".to_string(),
-            &vesting_contract,
-            &community_issuance,
-        )
-        .await;
+        fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
         pb.inc();
 
         // mock token for testing staking
@@ -192,8 +185,6 @@ pub mod common {
 
         usdf_token_abi::initialize(
             &usdf,
-            "USD Fuel".to_string(),
-            "USDF".to_string(),
             protocol_manager.contract_id().into(),
             Identity::ContractId(stability_pool.contract_id().into()),
             Identity::ContractId(borrow_operations.contract_id().into()),
@@ -257,6 +248,7 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.inc();
 
         default_pool_abi::initialize(
             &default_pool,
@@ -265,6 +257,7 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.inc();
 
         active_pool_abi::initialize(
             &active_pool,
@@ -275,6 +268,7 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.inc();
 
         sorted_troves_abi::initialize(
             &sorted_troves,
@@ -284,6 +278,7 @@ pub mod common {
         )
         .await
         .unwrap();
+        pb.inc();
 
         let fuel_asset_contracts = add_asset(
             &borrow_operations,

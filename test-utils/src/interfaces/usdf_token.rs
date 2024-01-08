@@ -18,15 +18,11 @@ pub mod usdf_token_abi {
 
     pub async fn initialize<T: Account>(
         instance: &USDFToken<T>,
-        mut name: String,
-        mut symbol: String,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
         let tx_params = TxParameters::default().with_gas_price(1);
-        name.push_str(" ".repeat(32 - name.len()).as_str());
-        symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
 
         instance
             .methods()
@@ -75,12 +71,6 @@ pub mod usdf_token_abi {
             .tx_params(tx_params)
             .call()
             .await
-
-        // .call_params(call_params)
-        // .unwrap()
-        // .tx_params(tx_params)
-        // .call()
-        // .await
     }
 
     pub async fn total_supply<T: Account>(

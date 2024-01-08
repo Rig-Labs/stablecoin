@@ -101,8 +101,6 @@ impl StabilityPool for Contract {
         storage.active_pool_contract.write(active_pool_contract);
         storage.is_initialized.write(true);
         storage.usdf_asset_id.write(get_default_asset_id(usdf_contract));
-        // Super weird, updated from 0.38.1 to 0.41.0 and initial storage assignment was not working
-        storage.p.write( U128::from_u64(DECIMAL_PRECISION));
     }
 
     #[storage(read, write)]

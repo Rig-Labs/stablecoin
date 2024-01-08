@@ -27,8 +27,6 @@ async fn get_contract_instance() -> (
 
     usdf_token_abi::initialize(
         &asset,
-        "Fuel".to_string(),
-        "FUEL".to_string(),
         asset.contract_id().into(),
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),

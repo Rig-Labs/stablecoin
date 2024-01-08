@@ -220,20 +220,11 @@ pub mod deployment {
         .await;
         pb.inc();
 
-        fpt_token_abi::initialize(
-            &fpt_token,
-            "FPT Token".to_string(),
-            "FPT".to_string(),
-            &vesting_contract,
-            &community_issuance,
-        )
-        .await;
+        fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
         pb.inc();
 
         let _ = usdf_token_abi::initialize(
             &usdf,
-            "USD Fuel".to_string(),
-            "USDF".to_string(),
             protocol_manager.contract_id().into(),
             Identity::ContractId(stability_pool.contract_id().into()),
             Identity::ContractId(borrow_operations.contract_id().into()),
