@@ -13,7 +13,7 @@ pub mod active_pool_abi {
     use crate::interfaces::token::Token;
     use fuels::prelude::Account;
     use fuels::{
-        prelude::{CallParameters, ContractId, Error, TxParameters},
+        prelude::{CallParameters, ContractId, Error, TxPolicies},
         types::{AssetId, Identity},
     };
 
@@ -24,7 +24,7 @@ pub mod active_pool_abi {
         default_pool: ContractId,
         protocol_manager: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = active_pool
             .methods()
@@ -34,7 +34,7 @@ pub mod active_pool_abi {
                 default_pool,
                 protocol_manager,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
@@ -70,12 +70,12 @@ pub mod active_pool_abi {
         amount: u64,
         asset_id: AssetId,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         active_pool
             .methods()
             .increase_usdf_debt(amount, asset_id.into())
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -86,12 +86,12 @@ pub mod active_pool_abi {
         amount: u64,
         asset_id: AssetId,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         active_pool
             .methods()
             .decrease_usdf_debt(amount, asset_id.into())
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -102,12 +102,12 @@ pub mod active_pool_abi {
         asset_id: AssetId,
         trove_manager: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         active_pool
             .methods()
             .add_asset(asset_id.into(), trove_manager)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()

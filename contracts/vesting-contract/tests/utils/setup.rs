@@ -9,10 +9,10 @@ pub async fn setup() -> (
     WalletUnlocked,
     Token<WalletUnlocked>,
 ) {
-    let config = Config {
-        manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
-        ..Config::local_node()
-    };
+    // let config = Config {
+    //     manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
+    //     ..Config::local_node()
+    // };
 
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -20,10 +20,11 @@ pub async fn setup() -> (
             Some(1),             /* Single coin (UTXO) */
             Some(1_000_000_000), /* Amount per coin */
         ),
-        Some(config),
+        None,
         None,
     )
-    .await;
+    .await
+    .unwrap();
 
     let wallet = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
@@ -72,7 +73,7 @@ pub mod test_helpers {
                 &vesting_contract.contract_id(),
                 amount,
                 asset_id,
-                TxParameters::default(),
+                TxPolicies::default(),
             )
             .await;
     }

@@ -15,7 +15,7 @@ pub mod fpt_token_abi {
         vesting_contract: &VestingContract<T>,
         community_issuance_contract: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -24,7 +24,7 @@ pub mod fpt_token_abi {
                 community_issuance_contract.contract_id(),
             )
             .with_contracts(&[vesting_contract, community_issuance_contract])
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .append_variable_outputs(10)
             .call()
             .await;

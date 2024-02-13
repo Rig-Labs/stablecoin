@@ -7,7 +7,7 @@ abigen!(Contract(
 ));
 
 pub mod community_issuance_abi {
-    use fuels::prelude::{Account, TxParameters};
+    use fuels::prelude::{Account, TxPolicies};
 
     use fuels::{prelude::ContractId, prelude::Error, types::AssetId, types::Identity};
 
@@ -19,7 +19,7 @@ pub mod community_issuance_abi {
         admin: &Identity,
         debugging: bool,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -29,7 +29,7 @@ pub mod community_issuance_abi {
                 admin.clone(),
                 debugging,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
@@ -40,12 +40,12 @@ pub mod community_issuance_abi {
         instance: &CommunityIssuance<T>,
         time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
             .set_current_time(time)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
@@ -55,12 +55,12 @@ pub mod community_issuance_abi {
     pub async fn public_start_rewards_increase_transition_after_deadline<T: Account>(
         instance: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
             .public_start_rewards_increase_transition_after_deadline()
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
@@ -71,12 +71,12 @@ pub mod community_issuance_abi {
         instance: &CommunityIssuance<T>,
         transition_time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
             .start_rewards_increase_transition(transition_time)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 

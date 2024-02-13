@@ -1,9 +1,14 @@
 contract;
 
 use libraries::usdf_token_interface::USDFToken;
-use libraries::fluid_math::{get_default_asset_id, null_contract, null_identity_address, ZERO_B256};
+use libraries::fluid_math::{get_default_asset_id, ZERO_B256};
 use std::{
     address::*,
+    asset::{
+        burn,
+        mint_to,
+        transfer,
+    },
     auth::{
         AuthError,
         msg_sender,
@@ -24,7 +29,6 @@ use std::{
     revert::require,
     storage::storage_vec::*,
     string::String,
-    token::*,
 };
 storage {
     trove_managers: StorageVec<ContractId> = StorageVec {},
@@ -35,10 +39,9 @@ storage {
     total_supply: u64 = 0,
     is_initialized: bool = false,
 }
-enum Error {
-    NotAuthorized: (),
-}
-impl USDFToken for Contract { //////////////////////////////////////
+
+impl USDFToken for Contract {
+    //////////////////////////////////////
     // Owner methods
     //////////////////////////////////////
     #[storage(read, write)]
@@ -47,25 +50,36 @@ impl USDFToken for Contract { //////////////////////////////////////
         stability_pool: Identity,
         borrower_operations: Identity,
     ) {
-        require(storage.is_initialized.read() == false, "Contract is already initialized");
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "Contract is already initialized",
+        );
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
         storage.borrower_operations.write(borrower_operations);
-        storage.default_asset.write(get_default_asset_id(contract_id()));
+        storage
+            .default_asset
+            .write(get_default_asset_id(contract_id()));
         storage.is_initialized.write(true);
     }
     #[storage(read, write)]
     fn mint(amount: u64, address: Identity) {
         require_caller_is_borrower_operations();
         mint_to(address, ZERO_B256, amount);
-        storage.total_supply.write(storage.total_supply.try_read().unwrap_or(0) + amount);
+        storage
+            .total_supply
+            .write(storage.total_supply.try_read().unwrap_or(0) + amount);
     }
     #[storage(read, write), payable]
     fn burn() {
         require_caller_is_bo_or_tm_or_sp_or_pm();
         let burn_amount = msg_amount();
         burn(ZERO_B256, burn_amount);
-        storage.total_supply.write(storage.total_supply.read() - burn_amount);
+        storage
+            .total_supply
+            .write(storage.total_supply.read() - burn_amount);
     }
     #[storage(read, write)]
     fn add_trove_manager(trove_manager: ContractId) {
@@ -94,6 +108,7 @@ impl USDFToken for Contract { //////////////////////////////////////
         }
         return None;
     }
+
     #[storage(read)]
     fn symbol(asset: AssetId) -> Option<String> {
         if asset == storage.default_asset.read() {
@@ -103,19 +118,29 @@ impl USDFToken for Contract { //////////////////////////////////////
     }
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
-        if asset == storage.default_asset.read() {
-            return Some(9);
-        }
+        // if asset == storage.default_asset.read() {
+        //     return Some(9u8);
+        // }
         return None;
     }
 }
 #[storage(read)]
 fn require_caller_is_protocol_manager() {
-    require(msg_sender().unwrap() == Identity::ContractId(storage.protocol_manager.read()), Error::NotAuthorized);
+    require(
+        msg_sender()
+            .unwrap() == Identity::ContractId(storage.protocol_manager.read()),
+        "NotAuthorized",
+    );
 }
 #[storage(read)]
 fn require_caller_is_borrower_operations() {
-    require(msg_sender().unwrap() == storage.borrower_operations.read(), Error::NotAuthorized);
+    require(
+        msg_sender()
+            .unwrap() == storage
+            .borrower_operations
+            .read(),
+        "NotAuthorized",
+    );
 }
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
@@ -129,5 +154,12 @@ fn require_caller_is_bo_or_tm_or_sp_or_pm() {
         }
         i += 1;
     }
-    require(sender == storage.borrower_operations.read() || sender == storage.stability_pool.read() || sender == protocol_manager_id, Error::NotAuthorized);
+    require(
+        sender == storage
+            .borrower_operations
+            .read() || sender == storage
+            .stability_pool
+            .read() || sender == protocol_manager_id,
+        "NotAuthorized",
+    );
 }

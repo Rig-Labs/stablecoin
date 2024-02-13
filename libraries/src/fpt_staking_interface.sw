@@ -21,7 +21,12 @@ abi FPTStaking {
     fn add_asset(asset_address: AssetId);
 
     #[storage(read, write)]
-    fn initialize(protocol_manager: ContractId, borrower_operations_address: ContractId, fpt_address: AssetId, usdf_address: AssetId);
+    fn initialize(
+        protocol_manager: ContractId,
+        borrower_operations_address: ContractId,
+        fpt_address: AssetId,
+        usdf_address: AssetId,
+    );
 
     #[storage(read)]
     fn get_storage() -> ReadStorage;

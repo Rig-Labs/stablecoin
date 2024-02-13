@@ -6,6 +6,7 @@ use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::*;
 use std::{
+    asset::transfer,
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
@@ -15,7 +16,6 @@ use std::{
     },
     hash::Hasher,
     logging::log,
-    token::transfer,
 };
 
 storage {}
@@ -35,19 +35,19 @@ struct CombinedTroveData {
 }
 
 impl MultiTroveGetter for Contract {
-// #[storage(read)]
-// fn get_multiple_sorted_troves(
-//     sorted_troves_contract: ContractId,
-//     trove_manager_contract: ContractId,
-//     start_indx: u64,
-//     count: u8,
-// ) -> Vec<CombinedTroveData> {
-//     let mut troves = Vec::new();
-//     let mut index = start_indx;
-//     let mut current_count = 0;
+    // #[storage(read)]
+    // fn get_multiple_sorted_troves(
+    //     sorted_troves_contract: ContractId,
+    //     trove_manager_contract: ContractId,
+    //     start_indx: u64,
+    //     count: u8,
+    // ) -> Vec<CombinedTroveData> {
+    //     let mut troves = Vec::new();
+    //     let mut index = start_indx;
+    //     let mut current_count = 0;
 
-//     return Vec::new();
-// }
+    //     return Vec::new();
+    // }
 }
 
 #[storage(read)]
@@ -73,23 +73,7 @@ fn get_multiple_sorted_troves_from_head(
         curr_index += 1;
     }
 
-    while current_count < count {
-        // let trove = trove_manager.get_entire_debt_and_coll(current_trove_owner);
-        // let stake = trove_manager.get_trove_stake(current_trove_owner);
-        // let trove_snapshot = trove_manager.get_trove_reward_snapshot(current_trove_owner);
-
-        // troves.push(CombinedTroveData {
-        //     address: current_trove_owner,
-        //     collateral: trove.0,
-        //     debt: trove.1,
-        //     stake: stake,
-        //     snapshot_collateral: trove_snapshot.asset,
-        //     snapshot_debt: trove_snapshot.usdf_debt,
-        // });
-
-        // current_trove_owner = sorted_troves.get_next(current_trove_owner, asset_id);
-        // current_count += 1;
-    }
+    while current_count < count {}
 
     return troves;
 }

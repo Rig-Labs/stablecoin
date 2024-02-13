@@ -425,7 +425,7 @@ async fn proper_many_depositors_distribution() {
         .contract_id()
         .asset_id(&BASE_ASSET_ID.into())
         .into();
-    let tx_params = TxParameters::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_gas_price(1);
 
     admin
         .transfer(
@@ -625,7 +625,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         .contract_id()
         .asset_id(&BASE_ASSET_ID.into())
         .into();
-    let tx_params = TxParameters::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_gas_price(1);
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
 

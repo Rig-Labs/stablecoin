@@ -17,7 +17,7 @@ pub mod borrow_operations_abi {
     use crate::interfaces::trove_manager::TroveManagerContract;
     use crate::interfaces::usdf_token::USDFToken;
     use fuels::prelude::Account;
-    use fuels::prelude::{CallParameters, ContractId, Error, TxParameters};
+    use fuels::prelude::{CallParameters, ContractId, Error, TxPolicies};
     use fuels::types::{AssetId, Identity};
 
     pub async fn initialize<T: Account>(
@@ -29,7 +29,9 @@ pub mod borrow_operations_abi {
         active_pool_contract: ContractId,
         sorted_troves_contract: ContractId,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
 
         borrow_operations
             .methods()
@@ -41,7 +43,7 @@ pub mod borrow_operations_abi {
                 active_pool_contract,
                 sorted_troves_contract,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -61,9 +63,10 @@ pub mod borrow_operations_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default()
+        let tx_params = TxPolicies::default()
             .with_gas_price(1)
-            .with_gas_limit(2000000);
+            .with_witness_limit(2000000)
+            .with_script_gas_limit(2000000);
 
         let asset_id = asset_token
             .contract_id()
@@ -73,6 +76,7 @@ pub mod borrow_operations_abi {
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fuel_amount_deposit)
             .with_asset_id(asset_id);
+        println!("call_params: {:?}", call_params);
 
         return borrow_operations
             .methods()
@@ -89,7 +93,7 @@ pub mod borrow_operations_abi {
                 fpt_staking,
             ])
             .append_variable_outputs(3)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
     }
@@ -106,7 +110,9 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
 
         let fuel_asset_id: AssetId = fuel_token
             .contract_id()
@@ -131,7 +137,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
             ])
             .append_variable_outputs(1)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
     }
@@ -147,7 +153,9 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
 
         let fuel_asset_id: AssetId = fuel_token
             .contract_id()
@@ -165,7 +173,7 @@ pub mod borrow_operations_abi {
                 active_pool,
             ])
             .append_variable_outputs(1)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
     }
@@ -183,7 +191,9 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
 
         let fuel_asset_id: AssetId = fuel_token
             .contract_id()
@@ -203,7 +213,7 @@ pub mod borrow_operations_abi {
                 fpt_staking,
             ])
             .append_variable_outputs(1)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -221,7 +231,9 @@ pub mod borrow_operations_abi {
         lower_hint: Identity,
         upper_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
         let usdf_asset_id = usdf_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
@@ -248,7 +260,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
             ])
             .append_variable_outputs(1)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
             .call()
@@ -266,7 +278,9 @@ pub mod borrow_operations_abi {
         active_pool: &ActivePool<T>,
         amount: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
         let usdf_asset_id: AssetId = usdf_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
@@ -296,7 +310,7 @@ pub mod borrow_operations_abi {
                 fpt_staking,
             ])
             .append_variable_outputs(3)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
             .call()
@@ -310,12 +324,14 @@ pub mod borrow_operations_abi {
         trove_manager: ContractId,
         asset: AssetId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(2000000);
 
         return borrow_operations
             .methods()
             .add_asset(asset.into(), trove_manager, oracle)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
     }

@@ -970,7 +970,9 @@ async fn proper_close_trove() {
         .asset_id(&BASE_ASSET_ID.into())
         .into();
     let amount = borrow_amount1 / 200;
-    let tx_parms = TxParameters::default();
+    let tx_parms = TxPolicies::default()
+        .with_gas_price(1)
+        .with_script_gas_limit(2000000);
 
     wallet1
         .transfer(wallet2.address(), amount, usdf_asset_id, tx_parms)

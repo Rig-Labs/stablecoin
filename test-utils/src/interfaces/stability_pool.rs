@@ -14,7 +14,7 @@ pub mod stability_pool_abi {
     use super::*;
     use fuels::prelude::BASE_ASSET_ID;
     use fuels::{
-        prelude::{Account, CallParameters, Error, TxParameters, WalletUnlocked},
+        prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},
         programs::call_response::FuelCallResponse,
         types::{AssetId, ContractId, Identity},
     };
@@ -27,7 +27,7 @@ pub mod stability_pool_abi {
         protocol_manager_contract: ContractId,
         active_pool: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         stability_pool
             .methods()
@@ -37,7 +37,7 @@ pub mod stability_pool_abi {
                 protocol_manager_contract,
                 active_pool,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
     }
@@ -48,12 +48,12 @@ pub mod stability_pool_abi {
         asset_address: AssetId,
         oracle_address: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         stability_pool
             .methods()
             .add_asset(trove_manager, asset_address.into(), oracle_address)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
     }
@@ -65,9 +65,10 @@ pub mod stability_pool_abi {
         fuel_token: &Token<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default()
+        let tx_params = TxPolicies::default()
             .with_gas_price(1)
-            .with_gas_limit(2_000_000);
+            .with_witness_limit(2_000_000)
+            .with_script_gas_limit(2000000);
 
         let usdf_asset_id = usdf_token.contract_id().asset_id(&BASE_ASSET_ID.into());
 
@@ -78,7 +79,7 @@ pub mod stability_pool_abi {
         stability_pool
             .methods()
             .provide_to_stability_pool()
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
             .append_variable_outputs(2)
@@ -149,12 +150,12 @@ pub mod stability_pool_abi {
         fuel_token: &Token<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         stability_pool
             .methods()
             .withdraw_from_stability_pool(amount)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .append_variable_outputs(2)
             .with_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()

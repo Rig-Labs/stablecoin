@@ -1,14 +1,32 @@
 library;
 
 pub mod data_structures;
-use data_structures::{SingleRedemptionValues, Status, Trove, RewardSnapshot};
+use data_structures::{RewardSnapshot, SingleRedemptionValues, Status};
 
 abi TroveManager {
     #[storage(read, write)]
-    fn initialize(borrow_operations: ContractId, sorted_troves: ContractId, oracle: ContractId, stability_pool: ContractId, default_pool: ContractId, active_pool: ContractId, coll_surplus_pool: ContractId, usdf_contract: ContractId, asset_contract: AssetId, protocol_manager: ContractId);
+    fn initialize(
+        borrow_operations: ContractId,
+        sorted_troves: ContractId,
+        oracle: ContractId,
+        stability_pool: ContractId,
+        default_pool: ContractId,
+        active_pool: ContractId,
+        coll_surplus_pool: ContractId,
+        usdf_contract: ContractId,
+        asset_contract: AssetId,
+        protocol_manager: ContractId,
+    );
 
     #[storage(read, write)]
-    fn redeem_collateral_from_trove(borrower: Identity, max_usdf_amount: u64, price: u64, partial_redemption_hint: u64, upper_partial_hint: Identity, lower_partial_hint: Identity) -> SingleRedemptionValues;
+    fn redeem_collateral_from_trove(
+        borrower: Identity,
+        max_usdf_amount: u64,
+        price: u64,
+        partial_redemption_hint: u64,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    ) -> SingleRedemptionValues;
 
     #[storage(read)]
     fn get_entire_system_debt() -> u64;
@@ -29,13 +47,25 @@ abi TroveManager {
     fn get_current_icr(id: Identity, price: u64) -> u64;
 
     #[storage(read, write)]
-    fn liquidate(id: Identity, upper_partial_hint: Identity, lower_partial_hint: Identity);
+    fn liquidate(
+        id: Identity,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    );
 
     #[storage(read, write)]
-    fn liquidate_troves(num_troves: u64, upper_partial_hint: Identity, lower_partial_hint: Identity);
+    fn liquidate_troves(
+        num_troves: u64,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    );
 
     #[storage(read, write)]
-    fn batch_liquidate_troves(ids: Vec<Identity>, upper_partial_hint: Identity, lower_partial_hint: Identity);
+    fn batch_liquidate_troves(
+        ids: Vec<Identity>,
+        upper_partial_hint: Identity,
+        lower_partial_hint: Identity,
+    );
 
     #[storage(read, write)]
     fn update_stake_and_total_stakes(id: Identity) -> u64;

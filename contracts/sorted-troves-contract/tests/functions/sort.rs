@@ -2,9 +2,9 @@ use crate::utils::setup::{initialize_st_and_tm, remove, set_nominal_icr_and_inse
 use crate::utils::sorted_troves::sorted_troves_utils::{
     assert_in_order_from_head, assert_in_order_from_tail, assert_neighbors, generate_random_nodes,
 };
-use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::types::AssetId;
 use fuels::{prelude::*, types::Identity};
+use rand::{self, Rng};
 use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 
 #[tokio::test]
@@ -60,7 +60,7 @@ async fn proper_head_and_tails_after_insert() {
 
     assert_eq!(result.value, false);
 
-    let tx_params = TxParameters::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_gas_price(1);
 
     let result = sorted_troves
         .methods()
@@ -71,7 +71,7 @@ async fn proper_head_and_tails_after_insert() {
             asset.into(),
         )
         .with_contracts(&[&trove_manager])
-        .tx_params(tx_params)
+        .with_tx_policies(tx_params)
         .simulate()
         .await
         .unwrap();

@@ -3,6 +3,7 @@ contract;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
 use libraries::fluid_math::ZERO_B256;
 use std::{
+    asset::transfer,
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
@@ -12,7 +13,6 @@ use std::{
     },
     hash::Hash,
     logging::log,
-    token::transfer,
 };
 storage {
     protocol_manager: Identity = Identity::Address(Address::from(ZERO_B256)),
@@ -29,8 +29,15 @@ impl CollSurplusPool for Contract {
         borrow_operations_contract: ContractId,
         protocol_manager: Identity,
     ) {
-        require(storage.is_initialized.read() == false, "CSP: Contract is already initialized");
-        storage.borrow_operations_contract.write(borrow_operations_contract);
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "CSP: Contract is already initialized",
+        );
+        storage
+            .borrow_operations_contract
+            .write(borrow_operations_contract);
         storage.protocol_manager.write(protocol_manager);
         storage.is_initialized.write(true);
     }
@@ -59,7 +66,9 @@ impl CollSurplusPool for Contract {
         require_is_trove_manager();
         require_is_valid_asset_id(asset);
         let current_asset_amount = storage.asset_amount.get(asset).try_read().unwrap_or(0);
-        storage.asset_amount.insert(asset, current_asset_amount + amount);
+        storage
+            .asset_amount
+            .insert(asset, current_asset_amount + amount);
         let mut balance = storage.balances.get((account, asset)).try_read().unwrap_or(0);
         balance += amount;
         storage.balances.insert((account, asset), balance);
@@ -94,5 +103,8 @@ fn require_is_trove_manager() {
 fn require_is_borrow_operations_contract() {
     let caller = msg_sender().unwrap();
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract.read());
-    require(caller == borrow_operations_contract, "CSP: Caller is not BO");
+    require(
+        caller == borrow_operations_contract,
+        "CSP: Caller is not BO",
+    );
 }

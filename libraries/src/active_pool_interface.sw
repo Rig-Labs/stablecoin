@@ -2,7 +2,12 @@ library;
 
 abi ActivePool {
     #[storage(read, write)]
-    fn initialize(borrow_operations: Identity, stability_pool: Identity, default_pool: ContractId, protocol_manager: Identity);
+    fn initialize(
+        borrow_operations: Identity,
+        stability_pool: Identity,
+        default_pool: ContractId,
+        protocol_manager: Identity,
+    );
 
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64, asset_id: AssetId);

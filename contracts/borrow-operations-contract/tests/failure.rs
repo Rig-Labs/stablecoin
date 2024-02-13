@@ -272,6 +272,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     )
     .await
     .unwrap();
+    println!("Opened trove");
 
     // 600 USDF - 300 USDF < 500 USDF
 
@@ -289,6 +290,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     )
     .await
     .is_err();
+    println!("Repaying");
 
     assert!(
         res,

@@ -26,7 +26,8 @@ async fn get_contract_instance() -> (
         None,
         None,
     )
-    .await;
+    .await
+    .unwrap();
     let wallet = wallets.pop().unwrap();
 
     let instance = deploy_default_pool(&wallet).await;

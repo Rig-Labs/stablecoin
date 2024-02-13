@@ -9,6 +9,7 @@ use ::interface::VestingContract;
 use ::utils::{calculate_redeemable_amount, is_valid_vesting_schedule};
 use std::{
     address::Address,
+    asset::transfer,
     auth::msg_sender,
     block::{
         height,
@@ -24,7 +25,6 @@ use std::{
     hash::Hash,
     logging::log,
     storage::storage_vec::*,
-    token::transfer,
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 storage {
@@ -43,18 +43,28 @@ impl VestingContract for Contract {
         schedules: Vec<VestingSchedule>,
         debugging: bool,
     ) {
-        require(!storage.is_initialized.read(), "Contract is already initialized");
+        require(
+            !storage
+                .is_initialized
+                .read(),
+            "Contract is already initialized",
+        );
         storage.asset.write(asset);
         storage.debug.write(debugging);
         let mut i = 0;
         while i < schedules.len() {
             let schedule = schedules.get(i).unwrap();
-            require(is_valid_vesting_schedule(schedule), "Invalid vesting schedule");
+            require(
+                is_valid_vesting_schedule(schedule),
+                "Invalid vesting schedule",
+            );
             match storage.vesting_schedules.get(schedule.recipient).try_read() {
                 Some(_) => require(false, "Schedule already exists"),
                 None => {}
             }
-            storage.vesting_schedules.insert(schedule.recipient, schedule);
+            storage
+                .vesting_schedules
+                .insert(schedule.recipient, schedule);
             storage.vesting_addresses.push(schedule.recipient);
             i += 1;
         }
@@ -88,7 +98,12 @@ impl VestingContract for Contract {
     }
     #[storage(write, read)]
     fn set_current_time(time: u64) {
-        require(storage.debug.read(), "Debugging must be enabled to set current time");
+        require(
+            storage
+                .debug
+                .read(),
+            "Debugging must be enabled to set current time",
+        );
         storage.debug_timestamp.write(time);
     }
 }

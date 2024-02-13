@@ -4,12 +4,11 @@ use libraries::fpt_token_interface::FPTToken;
 use libraries::fluid_math::{
     DECIMAL_PRECISION,
     get_default_asset_id,
-    null_contract,
-    null_identity_address,
     ZERO_B256,
 };
 use std::{
     address::*,
+    asset::*,
     auth::{
         AuthError,
         msg_sender,
@@ -26,10 +25,8 @@ use std::{
     identity::{
         Identity,
     },
-    revert::require,
     storage::*,
     string::String,
-    token::*,
 };
 storage {
     vesting_contract: ContractId = ContractId::from(ZERO_B256),
@@ -48,13 +45,30 @@ impl FPTToken for Contract {
         vesting_contract: ContractId,
         community_issuance_contract: ContractId,
     ) {
-        require(storage.is_initialized.read() == false, "Contract is already initialized");
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "Contract is already initialized",
+        );
         storage.vesting_contract.write(vesting_contract);
-        storage.community_issuance_contract.write(community_issuance_contract);
+        storage
+            .community_issuance_contract
+            .write(community_issuance_contract);
         // storage.config.write(config);
-        mint_to(Identity::ContractId(vesting_contract), ZERO_B256, TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION);
-        mint_to(Identity::ContractId(community_issuance_contract), ZERO_B256, TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION);
-        storage.default_asset.write(get_default_asset_id(contract_id()));
+        mint_to(
+            Identity::ContractId(vesting_contract),
+            ZERO_B256,
+            TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION,
+        );
+        mint_to(
+            Identity::ContractId(community_issuance_contract),
+            ZERO_B256,
+            TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION,
+        );
+        storage
+            .default_asset
+            .write(get_default_asset_id(contract_id()));
         storage.is_initialized.write(true);
     }
     //////////////////////////////////////
@@ -97,9 +111,9 @@ impl FPTToken for Contract {
 
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
-        if asset == storage.default_asset.read() {
-            return Some(9);
-        }
+        // if asset == storage.default_asset.read() {
+        //     return Some(9);
+        // }
         return None;
     }
 }

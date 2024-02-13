@@ -4,6 +4,7 @@ use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
 use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
 use std::{
+    asset::transfer,
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
@@ -13,7 +14,6 @@ use std::{
     },
     hash::Hash,
     logging::log,
-    token::transfer,
 };
 
 storage {
@@ -29,7 +29,12 @@ storage {
 impl DefaultPool for Contract {
     #[storage(read, write)]
     fn initialize(protocol_manager: Identity, active_pool_contract: ContractId) {
-        require(storage.is_initialized.read() == false, "Contract is already initialized");
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "Contract is already initialized",
+        );
 
         storage.protocol_manager.write(protocol_manager);
         storage.active_pool_contract.write(active_pool_contract);
@@ -43,10 +48,11 @@ impl DefaultPool for Contract {
         let new_amount = storage.asset_amount.get(asset_id).read() - amount;
 
         storage.asset_amount.insert(asset_id, new_amount);
-        active_pool.recieve {
-            coins: amount,
-            asset_id: asset_id.value,
-        }();
+        active_pool
+            .recieve {
+                coins: amount,
+                asset_id: asset_id.value,
+            }();
     }
 
     #[storage(read, write)]
@@ -109,7 +115,10 @@ fn require_is_trove_manager() {
 fn require_is_active_pool_contract() {
     let caller = msg_sender().unwrap();
     let active_pool_contract_contract = Identity::ContractId(storage.active_pool_contract.read());
-    require(caller == active_pool_contract_contract, "DP: Caller is not AP");
+    require(
+        caller == active_pool_contract_contract,
+        "DP: Caller is not AP",
+    );
 }
 
 #[storage(read)]

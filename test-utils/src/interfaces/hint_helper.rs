@@ -12,7 +12,7 @@ pub mod hint_helper_abi {
     use crate::interfaces::trove_manager::TroveManagerContract;
     use fuels::prelude::Account;
     use fuels::{
-        prelude::{ContractId, Error, TxParameters},
+        prelude::{ContractId, Error, TxPolicies},
         types::{AssetId, Identity},
     };
 
@@ -21,12 +21,12 @@ pub mod hint_helper_abi {
 
         sorted_troves: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = hint_helper
             .methods()
             .initialize(sorted_troves)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 

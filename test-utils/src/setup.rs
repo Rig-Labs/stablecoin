@@ -7,7 +7,7 @@ use super::interfaces::{
     trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
 };
 
-use fuels::prelude::{Contract, TxParameters, WalletUnlocked};
+use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
 
 pub mod common {
     use super::*;
@@ -24,12 +24,13 @@ pub mod common {
         paths::*,
     };
     use fuels::{
-        accounts::fuel_crypto::rand::{self, Rng},
+        // accounts::rand::{self, Rng},
         prelude::*,
         programs::call_response::FuelCallResponse,
         types::{ContractId, Identity},
     };
     use pbr::ProgressBar;
+    use rand::Rng;
     use std::env;
 
     pub struct ProtocolContracts<T: Account> {
@@ -80,7 +81,8 @@ pub mod common {
             None,
             None,
         )
-        .await;
+        .await
+        .unwrap();
         let wallet = wallets.pop().unwrap();
 
         let contracts =
@@ -345,14 +347,14 @@ pub mod common {
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -364,7 +366,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -376,14 +378,14 @@ pub mod common {
     pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -395,7 +397,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -407,14 +409,14 @@ pub mod common {
     pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policy = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policy)
         .await;
 
         match id {
@@ -426,7 +428,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policy)
                 .await
                 .unwrap();
 
@@ -440,14 +442,14 @@ pub mod common {
     ) -> TroveManagerContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -459,7 +461,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -473,14 +475,14 @@ pub mod common {
     ) -> VestingContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -491,7 +493,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -503,14 +505,14 @@ pub mod common {
     pub async fn deploy_oracle(wallet: &WalletUnlocked) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -523,7 +525,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -537,14 +539,14 @@ pub mod common {
     ) -> ProtocolManager<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await
         .unwrap();
 
@@ -556,14 +558,14 @@ pub mod common {
     ) -> BorrowOperations<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -577,7 +579,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -690,14 +692,14 @@ pub mod common {
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -711,7 +713,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -723,14 +725,14 @@ pub mod common {
     pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -744,7 +746,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -756,14 +758,14 @@ pub mod common {
     pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -777,7 +779,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -791,14 +793,14 @@ pub mod common {
     ) -> CollSurplusPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -812,7 +814,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -826,14 +828,14 @@ pub mod common {
     ) -> CommunityIssuance<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -847,7 +849,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -859,14 +861,14 @@ pub mod common {
     pub async fn deploy_fpt_staking(wallet: &WalletUnlocked) -> FPTStaking<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -880,7 +882,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -892,14 +894,14 @@ pub mod common {
     pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_parms = TxParameters::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_gas_price(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_parms)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -913,7 +915,7 @@ pub mod common {
                     LoadConfiguration::default().with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_parms)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -931,7 +933,7 @@ pub mod common {
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxParameters::default().with_gas_price(1))
+        .deploy(&wallet.clone(), TxPolicies::default().with_gas_price(1))
         .await
         .unwrap();
 

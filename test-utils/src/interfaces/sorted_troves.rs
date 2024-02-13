@@ -11,7 +11,7 @@ pub mod sorted_troves_abi {
     use super::*;
 
     use fuels::{
-        prelude::{Account, Error, TxParameters},
+        prelude::{Account, Error, TxPolicies},
         types::AssetId,
     };
 
@@ -21,12 +21,12 @@ pub mod sorted_troves_abi {
         protocol_manager: ContractId,
         borrow_opperations: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = sorted_troves
             .methods()
             .set_params(max_size, protocol_manager, borrow_opperations)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
