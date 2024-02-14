@@ -1,11 +1,7 @@
 contract;
 
 use libraries::fpt_token_interface::FPTToken;
-use libraries::fluid_math::{
-    DECIMAL_PRECISION,
-    get_default_asset_id,
-    ZERO_B256,
-};
+use libraries::fluid_math::{DECIMAL_PRECISION, get_default_asset_id, ZERO_B256,};
 use std::{
     address::*,
     asset::*,
@@ -111,9 +107,9 @@ impl FPTToken for Contract {
 
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
-        // if asset == storage.default_asset.read() {
-        //     return Some(9);
-        // }
+        if asset == storage.default_asset.read() {
+            return Some(9u8);
+        }
         return None;
     }
 }

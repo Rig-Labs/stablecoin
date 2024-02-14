@@ -118,9 +118,9 @@ impl USDFToken for Contract {
     }
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
-        // if asset == storage.default_asset.read() {
-        //     return Some(9u8);
-        // }
+        if asset == storage.default_asset.read() {
+            return Some(9u8);
+        }
         return None;
     }
 }
