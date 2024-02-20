@@ -2,6 +2,7 @@ contract;
 use libraries::token_interface::{Token, TokenInitializeConfig};
 use std::{
     address::*,
+    asset::*,
     auth::{
         AuthError,
         msg_sender,
@@ -21,7 +22,6 @@ use std::{
     },
     revert::require,
     storage::*,
-    token::*,
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 storage {
@@ -55,7 +55,12 @@ impl Token for Contract {
         mint_amount: u64,
         owner: Identity,
     ) {
-        require(storage.owner.read() == Identity::Address(Address::from(ZERO_B256)), Error::CannotReinitialize);
+        require(
+            storage
+                .owner
+                .read() == Identity::Address(Address::from(ZERO_B256)),
+            Error::CannotReinitialize,
+        );
         storage.owner.write(owner);
         storage.mint_amount.write(mint_amount);
         // storage.config.write(config);
@@ -97,7 +102,13 @@ impl Token for Contract {
         require(storage.mint_amount.read() > 0, Error::MintIsClosed);
         // Enable a address to mint only once
         let sender = msg_sender().unwrap();
-        require(storage.mint_list.get(sender).read() == false, Error::AddressAlreadyMint);
+        require(
+            storage
+                .mint_list
+                .get(sender)
+                .read() == false,
+            Error::AddressAlreadyMint,
+        );
         storage.mint_list.insert(sender, true);
         mint_to(sender, ZERO_B256, storage.mint_amount.read());
     }

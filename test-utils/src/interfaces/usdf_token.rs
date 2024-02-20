@@ -12,21 +12,17 @@ abigen!(Contract(
 pub mod usdf_token_abi {
     use super::*;
     use fuels::{
-        prelude::{Account, CallParameters, Error, TxParameters},
+        prelude::{Account, CallParameters, Error, TxPolicies},
         types::ContractId,
     };
 
     pub async fn initialize<T: Account>(
         instance: &USDFToken<T>,
-        mut name: String,
-        mut symbol: String,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
-        name.push_str(" ".repeat(32 - name.len()).as_str());
-        symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         instance
             .methods()
@@ -35,7 +31,7 @@ pub mod usdf_token_abi {
                 stability_pool.clone(),
                 borrow_operations.clone(),
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
     }
@@ -57,7 +53,9 @@ pub mod usdf_token_abi {
         usdf_token: &USDFToken<T>,
         amount: u64,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default()
+            .with_gas_price(1)
+            .with_script_gas_limit(200000);
         let usdf_asset_id = usdf_token
             .contract_id()
             .asset_id(&BASE_ASSET_ID.into())
@@ -72,15 +70,9 @@ pub mod usdf_token_abi {
         call_handler
             .call_params(call_params)
             .unwrap()
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
-
-        // .call_params(call_params)
-        // .unwrap()
-        // .tx_params(tx_params)
-        // .call()
-        // .await
     }
 
     pub async fn total_supply<T: Account>(

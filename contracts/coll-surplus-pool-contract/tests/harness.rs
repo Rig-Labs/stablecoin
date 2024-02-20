@@ -21,7 +21,8 @@ async fn get_contract_instance() -> (
         None,
         None,
     )
-    .await;
+    .await
+    .unwrap();
     let wallet = wallets.pop().unwrap();
 
     let coll_pool = deploy_coll_surplus_pool(&wallet).await;

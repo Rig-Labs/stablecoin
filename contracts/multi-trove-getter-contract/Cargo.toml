@@ -1,13 +1,15 @@
 [package]
-name = "token-contract"
+name = "multi-trove-getter-contract"
 version = "0.1.0"
 authors = ["hydrogen-labs"]
 edition = "2021"
 license = "Apache-2.0"
 
-[dependencies]
+[dev-dependencies]
 fuels = { workspace = true, default-features = false }
+test-utils = { path = "../../test-utils" }
 tokio = { workspace = true, default-features = false }
+
 # Not the latest version because of indexer bug o.o 
 
 [[test]]

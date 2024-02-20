@@ -18,7 +18,7 @@ abigen!(Contract(
 pub mod trove_manager_abi {
 
     use fuels::{
-        prelude::{Account, Error, TxParameters},
+        prelude::{Account, Error, TxPolicies},
         types::{AssetId, ContractId, Identity},
     };
 
@@ -50,12 +50,12 @@ pub mod trove_manager_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .batch_liquidate_troves(ids, upper_hint, lower_hint)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .with_contracts(&[
                 stability_pool,
                 oracle,
@@ -85,12 +85,12 @@ pub mod trove_manager_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .liquidate(id, upper_hint, lower_hint)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .with_contracts(&[
                 stability_pool,
                 oracle,
@@ -111,12 +111,12 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .increase_trove_coll(id, amount)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -127,12 +127,12 @@ pub mod trove_manager_abi {
         id: Identity,
         amount: u64,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .increase_trove_debt(id, amount)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -143,12 +143,12 @@ pub mod trove_manager_abi {
         id: Identity,
         status: Status,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .set_trove_status(id, status)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -167,7 +167,7 @@ pub mod trove_manager_abi {
         asset: AssetId,
         protocol_manager: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = trove_manager
             .methods()
@@ -183,7 +183,7 @@ pub mod trove_manager_abi {
                 asset.into(),
                 protocol_manager,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 
@@ -194,12 +194,12 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<u64> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .get_trove_coll(id)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()
@@ -209,12 +209,12 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
     ) -> FuelCallResponse<(u64, u64, u64, u64)> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         trove_manager
             .methods()
             .get_entire_debt_and_coll(id)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()

@@ -2,19 +2,35 @@ library;
 
 abi SortedTroves {
     #[storage(read, write)]
-    fn set_params(size: u64, protocol_manager: ContractId, borrower_operations_identity: ContractId);
+    fn set_params(
+        size: u64,
+        protocol_manager: ContractId,
+        borrower_operations_identity: ContractId,
+    );
 
     #[storage(read, write)]
     fn add_asset(asset: AssetId, trove_manager: ContractId);
 
     #[storage(read, write)]
-    fn insert(id: Identity, icr: u64, prev_id: Identity, next_id: Identity, asset: AssetId);
+    fn insert(
+        id: Identity,
+        icr: u64,
+        prev_id: Identity,
+        next_id: Identity,
+        asset: AssetId,
+    );
 
     #[storage(read, write)]
     fn remove(id: Identity, asset: AssetId);
 
     #[storage(read, write)]
-    fn re_insert(id: Identity, new_icr: u64, prev_id: Identity, next_id: Identity, asset: AssetId);
+    fn re_insert(
+        id: Identity,
+        new_icr: u64,
+        prev_id: Identity,
+        next_id: Identity,
+        asset: AssetId,
+    );
 
     #[storage(read)]
     fn contains(id: Identity, asset: AssetId) -> bool;
@@ -44,10 +60,20 @@ abi SortedTroves {
     fn get_prev(id: Identity, asset: AssetId) -> Identity;
 
     #[storage(read)]
-    fn valid_insert_position(icr: u64, next_id: Identity, prev_id: Identity, asset: AssetId) -> bool;
+    fn valid_insert_position(
+        icr: u64,
+        next_id: Identity,
+        prev_id: Identity,
+        asset: AssetId,
+    ) -> bool;
 
     #[storage(read)]
-    fn find_insert_position(icr: u64, next_id: Identity, prev_id: Identity, asset: AssetId) -> (Identity, Identity);
+    fn find_insert_position(
+        icr: u64,
+        next_id: Identity,
+        prev_id: Identity,
+        asset: AssetId,
+    ) -> (Identity, Identity);
 }
 
 pub struct Node {

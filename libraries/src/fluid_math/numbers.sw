@@ -35,13 +35,15 @@ impl U128 {
 
 impl U128 {
     pub fn is_power_of_two(self) -> bool {
-        self.lower != 0 && (self & (self - U128 {
-            upper: 0,
-            lower: 1,
-        })) == U128 {
-            upper: 0,
-            lower: 0,
-        }
+        self.lower != 0
+            && (self
+                & (self - U128 {
+                        upper: 0,
+                        lower: 1,
+                    })) == U128 {
+                upper: 0,
+                lower: 0,
+            }
     }
 }
 
@@ -79,8 +81,7 @@ impl U128 {
                 // upper: self.upper % other.upper,
                 // TODO fix this later breaks when upper is 0
                 upper: 0,
-                lower: self.lower
-                & ((1 << shift) - 1),
+                lower: self.lower & ((1 << shift) - 1),
             };
         }
 
@@ -113,8 +114,7 @@ impl U256 {
                 a: 0,
                 b: 0,
                 c: 0,
-                d: self.d
-                & ((1 << shift) - 1),
+                d: self.d & ((1 << shift) - 1),
             };
         }
 
@@ -170,12 +170,24 @@ fn test_u128_modulo() {
 
 #[test]
 fn test_u256_modulo() {
-    assert(U256::from((0, 0, 0, 100)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 1)));
-    assert(U256::from((0, 0, 0, 101)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 2)));
-    assert(U256::from((0, 0, 0, 102)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 0)));
-    assert(U256::from((0, 0, 0, 103)) % U256::from((0, 0, 0, 5)) == U256::from((0, 0, 0, 3)));
-    assert(U256::from((0, 0, 0, 104)) % U256::from((0, 0, 0, 5)) == U256::from((0, 0, 0, 4)));
-    assert(U256::from((0, 0, 0, 8)) % U256::from((0, 0, 0, 10)) == U256::from((0, 0, 0, 8)));
+    assert(
+        U256::from((0, 0, 0, 100)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 1)),
+    );
+    assert(
+        U256::from((0, 0, 0, 101)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 2)),
+    );
+    assert(
+        U256::from((0, 0, 0, 102)) % U256::from((0, 0, 0, 3)) == U256::from((0, 0, 0, 0)),
+    );
+    assert(
+        U256::from((0, 0, 0, 103)) % U256::from((0, 0, 0, 5)) == U256::from((0, 0, 0, 3)),
+    );
+    assert(
+        U256::from((0, 0, 0, 104)) % U256::from((0, 0, 0, 5)) == U256::from((0, 0, 0, 4)),
+    );
+    assert(
+        U256::from((0, 0, 0, 8)) % U256::from((0, 0, 0, 10)) == U256::from((0, 0, 0, 8)),
+    );
 }
 
 #[test]
@@ -200,6 +212,10 @@ fn test_u256_modulo_pow_2_divisor() {
     assert(U256::from((0, 0, 0, 1)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 1)));
     assert(U256::from((0, 0, 0, 2)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 0)));
     assert(U256::from((0, 0, 0, 3)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 1)));
-    assert(U256::from((0, 0, 0, 100)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 0)));
-    assert(U256::from((0, 0, 0, 101)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 1)));
+    assert(
+        U256::from((0, 0, 0, 100)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 0)),
+    );
+    assert(
+        U256::from((0, 0, 0, 101)) % U256::from((0, 0, 0, 2)) == U256::from((0, 0, 0, 1)),
+    );
 }

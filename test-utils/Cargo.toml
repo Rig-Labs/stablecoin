@@ -6,13 +6,14 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-dotenv = "0.15.0"
-fuels = { version = "0.49.0", features = ["fuel-core-lib"] }
-futures = "0.3.17"
-pbr = "1.1.1"
-serde = { version = "1.0.92", features = ["derive"] }
-serde_json = "1.0.92"
-tokio = { version = "1.12", features = ["rt", "macros"] }
+dotenv = { workspace = true, default-features = false }
+fuels = { workspace = true, default-features = false }
+futures = { workspace = true, default-features = false }
+pbr = { workspace = true, default-features = false }
+rand = { workspace = true, default-features = false }
+serde = { workspace = true, default-features = false }
+serde_json = { workspace = true, default-features = false }
+tokio = { workspace = true, default-features = false }
 
 [lib]
 doctest = false

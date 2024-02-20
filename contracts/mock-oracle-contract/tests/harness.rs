@@ -16,7 +16,8 @@ async fn get_contract_instance() -> Oracle<WalletUnlocked> {
         None,
         None,
     )
-    .await;
+    .await
+    .unwrap();
     let wallet = wallets.pop().unwrap();
 
     let instance = deploy_oracle(&wallet).await;

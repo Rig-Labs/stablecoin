@@ -9,7 +9,11 @@ pub struct TokenInitializeConfig {
 abi Token {
     // Initialize contract
     #[storage(read, write)]
-    fn initialize(config: TokenInitializeConfig, mint_amount: u64, address: Identity);
+    fn initialize(
+        config: TokenInitializeConfig,
+        mint_amount: u64,
+        address: Identity,
+    );
     // Set mint amount for each address
     #[storage(read, write)]
     fn set_mint_amount(mint_amount: u64);

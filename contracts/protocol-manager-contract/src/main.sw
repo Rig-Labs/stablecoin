@@ -15,6 +15,7 @@ use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::fluid_math::*;
 use std::{
+    asset::transfer,
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
@@ -25,7 +26,6 @@ use std::{
     hash::*,
     logging::log,
     storage::storage_vec::*,
-    token::transfer,
 };
 storage {
     admin: Identity = Identity::Address(Address::from(ZERO_B256)),
@@ -54,7 +54,12 @@ impl ProtocolManager for Contract {
         sorted_troves: ContractId,
         admin: Identity,
     ) {
-        require(storage.is_initialized.read() == false, "PM: Already initialized");
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "PM: Already initialized",
+        );
         storage.admin.write(admin);
         storage.borrow_operations_contract.write(borrow_operations);
         storage.fpt_staking_contract.write(fpt_staking);
@@ -81,11 +86,16 @@ impl ProtocolManager for Contract {
         let default_pool = abi(DefaultPool, storage.default_pool_contract.read().value);
         let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
-        storage.asset_contracts.insert(asset_address, AssetContracts {
-            trove_manager,
-            oracle,
-            asset_address,
-        });
+        storage
+            .asset_contracts
+            .insert(
+                asset_address,
+                AssetContracts {
+                    trove_manager,
+                    oracle,
+                    asset_address,
+                },
+            );
         storage.assets.push(asset_address);
         borrow_operations.add_asset(asset_address, trove_manager, oracle);
         coll_surplus_pool.add_asset(asset_address, Identity::ContractId(trove_manager));
@@ -130,7 +140,14 @@ impl ProtocolManager for Contract {
             remaining_itterations -= 1;
             let next_user_to_check = sorted_troves.get_prev(current_borrower, contracts_cache.asset_address);
             trove_manager_contract.apply_pending_rewards(current_borrower);
-            let single_redemption = trove_manager_contract.redeem_collateral_from_trove(current_borrower, remaining_usdf, price, partial_redemption_hint, upper_partial_hint, lower_partial_hint);
+            let single_redemption = trove_manager_contract.redeem_collateral_from_trove(
+                current_borrower,
+                remaining_usdf,
+                price,
+                partial_redemption_hint,
+                upper_partial_hint,
+                lower_partial_hint,
+            );
             if (single_redemption.cancelled_partial) {
                 break;
             }
@@ -165,21 +182,40 @@ impl ProtocolManager for Contract {
             // TODO require user accepts fee
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
-            active_pool.send_asset(Identity::ContractId(fpt_staking_contract_cache), totals.asset_fee, contracts_cache.asset_address);
+            active_pool.send_asset(
+                Identity::ContractId(fpt_staking_contract_cache),
+                totals
+                    .asset_fee,
+                contracts_cache
+                    .asset_address,
+            );
             fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(ind).unwrap());
             total_usdf_redeemed += totals.total_usdf_to_redeem;
             active_pool.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
-            active_pool.send_asset(msg_sender().unwrap(), totals.asset_to_send_to_redeemer, contracts_cache.asset_address);
+            active_pool.send_asset(
+                msg_sender()
+                    .unwrap(),
+                totals
+                    .asset_to_send_to_redeemer,
+                contracts_cache
+                    .asset_address,
+            );
             ind += 1;
         }
         log(total_usdf_redeemed);
-        usdf.burn {
-            coins: total_usdf_redeemed,
-            asset_id: get_default_asset_id(usdf_contract_cache).value,
-        }();
+        usdf
+            .burn {
+                coins: total_usdf_redeemed,
+                asset_id: get_default_asset_id(usdf_contract_cache).value,
+            }();
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
-            transfer(msg_sender().unwrap(), get_default_asset_id(usdf_contract_cache), remaining_usdf);
+            transfer(
+                msg_sender()
+                    .unwrap(),
+                get_default_asset_id(usdf_contract_cache),
+                remaining_usdf,
+            );
         }
     }
 }
@@ -192,7 +228,10 @@ fn require_is_admin() {
 }
 #[storage(read)]
 fn require_valid_usdf_id() {
-    require(msg_asset_id() == get_default_asset_id(storage.usdf_token_contract.read()), "PM: Invalid asset being transfered");
+    require(
+        msg_asset_id() == get_default_asset_id(storage.usdf_token_contract.read()),
+        "PM: Invalid asset being transfered",
+    );
 }
 #[storage(read)]
 fn get_all_assets_info() -> AssetInfo {

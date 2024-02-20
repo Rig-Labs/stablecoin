@@ -5,11 +5,8 @@ use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod sorted_troves_utils {
-    use fuels::{
-        accounts::fuel_crypto::rand::{self, Rng},
-        prelude::WalletUnlocked,
-        types::AssetId,
-    };
+    use fuels::{prelude::WalletUnlocked, types::AssetId};
+    use rand::{self, Rng};
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
 

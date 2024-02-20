@@ -16,12 +16,6 @@ impl SingleRedemptionValues {
     }
 }
 
-pub struct Trove {
-    usdf_borrowed: u64,
-    fuel_deposited: u64,
-    st_fuel_deposited: u64,
-}
-
 pub enum Status {
     NonExistent: (),
     Active: (),
@@ -64,5 +58,19 @@ pub struct Asset {
 impl Asset {
     pub fn new(id: ContractId, amount: u64) -> Self {
         Self { id, amount }
+    }
+}
+
+pub struct RewardSnapshot {
+    asset: u64,
+    usdf_debt: u64,
+}
+
+impl RewardSnapshot {
+    pub fn default() -> Self {
+        RewardSnapshot {
+            asset: 0,
+            usdf_debt: 0,
+        }
     }
 }

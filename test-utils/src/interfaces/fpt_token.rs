@@ -12,14 +12,10 @@ pub mod fpt_token_abi {
     use super::*;
     pub async fn initialize<T: Account>(
         instance: &FPTToken<T>,
-        mut name: String,
-        mut symbol: String,
         vesting_contract: &VestingContract<T>,
         community_issuance_contract: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
-        name.push_str(" ".repeat(32 - name.len()).as_str());
-        symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = instance
             .methods()
@@ -28,7 +24,7 @@ pub mod fpt_token_abi {
                 community_issuance_contract.contract_id(),
             )
             .with_contracts(&[vesting_contract, community_issuance_contract])
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .append_variable_outputs(10)
             .call()
             .await;

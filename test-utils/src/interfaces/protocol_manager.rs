@@ -21,7 +21,7 @@ pub mod protocol_manager_abi {
     use fuels::prelude::{Account, CallParameters, SettableContract};
     use fuels::types::AssetId;
     use fuels::{
-        prelude::{ContractId, TxParameters},
+        prelude::{ContractId, TxPolicies},
         types::Identity,
     };
 
@@ -37,7 +37,7 @@ pub mod protocol_manager_abi {
         sorted_troves: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = protocol_manager
             .methods()
@@ -52,7 +52,7 @@ pub mod protocol_manager_abi {
                 sorted_troves,
                 admin,
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap();
@@ -74,12 +74,12 @@ pub mod protocol_manager_abi {
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         protocol_manager
             .methods()
             .register_asset(asset.into(), trove_manager, oracle)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .with_contracts(&[
                 borrow_operations,
                 stability_pool,
@@ -110,9 +110,10 @@ pub mod protocol_manager_abi {
         sorted_troves: &SortedTroves<T>,
         aswith_contracts: &Vec<AssetContracts<T>>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxParameters::default()
+        let tx_params = TxPolicies::default()
             .with_gas_price(1)
-            .with_gas_limit(2000000);
+            .with_witness_limit(2000000)
+            .with_script_gas_limit(2000000);
         let usdf_asset_id = usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
 
         let call_params: CallParameters = CallParameters::default()
@@ -141,7 +142,7 @@ pub mod protocol_manager_abi {
                 upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
                 lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
             )
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
             .with_contracts(&with_contracts)

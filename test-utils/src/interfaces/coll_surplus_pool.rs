@@ -13,7 +13,7 @@ pub mod coll_surplus_pool_abi {
     use fuels::prelude::Error;
     use fuels::types::AssetId;
     use fuels::{
-        prelude::{Account, ContractId, TxParameters, WalletUnlocked},
+        prelude::{Account, ContractId, TxPolicies, WalletUnlocked},
         types::Identity,
     };
 
@@ -22,12 +22,12 @@ pub mod coll_surplus_pool_abi {
         borrow_operations: ContractId,
         protocol_manager: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxParameters::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_gas_price(1);
 
         let res = coll_surplus_pool
             .methods()
             .initialize(borrow_operations, protocol_manager)
-            .tx_params(tx_params)
+            .with_tx_policies(tx_params)
             .call()
             .await;
 

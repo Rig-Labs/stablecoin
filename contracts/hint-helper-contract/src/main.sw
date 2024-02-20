@@ -6,6 +6,7 @@ use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::*;
 use std::{
+    asset::transfer,
     auth::msg_sender,
     call_frames::{
         msg_asset_id,
@@ -15,7 +16,6 @@ use std::{
     },
     hash::Hasher,
     logging::log,
-    token::transfer,
 };
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
@@ -25,12 +25,23 @@ abi HintHelper {
     #[storage(read, write)]
     fn initialize(sorted_troves_contract: ContractId);
     #[storage(read, write)]
-    fn get_approx_hint(asset: AssetId, trove_manager_contract: ContractId, cr: u64, num_trials: u64, input_random_seed: u64) -> (Identity, u64, u64);
+    fn get_approx_hint(
+        asset: AssetId,
+        trove_manager_contract: ContractId,
+        cr: u64,
+        num_trials: u64,
+        input_random_seed: u64,
+    ) -> (Identity, u64, u64);
 }
 impl HintHelper for Contract {
     #[storage(read, write)]
     fn initialize(sorted_troves_contract: ContractId) {
-        require(storage.is_initialized.read() == false, "Already initialized");
+        require(
+            storage
+                .is_initialized
+                .read() == false,
+            "Already initialized",
+        );
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
     }
@@ -80,5 +91,7 @@ impl HintHelper for Contract {
 }
 
 fn decompose(val: b256) -> (u64, u64, u64, u64) {
-    asm(r1: __addr_of(val)) { r1: (u64, u64, u64, u64) }
+    asm(r1: __addr_of(val)) {
+        r1: (u64, u64, u64, u64)
+    }
 }

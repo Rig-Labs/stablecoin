@@ -16,8 +16,6 @@ async fn fails_fake_usdf_deposit() {
 
     usdf_token_abi::initialize(
         &fake_usdf,
-        "Fake USDF".to_string(),
-        "FUSDF".to_string(),
         ContractId::new([0; 32]),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),

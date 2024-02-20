@@ -1,7 +1,7 @@
-use fuels::accounts::fuel_crypto::rand::{self, Rng};
 use fuels::prelude::*;
 use fuels::programs::call_response::FuelCallResponse;
 use fuels::types::Identity;
+use rand::{self, Rng};
 use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
 use test_utils::setup::common::{deploy_sorted_troves, get_absolute_path_from_relative};
 
@@ -18,7 +18,7 @@ pub async fn deploy_mock_trove_manager_contract(
 ) -> MockTroveManagerContract<WalletUnlocked> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
-    let tx_parms = TxParameters::default().with_gas_price(1);
+    let tx_parms = TxPolicies::default().with_gas_price(1);
 
     let id = Contract::load_from(
         &get_absolute_path_from_relative(MOCK_TROVE_MANAGER_BINARY_PATH),
@@ -41,13 +41,13 @@ pub async fn set_nominal_icr_and_insert(
     next_id: Identity,
     asset: AssetId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_gas_price(1);
 
     trove_manager
         .methods()
         .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset.into())
         .with_contracts(&[sorted_troves])
-        .tx_params(tx_params)
+        .with_tx_policies(tx_params)
         .call()
         .await
         .unwrap()
@@ -71,13 +71,13 @@ pub async fn remove(
     id: Identity,
     asset: AssetId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxParameters::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_gas_price(1);
 
     trove_manager
         .methods()
         .remove(id, asset.into())
         .with_contracts(&[sorted_troves])
-        .tx_params(tx_params)
+        .with_tx_policies(tx_params)
         .call()
         .await
         .unwrap()
@@ -93,10 +93,10 @@ pub async fn setup(
     Vec<WalletUnlocked>,
 ) {
     // Launch a local network and deploy the contract
-    let config = Config {
-        manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
-        ..Config::local_node()
-    };
+    // let config = Config {
+    //     manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
+    //     ..Config::local_node()
+    // };
 
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -104,10 +104,11 @@ pub async fn setup(
             Some(1),             /* Single coin (UTXO) */
             Some(1_000_000_000), /* Amount per coin */
         ),
-        Some(config),
+        None,
         None,
     )
-    .await;
+    .await
+    .unwrap();
 
     let wallet = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
