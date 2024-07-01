@@ -94,9 +94,9 @@ impl BorrowOperations for Contract {
         let fpt_staking_contract = storage.fpt_staking_contract.read();
         let active_pool_contract = storage.active_pool_contract.read();
         let sorted_troves_contract = storage.sorted_troves_contract.read();
-        let oracle = abi(MockOracle, asset_contracts.oracle.value);
-        let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
-        let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
+        let oracle = abi(MockOracle, asset_contracts.oracle.bits());
+        let trove_manager = abi(TroveManager, asset_contracts.trove_manager.bits());
+        let sorted_troves = abi(SortedTroves, sorted_troves_contract.bits());
         let mut vars = LocalVariables_OpenTrove::new();
         let sender = msg_sender().unwrap();
         vars.net_debt = usdf_amount;
@@ -204,8 +204,8 @@ impl BorrowOperations for Contract {
         let asset_contracts_cache = storage.asset_contracts.get(asset_contract).read();
         let usdf_contract_cache = storage.usdf_contract.read();
         let active_pool_contract_cache = storage.active_pool_contract.read();
-        let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.value);
-        let active_pool = abi(ActivePool, active_pool_contract_cache.value);
+        let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.bits());
+        let active_pool = abi(ActivePool, active_pool_contract_cache.bits());
         let borrower = msg_sender().unwrap();
         require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
         trove_manager.apply_pending_rewards(borrower);
@@ -235,7 +235,7 @@ impl BorrowOperations for Contract {
     }
     #[storage(read)]
     fn claim_collateral(asset: AssetId) {
-        let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().value);
+        let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().bits());
         coll_surplus.claim_coll(msg_sender().unwrap(), asset);
     }
     #[storage(read)]
@@ -249,8 +249,8 @@ fn internal_trigger_borrowing_fee(
     usdf_contract: ContractId,
     fpt_staking_contract: ContractId,
 ) -> u64 {
-    let usdf = abi(USDFToken, usdf_contract.value);
-    let fpt_staking = abi(FPTStaking, fpt_staking_contract.value);
+    let usdf = abi(USDFToken, usdf_contract.bits());
+    let fpt_staking = abi(FPTStaking, fpt_staking_contract.bits());
     let usdf_fee = fm_compute_borrow_fee(usdf_amount);
     // Mint usdf to fpt staking contract
     usdf.mint(usdf_fee, Identity::ContractId(fpt_staking_contract));
@@ -274,9 +274,9 @@ fn internal_adjust_trove(
     let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
     let active_pool_contract_cache = storage.active_pool_contract.read();
     let sorted_troves_contract_cache = storage.sorted_troves_contract.read();
-    let oracle = abi(MockOracle, asset_contracts_cache.oracle.value);
-    let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.value);
-    let sorted_troves = abi(SortedTroves, sorted_troves_contract_cache.value);
+    let oracle = abi(MockOracle, asset_contracts_cache.oracle.bits());
+    let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.bits());
+    let sorted_troves = abi(SortedTroves, sorted_troves_contract_cache.bits());
     let price = oracle.get_price();
     let mut vars = LocalVariables_AdjustTrove::new();
     if is_debt_increase {
@@ -364,7 +364,7 @@ fn require_is_protocol_manager() {
 }
 #[storage(read)]
 fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
-    let trove_manager = abi(TroveManager, trove_manager.value);
+    let trove_manager = abi(TroveManager, trove_manager.bits());
     let status = trove_manager.get_trove_status(borrower);
     require(
         status != Status::Active,
@@ -373,7 +373,7 @@ fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
 }
 #[storage(read)]
 fn require_trove_is_active(borrower: Identity, trove_manage_contract: ContractId) {
-    let trove_manager = abi(TroveManager, trove_manage_contract.value);
+    let trove_manager = abi(TroveManager, trove_manage_contract.bits());
     let status = trove_manager.get_trove_status(borrower);
     require(
         status == Status::Active,
@@ -437,8 +437,8 @@ fn internal_withdraw_usdf(
     usdf_contract: ContractId,
     asset_contract: AssetId,
 ) {
-    let active_pool = abi(ActivePool, active_pool_contract.value);
-    let usdf = abi(USDFToken, usdf_contract.value);
+    let active_pool = abi(ActivePool, active_pool_contract.bits());
+    let usdf = abi(USDFToken, usdf_contract.bits());
     active_pool.increase_usdf_debt(net_debt_increase, asset_contract);
     usdf.mint(amount, recipient);
 }
@@ -497,7 +497,7 @@ fn internal_update_trove_from_adjustment(
     is_debt_increase: bool,
     trove_manager: ContractId,
 ) -> (u64, u64) {
-    let trove_manager = abi(TroveManager, trove_manager.value);
+    let trove_manager = abi(TroveManager, trove_manager.bits());
     let mut new_coll = 0;
     let mut new_debt = 0;
     if is_coll_increase {
@@ -534,7 +534,7 @@ fn internal_get_new_trove_amounts(
 }
 #[storage(read)]
 fn internal_active_pool_add_coll(coll_change: u64, asset: AssetId, active_pool: ContractId) {
-    let active_pool = abi(ActivePool, active_pool.value);
+    let active_pool = abi(ActivePool, active_pool.bits());
     active_pool
         .recieve {
             coins: coll_change,
@@ -548,8 +548,8 @@ fn internal_repay_usdf(
     usdf_contract: ContractId,
     asset_contract: AssetId,
 ) {
-    let active_pool = abi(ActivePool, active_pool_contract.value);
-    let usdf = abi(USDFToken, usdf_contract.value);
+    let active_pool = abi(ActivePool, active_pool_contract.bits());
+    let usdf = abi(USDFToken, usdf_contract.bits());
     usdf
         .burn {
             coins: usdf_amount,
@@ -569,7 +569,7 @@ fn internal_move_usdf_and_asset_from_adjustment(
     active_pool_contract: ContractId,
     usdf_contract: ContractId,
 ) {
-    let active_pool = abi(ActivePool, active_pool_contract.value);
+    let active_pool = abi(ActivePool, active_pool_contract.bits());
     if coll_change > 0 {
         if is_coll_increase {
             internal_active_pool_add_coll(coll_change, asset, active_pool_contract);

@@ -4,24 +4,20 @@ use libraries::sorted_troves_interface::{Node, SortedTroves};
 use libraries::trove_manager_interface::TroveManager;
 use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
 use std::{
-    address::Address,
     asset::transfer,
-    auth::msg_sender,
     block::{
         height,
         timestamp,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         msg_amount,
     },
     hash::Hash,
-    identity::Identity,
-    logging::log,
 };
+
 storage {
     max_size: u64 = 0,
     protocol_manager: ContractId = ContractId::from(ZERO_B256),
@@ -34,6 +30,7 @@ storage {
     valid_trove_manager: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
     is_initialized: bool = false,
 }
+
 impl SortedTroves for Contract {
     #[storage(read, write)]
     fn set_params(
@@ -229,7 +226,7 @@ fn internal_valid_insert_position(
     asset: AssetId,
 ) -> bool {
     let trove_manager_contract = storage.asset_trove_manager.get(asset).read();
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     if (next_id == null_identity_address()
         && prev_id == null_identity_address())
     {
@@ -274,7 +271,7 @@ fn internal_find_insert_position(
     asset: AssetId,
     trove_manager_contract: ContractId,
 ) -> (Identity, Identity) {
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     let mut next_id: Identity = next_id;
     let mut prev_id: Identity = prev_id;
     if (prev_id != null_identity_address()) {
@@ -315,7 +312,7 @@ fn internal_descend_list(
     asset: AssetId,
     trove_manager_contract: ContractId,
 ) -> (Identity, Identity) {
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     if (internal_get_head(asset) == start_id
         && nicr >= trove_manager.get_nominal_icr(start_id))
     {
@@ -323,10 +320,11 @@ fn internal_descend_list(
     }
     let mut prev_id = start_id;
     let mut next_id = internal_get_next(prev_id, asset);
-    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-        prev_id = internal_get_next(prev_id, asset);
-        next_id = internal_get_next(prev_id, asset);
-    }
+    // TODO: ICE, report to Fuel
+    // while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+    //     prev_id = internal_get_next(prev_id, asset);
+    //     next_id = internal_get_next(prev_id, asset);
+    // }
     return (prev_id, next_id);
 }
 #[storage(read)]
@@ -336,7 +334,7 @@ fn internal_ascend_list(
     asset: AssetId,
     trove_manager_contract: ContractId,
 ) -> (Identity, Identity) {
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     if (internal_get_tail(asset) == start_id
         && nicr <= trove_manager.get_nominal_icr(start_id))
     {
@@ -344,10 +342,11 @@ fn internal_ascend_list(
     }
     let mut next_id = start_id;
     let mut prev_id = internal_get_prev(next_id, asset);
-    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-        next_id = internal_get_prev(next_id, asset);
-        prev_id = internal_get_prev(next_id, asset);
-    }
+    // TODO: ICE, report to Fuel
+    // while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+    //     next_id = internal_get_prev(next_id, asset);
+    //     prev_id = internal_get_prev(next_id, asset);
+    // }
     return (prev_id, next_id);
 }
 #[storage(read, write)]

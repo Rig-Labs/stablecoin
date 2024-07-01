@@ -5,22 +5,15 @@ use std::{
     asset::*,
     auth::{
         AuthError,
-        msg_sender,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         balance_of,
         msg_amount,
     },
-    contract_id::ContractId,
     hash::Hash,
-    identity::{
-        Identity,
-    },
-    revert::require,
     storage::*,
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;

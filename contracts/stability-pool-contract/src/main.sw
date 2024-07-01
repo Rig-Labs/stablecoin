@@ -21,16 +21,13 @@ use libraries::fluid_math::{
 };
 use std::{
     asset::transfer,
-    auth::msg_sender,
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
     storage::storage_vec::*,
     u128::U128,
 };
@@ -230,7 +227,7 @@ fn internal_pay_out_asset_gains(depositor: Identity) {
 }
 #[storage(read, write)]
 fn internal_trigger_fpt_issuance() {
-    let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().value);
+    let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().bits());
     let fpt_issuance = community_issuance_contract.issue_fpt();
     internal_update_g(fpt_issuance);
 }
@@ -263,7 +260,7 @@ fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: 
 fn internal_pay_out_fpt_gains(depositor: Identity) {
     let depositor_fpt_gain = internal_get_depositor_fpt_gain(depositor);
     if (depositor_fpt_gain > 0) {
-        let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().value);
+        let community_issuance_contract = abi(CommunityIssuance, storage.community_issuance_contract.read().bits());
         community_issuance_contract.send_fpt(depositor, depositor_fpt_gain);
     }
 }
@@ -310,7 +307,7 @@ fn require_usdf_is_valid_and_non_zero() {
 }
 #[storage(read)]
 fn require_user_has_trove(address: Identity, trove_manager_contract: ContractId) {
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     let status = trove_manager.get_trove_status(address);
     require(
         status == Status::Active,
@@ -536,18 +533,18 @@ fn internal_move_offset_coll_and_debt(
     asset_contract: AssetId,
     asset_contractes_cache: AssetContracts,
 ) {
-    let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
-    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().value);
+    let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
+    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().bits());
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_contract);
     active_pool.decrease_usdf_debt(debt_to_offset, asset_contract);
     usdf_contract
         .burn {
             coins: debt_to_offset,
-            asset_id: storage.usdf_asset_id.read().value,
+            asset_id: storage.usdf_asset_id.read().bits(),
         }();
     active_pool.send_asset(
-        Identity::ContractId(contract_id()),
+        Identity::ContractId(ContractId::this()),
         coll_to_add,
         asset_contract,
     );

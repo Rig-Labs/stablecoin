@@ -1,14 +1,14 @@
 library;
 
 pub struct RedemptionTotals {
-    remaining_usdf: u64,
-    total_usdf_to_redeem: u64,
-    total_asset_drawn: u64,
-    asset_fee: u64,
-    asset_to_send_to_redeemer: u64,
-    decayed_base_rate: u64,
-    price: u64,
-    total_usdf_supply_at_start: u64,
+    pub remaining_usdf: u64,
+    pub total_usdf_to_redeem: u64,
+    pub total_asset_drawn: u64,
+    pub asset_fee: u64,
+    pub asset_to_send_to_redeemer: u64,
+    pub decayed_base_rate: u64,
+    pub price: u64,
+    pub total_usdf_supply_at_start: u64,
 }
 
 impl RedemptionTotals {
@@ -27,9 +27,9 @@ impl RedemptionTotals {
 }
 
 pub struct SingleRedemptionValues {
-    usdf_lot: u64,
-    asset_lot: u64,
-    cancelled_partial: bool,
+    pub usdf_lot: u64,
+    pub asset_lot: u64,
+    pub cancelled_partial: bool,
 }
 
 impl SingleRedemptionValues {
@@ -42,18 +42,26 @@ impl SingleRedemptionValues {
     }
 }
 
+// TODO: compiler says there is no impl when commented but it also says there is one when uncommented
+impl AbiDecode for SingleRedemptionValues {
+    fn abi_decode(ref mut buffer: BufferReader) -> Self {
+        // buffer.read::<b256>()
+        SingleRedemptionValues::default()
+    }
+}
+
 pub struct AssetInfo {
-    assets: Vec<AssetId>,
-    asset_contracts: Vec<AssetContracts>,
-    prices: Vec<u64>,
-    system_debts: Vec<u64>,
-    redemption_totals: Vec<RedemptionTotals>,
-    current_borrowers: Vec<Identity>,
-    current_crs: Vec<u64>,
+    pub assets: Vec<AssetId>,
+    pub asset_contracts: Vec<AssetContracts>,
+    pub prices: Vec<u64>,
+    pub system_debts: Vec<u64>,
+    pub redemption_totals: Vec<RedemptionTotals>,
+    pub current_borrowers: Vec<Identity>,
+    pub current_crs: Vec<u64>,
 }
 
 pub struct AssetContracts {
-    trove_manager: ContractId,
-    oracle: ContractId,
-    asset_address: AssetId,
+    pub trove_manager: ContractId,
+    pub oracle: ContractId,
+    pub asset_address: AssetId,
 }

@@ -5,30 +5,29 @@ use libraries::sorted_troves_interface::SortedTroves;
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::trove_manager_interface::data_structures::Status;
 use std::{
-    address::Address,
     asset::transfer,
-    auth::msg_sender,
     block::{
         height,
         timestamp,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
 };
+
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
 storage {
     sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
     borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     nominal_icr: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
 }
+
 abi MockTroveManager {
     #[storage(read, write)]
     fn initialize(
@@ -101,7 +100,7 @@ impl MockTroveManager for Contract {
         asset: AssetId,
     ) {
         storage.nominal_icr.insert(id, value);
-        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.read().value);
+        let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
         sorted_troves_contract.insert(id, value, prev_id, next_id, asset);
     }
     #[storage(read, write)]

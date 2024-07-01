@@ -11,22 +11,15 @@ use std::{
     },
     auth::{
         AuthError,
-        msg_sender,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         balance_of,
         msg_amount,
     },
-    contract_id::ContractId,
     hash::Hash,
-    identity::{
-        Identity,
-    },
-    revert::require,
     storage::storage_vec::*,
     string::String,
 };
@@ -61,7 +54,7 @@ impl USDFToken for Contract {
         storage.borrower_operations.write(borrower_operations);
         storage
             .default_asset
-            .write(get_default_asset_id(contract_id()));
+            .write(get_default_asset_id(ContractId::this()));
         storage.is_initialized.write(true);
     }
     #[storage(read, write)]
