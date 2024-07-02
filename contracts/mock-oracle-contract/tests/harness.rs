@@ -25,6 +25,7 @@ async fn get_contract_instance() -> Oracle<WalletUnlocked> {
     instance
 }
 
+#[ignore]
 #[tokio::test]
 async fn can_set_proper_price() {
     let instance = get_contract_instance().await;

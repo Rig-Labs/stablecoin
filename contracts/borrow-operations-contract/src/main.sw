@@ -12,7 +12,7 @@ use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::MockOracle;
+use libraries::mock_oracle_interface::Oracle;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::fluid_math::*;
 use std::{
@@ -94,7 +94,7 @@ impl BorrowOperations for Contract {
         let fpt_staking_contract = storage.fpt_staking_contract.read();
         let active_pool_contract = storage.active_pool_contract.read();
         let sorted_troves_contract = storage.sorted_troves_contract.read();
-        let oracle = abi(MockOracle, asset_contracts.oracle.value);
+        let oracle = abi(Oracle, asset_contracts.oracle.value);
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.value);
         let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
         let mut vars = LocalVariables_OpenTrove::new();
@@ -274,7 +274,7 @@ fn internal_adjust_trove(
     let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
     let active_pool_contract_cache = storage.active_pool_contract.read();
     let sorted_troves_contract_cache = storage.sorted_troves_contract.read();
-    let oracle = abi(MockOracle, asset_contracts_cache.oracle.value);
+    let oracle = abi(Oracle, asset_contracts_cache.oracle.value);
     let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.value);
     let sorted_troves = abi(SortedTroves, sorted_troves_contract_cache.value);
     let price = oracle.get_price();
