@@ -150,7 +150,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -161,7 +161,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -194,7 +194,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -401,7 +401,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -412,7 +412,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -429,7 +429,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -440,7 +440,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -536,7 +536,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -718,7 +718,7 @@ async fn proper_partial_liquidation_empty_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -729,7 +729,7 @@ async fn proper_partial_liquidation_empty_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -746,7 +746,7 @@ async fn proper_partial_liquidation_empty_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -757,7 +757,7 @@ async fn proper_partial_liquidation_empty_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -846,7 +846,7 @@ async fn proper_partial_liquidation_empty_sp() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

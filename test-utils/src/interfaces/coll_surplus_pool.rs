@@ -1,6 +1,5 @@
 use fuels::prelude::abigen;
 use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "CollSurplusPool",
@@ -11,6 +10,7 @@ pub mod coll_surplus_pool_abi {
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
     use fuels::prelude::Error;
+    use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::AssetId;
     use fuels::{
         prelude::{Account, ContractId, TxPolicies, WalletUnlocked},
@@ -22,7 +22,7 @@ pub mod coll_surplus_pool_abi {
         borrow_operations: ContractId,
         protocol_manager: Identity,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = coll_surplus_pool
             .methods()
@@ -56,7 +56,7 @@ pub mod coll_surplus_pool_abi {
             .methods()
             .claim_coll(acount, asset.into())
             .with_contracts(&[active_pool])
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
             .unwrap()

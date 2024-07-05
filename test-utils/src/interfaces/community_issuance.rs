@@ -19,7 +19,7 @@ pub mod community_issuance_abi {
         admin: &Identity,
         debugging: bool,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -40,7 +40,7 @@ pub mod community_issuance_abi {
         instance: &CommunityIssuance<T>,
         time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -55,7 +55,7 @@ pub mod community_issuance_abi {
     pub async fn public_start_rewards_increase_transition_after_deadline<T: Account>(
         instance: &CommunityIssuance<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -71,7 +71,7 @@ pub mod community_issuance_abi {
         instance: &CommunityIssuance<T>,
         transition_time: u64,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()

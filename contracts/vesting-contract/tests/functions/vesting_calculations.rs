@@ -1,5 +1,6 @@
 use crate::utils::setup::setup;
 use fuels::prelude::*;
+use fuels::types::transaction_builders::VariableOutputPolicy;
 use fuels::types::Identity;
 
 mod success {
@@ -28,7 +29,10 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            &asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             vesting_schedule.to_vec(),
         )
         .await;
@@ -68,14 +72,20 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            &asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             vesting_schedule.to_vec(),
         )
         .await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
-        let asset_id = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+        let asset_id = asset
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into();
 
         let provider = admin.provider().unwrap();
 
@@ -147,14 +157,20 @@ mod success {
 
         let _ = instantiate_vesting_contract(
             &vest,
-            &asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            &asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             vesting_schedule.to_vec(),
         )
         .await;
 
         let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
 
-        let asset_id = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+        let asset_id = asset
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into();
 
         let provider = admin.provider().unwrap();
 
@@ -177,7 +193,7 @@ mod success {
         let _res = recpient_vesting
             .methods()
             .claim_vested_tokens()
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await;
 
@@ -194,7 +210,7 @@ mod success {
         let _res = recpient_vesting
             .methods()
             .claim_vested_tokens()
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await;
 
@@ -211,7 +227,7 @@ mod success {
         let _res = recpient_vesting
             .methods()
             .claim_vested_tokens()
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await;
 
@@ -231,7 +247,7 @@ mod success {
         let _res = recpient_vesting
             .methods()
             .claim_vested_tokens()
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await;
 
@@ -248,7 +264,7 @@ mod success {
         let _res = recpient_vesting
             .methods()
             .claim_vested_tokens()
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await;
 

@@ -27,7 +27,7 @@ async fn test_emissions() {
     let fpt_asset_id = contracts
         .fpt_token
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
@@ -153,7 +153,7 @@ async fn test_admin_start_rewards_increase_transition() {
     let fpt_asset_id = contracts
         .fpt_token
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
@@ -262,7 +262,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     let fpt_asset_id = contracts
         .fpt_token
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     let wallet1 = wallets.pop().unwrap();
@@ -378,7 +378,7 @@ async fn test_emissions_multiple_deposits() {
     let fpt_asset_id = contracts
         .fpt_token
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;

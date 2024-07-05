@@ -1,13 +1,13 @@
 library;
 
 pub struct ReadStorage {
-    f_usdf: u64,
-    total_fpt_staked: u64,
-    protocol_manager_address: ContractId,
-    borrower_operations_address: ContractId,
-    fpt_address: AssetId,
-    usdf_address: AssetId,
-    is_initialized: bool,
+    pub f_usdf: u64,
+    pub total_fpt_staked: u64,
+    pub protocol_manager_address: ContractId,
+    pub borrower_operations_address: ContractId,
+    pub fpt_address: AssetId,
+    pub usdf_address: AssetId,
+    pub is_initialized: bool,
 }
 
 abi FPTStaking {

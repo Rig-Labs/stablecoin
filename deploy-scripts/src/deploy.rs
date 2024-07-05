@@ -1,7 +1,7 @@
 use std::{fs::File, io::Write, str::FromStr};
 
 use dotenv::dotenv;
-use fuels::{prelude::*, types::ContractId};
+use fuels::prelude::*;
 use serde_json::json;
 use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
@@ -97,7 +97,7 @@ pub mod deployment {
 
         //--------------- Deploy ---------------
         // TODO: Figure out max size
-        let contracts: ProtocolContracts<WalletUnlocked> = deployment::deploy_and_initialize_all(
+        let contracts = deployment::deploy_and_initialize_all(
             wallet,
             100_000,
             true,
@@ -112,12 +112,12 @@ pub mod deployment {
         let json = json!({
             "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
-            "usdf_asset_id": contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
+            "usdf_asset_id": contracts.usdf.contract_id().asset_id(&AssetId::zeroed().into()).to_string(),
             "stability_pool": contracts.stability_pool.contract_id().to_string(),
             "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
             "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
             "fpt_token": contracts.fpt_token.contract_id().to_string(),
-            "fpt_asset_id": contracts.fpt_token.contract_id().asset_id(&BASE_ASSET_ID.into()).to_string(),
+            "fpt_asset_id": contracts.fpt_token.contract_id().asset_id(&AssetId::zeroed().into()).to_string(),
             "community_issuance": contracts.community_issuance.contract_id().to_string(),
             "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
             "default_pool": contracts.default_pool.contract_id().to_string(),
@@ -212,7 +212,7 @@ pub mod deployment {
             stability_pool.contract_id().into(),
             fpt_token
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
             &Identity::Address(wallet.address().into()),
             false,
@@ -263,9 +263,11 @@ pub mod deployment {
             borrow_operations.contract_id().into(),
             fpt_token
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
-            usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            usdf.contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
         )
         .await;
         wait();
@@ -415,7 +417,10 @@ pub mod deployment {
             Some(contracts) => {
                 pb.finish();
                 let asset = Token::new(contracts.asset, wallet.clone());
-                let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+                let asset_id: AssetId = asset
+                    .contract_id()
+                    .asset_id(&AssetId::zeroed().into())
+                    .into();
 
                 return AssetContracts {
                     oracle: Oracle::new(contracts.oracle, wallet.clone()),
@@ -430,7 +435,10 @@ pub mod deployment {
                 let asset = deploy_token(&wallet).await;
                 pb.inc();
 
-                let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+                let asset_id: AssetId = asset
+                    .contract_id()
+                    .asset_id(&AssetId::zeroed().into())
+                    .into();
 
                 println!("Deploying asset contracts... Done");
                 println!("Oracle: {}", oracle.contract_id());
@@ -498,7 +506,10 @@ pub mod deployment {
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
-            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             protocol_manager.contract_id().into(),
         )
         .await;
@@ -507,7 +518,10 @@ pub mod deployment {
 
         let _ = protocol_manager_abi::register_asset(
             &protocol_manager,
-            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
             borrow_operations,

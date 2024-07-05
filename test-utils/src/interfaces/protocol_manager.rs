@@ -1,7 +1,6 @@
 use fuels::prelude::abigen;
-use fuels::prelude::BASE_ASSET_ID;
 use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
+
 abigen!(Contract(
     name = "ProtocolManager",
     abi = "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-abi.json"
@@ -19,6 +18,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::usdf_token::USDFToken;
     use crate::setup::common::AssetContracts;
     use fuels::prelude::{Account, CallParameters, SettableContract};
+    use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::AssetId;
     use fuels::{
         prelude::{ContractId, TxPolicies},
@@ -37,7 +37,7 @@ pub mod protocol_manager_abi {
         sorted_troves: ContractId,
         admin: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = protocol_manager
             .methods()
@@ -74,7 +74,7 @@ pub mod protocol_manager_abi {
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         protocol_manager
             .methods()
@@ -111,10 +111,13 @@ pub mod protocol_manager_abi {
         aswith_contracts: &Vec<AssetContracts<T>>,
     ) -> FuelCallResponse<()> {
         let tx_params = TxPolicies::default()
-            .with_gas_price(1)
+            .with_tip(1)
             .with_witness_limit(2000000)
             .with_script_gas_limit(2000000);
-        let usdf_asset_id = usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+        let usdf_asset_id = usdf
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
@@ -146,7 +149,7 @@ pub mod protocol_manager_abi {
             .call_params(call_params)
             .unwrap()
             .with_contracts(&with_contracts)
-            .append_variable_outputs(10)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
             .call()
             .await
             .unwrap()

@@ -21,7 +21,7 @@ pub mod hint_helper_abi {
 
         sorted_troves: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = hint_helper
             .methods()

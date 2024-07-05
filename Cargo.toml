@@ -26,7 +26,7 @@ members = [
 
 [workspace.dependencies]
 dotenv = "0.15.0"
-fuels = { version = "0.55.0", features = ["fuel-core-lib"] }
+fuels = { version = "0.64.0", features = ["fuel-core-lib"] }
 futures = "0.3.17"
 pbr = "1.1.1"
 rand = { version = "0.8.5", default-features = false, features = [

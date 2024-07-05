@@ -21,7 +21,7 @@ pub mod sorted_troves_abi {
         protocol_manager: ContractId,
         borrow_opperations: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = sorted_troves
             .methods()

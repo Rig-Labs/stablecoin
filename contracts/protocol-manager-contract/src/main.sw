@@ -4,6 +4,7 @@ mod data_structures;
 use ::data_structures::{AssetContracts, AssetInfo, RedemptionTotals};
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::trove_manager_interface::TroveManager;
+use libraries::trove_manager_interface::data_structures::SingleRedemptionValues;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::active_pool_interface::ActivePool;

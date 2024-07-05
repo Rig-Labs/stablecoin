@@ -97,7 +97,7 @@ impl ActivePool for Contract {
         dafault_pool
             .recieve {
                 coins: amount,
-                asset_id: asset_id.value,
+                asset_id: asset_id.bits(),
             }();
     }
     // --- Receive functionality ---

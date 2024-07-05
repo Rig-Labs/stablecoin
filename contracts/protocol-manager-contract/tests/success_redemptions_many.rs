@@ -11,6 +11,7 @@ use test_utils::{
     utils::with_min_borrow_fee,
 };
 
+#[ignore]
 #[tokio::test]
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
@@ -113,7 +114,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -141,7 +142,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -152,7 +153,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

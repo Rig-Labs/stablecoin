@@ -115,7 +115,7 @@ impl MockTroveManager for Contract {
         stability_pool.offset(
             debt,
             coll,
-            AssetId::from(storage.sorted_troves_contract.read().value),
+            AssetId::from(storage.sorted_troves_contract.read().bits()),
         );
     }
     #[storage(read, write)]

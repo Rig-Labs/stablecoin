@@ -26,30 +26,6 @@ impl RedemptionTotals {
     }
 }
 
-pub struct SingleRedemptionValues {
-    pub usdf_lot: u64,
-    pub asset_lot: u64,
-    pub cancelled_partial: bool,
-}
-
-impl SingleRedemptionValues {
-    pub fn default() -> Self {
-        SingleRedemptionValues {
-            usdf_lot: 0,
-            asset_lot: 0,
-            cancelled_partial: false,
-        }
-    }
-}
-
-// TODO: compiler says there is no impl when commented but it also says there is one when uncommented
-impl AbiDecode for SingleRedemptionValues {
-    fn abi_decode(ref mut buffer: BufferReader) -> Self {
-        // buffer.read::<b256>()
-        SingleRedemptionValues::default()
-    }
-}
-
 pub struct AssetInfo {
     pub assets: Vec<AssetId>,
     pub asset_contracts: Vec<AssetContracts>,

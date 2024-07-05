@@ -11,7 +11,7 @@ async fn proper_intialize() {
     let fpt_asset_id = contracts
         .fpt_token
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     let vesting_contract = fpt_token_abi::get_vesting_contract(&contracts.fpt_token)

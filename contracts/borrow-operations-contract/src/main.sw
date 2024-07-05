@@ -538,7 +538,7 @@ fn internal_active_pool_add_coll(coll_change: u64, asset: AssetId, active_pool: 
     active_pool
         .recieve {
             coins: coll_change,
-            asset_id: asset.value,
+            asset_id: asset.bits(),
         }();
 }
 #[storage(read)]
@@ -553,7 +553,7 @@ fn internal_repay_usdf(
     usdf
         .burn {
             coins: usdf_amount,
-            asset_id: storage.usdf_asset_id.read().value,
+            asset_id: storage.usdf_asset_id.read().bits(),
         }();
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
 }

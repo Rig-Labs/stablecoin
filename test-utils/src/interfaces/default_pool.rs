@@ -1,6 +1,5 @@
 use fuels::prelude::abigen;
 use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "DefaultPool",
@@ -12,6 +11,7 @@ pub mod default_pool_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::token::Token;
     use fuels::prelude::Account;
+    use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, Error, TxPolicies},
         types::Identity,
@@ -22,7 +22,7 @@ pub mod default_pool_abi {
         protocol_manager: Identity,
         active_pool: ContractId,
     ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = default_pool
             .methods()
@@ -76,7 +76,7 @@ pub mod default_pool_abi {
         asset_id: AssetId,
         trove_manager: Identity,
     ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         default_pool
             .methods()
@@ -111,13 +111,13 @@ pub mod default_pool_abi {
             .with_amount(amount)
             .with_asset_id(fuel_asset_id);
 
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         default_pool
             .methods()
             .recieve()
             .with_tx_policies(tx_params)
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call_params(call_params)
             .unwrap()
             .with_contracts(&[token])
@@ -136,7 +136,7 @@ pub mod default_pool_abi {
             .methods()
             .send_asset_to_active_pool(amount, asset_id.into())
             .with_contracts(&[active_pool])
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
             .unwrap()

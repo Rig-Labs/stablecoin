@@ -68,7 +68,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
             contracts
                 .usdf
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
         )
         .await
@@ -79,7 +79,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -89,7 +89,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -99,7 +99,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -143,7 +143,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -155,7 +155,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

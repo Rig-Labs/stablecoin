@@ -12,7 +12,7 @@ pub mod oracle_abi {
     use fuels::prelude::{Account, TxPolicies};
 
     pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = oracle
             .methods()
@@ -25,7 +25,7 @@ pub mod oracle_abi {
     }
 
     pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> FuelCallResponse<u64> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
         oracle
             .methods()
             .get_price()

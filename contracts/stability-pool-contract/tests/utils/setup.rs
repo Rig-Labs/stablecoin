@@ -29,7 +29,7 @@ pub async fn deploy_mock_trove_manager_contract(
 ) -> MockTroveManagerContract<WalletUnlocked> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
-    let tx_parms = TxPolicies::default().with_gas_price(1);
+    let tx_parms = TxPolicies::default().with_tip(1);
 
     let id = Contract::load_from(
         &get_absolute_path_from_relative(MOCK_TROVE_MANAGER_BINARY_PATH),
@@ -52,7 +52,7 @@ pub async fn set_nominal_icr_and_insert(
     next_id: Identity,
     asset: AssetId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
         .methods()
@@ -84,7 +84,7 @@ pub async fn offset(
     coll_to_offset: u64,
     debt_to_offset: u64,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
         .methods()
@@ -102,7 +102,7 @@ pub async fn initialize(
     sorted_troves: ContractId,
     stability_pool: ContractId,
 ) -> Result<FuelCallResponse<()>> {
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
         .methods()
@@ -118,7 +118,7 @@ pub async fn remove(
     id: Identity,
     asset: AssetId,
 ) -> FuelCallResponse<()> {
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
         .methods()
