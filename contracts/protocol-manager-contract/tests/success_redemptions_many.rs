@@ -11,7 +11,6 @@ use test_utils::{
     utils::with_min_borrow_fee,
 };
 
-#[ignore]
 #[tokio::test]
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;

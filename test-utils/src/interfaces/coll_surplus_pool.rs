@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "CollSurplusPool",
@@ -21,7 +21,7 @@ pub mod coll_surplus_pool_abi {
         coll_surplus_pool: &CollSurplusPool<T>,
         borrow_operations: ContractId,
         protocol_manager: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = coll_surplus_pool
@@ -37,7 +37,7 @@ pub mod coll_surplus_pool_abi {
     pub async fn get_asset<T: Account>(
         default_pool: &CollSurplusPool<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_asset(asset.into())
@@ -51,7 +51,7 @@ pub mod coll_surplus_pool_abi {
         acount: Identity,
         active_pool: &ActivePool<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         default_pool
             .methods()
             .claim_coll(acount, asset.into())
@@ -66,7 +66,7 @@ pub mod coll_surplus_pool_abi {
         default_pool: &CollSurplusPool<WalletUnlocked>,
         acount: Identity,
         asset: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_collateral(acount, asset.into())

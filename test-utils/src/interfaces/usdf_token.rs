@@ -1,6 +1,6 @@
 use fuels::{
     prelude::{abigen, AssetId},
-    programs::call_response::FuelCallResponse,
+    programs::responses::CallResponse,
     types::Identity,
 };
 
@@ -21,7 +21,7 @@ pub mod usdf_token_abi {
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         instance
@@ -40,7 +40,7 @@ pub mod usdf_token_abi {
         instance: &USDFToken<T>,
         amount: u64,
         address: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         instance
             .methods()
             .mint(amount, address)
@@ -52,7 +52,7 @@ pub mod usdf_token_abi {
     pub async fn burn<T: Account>(
         usdf_token: &USDFToken<T>,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(200000);
@@ -78,9 +78,7 @@ pub mod usdf_token_abi {
             .await
     }
 
-    pub async fn total_supply<T: Account>(
-        instance: &USDFToken<T>,
-    ) -> FuelCallResponse<Option<u64>> {
+    pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> CallResponse<Option<u64>> {
         let usdf_asset_id = instance
             .contract_id()
             .asset_id(&AssetId::zeroed().into())

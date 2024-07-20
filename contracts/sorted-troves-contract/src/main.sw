@@ -320,11 +320,10 @@ fn internal_descend_list(
     }
     let mut prev_id = start_id;
     let mut next_id = internal_get_next(prev_id, asset);
-    // TODO: ICE, report to Fuel
-    // while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-    //     prev_id = internal_get_next(prev_id, asset);
-    //     next_id = internal_get_next(prev_id, asset);
-    // }
+    while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+        prev_id = internal_get_next(prev_id, asset);
+        next_id = internal_get_next(prev_id, asset);
+    }
     return (prev_id, next_id);
 }
 #[storage(read)]
@@ -342,11 +341,10 @@ fn internal_ascend_list(
     }
     let mut next_id = start_id;
     let mut prev_id = internal_get_prev(next_id, asset);
-    // TODO: ICE, report to Fuel
-    // while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
-    //     next_id = internal_get_prev(next_id, asset);
-    //     prev_id = internal_get_prev(next_id, asset);
-    // }
+    while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+        next_id = internal_get_prev(next_id, asset);
+        prev_id = internal_get_prev(next_id, asset);
+    }
     return (prev_id, next_id);
 }
 #[storage(read, write)]

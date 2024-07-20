@@ -1,4 +1,4 @@
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
+use fuels::{prelude::abigen, programs::responses::CallResponse, types::Identity};
 
 abigen!(Contract(
     name = "Token",
@@ -18,7 +18,7 @@ pub mod token_abi {
         admin: &Identity,
         mut name: String,
         mut symbol: String,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         name.push_str(" ".repeat(32 - name.len()).as_str());
@@ -44,7 +44,7 @@ pub mod token_abi {
         instance: &Token<T>,
         amount: u64,
         admin: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         instance
             .methods()
             .mint_to_id(amount, admin)

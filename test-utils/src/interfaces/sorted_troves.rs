@@ -1,5 +1,5 @@
 use fuels::prelude::{abigen, ContractId};
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
 
 abigen!(Contract(
@@ -20,7 +20,7 @@ pub mod sorted_troves_abi {
         max_size: u64,
         protocol_manager: ContractId,
         borrow_opperations: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = sorted_troves
@@ -40,7 +40,7 @@ pub mod sorted_troves_abi {
         prev_id: Identity,
         next_id: Identity,
         asset: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         sorted_troves
             .methods()
             .insert(id, icr, prev_id, next_id, asset.into())
@@ -53,7 +53,7 @@ pub mod sorted_troves_abi {
         sorted_troves: &SortedTroves<T>,
         asset: AssetId,
         trove_manager: ContractId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         sorted_troves
             .methods()
             .add_asset(asset.into(), trove_manager)
@@ -65,7 +65,7 @@ pub mod sorted_troves_abi {
     pub async fn get_first<T: Account>(
         sorted_troves: &SortedTroves<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<Identity> {
+    ) -> CallResponse<Identity> {
         sorted_troves
             .methods()
             .get_first(asset.into())
@@ -77,7 +77,7 @@ pub mod sorted_troves_abi {
     pub async fn get_last<T: Account>(
         sorted_troves: &SortedTroves<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<Identity> {
+    ) -> CallResponse<Identity> {
         sorted_troves
             .methods()
             .get_last(asset.into())
@@ -89,7 +89,7 @@ pub mod sorted_troves_abi {
     pub async fn get_size<T: Account>(
         sorted_troves: &SortedTroves<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         sorted_troves
             .methods()
             .get_size(asset.into())
@@ -102,7 +102,7 @@ pub mod sorted_troves_abi {
         sorted_troves: &SortedTroves<T>,
         id: Identity,
         asset: AssetId,
-    ) -> FuelCallResponse<Identity> {
+    ) -> CallResponse<Identity> {
         sorted_troves
             .methods()
             .get_next(id, asset.into())
@@ -115,7 +115,7 @@ pub mod sorted_troves_abi {
         sorted_troves: &SortedTroves<T>,
         id: Identity,
         asset: AssetId,
-    ) -> FuelCallResponse<Identity> {
+    ) -> CallResponse<Identity> {
         sorted_troves
             .methods()
             .get_prev(id, asset.into())

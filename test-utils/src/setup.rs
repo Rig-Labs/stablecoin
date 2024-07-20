@@ -26,7 +26,7 @@ pub mod common {
     use fuels::{
         // accounts::rand::{self, Rng},
         prelude::*,
-        programs::call_response::FuelCallResponse,
+        programs::responses::CallResponse,
         types::{ContractId, Identity},
     };
     use pbr::ProgressBar;
@@ -125,14 +125,14 @@ pub mod common {
         pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-
         pb.inc();
+
         let default_pool = deploy_default_pool(&wallet).await;
-
         pb.inc();
+
         let active_pool = deploy_active_pool(&wallet).await;
-
         pb.inc();
+
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
         let vesting_contract = deploy_vesting_contract(&wallet).await;
@@ -951,7 +951,7 @@ pub mod common {
         HintHelper::new(id, wallet.clone())
     }
 
-    pub fn print_response<T>(response: &FuelCallResponse<T>)
+    pub fn print_response<T>(response: &CallResponse<T>)
     where
         T: std::fmt::Debug,
     {

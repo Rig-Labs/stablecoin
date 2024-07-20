@@ -1,6 +1,6 @@
 use fuels::prelude::abigen;
 
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 abigen!(Contract(
     name = "HintHelper",
     abi = "contracts/hint-helper-contract/out/debug/hint-helper-contract-abi.json"
@@ -20,7 +20,7 @@ pub mod hint_helper_abi {
         hint_helper: &HintHelper<T>,
 
         sorted_troves: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = hint_helper
@@ -41,7 +41,7 @@ pub mod hint_helper_abi {
         cr: u64,
         num_itterations: u64,
         random_seed: u64,
-    ) -> FuelCallResponse<(Identity, u64, u64)> {
+    ) -> CallResponse<(Identity, u64, u64)> {
         hint_helper
             .methods()
             .get_approx_hint(

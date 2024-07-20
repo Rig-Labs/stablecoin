@@ -1,7 +1,7 @@
 use fuels::prelude::*;
 use rand::{self, Rng};
 
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
@@ -51,7 +51,7 @@ pub async fn set_nominal_icr_and_insert(
     prev_id: Identity,
     next_id: Identity,
     asset: AssetId,
-) -> FuelCallResponse<()> {
+) -> CallResponse<()> {
     let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
@@ -67,7 +67,7 @@ pub async fn set_nominal_icr_and_insert(
 pub async fn get_nominal_icr(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     id: Identity,
-) -> FuelCallResponse<u64> {
+) -> CallResponse<u64> {
     trove_manager
         .methods()
         .get_nominal_icr(id)
@@ -83,7 +83,7 @@ pub async fn offset(
     usdf_token: &Token<WalletUnlocked>,
     coll_to_offset: u64,
     debt_to_offset: u64,
-) -> FuelCallResponse<()> {
+) -> CallResponse<()> {
     let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
@@ -101,7 +101,7 @@ pub async fn initialize(
     borrow_operations: ContractId,
     sorted_troves: ContractId,
     stability_pool: ContractId,
-) -> Result<FuelCallResponse<()>> {
+) -> Result<CallResponse<()>> {
     let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager
@@ -117,7 +117,7 @@ pub async fn remove(
     sorted_troves: &SortedTroves<WalletUnlocked>,
     id: Identity,
     asset: AssetId,
-) -> FuelCallResponse<()> {
+) -> CallResponse<()> {
     let tx_params = TxPolicies::default().with_tip(1);
 
     trove_manager

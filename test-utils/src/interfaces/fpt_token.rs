@@ -1,4 +1,4 @@
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse};
+use fuels::{prelude::abigen, programs::responses::CallResponse};
 
 abigen!(Contract(
     name = "FPTToken",
@@ -15,7 +15,7 @@ pub mod fpt_token_abi {
         instance: &FPTToken<T>,
         vesting_contract: &VestingContract<T>,
         community_issuance_contract: &CommunityIssuance<T>,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
@@ -33,7 +33,7 @@ pub mod fpt_token_abi {
         return res.unwrap();
     }
 
-    pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> FuelCallResponse<Option<u64>> {
+    pub async fn total_supply<T: Account>(instance: &FPTToken<T>) -> CallResponse<Option<u64>> {
         let fpt_token_asset_id = instance
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -49,7 +49,7 @@ pub mod fpt_token_abi {
 
     pub async fn get_vesting_contract<T: Account>(
         instance: &FPTToken<T>,
-    ) -> FuelCallResponse<ContractId> {
+    ) -> CallResponse<ContractId> {
         instance
             .methods()
             .get_vesting_contract()

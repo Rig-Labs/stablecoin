@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "BorrowOperations",
@@ -28,7 +28,7 @@ pub mod borrow_operations_abi {
         coll_surplus_pool_contract: ContractId,
         active_pool_contract: ContractId,
         sorted_troves_contract: ContractId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -62,7 +62,7 @@ pub mod borrow_operations_abi {
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
         lower_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_witness_limit(2000000)
@@ -109,7 +109,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -152,7 +152,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -190,7 +190,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -230,7 +230,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -277,7 +277,7 @@ pub mod borrow_operations_abi {
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
         amount: u64,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -323,7 +323,7 @@ pub mod borrow_operations_abi {
         oracle: ContractId,
         trove_manager: ContractId,
         asset: AssetId,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);

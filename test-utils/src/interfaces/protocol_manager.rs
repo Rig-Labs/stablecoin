@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "ProtocolManager",
@@ -17,7 +17,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::stability_pool::StabilityPool;
     use crate::interfaces::usdf_token::USDFToken;
     use crate::setup::common::AssetContracts;
-    use fuels::prelude::{Account, CallParameters, SettableContract};
+    use fuels::prelude::{Account, CallParameters, ContractDependency};
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::AssetId;
     use fuels::{
@@ -36,7 +36,7 @@ pub mod protocol_manager_abi {
         active_pool: ContractId,
         sorted_troves: ContractId,
         admin: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = protocol_manager
@@ -73,7 +73,7 @@ pub mod protocol_manager_abi {
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         protocol_manager
@@ -109,7 +109,7 @@ pub mod protocol_manager_abi {
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
         aswith_contracts: &Vec<AssetContracts<T>>,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_witness_limit(2000000)
@@ -123,7 +123,7 @@ pub mod protocol_manager_abi {
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
-        let mut with_contracts: Vec<&dyn SettableContract> = Vec::new();
+        let mut with_contracts: Vec<&dyn ContractDependency> = Vec::new();
 
         for contracts in aswith_contracts.iter() {
             with_contracts.push(&contracts.trove_manager);

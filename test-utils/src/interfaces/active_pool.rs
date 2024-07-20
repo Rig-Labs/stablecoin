@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "ActivePool",
@@ -23,7 +23,7 @@ pub mod active_pool_abi {
         stability_pool: Identity,
         default_pool: ContractId,
         protocol_manager: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = active_pool
@@ -44,7 +44,7 @@ pub mod active_pool_abi {
     pub async fn get_usdf_debt<T: Account>(
         active_pool: &ActivePool<T>,
         asset_id: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         active_pool
             .methods()
             .get_usdf_debt(asset_id.into())
@@ -56,7 +56,7 @@ pub mod active_pool_abi {
     pub async fn get_asset<T: Account>(
         active_pool: &ActivePool<T>,
         asset_id: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         active_pool
             .methods()
             .get_asset(asset_id.into())
@@ -69,7 +69,7 @@ pub mod active_pool_abi {
         active_pool: &ActivePool<T>,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         active_pool
@@ -85,7 +85,7 @@ pub mod active_pool_abi {
         active_pool: &ActivePool<T>,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         active_pool
@@ -101,7 +101,7 @@ pub mod active_pool_abi {
         active_pool: &ActivePool<T>,
         asset_id: AssetId,
         trove_manager: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         active_pool
@@ -117,7 +117,7 @@ pub mod active_pool_abi {
         active_pool: &ActivePool<T>,
         token: &Token<T>,
         amount: u64,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let fuel_asset_id = token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -144,7 +144,7 @@ pub mod active_pool_abi {
         recipient: Identity,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         active_pool
             .methods()
             .send_asset(recipient, amount, asset_id.into())
@@ -159,7 +159,7 @@ pub mod active_pool_abi {
         default_pool: &DefaultPool<T>,
         asset: &Token<T>,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         active_pool
             .methods()
             .send_asset_to_default_pool(

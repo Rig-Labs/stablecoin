@@ -4,7 +4,7 @@ use fuels::prelude::{Address, Bech32Address};
 use fuels::types::AssetId;
 use fuels::{
     prelude::{abigen, Account},
-    programs::call_response::FuelCallResponse,
+    programs::responses::CallResponse,
     types::Identity,
 };
 use serde::Deserialize;
@@ -20,7 +20,7 @@ pub async fn instantiate_vesting_contract<T: Account>(
     contract: &VestingContract<T>,
     asset_contract: &AssetId,
     schedules: Vec<VestingSchedule>,
-) -> FuelCallResponse<()> {
+) -> CallResponse<()> {
     contract
         .methods()
         .constructor(asset_contract.clone().into(), schedules, true)
@@ -32,7 +32,7 @@ pub async fn instantiate_vesting_contract<T: Account>(
 pub async fn set_timestamp<T: Account>(
     contract: &VestingContract<T>,
     timestamp: u64,
-) -> FuelCallResponse<()> {
+) -> CallResponse<()> {
     contract
         .methods()
         .set_current_time(timestamp)
