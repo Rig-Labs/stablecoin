@@ -98,47 +98,47 @@ pub mod common {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(12);
+        // let mut pb = ProgressBar::new(12);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let usdf = deploy_usdf_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let stability_pool = deploy_stability_pool(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt_staking = deploy_fpt_staking(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let community_issuance = deploy_community_issuance(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt_token = deploy_fpt_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt = deploy_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let default_pool = deploy_default_pool(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let active_pool = deploy_active_pool(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
         let vesting_contract = deploy_vesting_contract(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
-        pb.finish_println("Parent Contracts deployed");
+        // pb.finish_println("Parent Contracts deployed");
 
         if is_testnet {
             println!("Borrow operations: {}", borrow_operations.contract_id());
@@ -152,7 +152,7 @@ pub mod common {
             println!("Default Pool: {}", default_pool.contract_id());
         }
 
-        let mut pb = ProgressBar::new(12);
+        // let mut pb = ProgressBar::new(12);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
@@ -168,10 +168,10 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        pb.inc();
+        // pb.inc();
 
         // mock token for testing staking
         token_abi::initialize(
@@ -183,7 +183,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         usdf_token_abi::initialize(
             &usdf,
@@ -193,7 +193,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         borrow_operations_abi::initialize(
             &borrow_operations,
@@ -205,7 +205,7 @@ pub mod common {
             sorted_troves.contract_id().into(),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         stability_pool_abi::initialize(
             &stability_pool,
@@ -216,7 +216,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         fpt_staking_abi::initialize(
             &fpt_staking,
@@ -228,7 +228,7 @@ pub mod common {
                 .into(),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         protocol_manager_abi::initialize(
             &protocol_manager,
@@ -243,7 +243,7 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         coll_surplus_pool_abi::initialize(
             &coll_surplus_pool,
@@ -252,7 +252,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         default_pool_abi::initialize(
             &default_pool,
@@ -261,7 +261,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         active_pool_abi::initialize(
             &active_pool,
@@ -272,7 +272,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         sorted_troves_abi::initialize(
             &sorted_troves,
@@ -282,7 +282,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         let fuel_asset_contracts = add_asset(
             &borrow_operations,
@@ -318,11 +318,11 @@ pub mod common {
                 is_testnet,
             )
             .await;
-            pb.finish();
+            // pb.finish();
 
             asset_contracts.push(usdf_asset_contracts);
         }
-        pb.finish();
+        // pb.finish();
 
         asset_contracts.push(fuel_asset_contracts);
 

@@ -17,3 +17,4 @@ tokio = { version = "1.21.0", features = ["rt", "macros"] }
 
 [lib]
 doctest = false
+test = false
