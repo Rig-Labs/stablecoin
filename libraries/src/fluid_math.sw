@@ -2,7 +2,7 @@ library;
 
 pub mod numbers;
 use numbers::*;
-use std::{hash::*, u128::U128, u256::U256};
+use std::{hash::*, u128::U128};
 
 pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 // Using Precision 6 until u128 is available

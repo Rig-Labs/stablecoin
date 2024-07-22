@@ -65,14 +65,20 @@ async fn get_contract_instance() -> (
 
     active_pool_abi::add_asset(
         &active_pool,
-        asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+        asset
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into(),
         Identity::Address(wallet.address().into()),
     )
     .await;
 
     default_pool_abi::add_asset(
         &instance,
-        asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+        asset
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into(),
         Identity::Address(wallet.address().into()),
     )
     .await;
@@ -88,7 +94,7 @@ async fn proper_intialize() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -99,7 +105,7 @@ async fn proper_intialize() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -116,7 +122,7 @@ async fn proper_adjust_debt() {
         1000,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -125,7 +131,7 @@ async fn proper_adjust_debt() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -137,7 +143,7 @@ async fn proper_adjust_debt() {
         500,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -146,7 +152,7 @@ async fn proper_adjust_debt() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -180,7 +186,7 @@ async fn proper_adjust_asset_col() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -193,7 +199,7 @@ async fn proper_adjust_asset_col() {
         PRECISION / 2,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -202,7 +208,7 @@ async fn proper_adjust_asset_col() {
         &default_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

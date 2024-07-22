@@ -58,7 +58,7 @@ async fn proper_intialize() {
         &coll_surplus_pool,
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -70,7 +70,7 @@ async fn proper_intialize() {
         Identity::Address(admin.address().into()),
         mock_fuel
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;

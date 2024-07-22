@@ -6,9 +6,9 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-fuels = { workspace = true, default-features = false }
-tokio = { workspace = true, default-features = false }
-rand = { workspace = true, default-features = false }
+fuels = { workspace = true }
+tokio = { workspace = true }
+rand = { workspace = true }
 test-utils = { path = "../../test-utils" }
 
 # Not the latest version because of indexer bug o.o 

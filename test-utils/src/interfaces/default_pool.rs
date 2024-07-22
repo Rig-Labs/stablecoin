@@ -1,6 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "DefaultPool",
@@ -12,6 +11,7 @@ pub mod default_pool_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::token::Token;
     use fuels::prelude::Account;
+    use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::{
         prelude::{AssetId, CallParameters, ContractId, Error, TxPolicies},
         types::Identity,
@@ -21,8 +21,8 @@ pub mod default_pool_abi {
         default_pool: &DefaultPool<T>,
         protocol_manager: Identity,
         active_pool: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = default_pool
             .methods()
@@ -37,7 +37,7 @@ pub mod default_pool_abi {
     pub async fn get_usdf_debt<T: Account>(
         default_pool: &DefaultPool<T>,
         asset_id: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_usdf_debt(asset_id.into())
@@ -49,7 +49,7 @@ pub mod default_pool_abi {
     pub async fn get_asset<T: Account>(
         default_pool: &DefaultPool<T>,
         asset_id: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_asset(asset_id.into())
@@ -62,7 +62,7 @@ pub mod default_pool_abi {
         default_pool: &DefaultPool<T>,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         default_pool
             .methods()
             .increase_usdf_debt(amount, asset_id.into())
@@ -75,8 +75,8 @@ pub mod default_pool_abi {
         default_pool: &DefaultPool<T>,
         asset_id: AssetId,
         trove_manager: Identity,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         default_pool
             .methods()
@@ -91,7 +91,7 @@ pub mod default_pool_abi {
         default_pool: &DefaultPool<T>,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         default_pool
             .methods()
             .decrease_usdf_debt(amount, asset_id.into())
@@ -104,20 +104,20 @@ pub mod default_pool_abi {
         default_pool: &DefaultPool<T>,
         token: &Token<T>,
         amount: u64,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         let fuel_asset_id = AssetId::from(*token.contract_id().hash());
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
             .with_asset_id(fuel_asset_id);
 
-        let tx_params = TxPolicies::default().with_gas_price(1);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         default_pool
             .methods()
             .recieve()
             .with_tx_policies(tx_params)
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call_params(call_params)
             .unwrap()
             .with_contracts(&[token])
@@ -131,12 +131,12 @@ pub mod default_pool_abi {
         active_pool: &ActivePool<T>,
         amount: u64,
         asset_id: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         default_pool
             .methods()
             .send_asset_to_active_pool(amount, asset_id.into())
             .with_contracts(&[active_pool])
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
             .unwrap()

@@ -58,8 +58,8 @@ fn get_multiple_sorted_troves_from_head(
     start_indx: u64,
     count: u8,
 ) -> Vec<CombinedTroveData> {
-    let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
-    let trove_manager = abi(TroveManager, trove_manager_contract.value);
+    let sorted_troves = abi(SortedTroves, sorted_troves_contract.bits());
+    let trove_manager = abi(TroveManager, trove_manager_contract.bits());
 
     let mut index = start_indx;
     let mut curr_index = 0;

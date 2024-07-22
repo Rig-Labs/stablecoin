@@ -7,29 +7,25 @@ use std::{
     asset::*,
     auth::{
         AuthError,
-        msg_sender,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         balance_of,
         msg_amount,
     },
-    contract_id::ContractId,
-    identity::{
-        Identity,
-    },
     storage::*,
     string::String,
 };
+
 storage {
     vesting_contract: ContractId = ContractId::from(ZERO_B256),
     community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
     is_initialized: bool = false,
     default_asset: AssetId = AssetId::from(ZERO_B256),
 }
+
 // import fluid math decinals here
 pub const TOTAL_SUPPLY: u64 = 100_000_000;
 impl FPTToken for Contract {
@@ -64,7 +60,7 @@ impl FPTToken for Contract {
         );
         storage
             .default_asset
-            .write(get_default_asset_id(contract_id()));
+            .write(get_default_asset_id(ContractId::this()));
         storage.is_initialized.write(true);
     }
     //////////////////////////////////////

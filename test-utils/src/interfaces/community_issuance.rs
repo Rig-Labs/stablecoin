@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "CommunityIssuance",
@@ -18,8 +18,8 @@ pub mod community_issuance_abi {
         fpt_token_asset_id: AssetId,
         admin: &Identity,
         debugging: bool,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -39,8 +39,8 @@ pub mod community_issuance_abi {
     pub async fn set_current_time<T: Account>(
         instance: &CommunityIssuance<T>,
         time: u64,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -54,8 +54,8 @@ pub mod community_issuance_abi {
 
     pub async fn public_start_rewards_increase_transition_after_deadline<T: Account>(
         instance: &CommunityIssuance<T>,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()
@@ -70,8 +70,8 @@ pub mod community_issuance_abi {
     pub async fn start_rewards_increase_transition<T: Account>(
         instance: &CommunityIssuance<T>,
         transition_time: u64,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
             .methods()

@@ -113,7 +113,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -141,7 +141,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -152,7 +152,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

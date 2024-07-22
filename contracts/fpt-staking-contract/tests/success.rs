@@ -48,7 +48,7 @@ async fn proper_staking_deposit() {
     let fpt_asset_id = contracts
         .fpt
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     token_abi::mint_to_id(
@@ -77,12 +77,12 @@ async fn proper_staking_multiple_positions() {
     let fpt_asset_id = contracts
         .fpt
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
     let usdf_asset_id = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     let healthy_wallet1 = wallets.pop().unwrap();

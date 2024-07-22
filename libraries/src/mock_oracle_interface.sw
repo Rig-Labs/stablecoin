@@ -25,8 +25,8 @@ abi OracleModule {
 
 
 pub struct Price {
-    value: u64,
-    time: u64
+    pub value: u64,
+    pub time: u64
 }
 
 impl Price {

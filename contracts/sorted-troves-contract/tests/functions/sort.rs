@@ -60,7 +60,7 @@ async fn proper_head_and_tails_after_insert() {
 
     assert_eq!(result.value, false);
 
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     let result = sorted_troves
         .methods()

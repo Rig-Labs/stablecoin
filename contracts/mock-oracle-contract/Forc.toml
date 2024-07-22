@@ -6,5 +6,6 @@ name = "mock-oracle-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+#pyth_sdk = { git = "https://github.com/pyth-network/pyth-crosschain.git", tag = "pyth-fuel-contract-v0.3.0", subdir = "target_chains/fuel/contracts" }
 
 [constants]

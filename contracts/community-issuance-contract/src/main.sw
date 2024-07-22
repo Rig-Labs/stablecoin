@@ -9,32 +9,25 @@ use std::{
     asset::transfer,
     auth::{
         AuthError,
-        msg_sender,
     },
     block::{
         height,
         timestamp,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         balance_of,
         msg_amount,
     },
-    contract_id::ContractId,
-    identity::{
-        Identity,
-    },
-    logging::log,
-    revert::require,
     u128::U128,
-    u256::U256,
 };
+
 const ONE_WEEK_IN_SECONDS: u64 = 604800;
 const SIX_MONTHS_IN_SECONDS: u64 = 15780000;
 const ONE_YEAR_IN_SECONDS: u64 = 31104000;
+
 storage {
     stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
     fpt_token_contract: AssetId = AssetId::from(ZERO_B256),
@@ -48,6 +41,7 @@ storage {
     time_transition_started: u64 = 0,
     total_transition_time_seconds: u64 = 0,
 }
+
 impl CommunityIssuance for Contract {
     #[storage(read, write)]
     fn initialize(

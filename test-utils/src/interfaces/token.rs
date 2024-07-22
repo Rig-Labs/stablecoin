@@ -1,5 +1,4 @@
-use fuels::programs::call_utils::TxDependencyExtension;
-use fuels::{prelude::abigen, programs::call_response::FuelCallResponse, types::Identity};
+use fuels::{prelude::abigen, programs::responses::CallResponse, types::Identity};
 
 abigen!(Contract(
     name = "Token",
@@ -8,7 +7,10 @@ abigen!(Contract(
 
 pub mod token_abi {
     use super::*;
-    use fuels::prelude::{Account, Error, TxPolicies};
+    use fuels::{
+        prelude::{Account, Error, TxPolicies},
+        types::transaction_builders::VariableOutputPolicy,
+    };
 
     pub async fn initialize<T: Account>(
         instance: &Token<T>,
@@ -16,8 +18,8 @@ pub mod token_abi {
         admin: &Identity,
         mut name: String,
         mut symbol: String,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         name.push_str(" ".repeat(32 - name.len()).as_str());
         symbol.push_str(" ".repeat(8 - symbol.len()).as_str());
@@ -42,11 +44,11 @@ pub mod token_abi {
         instance: &Token<T>,
         amount: u64,
         admin: Identity,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         instance
             .methods()
             .mint_to_id(amount, admin)
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
             .unwrap()

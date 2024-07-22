@@ -36,12 +36,15 @@ impl Oracle for Contract {
         let last_price = storage.price.read();
 
         // Query the primary module for its price feed
-        let pyth_price = abi(OracleModule, PYTH.value).price();
+        let pyth_price = abi(OracleModule, PYTH.bits()).price();
 
         // If the primary module is determined to be stale then fallback to the next best metric
         if current_time - pyth_price.time > TIMEOUT || last_price.time == pyth_price.time {
             // Query the fallback module for its price
-            let redstone_price = abi(OracleModule, REDSTONE.value).price();
+
+            // Fuel Bug: trait coherence
+            let id = REDSTONE.bits();
+            let redstone_price = abi(OracleModule, id).price();
 
             // if the fallback oracle is also stale then compare the oracle times and the last price 
             // to determine which value is the latest
@@ -91,14 +94,14 @@ impl Oracle for Contract {
     }
 }
 
-impl OracleModule for Contract {
-    #[storage(read)]
-    fn price() -> Price {
-        storage.module_price.read()
-    }
+// impl OracleModule for Contract {
+//     #[storage(read)]
+//     fn price() -> Price {
+//         storage.module_price.read()
+//     }
 
-    #[storage(write)]
-    fn set_module_price(price: u64) {
-        storage.module_price.write(Price::new(price, timestamp()));
-    }
-}
+//     #[storage(write)]
+//     fn set_module_price(price: u64) {
+//         storage.module_price.write(Price::new(price, timestamp()));
+//     }
+// }

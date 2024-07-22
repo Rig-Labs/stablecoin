@@ -1,6 +1,6 @@
-use fuels::programs::call_utils::TxDependencyExtension;
 use fuels::{
-    prelude::abigen, prelude::BASE_ASSET_ID, programs::call_response::FuelCallResponse,
+    prelude::{abigen, AssetId},
+    programs::responses::CallResponse,
     types::Identity,
 };
 
@@ -13,7 +13,7 @@ pub mod usdf_token_abi {
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies},
-        types::ContractId,
+        types::{transaction_builders::VariableOutputPolicy, ContractId},
     };
 
     pub async fn initialize<T: Account>(
@@ -21,8 +21,8 @@ pub mod usdf_token_abi {
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         instance
             .methods()
@@ -40,11 +40,11 @@ pub mod usdf_token_abi {
         instance: &USDFToken<T>,
         amount: u64,
         address: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         instance
             .methods()
             .mint(amount, address)
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
     }
@@ -52,20 +52,23 @@ pub mod usdf_token_abi {
     pub async fn burn<T: Account>(
         usdf_token: &USDFToken<T>,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
-            .with_gas_price(1)
+            .with_tip(1)
             .with_script_gas_limit(200000);
         let usdf_asset_id = usdf_token
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
-        let call_handler = usdf_token.methods().burn().append_variable_outputs(1);
+        let call_handler = usdf_token
+            .methods()
+            .burn()
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1));
 
         call_handler
             .call_params(call_params)
@@ -75,12 +78,10 @@ pub mod usdf_token_abi {
             .await
     }
 
-    pub async fn total_supply<T: Account>(
-        instance: &USDFToken<T>,
-    ) -> FuelCallResponse<Option<u64>> {
+    pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> CallResponse<Option<u64>> {
         let usdf_asset_id = instance
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into();
 
         instance

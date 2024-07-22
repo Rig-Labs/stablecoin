@@ -436,7 +436,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await

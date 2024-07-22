@@ -1,5 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "Oracle",
@@ -11,8 +11,8 @@ pub mod oracle_abi {
     use super::*;
     use fuels::prelude::{Account, TxPolicies};
 
-    pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = oracle
             .methods()
@@ -24,8 +24,8 @@ pub mod oracle_abi {
         return res.unwrap();
     }
 
-    pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> FuelCallResponse<u64> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> CallResponse<u64> {
+        let tx_params = TxPolicies::default().with_tip(1);
         oracle
             .methods()
             .get_price()
