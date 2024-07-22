@@ -77,7 +77,7 @@ abi SortedTroves {
 }
 
 pub struct Node {
-    exists: bool,
-    next_id: Identity,
-    prev_id: Identity,
+    pub exists: bool,
+    pub next_id: Identity,
+    pub prev_id: Identity,
 }

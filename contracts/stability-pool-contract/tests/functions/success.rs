@@ -17,7 +17,10 @@ use test_utils::{
 async fn proper_initialization() {
     let (stability_pool, _, fuel, _, _, _) = setup(Some(4)).await;
 
-    let fuel_asset_id: AssetId = fuel.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+    let fuel_asset_id: AssetId = fuel
+        .contract_id()
+        .asset_id(&AssetId::zeroed().into())
+        .into();
 
     stability_pool_utils::assert_pool_asset(&stability_pool, 0, fuel_asset_id).await;
 
@@ -70,7 +73,7 @@ async fn proper_stability_deposit() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -149,7 +152,7 @@ async fn proper_stability_widthdrawl() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -171,7 +174,7 @@ async fn proper_stability_widthdrawl() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await;
@@ -423,9 +426,9 @@ async fn proper_many_depositors_distribution() {
     let usdf_asset_id: AssetId = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     admin
         .transfer(
@@ -623,9 +626,9 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     let usdf_asset_id: AssetId = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
-    let tx_params = TxPolicies::default().with_gas_price(1);
+    let tx_params = TxPolicies::default().with_tip(1);
 
     oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
 

@@ -3,7 +3,6 @@ use fuels::prelude::abigen;
 use crate::interfaces::community_issuance::CommunityIssuance;
 use crate::interfaces::token::Token;
 use crate::interfaces::usdf_token::USDFToken;
-use fuels::programs::call_utils::TxDependencyExtension;
 
 abigen!(Contract(
     name = "StabilityPool",
@@ -12,11 +11,10 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
     use super::*;
-    use fuels::prelude::BASE_ASSET_ID;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},
-        programs::call_response::FuelCallResponse,
-        types::{AssetId, ContractId, Identity},
+        programs::responses::CallResponse,
+        types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
 
     pub async fn initialize<T: Account>(
@@ -26,8 +24,8 @@ pub mod stability_pool_abi {
         community_issuance_address: ContractId,
         protocol_manager_contract: ContractId,
         active_pool: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         stability_pool
             .methods()
@@ -47,8 +45,8 @@ pub mod stability_pool_abi {
         trove_manager: ContractId,
         asset_address: AssetId,
         oracle_address: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         stability_pool
             .methods()
@@ -64,13 +62,13 @@ pub mod stability_pool_abi {
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, Error> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
-            .with_gas_price(1)
+            .with_tip(1)
             .with_witness_limit(2_000_000)
             .with_script_gas_limit(2000000);
 
-        let usdf_asset_id = usdf_token.contract_id().asset_id(&BASE_ASSET_ID.into());
+        let usdf_asset_id = usdf_token.contract_id().asset_id(&AssetId::zeroed().into());
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
@@ -82,7 +80,7 @@ pub mod stability_pool_abi {
             .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
-            .append_variable_outputs(2)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
             .with_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await
@@ -91,7 +89,7 @@ pub mod stability_pool_abi {
     pub async fn get_asset<T: Account>(
         stability_pool: &StabilityPool<T>,
         asset_address: AssetId,
-    ) -> Result<FuelCallResponse<u64>, Error> {
+    ) -> Result<CallResponse<u64>, Error> {
         stability_pool
             .methods()
             .get_asset(asset_address)
@@ -101,7 +99,7 @@ pub mod stability_pool_abi {
 
     pub async fn get_total_usdf_deposits<T: Account>(
         stability_pool: &StabilityPool<T>,
-    ) -> Result<FuelCallResponse<u64>, Error> {
+    ) -> Result<CallResponse<u64>, Error> {
         stability_pool
             .methods()
             .get_total_usdf_deposits()
@@ -113,7 +111,7 @@ pub mod stability_pool_abi {
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
         asset_id: AssetId,
-    ) -> Result<FuelCallResponse<u64>, Error> {
+    ) -> Result<CallResponse<u64>, Error> {
         stability_pool
             .methods()
             .get_depositor_asset_gain(depositor, asset_id.into())
@@ -124,7 +122,7 @@ pub mod stability_pool_abi {
     pub async fn get_compounded_usdf_deposit(
         stability_pool: &StabilityPool<WalletUnlocked>,
         depositor: Identity,
-    ) -> Result<FuelCallResponse<u64>, Error> {
+    ) -> Result<CallResponse<u64>, Error> {
         stability_pool
             .methods()
             .get_compounded_usdf_deposit(depositor)
@@ -135,7 +133,7 @@ pub mod stability_pool_abi {
     pub async fn get_depositor_fpt_gain<T: Account>(
         stability_pool: &StabilityPool<T>,
         depositor: Identity,
-    ) -> Result<FuelCallResponse<u64>, Error> {
+    ) -> Result<CallResponse<u64>, Error> {
         stability_pool
             .methods()
             .get_depositor_fpt_gain(depositor)
@@ -149,14 +147,14 @@ pub mod stability_pool_abi {
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
         amount: u64,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         stability_pool
             .methods()
             .withdraw_from_stability_pool(amount)
             .with_tx_policies(tx_params)
-            .append_variable_outputs(2)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
             .with_contracts(&[usdf_token, fuel_token, community_issuance])
             .call()
             .await

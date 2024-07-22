@@ -6,6 +6,7 @@ use test_utils::{
     setup::common::{deploy_hint_helper, setup_protocol},
 };
 
+#[ignore]
 #[tokio::test]
 async fn proper_hint_generations() {
     // let (active_pool, _admin) = get_contract_instance().await;

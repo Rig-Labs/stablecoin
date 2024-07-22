@@ -54,7 +54,7 @@ async fn proper_creating_trove() {
             contracts
                 .usdf
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
         )
         .await
@@ -65,7 +65,7 @@ async fn proper_creating_trove() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -76,7 +76,7 @@ async fn proper_creating_trove() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -87,7 +87,7 @@ async fn proper_creating_trove() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -132,7 +132,7 @@ async fn proper_creating_trove() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -147,7 +147,7 @@ async fn proper_creating_trove() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -227,7 +227,7 @@ async fn proper_increase_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -237,7 +237,7 @@ async fn proper_increase_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -247,7 +247,7 @@ async fn proper_increase_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -272,7 +272,7 @@ async fn proper_increase_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -284,7 +284,7 @@ async fn proper_increase_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -372,7 +372,7 @@ async fn proper_decrease_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -382,7 +382,7 @@ async fn proper_decrease_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -392,7 +392,7 @@ async fn proper_decrease_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -427,7 +427,7 @@ async fn proper_decrease_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -439,7 +439,7 @@ async fn proper_decrease_collateral() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -468,7 +468,7 @@ async fn proper_increase_debt() {
     let usdf_asset_id: AssetId = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     let deposit_amount = 1200 * PRECISION;
@@ -529,7 +529,7 @@ async fn proper_increase_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -539,7 +539,7 @@ async fn proper_increase_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -549,7 +549,7 @@ async fn proper_increase_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -624,7 +624,7 @@ async fn proper_decrease_debt() {
     let usdf_asset_id = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
 
     let deposit_amount = 1200 * PRECISION;
@@ -689,7 +689,7 @@ async fn proper_decrease_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -699,7 +699,7 @@ async fn proper_decrease_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -709,7 +709,7 @@ async fn proper_decrease_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -751,7 +751,7 @@ async fn proper_decrease_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -763,7 +763,7 @@ async fn proper_decrease_debt() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -850,7 +850,7 @@ async fn proper_open_multiple_troves() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -860,7 +860,7 @@ async fn proper_open_multiple_troves() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -870,7 +870,7 @@ async fn proper_open_multiple_troves() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -885,7 +885,7 @@ async fn proper_open_multiple_troves() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -899,7 +899,7 @@ async fn proper_open_multiple_troves() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -967,11 +967,11 @@ async fn proper_close_trove() {
     let usdf_asset_id: AssetId = contracts
         .usdf
         .contract_id()
-        .asset_id(&BASE_ASSET_ID.into())
+        .asset_id(&AssetId::zeroed().into())
         .into();
     let amount = borrow_amount1 / 200;
     let tx_parms = TxPolicies::default()
-        .with_gas_price(1)
+        .with_tip(1)
         .with_script_gas_limit(2000000);
 
     wallet1
@@ -1131,7 +1131,7 @@ async fn proper_creating_trove_with_2nd_asset() {
             contracts
                 .usdf
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
         )
         .await
@@ -1142,7 +1142,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1152,7 +1152,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1163,7 +1163,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1208,7 +1208,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1223,7 +1223,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[0]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1297,7 +1297,7 @@ async fn proper_creating_trove_with_2nd_asset() {
             contracts
                 .usdf
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
         )
         .await
@@ -1308,7 +1308,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[1]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1364,7 +1364,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         contracts.asset_contracts[1]
             .asset
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into(),
     )
     .await
@@ -1386,7 +1386,10 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     println!(
         "Expected: {:?}",
-        contracts.usdf.contract_id().asset_id(&BASE_ASSET_ID.into())
+        contracts
+            .usdf
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
     );
 
     let _res = borrow_operations_abi::close_trove(

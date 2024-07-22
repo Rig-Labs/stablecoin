@@ -8,25 +8,22 @@ use ::data_structures::VestingSchedule;
 use ::interface::VestingContract;
 use ::utils::{calculate_redeemable_amount, is_valid_vesting_schedule};
 use std::{
-    address::Address,
     asset::transfer,
-    auth::msg_sender,
     block::{
         height,
         timestamp,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
     storage::storage_vec::*,
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
 storage {
     vesting_schedules: StorageMap<Identity, VestingSchedule> = StorageMap::<Identity, VestingSchedule> {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
@@ -36,6 +33,7 @@ storage {
     debug: bool = false,
     debug_timestamp: u64 = 0,
 }
+
 impl VestingContract for Contract {
     #[storage(write, read)]
     fn constructor(

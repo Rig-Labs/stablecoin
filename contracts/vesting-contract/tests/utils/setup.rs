@@ -52,7 +52,7 @@ pub mod test_helpers {
         let instance = Token::new(contract.contract_id().clone(), admin.clone());
         let asset_id = instance
             .contract_id()
-            .asset_id(&BASE_ASSET_ID.into())
+            .asset_id(&AssetId::zeroed().into())
             .into();
         let name = "Fluid Protocol Test Token".to_string();
         let symbol = "FPTT".to_string();

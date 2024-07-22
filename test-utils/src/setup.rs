@@ -26,7 +26,7 @@ pub mod common {
     use fuels::{
         // accounts::rand::{self, Rng},
         prelude::*,
-        programs::call_response::FuelCallResponse,
+        programs::responses::CallResponse,
         types::{ContractId, Identity},
     };
     use pbr::ProgressBar;
@@ -98,47 +98,47 @@ pub mod common {
         deploy_2nd_asset: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
-        let mut pb = ProgressBar::new(12);
+        // let mut pb = ProgressBar::new(12);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let usdf = deploy_usdf_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let stability_pool = deploy_stability_pool(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt_staking = deploy_fpt_staking(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let community_issuance = deploy_community_issuance(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt_token = deploy_fpt_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let fpt = deploy_token(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
         let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
+        // pb.inc();
 
-        pb.inc();
         let default_pool = deploy_default_pool(&wallet).await;
+        // pb.inc();
 
-        pb.inc();
         let active_pool = deploy_active_pool(&wallet).await;
+        // pb.inc();
 
-        pb.inc();
         let sorted_troves = deploy_sorted_troves(&wallet).await;
 
         let vesting_contract = deploy_vesting_contract(&wallet).await;
-        pb.inc();
+        // pb.inc();
 
-        pb.finish_println("Parent Contracts deployed");
+        // pb.finish_println("Parent Contracts deployed");
 
         if is_testnet {
             println!("Borrow operations: {}", borrow_operations.contract_id());
@@ -152,7 +152,7 @@ pub mod common {
             println!("Default Pool: {}", default_pool.contract_id());
         }
 
-        let mut pb = ProgressBar::new(12);
+        // let mut pb = ProgressBar::new(12);
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
@@ -161,17 +161,17 @@ pub mod common {
             stability_pool.contract_id().into(),
             fpt_token
                 .contract_id()
-                .asset_id(&BASE_ASSET_ID.into())
+                .asset_id(&AssetId::zeroed().into())
                 .into(),
             &Identity::Address(wallet.address().into()),
             true,
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        pb.inc();
+        // pb.inc();
 
         // mock token for testing staking
         token_abi::initialize(
@@ -183,7 +183,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         usdf_token_abi::initialize(
             &usdf,
@@ -193,7 +193,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         borrow_operations_abi::initialize(
             &borrow_operations,
@@ -205,7 +205,7 @@ pub mod common {
             sorted_troves.contract_id().into(),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         stability_pool_abi::initialize(
             &stability_pool,
@@ -216,17 +216,19 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         fpt_staking_abi::initialize(
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt.contract_id().asset_id(&BASE_ASSET_ID.into()).into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
-            usdf.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            fpt.contract_id().asset_id(&AssetId::zeroed().into()).into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
+            usdf.contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         protocol_manager_abi::initialize(
             &protocol_manager,
@@ -241,7 +243,7 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
-        pb.inc();
+        // pb.inc();
 
         coll_surplus_pool_abi::initialize(
             &coll_surplus_pool,
@@ -250,7 +252,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         default_pool_abi::initialize(
             &default_pool,
@@ -259,7 +261,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         active_pool_abi::initialize(
             &active_pool,
@@ -270,7 +272,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         sorted_troves_abi::initialize(
             &sorted_troves,
@@ -280,7 +282,7 @@ pub mod common {
         )
         .await
         .unwrap();
-        pb.inc();
+        // pb.inc();
 
         let fuel_asset_contracts = add_asset(
             &borrow_operations,
@@ -316,11 +318,11 @@ pub mod common {
                 is_testnet,
             )
             .await;
-            pb.finish();
+            // pb.finish();
 
             asset_contracts.push(usdf_asset_contracts);
         }
-        pb.finish();
+        // pb.finish();
 
         asset_contracts.push(fuel_asset_contracts);
 
@@ -347,7 +349,7 @@ pub mod common {
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
@@ -378,7 +380,7 @@ pub mod common {
     pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
@@ -409,7 +411,7 @@ pub mod common {
     pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policy = TxPolicies::default().with_gas_price(1);
+        let tx_policy = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
@@ -442,7 +444,7 @@ pub mod common {
     ) -> TroveManagerContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
@@ -475,7 +477,7 @@ pub mod common {
     ) -> VestingContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
@@ -505,7 +507,7 @@ pub mod common {
     pub async fn deploy_oracle(wallet: &WalletUnlocked) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
@@ -539,7 +541,7 @@ pub mod common {
     ) -> ProtocolManager<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
@@ -558,7 +560,7 @@ pub mod common {
     ) -> BorrowOperations<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
@@ -655,7 +657,10 @@ pub mod common {
             active_pool.contract_id().into(),
             coll_surplus_pool.contract_id().into(),
             usdf.contract_id().into(),
-            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             protocol_manager.contract_id().into(),
         )
         .await
@@ -665,7 +670,10 @@ pub mod common {
 
         protocol_manager_abi::register_asset(
             &protocol_manager,
-            asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into(),
+            asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
             borrow_operations,
@@ -679,7 +687,10 @@ pub mod common {
         )
         .await;
 
-        let asset_id: AssetId = asset.contract_id().asset_id(&BASE_ASSET_ID.into()).into();
+        let asset_id: AssetId = asset
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into())
+            .into();
 
         return AssetContracts {
             oracle,
@@ -692,7 +703,7 @@ pub mod common {
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
@@ -725,7 +736,7 @@ pub mod common {
     pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
@@ -758,7 +769,7 @@ pub mod common {
     pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
@@ -793,7 +804,7 @@ pub mod common {
     ) -> CollSurplusPool<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
@@ -828,7 +839,7 @@ pub mod common {
     ) -> CommunityIssuance<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
@@ -861,7 +872,7 @@ pub mod common {
     pub async fn deploy_fpt_staking(wallet: &WalletUnlocked) -> FPTStaking<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
@@ -894,7 +905,7 @@ pub mod common {
     pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policies = TxPolicies::default().with_gas_price(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
@@ -933,14 +944,14 @@ pub mod common {
             LoadConfiguration::default().with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), TxPolicies::default().with_gas_price(1))
+        .deploy(&wallet.clone(), TxPolicies::default().with_tip(1))
         .await
         .unwrap();
 
         HintHelper::new(id, wallet.clone())
     }
 
-    pub fn print_response<T>(response: &FuelCallResponse<T>)
+    pub fn print_response<T>(response: &CallResponse<T>)
     where
         T: std::fmt::Debug,
     {

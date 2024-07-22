@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use fuels::programs::call_response::FuelCallResponse;
+use fuels::programs::responses::CallResponse;
 
 const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
@@ -72,7 +72,7 @@ pub fn resolve_relative_path(path: &str) -> String {
     resolved_str
 }
 
-pub fn print_response<T>(response: &FuelCallResponse<T>)
+pub fn print_response<T>(response: &CallResponse<T>)
 where
     T: std::fmt::Debug,
 {

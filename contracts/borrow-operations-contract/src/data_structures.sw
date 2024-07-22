@@ -1,19 +1,19 @@
 library;
 
 pub struct LocalVariables_OpenTrove {
-    price: u64,
-    usdf_fee: u64,
-    net_debt: u64,
-    composite_debt: u64,
-    icr: u64,
-    nicr: u64,
-    stake: u64,
-    array_index: u64,
+    pub price: u64,
+    pub usdf_fee: u64,
+    pub net_debt: u64,
+    pub composite_debt: u64,
+    pub icr: u64,
+    pub nicr: u64,
+    pub stake: u64,
+    pub array_index: u64,
 }
 
 pub struct AssetContracts {
-    trove_manager: ContractId,
-    oracle: ContractId,
+    pub trove_manager: ContractId,
+    pub oracle: ContractId,
 }
 
 impl LocalVariables_OpenTrove {
@@ -32,19 +32,19 @@ impl LocalVariables_OpenTrove {
 }
 
 pub struct LocalVariables_AdjustTrove {
-    price: u64,
-    coll_change: u64,
-    net_debt_change: u64,
-    is_coll_increase: bool,
-    debt: u64,
-    coll: u64,
-    old_icr: u64,
-    new_icr: u64,
-    new_tcr: u64,
-    usdf_fee: u64,
-    new_debt: u64,
-    new_coll: u64,
-    stake: u64,
+    pub price: u64,
+    pub coll_change: u64,
+    pub net_debt_change: u64,
+    pub is_coll_increase: bool,
+    pub debt: u64,
+    pub coll: u64,
+    pub old_icr: u64,
+    pub new_icr: u64,
+    pub new_tcr: u64,
+    pub usdf_fee: u64,
+    pub new_debt: u64,
+    pub new_coll: u64,
+    pub stake: u64,
 }
 
 impl LocalVariables_AdjustTrove {

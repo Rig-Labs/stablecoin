@@ -29,22 +29,18 @@ use libraries::trove_manager_interface::data_structures::{
 };
 use libraries::fluid_math::*;
 use std::{
-    address::Address,
     asset::transfer,
-    auth::msg_sender,
     block::{
         height,
         timestamp,
     },
     call_frames::{
-        contract_id,
         msg_asset_id,
     },
     context::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
     storage::storage_vec::*,
     u128::U128,
 };
@@ -797,7 +793,7 @@ fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amoun
     usdf_contract
         .burn {
             coins: usdf_amount,
-            asset_id: storage.usdf_contract.read().value,
+            asset_id: storage.usdf_contract.read().bits(),
         }();
 
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);

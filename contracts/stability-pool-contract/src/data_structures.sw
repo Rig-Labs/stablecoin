@@ -4,15 +4,15 @@ use libraries::fluid_math::numbers::*;
 use std::u128::U128;
 pub struct
  AssetContracts {
-    trove_manager: ContractId,
-    oracle: ContractId,
+    pub trove_manager: ContractId,
+    pub oracle: ContractId,
 }
 pub struct
  Snapshots {
-    P: U128,
-    G: U128,
-    scale: u64,
-    epoch: u64,
+    pub P: U128,
+    pub G: U128,
+    pub scale: u64,
+    pub epoch: u64,
 }
 impl Snapshots
  {

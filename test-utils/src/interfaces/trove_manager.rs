@@ -7,8 +7,7 @@ use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "TroveManagerContract",
@@ -19,7 +18,7 @@ pub mod trove_manager_abi {
 
     use fuels::{
         prelude::{Account, Error, TxPolicies},
-        types::{AssetId, ContractId, Identity},
+        types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
 
     use super::*;
@@ -27,7 +26,7 @@ pub mod trove_manager_abi {
     pub async fn get_nominal_icr<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         trove_manager
             .methods()
             .get_nominal_icr(id)
@@ -49,8 +48,8 @@ pub mod trove_manager_abi {
         ids: Vec<Identity>,
         upper_hint: Identity,
         lower_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -66,7 +65,7 @@ pub mod trove_manager_abi {
                 usdf,
                 community_issuance,
             ])
-            .append_variable_outputs(3)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
             .await
     }
@@ -84,8 +83,8 @@ pub mod trove_manager_abi {
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -101,7 +100,7 @@ pub mod trove_manager_abi {
                 usdf,
                 community_issuance,
             ])
-            .append_variable_outputs(3)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
             .await
     }
@@ -110,8 +109,8 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
         amount: u64,
-    ) -> FuelCallResponse<u64> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<u64> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -126,8 +125,8 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
         amount: u64,
-    ) -> FuelCallResponse<u64> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<u64> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -142,8 +141,8 @@ pub mod trove_manager_abi {
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
         status: Status,
-    ) -> FuelCallResponse<()> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -166,8 +165,8 @@ pub mod trove_manager_abi {
         usdf: ContractId,
         asset: AssetId,
         protocol_manager: ContractId,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = trove_manager
             .methods()
@@ -193,8 +192,8 @@ pub mod trove_manager_abi {
     pub async fn get_trove_coll<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<u64> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<u64> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -208,8 +207,8 @@ pub mod trove_manager_abi {
     pub async fn get_entire_debt_and_coll<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<(u64, u64, u64, u64)> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> CallResponse<(u64, u64, u64, u64)> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
             .methods()
@@ -223,7 +222,7 @@ pub mod trove_manager_abi {
     pub async fn get_trove_debt<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         trove_manager
             .methods()
             .get_trove_debt(id)
@@ -235,14 +234,14 @@ pub mod trove_manager_abi {
     pub async fn get_trove_status<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> Result<FuelCallResponse<Status>, Error> {
+    ) -> Result<CallResponse<Status>, Error> {
         trove_manager.methods().get_trove_status(id).call().await
     }
 
     pub async fn get_pending_asset_reward<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         trove_manager
             .methods()
             .get_pending_asset_rewards(id)
@@ -254,7 +253,7 @@ pub mod trove_manager_abi {
     pub async fn get_pending_usdf_reward<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         id: Identity,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         trove_manager
             .methods()
             .get_pending_usdf_rewards(id)

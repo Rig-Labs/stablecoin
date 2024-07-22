@@ -1,9 +1,10 @@
 contract;
 
 mod data_structures;
-use ::data_structures::{AssetContracts, AssetInfo, RedemptionTotals, SingleRedemptionValues};
+use ::data_structures::{AssetContracts, AssetInfo, RedemptionTotals};
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::trove_manager_interface::TroveManager;
+use libraries::trove_manager_interface::data_structures::SingleRedemptionValues;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::active_pool_interface::ActivePool;
@@ -78,14 +79,14 @@ impl ProtocolManager for Contract {
         oracle: ContractId,
     ) {
         require_is_admin();
-        let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().value);
-        let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().value);
-        let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().value);
-        let fpt_staking = abi(FPTStaking, storage.fpt_staking_contract.read().value);
-        let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().value);
-        let default_pool = abi(DefaultPool, storage.default_pool_contract.read().value);
-        let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
-        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
+        let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().bits());
+        let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().bits());
+        let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().bits());
+        let fpt_staking = abi(FPTStaking, storage.fpt_staking_contract.read().bits());
+        let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().bits());
+        let default_pool = abi(DefaultPool, storage.default_pool_contract.read().bits());
+        let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
+        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
         storage
             .asset_contracts
             .insert(
@@ -124,17 +125,17 @@ impl ProtocolManager for Contract {
         require(msg_amount() > 0, "Redemption amount must be greater than 0");
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
-        let usdf = abi(USDFToken, usdf_contract_cache.value);
-        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
-        let active_pool = abi(ActivePool, storage.active_pool_contract.read().value);
-        let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.value);
+        let usdf = abi(USDFToken, usdf_contract_cache.bits());
+        let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
+        let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
+        let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.bits());
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
         let mut remaining_itterations = max_itterations;
         while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_itterations > 0) {
             let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
-            let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
+            let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
             let price = assets_info.prices.get(index).unwrap();
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
             remaining_itterations -= 1;
@@ -170,7 +171,7 @@ impl ProtocolManager for Contract {
         let mut ind = 0;
         while (ind < assets_info.assets.len()) {
             let contracts_cache = assets_info.asset_contracts.get(ind).unwrap();
-            let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.value);
+            let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
             let price = assets_info.prices.get(ind).unwrap();
             let mut totals = assets_info.redemption_totals.get(ind).unwrap();
             // let total_usdf_supply_at_start = usdf.total_supply();
@@ -206,7 +207,7 @@ impl ProtocolManager for Contract {
         usdf
             .burn {
                 coins: total_usdf_redeemed,
-                asset_id: get_default_asset_id(usdf_contract_cache).value,
+                asset_id: get_default_asset_id(usdf_contract_cache).bits(),
             }();
         if (remaining_usdf > 0) {
             // Return remaining usdf to redeemer
@@ -242,7 +243,7 @@ fn get_all_assets_info() -> AssetInfo {
     let mut redemption_totals: Vec<RedemptionTotals> = Vec::new();
     let mut current_borrowers: Vec<Identity> = Vec::new();
     let mut current_crs: Vec<u64> = Vec::new();
-    let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().value);
+    let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
     let length = storage.assets.len();
     let mut ind = 0;
     while (ind < length) {

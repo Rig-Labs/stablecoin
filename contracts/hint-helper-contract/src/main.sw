@@ -54,8 +54,8 @@ impl HintHelper for Contract {
         input_random_seed: u64,
     ) -> (Identity, u64, u64) {
         let sorted_troves_contract = storage.sorted_troves_contract.read();
-        let sorted_troves = abi(SortedTroves, sorted_troves_contract.value);
-        let trove_manager = abi(TroveManager, trove_manager_contract.value);
+        let sorted_troves = abi(SortedTroves, sorted_troves_contract.bits());
+        let trove_manager = abi(TroveManager, trove_manager_contract.bits());
 
         let array_length = trove_manager.get_trove_owners_count();
 

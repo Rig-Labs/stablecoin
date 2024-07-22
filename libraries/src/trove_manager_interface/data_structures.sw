@@ -1,9 +1,9 @@
 library;
 
 pub struct SingleRedemptionValues {
-    usdf_lot: u64,
-    asset_lot: u64,
-    cancelled_partial: bool,
+    pub usdf_lot: u64,
+    pub asset_lot: u64,
+    pub cancelled_partial: bool,
 }
 
 impl SingleRedemptionValues {
@@ -62,8 +62,8 @@ impl Asset {
 }
 
 pub struct RewardSnapshot {
-    asset: u64,
-    usdf_debt: u64,
+    pub asset: u64,
+    pub usdf_debt: u64,
 }
 
 impl RewardSnapshot {

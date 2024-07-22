@@ -1,6 +1,5 @@
 use fuels::prelude::abigen;
-use fuels::programs::call_response::FuelCallResponse;
-use fuels::programs::call_utils::TxDependencyExtension;
+use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "CollSurplusPool",
@@ -11,6 +10,7 @@ pub mod coll_surplus_pool_abi {
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
     use fuels::prelude::Error;
+    use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::AssetId;
     use fuels::{
         prelude::{Account, ContractId, TxPolicies, WalletUnlocked},
@@ -21,8 +21,8 @@ pub mod coll_surplus_pool_abi {
         coll_surplus_pool: &CollSurplusPool<T>,
         borrow_operations: ContractId,
         protocol_manager: Identity,
-    ) -> Result<FuelCallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_gas_price(1);
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let res = coll_surplus_pool
             .methods()
@@ -37,7 +37,7 @@ pub mod coll_surplus_pool_abi {
     pub async fn get_asset<T: Account>(
         default_pool: &CollSurplusPool<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_asset(asset.into())
@@ -51,12 +51,12 @@ pub mod coll_surplus_pool_abi {
         acount: Identity,
         active_pool: &ActivePool<T>,
         asset: AssetId,
-    ) -> FuelCallResponse<()> {
+    ) -> CallResponse<()> {
         default_pool
             .methods()
             .claim_coll(acount, asset.into())
             .with_contracts(&[active_pool])
-            .append_variable_outputs(1)
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
             .unwrap()
@@ -66,7 +66,7 @@ pub mod coll_surplus_pool_abi {
         default_pool: &CollSurplusPool<WalletUnlocked>,
         acount: Identity,
         asset: AssetId,
-    ) -> FuelCallResponse<u64> {
+    ) -> CallResponse<u64> {
         default_pool
             .methods()
             .get_collateral(acount, asset.into())

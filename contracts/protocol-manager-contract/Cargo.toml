@@ -6,9 +6,9 @@ edition = "2021"
 license = "Apache-2.0"
 
 [dependencies]
-fuels = { workspace = true, default-features = false }
+fuels = { workspace = true }
 test-utils = { path = "../../test-utils" }
-tokio = { workspace = true, default-features = false }
+tokio = { workspace = true }
 
 [[test]]
 harness = true

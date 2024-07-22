@@ -51,7 +51,7 @@ impl DefaultPool for Contract {
         active_pool
             .recieve {
                 coins: amount,
-                asset_id: asset_id.value,
+                asset_id: asset_id.bits(),
             }();
     }
 

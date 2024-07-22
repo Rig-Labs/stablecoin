@@ -3,11 +3,11 @@ library;
 use libraries::trove_manager_interface::data_structures::{Status};
 
 pub struct Trove {
-    debt: u64,
-    coll: u64,
-    stake: u64,
-    array_index: u64,
-    status: Status,
+    pub debt: u64,
+    pub coll: u64,
+    pub stake: u64,
+    pub array_index: u64,
+    pub status: Status,
 }
 
 impl Trove {
@@ -25,10 +25,10 @@ impl Trove {
 
 
 pub struct LocalVariablesOuterLiquidationFunction {
-    price: u64,
-    usdf_in_stability_pool: u64,
-    liquidated_debt: u64,
-    liquidated_coll: u64,
+    pub price: u64,
+    pub usdf_in_stability_pool: u64,
+    pub liquidated_debt: u64,
+    pub liquidated_coll: u64,
 }
 
 impl LocalVariablesOuterLiquidationFunction {
@@ -43,10 +43,10 @@ impl LocalVariablesOuterLiquidationFunction {
 }
 
 pub struct LocalVariablesLiquidationSequence {
-    remaining_usdf_in_stability_pool: u64,
-    i: u64,
-    icr: u64,
-    borrower: Identity,
+    pub remaining_usdf_in_stability_pool: u64,
+    pub i: u64,
+    pub icr: u64,
+    pub borrower: Identity,
 }
 
 impl LocalVariablesLiquidationSequence {
@@ -61,17 +61,17 @@ impl LocalVariablesLiquidationSequence {
 }
 
 pub struct LiquidationValues {
-    entire_trove_debt: u64,
-    entire_trove_coll: u64,
-    debt_to_offset: u64,
-    coll_to_send_to_sp: u64,
-    debt_to_redistribute: u64,
-    coll_to_redistribute: u64,
-    coll_surplus: u64,
-    coll_gas_compensation: u64,
-    is_partial_liquidation: bool,
-    remaining_trove_coll: u64,
-    remaining_trove_debt: u64,
+    pub entire_trove_debt: u64,
+    pub entire_trove_coll: u64,
+    pub debt_to_offset: u64,
+    pub coll_to_send_to_sp: u64,
+    pub debt_to_redistribute: u64,
+    pub coll_to_redistribute: u64,
+    pub coll_surplus: u64,
+    pub coll_gas_compensation: u64,
+    pub is_partial_liquidation: bool,
+    pub remaining_trove_coll: u64,
+    pub remaining_trove_debt: u64,
 }
 
 impl LiquidationValues {
@@ -93,14 +93,14 @@ impl LiquidationValues {
 }
 
 pub struct LiquidationTotals {
-    total_debt_to_offset: u64,
-    total_coll_to_send_to_sp: u64,
-    total_debt_to_redistribute: u64,
-    total_coll_to_redistribute: u64,
-    total_coll_gas_compensation: u64,
-    total_coll_surplus: u64,
-    total_debt_in_sequence: u64,
-    total_coll_in_sequence: u64,
+    pub total_debt_to_offset: u64,
+    pub total_coll_to_send_to_sp: u64,
+    pub total_debt_to_redistribute: u64,
+    pub total_coll_to_redistribute: u64,
+    pub total_coll_gas_compensation: u64,
+    pub total_coll_surplus: u64,
+    pub total_debt_in_sequence: u64,
+    pub total_coll_in_sequence: u64,
 }
 
 impl LiquidationTotals {
@@ -119,27 +119,27 @@ impl LiquidationTotals {
 }
 
 pub struct LiquidatedTroveValsInner {
-    trove_debt_to_repay: u64,
-    trove_coll_liquidated: u64,
-    is_partial_liquidation: bool,
+    pub trove_debt_to_repay: u64,
+    pub trove_coll_liquidated: u64,
+    pub is_partial_liquidation: bool,
 }
 
 pub struct EntireTroveDebtAndColl {
-    entire_trove_debt: u64,
-    entire_trove_coll: u64,
-    pending_debt_rewards: u64,
-    pending_coll_rewards: u64,
+    pub entire_trove_debt: u64,
+    pub entire_trove_coll: u64,
+    pub pending_debt_rewards: u64,
+    pub pending_coll_rewards: u64,
 }
 
 pub struct RedemptionTotals {
-    remaining_usdf: u64,
-    total_usdf_to_redeem: u64,
-    total_asset_drawn: u64,
-    asset_fee: u64,
-    asset_to_send_to_redeemer: u64,
-    decayed_base_rate: u64,
-    price: u64,
-    total_usdf_supply_at_start: u64,
+    pub remaining_usdf: u64,
+    pub total_usdf_to_redeem: u64,
+    pub total_asset_drawn: u64,
+    pub asset_fee: u64,
+    pub asset_to_send_to_redeemer: u64,
+    pub decayed_base_rate: u64,
+    pub price: u64,
+    pub total_usdf_supply_at_start: u64,
 }
 
 impl RedemptionTotals {
