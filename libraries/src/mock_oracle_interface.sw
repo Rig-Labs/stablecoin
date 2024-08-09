@@ -8,19 +8,6 @@ abi Oracle {
     // TODO: return Price
     #[storage(read, write)]
     fn get_price() -> u64;
-
-    // TODO: remove?
-    #[storage(read)]
-    fn get_precision() -> u64;
-}
-
-// Placeholder for oracle integration
-abi OracleModule {
-    #[storage(read)]
-    fn price() -> Price;
-
-    #[storage(write)]
-    fn set_module_price(price: u64);
 }
 
 

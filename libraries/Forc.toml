@@ -4,4 +4,8 @@ entry = "interface.sw"
 license = "Apache-2.0"
 name = "libraries"
 
+[dependencies]
+# TODO: this maxes my 64GB RAM...
+#pyth_interface = { git = "https://github.com/pyth-network/pyth-crosschain.git", tag = "pyth-fuel-contract-v0.5.0" }
+
 [constants]
