@@ -8,6 +8,7 @@ pub mod fpt_token;
 pub mod hint_helper;
 pub mod oracle;
 pub mod protocol_manager;
+pub mod pyth_oracle;
 pub mod sorted_troves;
 pub mod stability_pool;
 pub mod token;

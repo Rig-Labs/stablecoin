@@ -1,7 +1,10 @@
 contract;
 
-use libraries::mock_oracle_interface::{Oracle, Price};
-use pyth_interface::{data_structures::price::{PriceFeedId, Price as PythPrice}, PythCore};
+use libraries::{
+    mock_oracle_interface::{PythPriceFeedId, PythPrice, PythCore},
+    mock_oracle_interface::{Oracle, Price},
+};
+// use pyth_interface::{data_structures::price::{PriceFeedId, Price as PythPrice}, PythCore};
 use std::{
     block::timestamp,
     constants::ZERO_B256,
@@ -19,7 +22,7 @@ impl From<PythPrice> for Price {
 
 configurable {
     PYTH: ContractId = ContractId::from(ZERO_B256),
-    PYTH_PRICE_ID: PriceFeedId = ZERO_B256,
+    PYTH_PRICE_ID: PythPriceFeedId = ZERO_B256,
     REDSTONE: ContractId = ContractId::from(ZERO_B256),
     TIMEOUT: u64 = 0,
 }
