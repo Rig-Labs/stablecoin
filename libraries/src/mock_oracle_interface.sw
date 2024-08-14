@@ -1,22 +1,23 @@
 library;
 
+use std::bytes::Bytes;
+
 abi Oracle {
     // TODO: remove
     #[storage(write)]
     fn set_price(price: u64);
 
-    // TODO: return Price
     #[storage(read, write)]
-    fn get_price() -> u64;
+    fn get_price(redstone_payload: Bytes) -> Price;
 }
 
 pub struct Price {
-    pub value: u64,
+    pub value: u256,
     pub time: u64
 }
 
 impl Price {
-    pub fn new(price: u64, time: u64) -> Self {
+    pub fn new(price: u256, time: u64) -> Self {
         Self {
             value: price,
             time
@@ -47,4 +48,10 @@ pub struct PythPriceFeed {
 
 pub enum PythError {
     PriceFeedNotFound: (),
+}
+
+// Mocked Redstone structures
+abi RedstoneCore {
+    #[storage(read)]
+    fn get_prices(feed_ids: Vec<u256>, payload_bytes: Bytes) -> (Vec<u256>, u64);
 }

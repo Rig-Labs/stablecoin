@@ -9,7 +9,10 @@ abigen!(Contract(
 pub mod oracle_abi {
 
     use super::*;
-    use fuels::prelude::{Account, TxPolicies};
+    use fuels::{
+        prelude::{Account, TxPolicies},
+        types::Bytes,
+    };
 
     pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -24,11 +27,14 @@ pub mod oracle_abi {
         return res.unwrap();
     }
 
-    pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> CallResponse<u64> {
+    pub async fn get_price<T: Account>(
+        oracle: &Oracle<T>,
+        redstone_payload: Bytes,
+    ) -> CallResponse<Price> {
         let tx_params = TxPolicies::default().with_tip(1);
         oracle
             .methods()
-            .get_price()
+            .get_price(redstone_payload)
             .with_tx_policies(tx_params)
             .call()
             .await

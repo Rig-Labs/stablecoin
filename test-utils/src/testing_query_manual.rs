@@ -9,7 +9,7 @@ use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
 use dotenv::dotenv;
 use fuels::prelude::{Bech32ContractId, Provider, WalletUnlocked};
-use fuels::types::{Address, Identity};
+use fuels::types::{Address, Bytes, Identity};
 
 const RPC: &str = "beta-4.fuel.network";
 
@@ -42,7 +42,10 @@ pub async fn testing_query() {
 
     let oracle = Oracle::new(id, wallet.clone());
 
-    let res = oracle_abi::get_price(&oracle).await;
+    let hex_str = "0101010101010101010101010101010101010101010101010101010101010101";
+    let bytes = Bytes::from_hex_str(hex_str).unwrap();
+
+    let res = oracle_abi::get_price(&oracle, bytes).await;
 
     println!("Result: {:#?}", res.value);
 
