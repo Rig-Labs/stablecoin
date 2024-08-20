@@ -57,6 +57,8 @@ async fn proper_redemption_from_partially_closed() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -79,6 +81,8 @@ async fn proper_redemption_from_partially_closed() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -101,6 +105,8 @@ async fn proper_redemption_from_partially_closed() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -256,6 +262,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -280,6 +288,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -304,6 +314,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

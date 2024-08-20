@@ -2,7 +2,7 @@ use fuels::prelude::*;
 
 use test_utils::{
     interfaces::oracle::{oracle_abi, Oracle},
-    setup::common::deploy_oracle,
+    setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
 
 async fn get_contract_instance() -> Oracle<WalletUnlocked> {
@@ -20,7 +20,14 @@ async fn get_contract_instance() -> Oracle<WalletUnlocked> {
     .unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let instance = deploy_oracle(&wallet).await;
+    let pyth = deploy_mock_pyth_oracle(&wallet).await;
+    let redstone = deploy_mock_redstone_oracle(&wallet).await;
+    let instance = deploy_oracle(
+        &wallet,
+        pyth.contract_id().into(),
+        redstone.contract_id().into(),
+    )
+    .await;
 
     instance
 }

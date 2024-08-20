@@ -6,13 +6,13 @@ abigen!(Contract(
     abi = "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
 ));
 
+// 1 minute
+pub const ORACLE_TIMEOUT: u64 = 60;
+
 pub mod oracle_abi {
 
     use super::*;
-    use fuels::{
-        prelude::{Account, TxPolicies},
-        types::Bytes,
-    };
+    use fuels::prelude::{Account, TxPolicies};
 
     pub async fn set_price<T: Account>(oracle: &Oracle<T>, price: u64) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -27,14 +27,11 @@ pub mod oracle_abi {
         return res.unwrap();
     }
 
-    pub async fn get_price<T: Account>(
-        oracle: &Oracle<T>,
-        redstone_payload: Bytes,
-    ) -> CallResponse<Price> {
+    pub async fn get_price<T: Account>(oracle: &Oracle<T>) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
         oracle
             .methods()
-            .get_price(redstone_payload)
+            .get_price()
             .with_tx_policies(tx_params)
             .call()
             .await

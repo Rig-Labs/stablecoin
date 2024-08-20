@@ -18,6 +18,12 @@ pub const ORACLE_CONTRACT_BINARY_PATH: &str =
 pub const ORACLE_CONTRACT_STORAGE_PATH: &str =
     "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-storage_slots.json";
 
+pub const REDSTONE_ORACLE_CONTRACT_BINARY_PATH: &str =
+    "contracts/mock-redstone-contract/out/debug/mock-redstone-contract.bin";
+
+pub const PYTH_ORACLE_CONTRACT_BINARY_PATH: &str =
+    "contracts/mock-pyth-contract/out/debug/mock-pyth-contract.bin";
+
 pub const BORROW_OPERATIONS_CONTRACT_BINARY_PATH: &str =
     "contracts/borrow-operations-contract/out/debug/borrow-operations-contract.bin";
 pub const BORROW_OPERATIONS_CONTRACT_STORAGE_PATH: &str =

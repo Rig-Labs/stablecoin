@@ -41,6 +41,8 @@ async fn proper_stability_deposit() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -111,6 +113,8 @@ async fn proper_stability_widthdrawl() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -204,6 +208,8 @@ async fn proper_one_sp_depositor_position() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -226,6 +232,8 @@ async fn proper_one_sp_depositor_position() {
     borrow_operations_abi::open_trove(
         &liq_borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -377,6 +385,8 @@ async fn proper_many_depositors_distribution() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -399,6 +409,8 @@ async fn proper_many_depositors_distribution() {
     borrow_operations_abi::open_trove(
         &liq_borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -577,6 +589,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -599,6 +613,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     borrow_operations_abi::open_trove(
         &liq_borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

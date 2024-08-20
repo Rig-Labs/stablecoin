@@ -30,9 +30,10 @@ pub mod deployment {
     use test_utils::setup::common::{
         deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
         deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
-        deploy_oracle, deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool,
-        deploy_token, deploy_trove_manager_contract, deploy_usdf_token, deploy_vesting_contract,
-        AssetContracts, ProtocolContracts,
+        deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle,
+        deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool, deploy_token,
+        deploy_trove_manager_contract, deploy_usdf_token, deploy_vesting_contract, AssetContracts,
+        ProtocolContracts,
     };
 
     pub async fn deploy() {
@@ -422,15 +423,28 @@ pub mod deployment {
                     .asset_id(&AssetId::zeroed().into())
                     .into();
 
+                // TODO: mock oracles need to come from the interface of the existing oracle
+                let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                let redstone = deploy_mock_redstone_oracle(&wallet).await;
+
                 return AssetContracts {
                     oracle: Oracle::new(contracts.oracle, wallet.clone()),
+                    mock_pyth_oracle: pyth,
+                    mock_redstone_oracle: redstone,
                     asset,
                     trove_manager,
                     asset_id,
                 };
             }
             None => {
-                let oracle = deploy_oracle(&wallet).await;
+                let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                let redstone = deploy_mock_redstone_oracle(&wallet).await;
+                let oracle = deploy_oracle(
+                    &wallet,
+                    pyth.contract_id().into(),
+                    redstone.contract_id().into(),
+                )
+                .await;
                 pb.inc();
                 let asset = deploy_token(&wallet).await;
                 pb.inc();
@@ -442,11 +456,15 @@ pub mod deployment {
 
                 println!("Deploying asset contracts... Done");
                 println!("Oracle: {}", oracle.contract_id());
+                println!("Mock Pyth Oracle: {}", pyth.contract_id());
+                println!("Mock Redstone Oracle: {}", redstone.contract_id());
                 println!("Trove Manager: {}", trove_manager.contract_id());
                 println!("Asset: {}", asset.contract_id());
 
                 return AssetContracts {
                     oracle,
+                    mock_pyth_oracle: pyth,
+                    mock_redstone_oracle: redstone,
                     trove_manager,
                     asset,
                     asset_id,

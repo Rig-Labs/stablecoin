@@ -155,6 +155,8 @@ async fn proper_staking_multiple_positions() {
     let _open_trove = borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

@@ -11,6 +11,8 @@ pub mod borrow_operations_abi {
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
+    use crate::interfaces::pyth_oracle::PythCore;
+    use crate::interfaces::redstone_oracle::RedstoneCore;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::token::Token;
     use crate::interfaces::trove_manager::TroveManagerContract;
@@ -52,6 +54,8 @@ pub mod borrow_operations_abi {
     pub async fn open_trove<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        mock_pyth: &PythCore<T>,
+        mock_redstone: &RedstoneCore<T>,
         asset_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
@@ -85,6 +89,8 @@ pub mod borrow_operations_abi {
             .unwrap()
             .with_contracts(&[
                 oracle,
+                mock_pyth,
+                mock_redstone,
                 active_pool,
                 asset_token,
                 usdf_token,
@@ -372,6 +378,8 @@ pub mod borrow_operations_utils {
         borrow_operations_abi::open_trove(
             &borrow_operations_healthy_wallet1,
             &asset_contracts.oracle,
+            &asset_contracts.mock_pyth_oracle,
+            &asset_contracts.mock_redstone_oracle,
             &asset_contracts.asset,
             &usdf,
             fpt_staking,

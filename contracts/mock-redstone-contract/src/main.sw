@@ -11,7 +11,7 @@ impl RedstoneCore for Contract {
     #[storage(read)]
     fn read_prices(feed_ids: Vec<u256>) -> Vec<u256> {
         let mut prices = Vec::with_capacity(1);
-        prices.push(u256::from(42_u64));
+        prices.push(u256::from(0_u64));
         prices
     }
 

@@ -53,6 +53,8 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -71,6 +73,8 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -259,6 +263,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -277,6 +283,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -295,6 +303,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -601,6 +611,8 @@ async fn proper_partial_liquidation_empty_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -619,6 +631,8 @@ async fn proper_partial_liquidation_empty_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -637,6 +651,8 @@ async fn proper_partial_liquidation_empty_sp() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

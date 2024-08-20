@@ -3,13 +3,15 @@ use crate::interfaces::active_pool::ActivePool;
 use crate::interfaces::borrow_operations::{borrow_operations_abi, BorrowOperations};
 use crate::interfaces::fpt_staking::FPTStaking;
 use crate::interfaces::oracle::{oracle_abi, Oracle};
+use crate::interfaces::pyth_oracle::PythCore;
+use crate::interfaces::redstone_oracle::RedstoneCore;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
 use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
 use dotenv::dotenv;
 use fuels::prelude::{Bech32ContractId, Provider, WalletUnlocked};
-use fuels::types::{Address, Bytes, Identity};
+use fuels::types::{Address, Identity};
 
 const RPC: &str = "beta-4.fuel.network";
 
@@ -40,12 +42,12 @@ pub async fn testing_query() {
         .parse()
         .expect("Invalid ID");
 
-    let oracle = Oracle::new(id, wallet.clone());
+    // TODO: each oracle needs to have its own ID rather than the same one
+    let oracle = Oracle::new(id.clone(), wallet.clone());
+    let pyth = PythCore::new(id.clone(), wallet.clone());
+    let redstone = RedstoneCore::new(id, wallet.clone());
 
-    let hex_str = "0101010101010101010101010101010101010101010101010101010101010101";
-    let bytes = Bytes::from_hex_str(hex_str).unwrap();
-
-    let res = oracle_abi::get_price(&oracle, bytes).await;
+    let res = oracle_abi::get_price(&oracle).await;
 
     println!("Result: {:#?}", res.value);
 
@@ -105,6 +107,8 @@ pub async fn testing_query() {
     let _res = borrow_operations_abi::open_trove(
         &borrow_operations,
         &oracle,
+        &pyth,
+        &redstone,
         &asset_token,
         &usdf_token,
         &fpt_staking,

@@ -56,6 +56,8 @@ async fn test_emissions() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -177,6 +179,8 @@ async fn test_admin_start_rewards_increase_transition() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -288,6 +292,8 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -430,6 +436,8 @@ async fn test_emissions_multiple_deposits() {
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -447,6 +455,8 @@ async fn test_emissions_multiple_deposits() {
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -464,6 +474,8 @@ async fn test_emissions_multiple_deposits() {
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

@@ -9,6 +9,7 @@ license = "Apache-2.0"
 dotenv = { workspace = true }
 fuels = { workspace = true }
 futures = { workspace = true }
+lazy_static = "1.5.0"
 pbr = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
