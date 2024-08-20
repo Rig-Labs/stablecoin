@@ -5,7 +5,6 @@ use libraries::{
     mock_oracle_interface::{Oracle, Price},
     mock_oracle_interface::RedstoneCore,
 };
-// use pyth_interface::{data_structures::price::{PriceFeedId, Price as PythPrice}, PythCore};
 use std::{
     block::timestamp,
     bytes::Bytes,
@@ -16,22 +15,40 @@ use std::{
 impl From<PythPrice> for Price {
     fn from(p: PythPrice) -> Self {
         Self {
-            value: p.price.into(),
+            value: p.price,
             time: p.publish_time
         }
     }
 }
 
+// Hack: Sway does not provide a downcast to u64
+// If redstone provides a strangely high u256 which shouldn't be cast down
+// then other parts of the code must be adjusted to use u256
+impl u256 {
+    fn to_u64(self) -> u64 {
+        let (_a, _b, _c, d): (u64, u64, u64, u64) = asm(r1: self) {
+            r1: (u64, u64, u64, u64)
+        };
+
+        d
+    }
+}
+
 configurable {
+    /// Contract Address
     PYTH: ContractId = ContractId::from(ZERO_B256),
+    /// Price feed to query
     PYTH_PRICE_ID: PythPriceFeedId = ZERO_B256,
+    /// Contract Address
     REDSTONE: ContractId = ContractId::from(ZERO_B256),
+    /// Price feed to query
     REDSTONE_PRICE_ID: u256 = u256::min(),
+    /// Timeout in seconds
     TIMEOUT: u64 = 0,
 }
 
 storage {
-    /// The last price
+    /// The last price from either Pyth or Redstone
     price: Price = Price { value: 0, time: 0 },
 
     // TODO: remove and clean up tests later
@@ -40,7 +57,7 @@ storage {
 
 impl Oracle for Contract {
     #[storage(read, write)]
-    fn get_price(redstone_payload: Bytes) -> Price {
+    fn get_price() -> u64 {
         // Fetch the current time and price to evaluate if a price may be stale
         let current_time = timestamp();
         let last_price = storage.price.read();
@@ -58,8 +75,10 @@ impl Oracle for Contract {
 
             // Fuel Bug: trait coherence
             let id = REDSTONE.bits();
-            let (redstone_prices, redstone_timestamp) = abi(RedstoneCore, id).get_prices(feed, redstone_payload);
-            let redstone_price = redstone_prices.get(0).unwrap();
+            let redstone = abi(RedstoneCore, id);
+            let redstone_prices = redstone.read_prices(feed);
+            let redstone_timestamp = redstone.read_timestamp();
+            let redstone_price = redstone_prices.get(0).unwrap().to_u64();
 
             // if the fallback oracle is also stale then compare the oracle times and the last price 
             // to determine which value is the latest
@@ -69,37 +88,37 @@ impl Oracle for Contract {
                     if last_price.time < pyth_price.publish_time {
                         let price: Price = pyth_price.into();
                         storage.price.write(price);
-                        return price;
+                        return price.value;
                     }
                 } else {
                     if last_price.time < redstone_timestamp {
                         let price = Price::new(redstone_price, redstone_timestamp);
                         storage.price.write(price);
-                        return price;
+                        return price.value;
                     }
                 }
 
-                return last_price;
+                return last_price.value;
             }
 
             // oracle is live so compare if it has the latest data
             if last_price.time < redstone_timestamp {
                 let price = Price::new(redstone_price, redstone_timestamp);
                 storage.price.write(price);
-                return price;
+                return price.value;
             }
 
-            return last_price;
+            return last_price.value;
         }
 
         // oracle is live so compare if it has the latest data
         if last_price.time < pyth_price.publish_time {
             let price: Price = pyth_price.into();
             storage.price.write(price);
-            return price;
+            return price.value;
         }
 
-        return last_price;
+        return last_price.value;
     }
 
     #[storage(write)]
