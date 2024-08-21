@@ -128,6 +128,8 @@ pub mod protocol_manager_abi {
         for contracts in aswith_contracts.iter() {
             with_contracts.push(&contracts.trove_manager);
             with_contracts.push(&contracts.oracle);
+            with_contracts.push(&contracts.mock_pyth_oracle);
+            with_contracts.push(&contracts.mock_redstone_oracle);
         }
 
         with_contracts.push(fpt_staking);

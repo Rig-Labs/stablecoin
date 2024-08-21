@@ -2,7 +2,6 @@ use crate::data_structures::PRECISION;
 use fuels::prelude::abigen;
 use fuels::programs::responses::CallResponse;
 use fuels::types::Bits256;
-use lazy_static::lazy_static;
 
 abigen!(Contract(
     name = "PythCore",
@@ -10,16 +9,18 @@ abigen!(Contract(
 ));
 
 pub const PYTH_PRICE_ID: Bits256 = Bits256([0; 32]);
-lazy_static! {
-    pub static ref PYTH_FEEDS: Vec<(Bits256, PythPriceFeed)> = vec![(
+pub const PYTH_TIMESTAMP: u64 = 1724166967;
+
+pub fn pyth_price_feed(price: u64) -> Vec<(Bits256, PythPriceFeed)> {
+    vec![(
         Bits256::zeroed(),
         PythPriceFeed {
             price: PythPrice {
-                price: 1 * PRECISION,
-                publish_time: 1724166967
-            }
-        }
-    )];
+                price: price * PRECISION,
+                publish_time: PYTH_TIMESTAMP,
+            },
+        },
+    )]
 }
 
 pub mod pyth_oracle_abi {

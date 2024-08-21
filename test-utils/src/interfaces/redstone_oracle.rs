@@ -1,3 +1,4 @@
+use crate::data_structures::PRECISION;
 use fuels::prelude::abigen;
 use fuels::programs::responses::CallResponse;
 use fuels::types::U256;
@@ -8,6 +9,14 @@ abigen!(Contract(
 ));
 
 pub const REDSTONE_PRICE_ID: U256 = U256::zero();
+
+pub fn redstone_price_feed(prices: Vec<u64>) -> Vec<(U256, U256)> {
+    let mut feed = Vec::with_capacity(prices.len());
+    for price in prices {
+        feed.push((U256::zero(), U256::from(price * PRECISION)));
+    }
+    feed
+}
 
 pub mod redstone_oracle_abi {
 
@@ -26,6 +35,21 @@ pub mod redstone_oracle_abi {
         oracle
             .methods()
             .read_prices(price_feed_ids)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn write_prices<T: Account>(
+        oracle: &RedstoneCore<T>,
+        feed: Vec<(U256, U256)>,
+    ) -> CallResponse<()> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .methods()
+            .write_prices(feed)
             .with_tx_policies(tx_params)
             .call()
             .await

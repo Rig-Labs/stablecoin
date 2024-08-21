@@ -5,6 +5,8 @@ use test_utils::{
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         community_issuance::{community_issuance_abi, CommunityIssuance},
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
     },
@@ -50,6 +52,23 @@ async fn test_emissions() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -176,6 +195,23 @@ async fn test_admin_start_rewards_increase_transition() {
     )
     .await;
 
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -286,6 +322,23 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -432,6 +485,23 @@ async fn test_emissions_multiple_deposits() {
         contracts.borrow_operations.contract_id().clone(),
         wallet3.clone(),
     );
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,

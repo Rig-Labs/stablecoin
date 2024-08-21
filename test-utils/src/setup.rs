@@ -24,14 +24,21 @@ use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
 pub mod common {
     use super::*;
     use crate::{
-        data_structures::PRECISION,
         interfaces::{
-            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, community_issuance::community_issuance_abi,
-            default_pool::default_pool_abi, fpt_staking::fpt_staking_abi, fpt_token::fpt_token_abi,
-            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
-            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
+            active_pool::active_pool_abi,
+            borrow_operations::borrow_operations_abi,
+            coll_surplus_pool::coll_surplus_pool_abi,
+            community_issuance::community_issuance_abi,
+            default_pool::default_pool_abi,
+            fpt_staking::fpt_staking_abi,
+            fpt_token::fpt_token_abi,
+            protocol_manager::protocol_manager_abi,
+            pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
+            sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi,
+            token::token_abi,
+            trove_manager::trove_manager_abi,
+            usdf_token::usdf_token_abi,
         },
         paths::*,
     };
@@ -775,7 +782,7 @@ pub mod common {
         .await
         .unwrap();
 
-        oracle_abi::set_price(&oracle, 1 * PRECISION).await;
+        pyth_oracle_abi::update_price_feeds(&pyth, pyth_price_feed(1)).await;
 
         protocol_manager_abi::register_asset(
             &protocol_manager,

@@ -3,7 +3,8 @@ use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
-        oracle::oracle_abi,
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         token::token_abi,
         trove_manager::trove_manager_abi,
     },
@@ -14,7 +15,22 @@ use test_utils::{
 async fn fails_to_liquidate_trove_not_under_mcr() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let wallet1 = wallets.pop().unwrap();
 
@@ -55,6 +71,8 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,

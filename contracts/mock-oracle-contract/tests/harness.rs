@@ -1,7 +1,11 @@
 use fuels::prelude::*;
 
 use test_utils::{
-    interfaces::oracle::{oracle_abi, Oracle},
+    interfaces::{
+        oracle::{oracle_abi, Oracle},
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
+    },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
 
@@ -28,6 +32,23 @@ async fn get_contract_instance() -> Oracle<WalletUnlocked> {
         redstone.contract_id().into(),
     )
     .await;
+
+    // pyth_oracle_abi::update_price_feeds(
+    //     &contracts.asset_contracts[0].mock_pyth_oracle,
+    //     pyth_price_feed(1),
+    // )
+    // .await;
+
+    // redstone_oracle_abi::write_prices(
+    //     &contracts.asset_contracts[0].mock_redstone_oracle,
+    //     redstone_price_feed(vec![1]),
+    // )
+    // .await;
+    // redstone_oracle_abi::set_timestamp(
+    //     &contracts.asset_contracts[0].mock_redstone_oracle,
+    //     PYTH_TIMESTAMP,
+    // )
+    // .await;
 
     instance
 }

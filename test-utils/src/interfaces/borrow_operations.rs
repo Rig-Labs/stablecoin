@@ -107,6 +107,8 @@ pub mod borrow_operations_abi {
     pub async fn add_coll<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         sorted_troves: &SortedTroves<T>,
@@ -136,6 +138,8 @@ pub mod borrow_operations_abi {
             .unwrap()
             .with_contracts(&[
                 oracle,
+                pyth,
+                redstone,
                 fuel_token,
                 sorted_troves,
                 trove_manager,
@@ -151,6 +155,8 @@ pub mod borrow_operations_abi {
     pub async fn withdraw_coll<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         fuel_token: &Token<T>,
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
@@ -173,6 +179,8 @@ pub mod borrow_operations_abi {
             .withdraw_coll(amount, lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
+                pyth,
+                redstone,
                 fuel_token,
                 sorted_troves,
                 trove_manager,
@@ -187,6 +195,8 @@ pub mod borrow_operations_abi {
     pub async fn withdraw_usdf<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
@@ -211,6 +221,8 @@ pub mod borrow_operations_abi {
             .withdraw_usdf(amount, lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
+                pyth,
+                redstone,
                 fuel_token,
                 sorted_troves,
                 trove_manager,
@@ -228,6 +240,8 @@ pub mod borrow_operations_abi {
     pub async fn repay_usdf<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         sorted_troves: &SortedTroves<T>,
@@ -259,6 +273,8 @@ pub mod borrow_operations_abi {
             .repay_usdf(lower_hint, upper_hint, fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
+                pyth,
+                redstone,
                 fuel_token,
                 sorted_troves,
                 trove_manager,
@@ -276,6 +292,8 @@ pub mod borrow_operations_abi {
     pub async fn close_trove<T: Account>(
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         fuel_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
@@ -308,6 +326,8 @@ pub mod borrow_operations_abi {
             .close_trove(fuel_asset_id.into())
             .with_contracts(&[
                 oracle,
+                pyth,
+                redstone,
                 fuel_token,
                 sorted_troves,
                 trove_manager,

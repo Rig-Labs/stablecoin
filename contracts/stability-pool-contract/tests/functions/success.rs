@@ -4,7 +4,8 @@ use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
-        oracle::oracle_abi,
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
         token::token_abi,
         trove_manager::trove_manager_abi,
@@ -35,6 +36,23 @@ async fn proper_stability_deposit() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -107,6 +125,23 @@ async fn proper_stability_widthdrawl() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -187,7 +222,23 @@ async fn proper_stability_widthdrawl() {
 #[tokio::test]
 async fn proper_one_sp_depositor_position() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
 
@@ -259,13 +310,25 @@ async fn proper_one_sp_depositor_position() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -362,7 +425,23 @@ async fn proper_one_sp_depositor_position() {
 #[tokio::test]
 async fn proper_many_depositors_distribution() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let depositor_2 = wallets.pop().unwrap();
@@ -379,6 +458,12 @@ async fn proper_many_depositors_distribution() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
     )
     .await;
 
@@ -492,13 +577,25 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -567,7 +664,23 @@ async fn proper_many_depositors_distribution() {
 #[tokio::test]
 async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
     let depositor_2 = wallets.pop().unwrap();
@@ -583,6 +696,12 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
         Identity::Address(liquidated_wallet.address().into()),
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
     )
     .await;
 
@@ -646,13 +765,25 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         .into();
     let tx_params = TxPolicies::default().with_tip(1);
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -709,8 +840,40 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 #[tokio::test]
 async fn proper_one_sp_depositor_position_multiple_assets() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, true).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[1].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[1].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[1].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
 
@@ -777,14 +940,37 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1 * PRECISION).await;
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[1].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[1].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -802,6 +988,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[1].oracle,
+        &contracts.asset_contracts[1].mock_pyth_oracle,
+        &contracts.asset_contracts[1].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -929,7 +1117,23 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 #[tokio::test]
 async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
 
@@ -970,13 +1174,25 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,
@@ -1009,7 +1225,17 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     )
     .await;
 
-    oracle_abi::set_price(&new_asset_contracts.oracle, 10 * PRECISION).await;
+    pyth_oracle_abi::update_price_feeds(&new_asset_contracts.mock_pyth_oracle, pyth_price_feed(10))
+        .await;
+
+    redstone_oracle_abi::write_prices(
+        &new_asset_contracts.mock_redstone_oracle,
+        redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(&new_asset_contracts.mock_redstone_oracle, PYTH_TIMESTAMP)
+        .await;
+
     borrow_operations_utils::mint_token_and_open_trove(
         admin.clone(),
         &new_asset_contracts,
@@ -1035,13 +1261,28 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         1_000 * PRECISION,
     )
     .await;
-    oracle_abi::set_price(&new_asset_contracts.oracle, 1 * PRECISION).await;
+
+    pyth_oracle_abi::update_price_feeds(&new_asset_contracts.mock_pyth_oracle, pyth_price_feed(1))
+        .await;
+
+    redstone_oracle_abi::write_prices(
+        &new_asset_contracts.mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &new_asset_contracts.mock_redstone_oracle,
+        PYTH_TIMESTAMP + 1,
+    )
+    .await;
 
     trove_manager_abi::liquidate(
         &new_asset_contracts.trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
         &new_asset_contracts.oracle,
+        &new_asset_contracts.mock_pyth_oracle,
+        &new_asset_contracts.mock_redstone_oracle,
         &contracts.sorted_troves,
         &contracts.active_pool,
         &contracts.default_pool,

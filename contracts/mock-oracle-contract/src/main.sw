@@ -7,7 +7,6 @@ use libraries::{
 };
 use std::{
     block::timestamp,
-    bytes::Bytes,
     constants::ZERO_B256,
 };
 
@@ -97,7 +96,6 @@ impl Oracle for Contract {
                         return price.value;
                     }
                 }
-
                 return last_price.value;
             }
 

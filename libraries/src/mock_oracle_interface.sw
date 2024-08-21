@@ -55,6 +55,10 @@ abi RedstoneCore {
     #[storage(read)]
     fn read_prices(feed_ids: Vec<u256>) -> Vec<u256>;
 
+    // Testing only, not the actual function signature of redstone
+    #[storage(write)]
+    fn write_prices(feed: Vec<(u256, u256)>);
+
     #[storage(read)]
     fn read_timestamp() -> u64;
 

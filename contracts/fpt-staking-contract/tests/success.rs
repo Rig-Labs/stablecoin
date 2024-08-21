@@ -5,6 +5,8 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
         protocol_manager::{protocol_manager_abi, ProtocolManager},
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         token::token_abi,
     },
     setup::common::setup_protocol,
@@ -151,6 +153,23 @@ async fn proper_staking_multiple_positions() {
         contracts.borrow_operations.contract_id().clone(),
         healthy_wallet3.clone(),
     );
+
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    redstone_oracle_abi::write_prices(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        redstone_price_feed(vec![1]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
+    )
+    .await;
 
     let _open_trove = borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,

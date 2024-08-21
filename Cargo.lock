@@ -5385,7 +5385,6 @@ dependencies = [
  "dotenv",
  "fuels",
  "futures",
- "lazy_static",
  "pbr",
  "rand",
  "serde",
