@@ -3,10 +3,6 @@ library;
 use std::bytes::Bytes;
 
 abi Oracle {
-    // TODO: remove
-    #[storage(write)]
-    fn set_price(price: u64);
-
     #[storage(read, write)]
     fn get_price() -> u64;
 }

@@ -81,6 +81,8 @@ pub mod common {
     pub struct ExistingAssetContracts {
         pub asset: ContractId,
         pub oracle: ContractId,
+        pub pyth_oracle: ContractId,
+        pub redstone_oracle: ContractId,
     }
 
     pub async fn setup_protocol(

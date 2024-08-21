@@ -49,9 +49,6 @@ configurable {
 storage {
     /// The last price from either Pyth or Redstone
     price: Price = Price { value: 0, time: 0 },
-
-    // TODO: remove and clean up tests later
-    legacy_price: u64 = 0
 }
 
 impl Oracle for Contract {
@@ -117,10 +114,5 @@ impl Oracle for Contract {
         }
 
         return last_price.value;
-    }
-
-    #[storage(write)]
-    fn set_price(price: u64) {
-        storage.legacy_price.write(price)
     }
 }

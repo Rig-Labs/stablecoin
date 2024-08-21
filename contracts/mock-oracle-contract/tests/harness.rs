@@ -1,23 +1,31 @@
-use fuels::prelude::*;
-
+use fuels::{prelude::*, types::Bits256};
 use test_utils::{
+    data_structures::PRECISION,
     interfaces::{
-        oracle::{oracle_abi, Oracle},
-        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
-        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
+        oracle::{oracle_abi, Oracle, ORACLE_TIMEOUT},
+        pyth_oracle::{pyth_oracle_abi, PythCore, PythPrice, PythPriceFeed},
+        redstone_oracle::{redstone_oracle_abi, redstone_price_feed, RedstoneCore},
     },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
 
-async fn get_contract_instance() -> Oracle<WalletUnlocked> {
-    // Launch a local network and deploy the contract
+async fn setup() -> (
+    Oracle<WalletUnlocked>,
+    PythCore<WalletUnlocked>,
+    RedstoneCore<WalletUnlocked>,
+    WalletUnlocked,
+) {
+    let block_time = 1u32; // seconds
+    let config = NodeConfig {
+        block_production: Trigger::Interval {
+            block_time: std::time::Duration::from_secs(block_time.into()),
+        },
+        ..NodeConfig::default()
+    };
+
     let mut wallets = launch_custom_provider_and_get_wallets(
-        WalletsConfig::new(
-            Some(1),             /* Single wallet */
-            Some(1),             /* Single coin (UTXO) */
-            Some(1_000_000_000), /* Amount per coin */
-        ),
-        None,
+        WalletsConfig::new(Some(1), Some(1), Some(1_000_000_000)),
+        Some(config),
         None,
     )
     .await
@@ -26,47 +34,115 @@ async fn get_contract_instance() -> Oracle<WalletUnlocked> {
 
     let pyth = deploy_mock_pyth_oracle(&wallet).await;
     let redstone = deploy_mock_redstone_oracle(&wallet).await;
-    let instance = deploy_oracle(
+    let oracle = deploy_oracle(
         &wallet,
         pyth.contract_id().into(),
         redstone.contract_id().into(),
     )
     .await;
 
-    // pyth_oracle_abi::update_price_feeds(
-    //     &contracts.asset_contracts[0].mock_pyth_oracle,
-    //     pyth_price_feed(1),
-    // )
-    // .await;
-
-    // redstone_oracle_abi::write_prices(
-    //     &contracts.asset_contracts[0].mock_redstone_oracle,
-    //     redstone_price_feed(vec![1]),
-    // )
-    // .await;
-    // redstone_oracle_abi::set_timestamp(
-    //     &contracts.asset_contracts[0].mock_redstone_oracle,
-    //     PYTH_TIMESTAMP,
-    // )
-    // .await;
-
-    instance
+    (oracle, pyth, redstone, wallet)
 }
 
-#[ignore]
-#[tokio::test]
-async fn can_set_proper_price() {
-    let instance = get_contract_instance().await;
-    let new_price: u64 = 100;
-    // Increment the counter
-    let _result = oracle_abi::set_price(&instance, new_price).await;
+pub fn pyth_feed(price: u64, unix_timestamp: u64) -> Vec<(Bits256, PythPriceFeed)> {
+    let tai64_offset = 4611686018427387904;
+    // Leap seconds offset (as of 2023, TAI is ahead by 37 seconds)
+    let leap_seconds = 37;
+    vec![(
+        Bits256::zeroed(),
+        PythPriceFeed {
+            price: PythPrice {
+                price: price * PRECISION,
+                publish_time: unix_timestamp + tai64_offset + leap_seconds,
+            },
+        },
+    )]
+}
 
-    // Get the current value of the counter
-    let result = oracle_abi::get_price(&instance).await;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    // Check that the current value of the counter is 1.
-    // Recall that the initial value of the counter was 0.
-    assert_eq!(result.value, new_price);
+    mod live_pyth {
+        use super::*;
 
-    // Now you have an instance of your contract you can use to test each function
+        #[ignore]
+        #[tokio::test]
+        async fn price() {
+            let (oracle, pyth, redstone, wallet) = setup().await;
+            let provider = wallet.try_provider().unwrap();
+            let timestamp = provider
+                .latest_block_time()
+                .await
+                .unwrap()
+                .unwrap()
+                .timestamp() as u64;
+
+            let expected_price = 1 * PRECISION;
+
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, timestamp)).await;
+
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(expected_price, price);
+        }
+
+        #[ignore]
+        #[tokio::test]
+        async fn fallback_to_last_price() {
+            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+        }
+    }
+
+    mod pyth_timeout {
+        use super::*;
+
+        #[ignore]
+        #[tokio::test]
+        async fn live_redstone() {
+            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+        }
+
+        #[ignore]
+        #[tokio::test]
+        async fn live_redstone_fallback_to_last_price() {
+            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+        }
+
+        mod redstone_timeout {
+            use super::*;
+
+            mod pyth_timestamp_more_recent {
+                use super::*;
+
+                #[ignore]
+                #[tokio::test]
+                async fn price() {
+                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                }
+
+                #[ignore]
+                #[tokio::test]
+                async fn fallback_last_price() {
+                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                }
+            }
+
+            mod redstone_timestamp_more_recent {
+                use super::*;
+
+                #[ignore]
+                #[tokio::test]
+                async fn price() {
+                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                }
+
+                #[ignore]
+                #[tokio::test]
+                async fn fallback_last_price() {
+                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                }
+            }
+        }
+    }
 }
