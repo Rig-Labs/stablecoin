@@ -44,18 +44,27 @@ configurable {
     REDSTONE_PRICE_ID: u256 = u256::min(),
     /// Timeout in seconds
     TIMEOUT: u64 = 0,
+
+    // Workaround for testing timestamps
+    DEBUG: bool = false,
 }
 
 storage {
     /// The last price from either Pyth or Redstone
     price: Price = Price { value: 0, time: 0 },
+
+    // Workaround for testing timestamps
+    debug_timestamp: u64 = 0,
 }
 
 impl Oracle for Contract {
     #[storage(read, write)]
     fn get_price() -> u64 {
         // Fetch the current time and price to evaluate if a price may be stale
-        let current_time = timestamp();
+        let current_time = match DEBUG {
+            true => storage.debug_timestamp.read(),
+            false => timestamp(),
+        };
         let last_price = storage.price.read();
 
         // Query the primary module for its price feed
@@ -114,5 +123,10 @@ impl Oracle for Contract {
         }
 
         return last_price.value;
+    }
+
+    #[storage(write)]
+    fn set_debug_timestamp(timestamp: u64) {
+        storage.debug_timestamp.write(timestamp);
     }
 }

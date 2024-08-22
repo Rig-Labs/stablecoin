@@ -9,6 +9,7 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         stability_pool::{stability_pool_abi, StabilityPool},
@@ -23,6 +24,7 @@ use test_utils::{
 async fn proper_full_liquidation_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -124,6 +126,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -290,6 +293,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 async fn proper_full_liquidation_partial_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -422,6 +426,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -620,6 +625,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
 async fn proper_full_liquidation_empty_sp() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 5, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -737,6 +743,7 @@ async fn proper_full_liquidation_empty_sp() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),

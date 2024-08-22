@@ -1,10 +1,11 @@
+use fuels::types::U256;
 use fuels::{prelude::*, types::Bits256};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         oracle::{oracle_abi, Oracle, ORACLE_TIMEOUT},
-        pyth_oracle::{pyth_oracle_abi, PythCore, PythPrice, PythPriceFeed},
-        redstone_oracle::{redstone_oracle_abi, redstone_price_feed, RedstoneCore},
+        pyth_oracle::{pyth_oracle_abi, PythCore, PythPrice, PythPriceFeed, PYTH_TIMESTAMP},
+        redstone_oracle::{redstone_oracle_abi, RedstoneCore},
     },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
@@ -13,7 +14,6 @@ async fn setup() -> (
     Oracle<WalletUnlocked>,
     PythCore<WalletUnlocked>,
     RedstoneCore<WalletUnlocked>,
-    WalletUnlocked,
 ) {
     let block_time = 1u32; // seconds
     let config = NodeConfig {
@@ -41,22 +41,23 @@ async fn setup() -> (
     )
     .await;
 
-    (oracle, pyth, redstone, wallet)
+    (oracle, pyth, redstone)
 }
 
-pub fn pyth_feed(price: u64, unix_timestamp: u64) -> Vec<(Bits256, PythPriceFeed)> {
-    let tai64_offset = 4611686018427387904;
-    // Leap seconds offset (as of 2023, TAI is ahead by 37 seconds)
-    let leap_seconds = 37;
+fn pyth_feed(price: u64, unix_timestamp: u64) -> Vec<(Bits256, PythPriceFeed)> {
     vec![(
         Bits256::zeroed(),
         PythPriceFeed {
             price: PythPrice {
                 price: price * PRECISION,
-                publish_time: unix_timestamp + tai64_offset + leap_seconds,
+                publish_time: unix_timestamp,
             },
         },
     )]
+}
+
+fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
+    vec![(U256::zero(), U256::from(price * PRECISION))]
 }
 
 #[cfg(test)]
@@ -66,48 +67,64 @@ mod tests {
     mod live_pyth {
         use super::*;
 
-        #[ignore]
         #[tokio::test]
         async fn price() {
-            let (oracle, pyth, redstone, wallet) = setup().await;
-            let provider = wallet.try_provider().unwrap();
-            let timestamp = provider
-                .latest_block_time()
-                .await
-                .unwrap()
-                .unwrap()
-                .timestamp() as u64;
-
+            let (oracle, pyth, redstone) = setup().await;
             let expected_price = 1 * PRECISION;
 
-            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, timestamp)).await;
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
 
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
             assert_eq!(expected_price, price);
         }
 
-        #[ignore]
         #[tokio::test]
         async fn fallback_to_last_price() {
-            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+            let (oracle, pyth, redstone) = setup().await;
+            let expected_price = 1 * PRECISION;
+
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(expected_price, price);
+
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP - 1)).await;
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(expected_price, price);
         }
     }
 
     mod pyth_timeout {
         use super::*;
 
-        #[ignore]
         #[tokio::test]
         async fn live_redstone() {
-            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+            let (oracle, pyth, redstone) = setup().await;
+            let expected_price = 1 * PRECISION;
+
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(expected_price, price);
+
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT).await;
+
+            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP)).await;
+            redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
+            redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP + 1).await;
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(expected_price * 3, price);
         }
 
-        #[ignore]
+        #[ignore = "Unreachable by logic so skip test but leave for acknowledgement of case"]
         #[tokio::test]
-        async fn live_redstone_fallback_to_last_price() {
-            let (_oracle, _pyth, _redstone, _wallet) = setup().await;
-        }
+        async fn live_redstone_fallback_to_last_price() {}
 
         mod redstone_timeout {
             use super::*;
@@ -115,32 +132,97 @@ mod tests {
             mod pyth_timestamp_more_recent {
                 use super::*;
 
-                #[ignore]
                 #[tokio::test]
                 async fn price() {
-                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                    let (oracle, pyth, redstone) = setup().await;
+                    let expected_price = 1 * PRECISION;
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 2)
+                        .await;
+
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP + 1))
+                        .await;
+                    redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
+                    redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price * 2, price);
                 }
 
-                #[ignore]
                 #[tokio::test]
                 async fn fallback_last_price() {
-                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                    let (oracle, pyth, redstone) = setup().await;
+                    let expected_price = 1 * PRECISION;
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 1)
+                        .await;
+
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP)).await;
+                    redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
+                    redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
                 }
             }
 
             mod redstone_timestamp_more_recent {
                 use super::*;
 
-                #[ignore]
                 #[tokio::test]
                 async fn price() {
-                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                    let (oracle, pyth, redstone) = setup().await;
+                    let expected_price = 1 * PRECISION;
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 2)
+                        .await;
+
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP)).await;
+                    redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
+                    redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP + 1).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price * 3, price);
                 }
 
-                #[ignore]
                 #[tokio::test]
                 async fn fallback_last_price() {
-                    let (_oracle, _pyth, _redstone, _wallet) = setup().await;
+                    let (oracle, pyth, redstone) = setup().await;
+                    let expected_price = 1 * PRECISION;
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(1, PYTH_TIMESTAMP)).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
+
+                    oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 2)
+                        .await;
+
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed(2, PYTH_TIMESTAMP)).await;
+                    redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
+                    redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+                    let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+                    assert_eq!(expected_price, price);
                 }
             }
         }

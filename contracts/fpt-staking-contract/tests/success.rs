@@ -4,6 +4,7 @@ use test_utils::{
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
+        oracle::oracle_abi,
         protocol_manager::{protocol_manager_abi, ProtocolManager},
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
@@ -154,6 +155,7 @@ async fn proper_staking_multiple_positions() {
         healthy_wallet3.clone(),
     );
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),

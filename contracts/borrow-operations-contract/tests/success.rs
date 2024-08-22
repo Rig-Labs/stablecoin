@@ -8,6 +8,7 @@ use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         sorted_troves::sorted_troves_abi,
@@ -33,6 +34,7 @@ async fn proper_creating_trove() {
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -195,6 +197,7 @@ async fn proper_increase_collateral() {
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -358,6 +361,7 @@ async fn proper_decrease_collateral() {
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -541,6 +545,7 @@ async fn proper_increase_debt() {
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -719,6 +724,7 @@ async fn proper_decrease_debt() {
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 800 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -920,6 +926,7 @@ async fn proper_open_multiple_troves() {
     let deposit_amount1 = 3000 * PRECISION;
     let borrow_amount1 = 1000 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -1079,6 +1086,7 @@ async fn proper_close_trove() {
     let deposit_amount1 = 3000 * PRECISION;
     let borrow_amount1 = 1000 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -1267,6 +1275,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     let deposit_amount1 = 1200 * PRECISION;
     let borrow_amount1 = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -1434,6 +1443,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     let deposit_amount2 = 1200 * PRECISION;
     let borrow_amount2 = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),

@@ -7,6 +7,7 @@ use test_utils::{
         borrow_operations::borrow_operations_utils,
         coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         stability_pool::{stability_pool_abi, StabilityPool},
@@ -20,6 +21,7 @@ use test_utils::{
 async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -29,6 +31,11 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![10]),
+    )
+    .await;
+    redstone_oracle_abi::set_timestamp(
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -93,6 +100,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),

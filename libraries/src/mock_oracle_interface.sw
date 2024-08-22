@@ -5,6 +5,10 @@ use std::bytes::Bytes;
 abi Oracle {
     #[storage(read, write)]
     fn get_price() -> u64;
+
+    // Testing workaround
+    #[storage(write)]
+    fn set_debug_timestamp(timestamp: u64);
 }
 
 pub struct Price {

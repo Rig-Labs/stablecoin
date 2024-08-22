@@ -30,4 +30,16 @@ pub mod oracle_abi {
             .await
             .unwrap()
     }
+
+    pub async fn set_debug_timestamp<T: Account>(oracle: &Oracle<T>, timestamp: u64) {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .methods()
+            .set_debug_timestamp(timestamp)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+            .unwrap();
+    }
 }

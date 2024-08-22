@@ -3,6 +3,7 @@ use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         token::token_abi,
@@ -15,6 +16,7 @@ use test_utils::{
 async fn fails_to_liquidate_trove_not_under_mcr() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),

@@ -33,7 +33,7 @@ pub mod common {
             fpt_staking::fpt_staking_abi,
             fpt_token::fpt_token_abi,
             protocol_manager::protocol_manager_abi,
-            pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
+            pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
             sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi,
             token::token_abi,
@@ -612,6 +612,8 @@ pub mod common {
             .with_REDSTONE_PRICE_ID(REDSTONE_PRICE_ID)
             .unwrap()
             .with_TIMEOUT(ORACLE_TIMEOUT)
+            .unwrap()
+            .with_DEBUG(true)
             .unwrap();
 
         let id = Contract::load_from(

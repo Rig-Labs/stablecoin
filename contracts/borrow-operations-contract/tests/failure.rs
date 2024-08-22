@@ -5,6 +5,7 @@ use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::borrow_operations_abi,
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         sorted_troves::sorted_troves_abi,
@@ -32,6 +33,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
     let col_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -293,6 +295,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -370,6 +373,7 @@ async fn fails_decrease_collateral_under_mcr() {
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -458,6 +462,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),

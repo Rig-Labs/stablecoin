@@ -1,6 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
+use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
 use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed};
@@ -23,12 +24,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     let healthy_wallet2 = wallets.pop().unwrap();
     let healthy_wallet3 = wallets.pop().unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),

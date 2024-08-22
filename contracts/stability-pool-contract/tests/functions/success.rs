@@ -4,6 +4,7 @@ use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
+        oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
@@ -39,6 +40,7 @@ async fn proper_stability_deposit() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -128,6 +130,7 @@ async fn proper_stability_widthdrawl() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -223,6 +226,7 @@ async fn proper_stability_widthdrawl() {
 async fn proper_one_sp_depositor_position() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -310,6 +314,7 @@ async fn proper_one_sp_depositor_position() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -426,6 +431,7 @@ async fn proper_one_sp_depositor_position() {
 async fn proper_many_depositors_distribution() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -577,6 +583,7 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -665,6 +672,7 @@ async fn proper_many_depositors_distribution() {
 async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -765,6 +773,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         .into();
     let tx_params = TxPolicies::default().with_tip(1);
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -841,6 +850,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 async fn proper_one_sp_depositor_position_multiple_assets() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, true).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -858,6 +868,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -939,6 +950,9 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await
     .unwrap();
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP + 1).await;
 
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
@@ -1118,6 +1132,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     let (contracts, admin, mut wallets) = setup_protocol(10, 4, false).await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
@@ -1174,6 +1189,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     .await
     .unwrap();
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     redstone_oracle_abi::write_prices(
         &contracts.asset_contracts[0].mock_redstone_oracle,
         redstone_price_feed(vec![1]),
@@ -1225,6 +1241,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&new_asset_contracts.oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(&new_asset_contracts.mock_pyth_oracle, pyth_price_feed(10))
         .await;
 
