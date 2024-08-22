@@ -3648,7 +3648,6 @@ name = "mock-oracle-contract"
 version = "0.1.0"
 dependencies = [
  "fuels",
- "tai64",
  "test-utils",
  "tokio",
 ]
