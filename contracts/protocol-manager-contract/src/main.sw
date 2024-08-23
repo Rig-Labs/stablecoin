@@ -10,7 +10,7 @@ use libraries::sorted_troves_interface::SortedTroves;
 use libraries::active_pool_interface::ActivePool;
 use libraries::default_pool_interface::DefaultPool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::Oracle;
+use libraries::oracle_interface::Oracle;
 use libraries::protocol_manager_interface::ProtocolManager;
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;

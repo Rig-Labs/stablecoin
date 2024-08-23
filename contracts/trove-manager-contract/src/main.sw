@@ -21,7 +21,7 @@ use libraries::stability_pool_interface::StabilityPool;
 use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::Oracle;
+use libraries::oracle_interface::Oracle;
 use libraries::trove_manager_interface::data_structures::{
     RewardSnapshot,
     SingleRedemptionValues,

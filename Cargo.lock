@@ -3644,15 +3644,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mock-oracle-contract"
-version = "0.1.0"
-dependencies = [
- "fuels",
- "test-utils",
- "tokio",
-]
-
-[[package]]
 name = "mock-trove-manager-contract"
 version = "0.1.0"
 dependencies = [
@@ -3991,6 +3982,15 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
+
+[[package]]
+name = "oracle-contract"
+version = "0.1.0"
+dependencies = [
+ "fuels",
+ "test-utils",
+ "tokio",
+]
 
 [[package]]
 name = "p256"

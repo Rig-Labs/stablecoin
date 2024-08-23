@@ -1,6 +1,6 @@
 contract;
 
-use libraries::mock_oracle_interface::{PythCore, PythPrice, PythError, PythPriceFeedId, PythPriceFeed};
+use libraries::oracle_interface::{PythCore, PythPrice, PythError, PythPriceFeedId, PythPriceFeed};
 use std::{block::timestamp, hash::Hash};
 
 storage {

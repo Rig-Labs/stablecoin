@@ -1,6 +1,6 @@
 contract;
 
-use libraries::mock_oracle_interface::RedstoneCore;
+use libraries::oracle_interface::RedstoneCore;
 use std::hash::Hash;
 
 storage {

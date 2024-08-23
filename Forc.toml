@@ -2,7 +2,7 @@
 members = [
   "./contracts/mock-pyth-contract",
   "./contracts/mock-redstone-contract",
-  "./contracts/mock-oracle-contract",
+  "./contracts/oracle-contract",
   "./contracts/multi-trove-getter-contract",
   "./contracts/stability-pool-contract",
   "./contracts/trove-manager-contract",

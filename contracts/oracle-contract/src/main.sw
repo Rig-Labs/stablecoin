@@ -1,9 +1,9 @@
 contract;
 
 use libraries::{
-    mock_oracle_interface::{PythPriceFeedId, PythPrice, PythCore},
-    mock_oracle_interface::{Oracle, Price},
-    mock_oracle_interface::RedstoneCore,
+    oracle_interface::{PythPriceFeedId, PythPrice, PythCore},
+    oracle_interface::{Oracle, Price},
+    oracle_interface::RedstoneCore,
     fluid_math::convert_precision,
 };
 use std::{

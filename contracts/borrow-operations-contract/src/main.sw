@@ -12,7 +12,7 @@ use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::Oracle;
+use libraries::oracle_interface::Oracle;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::fluid_math::*;
 use std::{

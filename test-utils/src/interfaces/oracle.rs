@@ -4,7 +4,7 @@ use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "Oracle",
-    abi = "contracts/mock-oracle-contract/out/debug/mock-oracle-contract-abi.json"
+    abi = "contracts/oracle-contract/out/debug/oracle-contract-abi.json"
 ));
 
 // 1 minute

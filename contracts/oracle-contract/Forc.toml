@@ -2,7 +2,7 @@
 authors = ["hydrogen-labs"]
 entry = "main.sw"
 license = "Apache-2.0"
-name = "mock-oracle-contract"
+name = "oracle-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
