@@ -42,6 +42,19 @@ pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 
+pub fn convert_precision(price: u64, target_precision: u8) -> u64 {
+    let mut adjusted_price = 0;
+    if target_precision > 9 {
+        adjusted_price = price / 10 ** (target_precision - 9).into();
+    } else if target_precision < 9 {
+        adjusted_price = price / 10 ** (9_u8 - target_precision).into();
+    } else {
+        adjusted_price = price;
+    }
+
+    adjusted_price
+}
+
 pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
     AssetId::from(sha256((temp_contract, ZERO_B256)))
 }

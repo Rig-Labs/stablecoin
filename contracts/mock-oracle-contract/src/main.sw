@@ -4,6 +4,7 @@ use libraries::{
     mock_oracle_interface::{PythPriceFeedId, PythPrice, PythCore},
     mock_oracle_interface::{Oracle, Price},
     mock_oracle_interface::RedstoneCore,
+    fluid_math::convert_precision,
 };
 use std::{
     block::timestamp,
@@ -14,7 +15,7 @@ use std::{
 impl From<PythPrice> for Price {
     fn from(p: PythPrice) -> Self {
         Self {
-            value: p.price,
+            value: convert_precision(p.price, PYTH_PRECISION),
             time: p.publish_time
         }
     }
@@ -38,10 +39,14 @@ configurable {
     PYTH: ContractId = ContractId::from(ZERO_B256),
     /// Price feed to query
     PYTH_PRICE_ID: PythPriceFeedId = ZERO_B256,
+    /// Precision of value returned by Pyth
+    PYTH_PRECISION: u8 = 9,
     /// Contract Address
     REDSTONE: ContractId = ContractId::from(ZERO_B256),
     /// Price feed to query
     REDSTONE_PRICE_ID: u256 = u256::min(),
+    /// Precision of value returned by Redstone
+    REDSTONE_PRECISION: u8 = 9,
     /// Timeout in seconds
     TIMEOUT: u64 = 0,
 
@@ -83,7 +88,7 @@ impl Oracle for Contract {
             let redstone = abi(RedstoneCore, id);
             let redstone_prices = redstone.read_prices(feed);
             let redstone_timestamp = redstone.read_timestamp();
-            let redstone_price = redstone_prices.get(0).unwrap().to_u64();
+            let redstone_price = convert_precision(redstone_prices.get(0).unwrap().to_u64(), REDSTONE_PRECISION);
 
             // if the fallback oracle is also stale then compare the oracle times and the last price 
             // to determine which value is the latest
