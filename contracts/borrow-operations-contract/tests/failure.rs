@@ -7,7 +7,6 @@ use test_utils::{
         borrow_operations::borrow_operations_abi,
         oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
-        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         sorted_troves::sorted_troves_abi,
         token::token_abi,
         trove_manager::trove_manager_abi,
@@ -37,17 +36,6 @@ async fn fails_open_two_troves_of_same_coll_type() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -302,17 +290,6 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -377,17 +354,6 @@ async fn fails_decrease_collateral_under_mcr() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -466,17 +432,6 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 

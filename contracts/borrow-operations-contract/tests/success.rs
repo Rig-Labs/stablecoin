@@ -10,7 +10,6 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         oracle::oracle_abi,
         pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
-        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
         sorted_troves::sorted_troves_abi,
         token::token_abi,
         trove_manager::trove_manager_abi,
@@ -38,17 +37,6 @@ async fn proper_creating_trove() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -204,17 +192,6 @@ async fn proper_increase_collateral() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -365,17 +342,6 @@ async fn proper_decrease_collateral() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -552,17 +518,6 @@ async fn proper_increase_debt() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -728,17 +683,6 @@ async fn proper_decrease_debt() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -933,17 +877,6 @@ async fn proper_open_multiple_troves() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &borrow_operations_wallet1,
         &contracts.asset_contracts[0].oracle,
@@ -1090,17 +1023,6 @@ async fn proper_close_trove() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -1282,17 +1204,6 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
@@ -1447,17 +1358,6 @@ async fn proper_creating_trove_with_2nd_asset() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 

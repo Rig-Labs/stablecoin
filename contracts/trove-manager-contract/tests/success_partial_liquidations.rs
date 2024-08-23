@@ -8,8 +8,9 @@ use test_utils::{
         coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
         oracle::oracle_abi,
-        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
-        redstone_oracle::{redstone_oracle_abi, redstone_price_feed},
+        pyth_oracle::{
+            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_TIMESTAMP,
+        },
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
@@ -26,17 +27,6 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![10]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -123,15 +113,9 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP + 1,
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
     )
     .await;
 
@@ -250,17 +234,6 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(10),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![10]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -383,15 +356,9 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP + 1,
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
     )
     .await;
 
@@ -631,17 +598,6 @@ async fn proper_partial_liquidation_empty_sp() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![10]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     let liquidated_wallet = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -746,15 +702,9 @@ async fn proper_partial_liquidation_empty_sp() {
     .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP + 1,
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
     )
     .await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it

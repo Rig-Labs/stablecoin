@@ -4,7 +4,6 @@ use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
-use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed};
 use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
@@ -35,28 +34,6 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 

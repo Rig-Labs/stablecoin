@@ -71,7 +71,7 @@ impl Oracle for Contract {
         let pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
 
         // If the primary module is determined to be stale then fallback to the next best metric
-        if current_time - pyth_price.publish_time > TIMEOUT || last_price.time == pyth_price.publish_time {
+        if current_time - pyth_price.publish_time > TIMEOUT {
             // Query the fallback module for its price
 
             // Define the redstone price feed arguments
@@ -87,7 +87,7 @@ impl Oracle for Contract {
 
             // if the fallback oracle is also stale then compare the oracle times and the last price 
             // to determine which value is the latest
-            if current_time - redstone_timestamp > TIMEOUT || last_price.time == redstone_timestamp {
+            if current_time - redstone_timestamp > TIMEOUT {
                 // redstone is also stale so use the latest price we have available
                 if redstone_timestamp <= pyth_price.publish_time {
                     if last_price.time < pyth_price.publish_time {

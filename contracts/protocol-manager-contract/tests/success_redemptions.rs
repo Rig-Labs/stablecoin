@@ -3,7 +3,6 @@ use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
-use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed};
 use test_utils::utils::print_response;
 use test_utils::{
     interfaces::{
@@ -59,17 +58,6 @@ async fn proper_redemption_from_partially_closed() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -158,17 +146,6 @@ async fn proper_redemption_from_partially_closed() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
@@ -300,17 +277,6 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     )
     .await;
 
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
-    )
-    .await;
-
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
@@ -396,17 +362,6 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[1].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 

@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
+use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP};
-use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::hint_helper::hint_helper_abi,
@@ -24,20 +24,10 @@ async fn proper_hint_generations() {
     let mut target_address = Identity::Address(wallet.address().into());
     let mut target_address2 = Identity::Address(wallet.address().into());
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
-    )
-    .await;
-
-    redstone_oracle_abi::write_prices(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        redstone_price_feed(vec![1]),
-    )
-    .await;
-    redstone_oracle_abi::set_timestamp(
-        &contracts.asset_contracts[0].mock_redstone_oracle,
-        PYTH_TIMESTAMP,
     )
     .await;
 
