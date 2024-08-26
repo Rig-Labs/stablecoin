@@ -47,11 +47,11 @@ pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
     if current_precision > 9 {
         let precision = current_precision - 9;
         let magnitude = 10.pow(precision.as_u32());
-        adjusted_price = price * magnitude;
+        adjusted_price = price / magnitude;
     } else if current_precision < 9 {
         let precision = 9_u8 - current_precision;
         let magnitude = 10.pow(precision.as_u32());
-        adjusted_price = price / magnitude;
+        adjusted_price = price * magnitude;
     } else {
         adjusted_price = price;
     }
@@ -197,7 +197,7 @@ fn test_precision_less_than_current() {
     let price = 1_000_000_000_000;
     let precision = 8;
     let result = convert_precision(price, precision);
-    assert_eq(result, price / 10);
+    assert_eq(result, price * 10);
 }
 
 #[test]
@@ -205,7 +205,7 @@ fn test_precision_more_than_current() {
     let price = 1_000_000_000_000;
     let precision = 10;
     let result = convert_precision(price, precision);
-    assert_eq(result, price * 10);
+    assert_eq(result, price / 10);
 }
 
 #[test]
@@ -222,7 +222,7 @@ fn test_precision_less_than_current_pow() {
     let precision = 6;
 
     let result = convert_precision(price, precision);
-    assert_eq(result, price / 10.pow(3));
+    assert_eq(result, price * 10.pow(3));
 }
 
 // TODO add more tests

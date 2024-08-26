@@ -56,9 +56,9 @@ fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
 fn convert_precision(price: u64, current_precision: u32) -> u64 {
     let mut adjusted_price = 0;
     if current_precision > 9 {
-        adjusted_price = price * (10_u64.pow(current_precision - 9));
+        adjusted_price = price / (10_u64.pow(current_precision - 9));
     } else if current_precision < 9 {
-        adjusted_price = price / 10_u64.pow(9 - current_precision);
+        adjusted_price = price * 10_u64.pow(9 - current_precision);
     } else {
         adjusted_price = price;
     }
