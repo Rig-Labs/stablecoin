@@ -2,10 +2,16 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::PRECISION,
-    interfaces::borrow_operations::borrow_operations_abi,
-    interfaces::sorted_troves::sorted_troves_abi,
-    interfaces::{active_pool::active_pool_abi, token::token_abi},
-    interfaces::{trove_manager::trove_manager_abi, usdf_token::usdf_token_abi},
+    interfaces::{
+        active_pool::active_pool_abi,
+        borrow_operations::borrow_operations_abi,
+        oracle::oracle_abi,
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
+        sorted_troves::sorted_troves_abi,
+        token::token_abi,
+        trove_manager::trove_manager_abi,
+        usdf_token::usdf_token_abi,
+    },
     setup::common::{deploy_token, deploy_usdf_token, setup_protocol},
     utils::{calculate_icr, with_min_borrow_fee},
 };
@@ -26,9 +32,18 @@ async fn fails_open_two_troves_of_same_coll_type() {
     let col_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -46,6 +61,8 @@ async fn fails_open_two_troves_of_same_coll_type() {
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -184,6 +201,8 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -219,9 +238,17 @@ async fn fails_open_trove_under_min_usdf_required() {
     let debt_amount = 400 * PRECISION;
     // 100 USDF < 500 USDF
 
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -256,9 +283,18 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -279,6 +315,8 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     let res = borrow_operations_abi::repay_usdf(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.sorted_troves,
@@ -312,9 +350,18 @@ async fn fails_decrease_collateral_under_mcr() {
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -332,6 +379,8 @@ async fn fails_decrease_collateral_under_mcr() {
     let res = borrow_operations_abi::withdraw_coll(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -379,9 +428,18 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     )
     .await;
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     let res = borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &mock_fake_token,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -405,6 +463,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -422,6 +482,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     let res = borrow_operations_abi::add_coll(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &mock_fake_token,
         &contracts.usdf,
         &contracts.sorted_troves,
@@ -461,6 +523,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
     let res = borrow_operations_abi::repay_usdf(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &fake_usdf_token,
         &contracts.sorted_troves,

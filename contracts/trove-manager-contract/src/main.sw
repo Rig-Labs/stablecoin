@@ -21,7 +21,7 @@ use libraries::stability_pool_interface::StabilityPool;
 use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::MockOracle;
+use libraries::oracle_interface::Oracle;
 use libraries::trove_manager_interface::data_structures::{
     RewardSnapshot,
     SingleRedemptionValues,
@@ -372,7 +372,7 @@ fn internal_batch_liquidate_troves(
 ) {
     require(borrowers.len() > 0, "TM: No borrowers to liquidate");
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
-    let oracle = abi(MockOracle, storage.oracle_contract.read().into());
+    let oracle = abi(Oracle, storage.oracle_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
     vars.price = oracle.get_price();
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().into());

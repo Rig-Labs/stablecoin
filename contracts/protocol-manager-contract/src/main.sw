@@ -10,7 +10,7 @@ use libraries::sorted_troves_interface::SortedTroves;
 use libraries::active_pool_interface::ActivePool;
 use libraries::default_pool_interface::DefaultPool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::mock_oracle_interface::MockOracle;
+use libraries::oracle_interface::Oracle;
 use libraries::protocol_manager_interface::ProtocolManager;
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;
@@ -253,7 +253,7 @@ fn get_all_assets_info() -> AssetInfo {
     }
     let mut i = 0;
     while (i < length) {
-        let oracle = abi(MockOracle, asset_contracts.get(i).unwrap().oracle.into());
+        let oracle = abi(Oracle, asset_contracts.get(i).unwrap().oracle.into());
         let trove_manager = abi(TroveManager, asset_contracts.get(i).unwrap().trove_manager.into());
         let asset = assets.get(i).unwrap();
         let price = oracle.get_price();

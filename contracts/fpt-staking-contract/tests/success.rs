@@ -4,7 +4,9 @@ use test_utils::{
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
+        oracle::oracle_abi,
         protocol_manager::{protocol_manager_abi, ProtocolManager},
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP},
         token::token_abi,
     },
     setup::common::setup_protocol,
@@ -152,9 +154,18 @@ async fn proper_staking_multiple_positions() {
         healthy_wallet3.clone(),
     );
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     let _open_trove = borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,

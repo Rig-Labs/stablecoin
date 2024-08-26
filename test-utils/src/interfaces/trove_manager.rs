@@ -3,6 +3,8 @@ use crate::interfaces::coll_surplus_pool::CollSurplusPool;
 use crate::interfaces::community_issuance::CommunityIssuance;
 use crate::interfaces::default_pool::DefaultPool;
 use crate::interfaces::oracle::Oracle;
+use crate::interfaces::pyth_oracle::PythCore;
+use crate::interfaces::redstone_oracle::RedstoneCore;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
 use crate::interfaces::usdf_token::USDFToken;
@@ -40,6 +42,8 @@ pub mod trove_manager_abi {
         community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         sorted_troves: &SortedTroves<T>,
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
@@ -58,6 +62,8 @@ pub mod trove_manager_abi {
             .with_contracts(&[
                 stability_pool,
                 oracle,
+                pyth,
+                redstone,
                 sorted_troves,
                 active_pool,
                 default_pool,
@@ -75,6 +81,8 @@ pub mod trove_manager_abi {
         community_issuance: &CommunityIssuance<T>,
         stability_pool: &StabilityPool<T>,
         oracle: &Oracle<T>,
+        pyth: &PythCore<T>,
+        redstone: &RedstoneCore<T>,
         sorted_troves: &SortedTroves<T>,
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
@@ -93,6 +101,8 @@ pub mod trove_manager_abi {
             .with_contracts(&[
                 stability_pool,
                 oracle,
+                pyth,
+                redstone,
                 sorted_troves,
                 active_pool,
                 default_pool,

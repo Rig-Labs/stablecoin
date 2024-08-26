@@ -42,6 +42,23 @@ pub const ONE: u64 = 1_000_000_000;
 
 pub const BETA: u64 = 2;
 
+pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
+    let mut adjusted_price = 0;
+    if current_precision > 9 {
+        let precision = current_precision - 9;
+        let magnitude = 10.pow(precision.as_u32());
+        adjusted_price = price / magnitude;
+    } else if current_precision < 9 {
+        let precision = 9_u8 - current_precision;
+        let magnitude = 10.pow(precision.as_u32());
+        adjusted_price = price * magnitude;
+    } else {
+        adjusted_price = price;
+    }
+
+    adjusted_price
+}
+
 pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
     AssetId::from(sha256((temp_contract, ZERO_B256)))
 }
@@ -173,6 +190,39 @@ fn test_dec_pow_two() {
     let exponent = 2;
     let result = dec_pow(base, exponent);
     assert(9_000_000_000 == result.as_u64().unwrap());
+}
+
+#[test]
+fn test_precision_less_than_current() {
+    let price = 1_000_000_000_000;
+    let precision = 8;
+    let result = convert_precision(price, precision);
+    assert_eq(result, price * 10);
+}
+
+#[test]
+fn test_precision_more_than_current() {
+    let price = 1_000_000_000_000;
+    let precision = 10;
+    let result = convert_precision(price, precision);
+    assert_eq(result, price / 10);
+}
+
+#[test]
+fn test_precision_is_equal_to_current() {
+    let price = 1_000_000_000_000;
+    let precision = 9;
+    let result = convert_precision(price, precision);
+    assert_eq(result, price);
+}
+
+#[test]
+fn test_precision_less_than_current_pow() {
+    let price = 1_000_000_000_000;
+    let precision = 6;
+
+    let result = convert_precision(price, precision);
+    assert_eq(result, price * 10.pow(3));
 }
 
 // TODO add more tests

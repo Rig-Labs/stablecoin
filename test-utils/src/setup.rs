@@ -1,10 +1,22 @@
 use super::interfaces::{
-    active_pool::ActivePool, borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
-    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
-    hint_helper::HintHelper, oracle::Oracle, protocol_manager::ProtocolManager,
-    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
+    active_pool::ActivePool,
+    borrow_operations::BorrowOperations,
+    coll_surplus_pool::CollSurplusPool,
+    community_issuance::CommunityIssuance,
+    default_pool::DefaultPool,
+    fpt_staking::FPTStaking,
+    fpt_token::FPTToken,
+    hint_helper::HintHelper,
+    oracle::{Oracle, OracleConfigurables, ORACLE_TIMEOUT},
+    protocol_manager::ProtocolManager,
+    pyth_oracle::{PythCore, PYTH_PRICE_ID},
+    redstone_oracle::{RedstoneCore, REDSTONE_PRICE_ID},
+    sorted_troves::SortedTroves,
+    stability_pool::StabilityPool,
+    token::Token,
+    trove_manager::TroveManagerContract,
+    usdf_token::USDFToken,
+    vesting::VestingContract,
 };
 
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
@@ -12,14 +24,21 @@ use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
 pub mod common {
     use super::*;
     use crate::{
-        data_structures::PRECISION,
         interfaces::{
-            active_pool::active_pool_abi, borrow_operations::borrow_operations_abi,
-            coll_surplus_pool::coll_surplus_pool_abi, community_issuance::community_issuance_abi,
-            default_pool::default_pool_abi, fpt_staking::fpt_staking_abi, fpt_token::fpt_token_abi,
-            oracle::oracle_abi, protocol_manager::protocol_manager_abi,
-            sorted_troves::sorted_troves_abi, stability_pool::stability_pool_abi, token::token_abi,
-            trove_manager::trove_manager_abi, usdf_token::usdf_token_abi,
+            active_pool::active_pool_abi,
+            borrow_operations::borrow_operations_abi,
+            coll_surplus_pool::coll_surplus_pool_abi,
+            community_issuance::community_issuance_abi,
+            default_pool::default_pool_abi,
+            fpt_staking::fpt_staking_abi,
+            fpt_token::fpt_token_abi,
+            protocol_manager::protocol_manager_abi,
+            pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
+            sorted_troves::sorted_troves_abi,
+            stability_pool::stability_pool_abi,
+            token::token_abi,
+            trove_manager::trove_manager_abi,
+            usdf_token::usdf_token_abi,
         },
         paths::*,
     };
@@ -53,6 +72,8 @@ pub mod common {
     pub struct AssetContracts<T: Account> {
         pub asset: Token<T>,
         pub oracle: Oracle<T>,
+        pub mock_pyth_oracle: PythCore<T>,
+        pub mock_redstone_oracle: RedstoneCore<T>,
         pub trove_manager: TroveManagerContract<T>,
         pub asset_id: AssetId,
     }
@@ -60,6 +81,8 @@ pub mod common {
     pub struct ExistingAssetContracts {
         pub asset: ContractId,
         pub oracle: ContractId,
+        pub pyth_oracle: ContractId,
+        pub redstone_oracle: ContractId,
     }
 
     pub async fn setup_protocol(
@@ -504,14 +527,106 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_oracle(wallet: &WalletUnlocked) -> Oracle<WalletUnlocked> {
+    pub async fn deploy_mock_pyth_oracle(wallet: &WalletUnlocked) -> PythCore<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
         let id = Contract::load_from(
-            &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+            &get_absolute_path_from_relative(PYTH_ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_policies)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return PythCore::new(id, wallet.clone());
+            }
+            Err(_) => {
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(PYTH_ORACLE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().with_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_policies)
+                .await
+                .unwrap();
+
+                return PythCore::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_mock_redstone_oracle(
+        wallet: &WalletUnlocked,
+    ) -> RedstoneCore<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_policies = TxPolicies::default().with_tip(1);
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(REDSTONE_ORACLE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().with_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_policies)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return RedstoneCore::new(id, wallet.clone());
+            }
+            Err(_) => {
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(REDSTONE_ORACLE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().with_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_policies)
+                .await
+                .unwrap();
+
+                return RedstoneCore::new(id, wallet.clone());
+            }
+        }
+    }
+
+    pub async fn deploy_oracle(
+        wallet: &WalletUnlocked,
+        pyth: ContractId,
+        pyth_precision: u8,
+        redstone: ContractId,
+        redstone_precison: u8,
+    ) -> Oracle<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_policies = TxPolicies::default().with_tip(1);
+
+        let configurables = OracleConfigurables::default()
+            .with_PYTH(pyth)
+            .unwrap()
+            .with_PYTH_PRICE_ID(PYTH_PRICE_ID)
+            .unwrap()
+            .with_REDSTONE(redstone)
+            .unwrap()
+            .with_REDSTONE_PRICE_ID(REDSTONE_PRICE_ID)
+            .unwrap()
+            .with_TIMEOUT(ORACLE_TIMEOUT)
+            .unwrap()
+            .with_DEBUG(true)
+            .unwrap()
+            .with_PYTH_PRECISION(pyth_precision)
+            .unwrap()
+            .with_REDSTONE_PRECISION(redstone_precison)
+            .unwrap();
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -524,7 +639,9 @@ pub mod common {
             Err(_) => {
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -626,7 +743,16 @@ pub mod common {
         symbol: String,
         is_testnet: bool,
     ) -> AssetContracts<WalletUnlocked> {
-        let oracle = deploy_oracle(&wallet).await;
+        let pyth = deploy_mock_pyth_oracle(&wallet).await;
+        let redstone = deploy_mock_redstone_oracle(&wallet).await;
+        let oracle = deploy_oracle(
+            &wallet,
+            pyth.contract_id().into(),
+            9,
+            redstone.contract_id().into(),
+            9,
+        )
+        .await;
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         let asset = deploy_token(&wallet).await;
 
@@ -634,6 +760,8 @@ pub mod common {
             println!("Deployed asset: {}", asset.contract_id());
             println!("Deployed trove manager: {}", trove_manager.contract_id());
             println!("Deployed oracle: {}", oracle.contract_id());
+            println!("Deployed mock pyth oracle: {}", pyth.contract_id());
+            println!("Deployed mock redstone oracle: {}", redstone.contract_id());
             println!("Deployed fpt staking: {}", fpt_staking.contract_id());
         }
 
@@ -666,7 +794,7 @@ pub mod common {
         .await
         .unwrap();
 
-        oracle_abi::set_price(&oracle, 1 * PRECISION).await;
+        pyth_oracle_abi::update_price_feeds(&pyth, pyth_price_feed(1)).await;
 
         protocol_manager_abi::register_asset(
             &protocol_manager,
@@ -694,6 +822,8 @@ pub mod common {
 
         return AssetContracts {
             oracle,
+            mock_pyth_oracle: pyth,
+            mock_redstone_oracle: redstone,
             trove_manager,
             asset,
             asset_id,

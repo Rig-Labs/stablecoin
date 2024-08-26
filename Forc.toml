@@ -1,6 +1,8 @@
 [workspace]
 members = [
-  "./contracts/mock-oracle-contract",
+  "./contracts/mock-pyth-contract",
+  "./contracts/mock-redstone-contract",
+  "./contracts/oracle-contract",
   "./contracts/multi-trove-getter-contract",
   "./contracts/stability-pool-contract",
   "./contracts/trove-manager-contract",

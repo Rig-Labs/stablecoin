@@ -1,10 +1,14 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
+use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
+use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
 use test_utils::{
     interfaces::{
-        active_pool::active_pool_abi, oracle::oracle_abi, protocol_manager::protocol_manager_abi,
+        active_pool::active_pool_abi,
+        protocol_manager::protocol_manager_abi,
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
         trove_manager::trove_manager_utils,
     },
     setup::common::setup_protocol,
@@ -15,12 +19,23 @@ use test_utils::{
 async fn proper_multi_collateral_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 10 * PRECISION).await;
-
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
     let healthy_wallet3 = wallets.pop().unwrap();
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[1].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
 
     borrow_operations_utils::mint_token_and_open_trove(
         healthy_wallet1.clone(),
@@ -97,9 +112,6 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     // 5k USDF   > 5k USDF + (fees)
 
     // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
-
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-    oracle_abi::set_price(&contracts.asset_contracts[1].oracle, 1 * PRECISION).await;
 
     let redemption_amount: u64 = 8_000 * PRECISION;
 

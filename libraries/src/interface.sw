@@ -14,4 +14,4 @@ pub mod protocol_manager_interface;
 pub mod fpt_staking_interface;
 pub mod fpt_token_interface;
 pub mod community_issuance_interface;
-pub mod mock_oracle_interface;
+pub mod oracle_interface;

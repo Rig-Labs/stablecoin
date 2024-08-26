@@ -1,14 +1,16 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::data_structures::PRECISION;
+use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
+use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
 use test_utils::utils::print_response;
 use test_utils::{
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::coll_surplus_pool_abi,
-        oracle::oracle_abi,
         protocol_manager::protocol_manager_abi,
+        pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
@@ -19,8 +21,6 @@ use test_utils::{
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
-
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -54,9 +54,18 @@ async fn proper_redemption_from_partially_closed() {
         healthy_wallet1.clone(),
     );
 
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -79,6 +88,8 @@ async fn proper_redemption_from_partially_closed() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -101,6 +112,8 @@ async fn proper_redemption_from_partially_closed() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -115,8 +128,6 @@ async fn proper_redemption_from_partially_closed() {
     .await
     .unwrap();
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-
     let redemption_amount: u64 = 3_000 * PRECISION;
 
     let protocol_manager_health1 = ProtocolManager::new(
@@ -130,6 +141,13 @@ async fn proper_redemption_from_partially_closed() {
     )
     .await
     .value;
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[1].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
 
     let res = protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
@@ -217,8 +235,6 @@ async fn proper_redemption_from_partially_closed() {
 async fn proper_redemption_with_a_trove_closed_fully() {
     let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 10 * PRECISION).await;
-
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
     let healthy_wallet3 = wallets.pop().unwrap();
@@ -253,9 +269,19 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let coll1 = 12_000 * PRECISION;
     let debt1 = 6_000 * PRECISION;
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
+
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet1,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -280,6 +306,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet2,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -304,6 +332,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     borrow_operations_abi::open_trove(
         &borrow_operations_healthy_wallet3,
         &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
         &contracts.usdf,
         &contracts.fpt_staking,
@@ -321,14 +351,19 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     // Troves
     // H1: 12/6 = 2 -> H2: 9/5 = 1.8 -> H3: 8/5 = 1.6
 
-    oracle_abi::set_price(&contracts.asset_contracts[0].oracle, 1 * PRECISION).await;
-
     let redemption_amount: u64 = 6_000 * PRECISION;
 
     let protocol_manager_health1 = ProtocolManager::new(
         contracts.protocol_manager.contract_id().clone(),
         healthy_wallet1.clone(),
     );
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[1].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
 
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_health1,
