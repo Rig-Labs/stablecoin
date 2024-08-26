@@ -596,7 +596,9 @@ pub mod common {
     pub async fn deploy_oracle(
         wallet: &WalletUnlocked,
         pyth: ContractId,
+        pyth_precision: u8,
         redstone: ContractId,
+        redstone_precison: u8,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -614,6 +616,10 @@ pub mod common {
             .with_TIMEOUT(ORACLE_TIMEOUT)
             .unwrap()
             .with_DEBUG(true)
+            .unwrap()
+            .with_PYTH_PRECISION(pyth_precision)
+            .unwrap()
+            .with_REDSTONE_PRECISION(redstone_precison)
             .unwrap();
 
         let id = Contract::load_from(
@@ -742,7 +748,9 @@ pub mod common {
         let oracle = deploy_oracle(
             &wallet,
             pyth.contract_id().into(),
+            9,
             redstone.contract_id().into(),
+            9,
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(&wallet).await;

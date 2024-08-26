@@ -483,7 +483,9 @@ pub mod deployment {
                 let oracle = deploy_oracle(
                     &wallet,
                     pyth.contract_id().into(),
+                    9,
                     redstone.contract_id().into(),
+                    9,
                 )
                 .await;
                 pb.inc();

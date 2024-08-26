@@ -10,6 +10,9 @@ use test_utils::{
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
 
+const PYTH_PRECISION: u8 = 12;
+const REDSTONE_PRECISION: u8 = 6;
+
 async fn setup() -> (
     Oracle<WalletUnlocked>,
     PythCore<WalletUnlocked>,
@@ -37,7 +40,9 @@ async fn setup() -> (
     let oracle = deploy_oracle(
         &wallet,
         pyth.contract_id().into(),
+        PYTH_PRECISION,
         redstone.contract_id().into(),
+        REDSTONE_PRECISION,
     )
     .await;
 
@@ -46,6 +51,19 @@ async fn setup() -> (
 
 fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
     vec![(U256::zero(), U256::from(price * PRECISION))]
+}
+
+fn convert_precision(price: u64, current_precision: u32) -> u64 {
+    let mut adjusted_price = 0;
+    if current_precision > 9 {
+        adjusted_price = price * (10_u64.pow(current_precision - 9));
+    } else if current_precision < 9 {
+        adjusted_price = price / 10_u64.pow(9 - current_precision);
+    } else {
+        adjusted_price = price;
+    }
+
+    adjusted_price
 }
 
 #[cfg(test)]
@@ -58,7 +76,7 @@ mod tests {
         #[tokio::test]
         async fn price() {
             let (oracle, pyth, redstone) = setup().await;
-            let expected_price = 1 * PRECISION;
+            let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
@@ -75,7 +93,7 @@ mod tests {
         #[tokio::test]
         async fn fallback_to_last_price() {
             let (oracle, pyth, redstone) = setup().await;
-            let expected_price = 1 * PRECISION;
+            let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
@@ -104,7 +122,9 @@ mod tests {
         #[tokio::test]
         async fn live_redstone() {
             let (oracle, pyth, redstone) = setup().await;
-            let expected_price = 1 * PRECISION;
+            let expected_price_pyth = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
+            let expected_price_redstone =
+                convert_precision(3 * PRECISION, REDSTONE_PRECISION.into());
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
@@ -114,7 +134,7 @@ mod tests {
             .await;
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
-            assert_eq!(expected_price, price);
+            assert_eq!(expected_price_pyth, price);
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 1).await;
 
@@ -127,7 +147,7 @@ mod tests {
             redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP + 1).await;
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
-            assert_eq!(expected_price * 3, price);
+            assert_eq!(expected_price_redstone, price);
         }
 
         #[ignore = "Unreachable by logic so skip test but leave for acknowledgement of case"]
@@ -143,7 +163,7 @@ mod tests {
                 #[tokio::test]
                 async fn price() {
                     let (oracle, pyth, redstone) = setup().await;
-                    let expected_price = 1 * PRECISION;
+                    let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
@@ -173,7 +193,7 @@ mod tests {
                 #[tokio::test]
                 async fn fallback_last_price() {
                     let (oracle, pyth, redstone) = setup().await;
-                    let expected_price = 1 * PRECISION;
+                    let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
@@ -207,7 +227,10 @@ mod tests {
                 #[tokio::test]
                 async fn price() {
                     let (oracle, pyth, redstone) = setup().await;
-                    let expected_price = 1 * PRECISION;
+                    let expected_price_pyth =
+                        convert_precision(1 * PRECISION, PYTH_PRECISION.into());
+                    let expected_price_redstone =
+                        convert_precision(3 * PRECISION, REDSTONE_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
@@ -217,7 +240,7 @@ mod tests {
                     .await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
-                    assert_eq!(expected_price, price);
+                    assert_eq!(expected_price_pyth, price);
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + ORACLE_TIMEOUT + 2)
                         .await;
@@ -231,13 +254,13 @@ mod tests {
                     redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP + 1).await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
-                    assert_eq!(expected_price * 3, price);
+                    assert_eq!(expected_price_redstone, price);
                 }
 
                 #[tokio::test]
                 async fn fallback_last_price() {
                     let (oracle, pyth, redstone) = setup().await;
-                    let expected_price = 1 * PRECISION;
+                    let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
