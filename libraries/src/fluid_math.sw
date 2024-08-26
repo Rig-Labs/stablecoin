@@ -217,7 +217,7 @@ fn test_precision_is_equal_to_current() {
 }
 
 #[test]
-fn test_precision_more_than_current_pow() {
+fn test_precision_less_than_current_pow() {
     let price = 1_000_000_000_000;
     let precision = 6;
 
