@@ -72,7 +72,7 @@ async fn proper_head_and_tails_after_insert() {
         )
         .with_contracts(&[&trove_manager])
         .with_tx_policies(tx_params)
-        .simulate()
+        .simulate(Execution::Realistic)
         .await
         .unwrap();
 
