@@ -62,13 +62,13 @@ jobs:
         run: |
           cargo fmt --verbose --check
 
-      # - name: Build Sway
-      #   run: |
-      #     forc build --terse
-      # Forc test builds anyways, so we don't need to build here
-      - name: Test Sway
+      - name: Build Sway
         run: |
-          forc test --terse
+          forc build --terse
+      # Forc test builds anyways, so we don't need to build here
+      # - name: Test Sway
+      #   run: |
+      #     forc test --terse
       - name: Run Rust tests
         run: |
           cargo test
