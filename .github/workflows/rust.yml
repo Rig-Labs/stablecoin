@@ -49,11 +49,18 @@ jobs:
       - name: Install rustfmt
         run: rustup component add rustfmt
 
+      - name: Install wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "latest"
+
       - name: Install Fuel toolchain
         uses: FuelLabs/action-fuel-toolchain@v0.6.0
         with:
           toolchain: latest
-          # date: 2023-01-18
 
       - name: Check Sway formatting
         run: |
