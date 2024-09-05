@@ -68,7 +68,7 @@ jobs:
       # Currently there's a weird bug on forc test that I cannot resolve
       - name: Test Sway
         run: |
-          forc test
+          forc test --terse
       - name: Run Rust tests
         run: |
           cargo test
