@@ -49,7 +49,6 @@ use std::{
     hash::Hash,
 };
 
-
 storage {
     sorted_troves_contract: ContractId = ContractId::zero(),
     borrow_operations_contract: ContractId = ContractId::zero(),

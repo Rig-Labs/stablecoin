@@ -69,9 +69,18 @@ pub fn get_offset_and_redistribution_vals(
 
     if (usdf_in_stab_pool > 0) {
         // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
-        vars.debt_to_offset = fm_min(liquidated_position_vals.trove_debt_to_repay, usdf_in_stab_pool);
+        vars.debt_to_offset = fm_min(
+            liquidated_position_vals
+                .trove_debt_to_repay,
+            usdf_in_stab_pool,
+        );
         // Send collateral to the Stability Pool proportional to the amount of debt offset
-        vars.coll_to_send_to_sp = fm_multiply_ratio(pending_liquidated_col, vars.debt_to_offset, liquidated_position_vals.trove_debt_to_repay);
+        vars.coll_to_send_to_sp = fm_multiply_ratio(
+            pending_liquidated_col,
+            vars.debt_to_offset,
+            liquidated_position_vals
+                .trove_debt_to_repay,
+        );
         // If stability pool doesn't have enough USDF to offset the entire debt, redistribute the remaining debt and collateral
         vars.debt_to_redistribute = liquidated_position_vals.trove_debt_to_repay - vars.debt_to_offset;
         vars.coll_to_redistribute = pending_liquidated_col - vars.coll_to_send_to_sp;
@@ -155,7 +164,10 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_empty_pool() {
     assert(liquidation_vals.coll_to_send_to_sp == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_redistribute == starting_debt);
-    assert(liquidation_vals.coll_to_redistribute == 1_100 * DECIMAL_PRECISION - coll_gas_compensation);
+    assert(
+        liquidation_vals
+            .coll_to_redistribute == 1_100 * DECIMAL_PRECISION - coll_gas_compensation,
+    );
     assert(liquidation_vals.coll_gas_compensation == coll_gas_compensation);
 }
 
@@ -179,7 +191,10 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_enough_pool() {
     assert(liquidation_vals.coll_to_redistribute == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_offset == 1_000 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_send_to_sp == 1_100 * DECIMAL_PRECISION - coll_gas_compensation);
+    assert(
+        liquidation_vals
+            .coll_to_send_to_sp == 1_100 * DECIMAL_PRECISION - coll_gas_compensation,
+    );
     assert(liquidation_vals.coll_gas_compensation == coll_gas_compensation);
 }
 
@@ -201,9 +216,15 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_partial_pool() {
     assert(liquidation_vals.remaining_trove_debt == 0);
     assert(liquidation_vals.coll_surplus == starting_coll - coll_liquidated);
     assert(liquidation_vals.debt_to_offset == 500 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_send_to_sp == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2);
+    assert(
+        liquidation_vals
+            .coll_to_send_to_sp == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2,
+    );
     assert(liquidation_vals.debt_to_redistribute == 500 * DECIMAL_PRECISION);
-    assert(liquidation_vals.coll_to_redistribute == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2);
+    assert(
+        liquidation_vals
+            .coll_to_redistribute == 550 * DECIMAL_PRECISION - coll_gas_compensation / 2,
+    );
 }
 
 #[test]
@@ -214,7 +235,13 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_empty_pool() {
     let price = DECIMAL_PRECISION;
     let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, 0, price);
 
-    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, price);
+    let icr = fm_compute_cr(
+        liquidation_vals
+            .remaining_trove_coll,
+        liquidation_vals
+            .remaining_trove_debt,
+        price,
+    );
     assert(liquidation_vals.entire_trove_coll == starting_coll);
     assert(liquidation_vals.entire_trove_debt == starting_debt);
     assert(liquidation_vals.is_partial_liquidation == true);
@@ -222,8 +249,17 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_empty_pool() {
     assert(liquidation_vals.coll_surplus == 0);
     assert(liquidation_vals.debt_to_offset == 0);
     assert(liquidation_vals.coll_to_send_to_sp == 0);
-    assert(liquidation_vals.debt_to_redistribute == starting_debt - liquidation_vals.remaining_trove_debt);
-    assert(liquidation_vals.coll_to_redistribute == starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_gas_compensation);
+    assert(
+        liquidation_vals
+            .debt_to_redistribute == starting_debt - liquidation_vals
+            .remaining_trove_debt,
+    );
+    assert(
+        liquidation_vals
+            .coll_to_redistribute == starting_coll - liquidation_vals
+            .remaining_trove_coll - liquidation_vals
+            .coll_gas_compensation,
+    );
 }
 
 #[test]
@@ -234,14 +270,29 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_enough_pool() {
     let amount_in_pool = 20_000 * DECIMAL_PRECISION;
     let price = DECIMAL_PRECISION;
     let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, amount_in_pool, price);
-    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, price);
+    let icr = fm_compute_cr(
+        liquidation_vals
+            .remaining_trove_coll,
+        liquidation_vals
+            .remaining_trove_debt,
+        price,
+    );
 
     assert(liquidation_vals.entire_trove_coll == starting_coll);
     assert(liquidation_vals.entire_trove_debt == starting_debt);
     assert(liquidation_vals.is_partial_liquidation == true);
     assert(liquidation_vals.coll_surplus == 0);
-    assert(liquidation_vals.debt_to_offset == starting_debt - liquidation_vals.remaining_trove_debt);
-    assert(liquidation_vals.coll_to_send_to_sp == starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_gas_compensation);
+    assert(
+        liquidation_vals
+            .debt_to_offset == starting_debt - liquidation_vals
+            .remaining_trove_debt,
+    );
+    assert(
+        liquidation_vals
+            .coll_to_send_to_sp == starting_coll - liquidation_vals
+            .remaining_trove_coll - liquidation_vals
+            .coll_gas_compensation,
+    );
     assert(liquidation_vals.debt_to_redistribute == 0);
     assert(liquidation_vals.coll_to_redistribute == 0);
     assert_within_percent_tolerance(icr, POST_COLLATERAL_RATIO, DECIMAL_PRECISION / 100);
@@ -256,7 +307,13 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
     let price = DECIMAL_PRECISION;
 
     let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, total_usdf, price);
-    let icr = fm_compute_cr(liquidation_vals.remaining_trove_coll, liquidation_vals.remaining_trove_debt, price);
+    let icr = fm_compute_cr(
+        liquidation_vals
+            .remaining_trove_coll,
+        liquidation_vals
+            .remaining_trove_debt,
+        price,
+    );
     let coll_removed = starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_gas_compensation;
 
     let expected_coll_to_send_to_sp = U128::from_u64(total_usdf) * U128::from_u64(coll_removed) / U128::from_u64(starting_debt - liquidation_vals.remaining_trove_debt);
@@ -266,8 +323,23 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
     assert(liquidation_vals.is_partial_liquidation == true);
     assert(liquidation_vals.coll_surplus == 0);
     assert(liquidation_vals.debt_to_offset == total_usdf);
-    assert(liquidation_vals.coll_to_send_to_sp == expected_coll_to_send_to_sp.as_u64().unwrap());
-    assert(liquidation_vals.debt_to_redistribute == starting_debt - liquidation_vals.remaining_trove_debt - total_usdf);
-    assert(liquidation_vals.coll_to_redistribute == starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_to_send_to_sp - liquidation_vals.coll_gas_compensation);
+    assert(
+        liquidation_vals
+            .coll_to_send_to_sp == expected_coll_to_send_to_sp
+            .as_u64()
+            .unwrap(),
+    );
+    assert(
+        liquidation_vals
+            .debt_to_redistribute == starting_debt - liquidation_vals
+            .remaining_trove_debt - total_usdf,
+    );
+    assert(
+        liquidation_vals
+            .coll_to_redistribute == starting_coll - liquidation_vals
+            .remaining_trove_coll - liquidation_vals
+            .coll_to_send_to_sp - liquidation_vals
+            .coll_gas_compensation,
+    );
     assert_within_percent_tolerance(icr, POST_COLLATERAL_RATIO, DECIMAL_PRECISION / 100);
 }

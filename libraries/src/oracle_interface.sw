@@ -13,14 +13,14 @@ abi Oracle {
 
 pub struct Price {
     pub value: u64,
-    pub time: u64
+    pub time: u64,
 }
 
 impl Price {
     pub fn new(price: u64, time: u64) -> Self {
         Self {
             value: price,
-            time
+            time,
         }
     }
 }

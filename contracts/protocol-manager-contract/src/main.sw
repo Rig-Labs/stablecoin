@@ -121,7 +121,10 @@ impl ProtocolManager for Contract {
         // TODO Require functions
         // TODO Require bootstrap mode
         require_valid_usdf_id();
-        require(msg_amount() > 0, "ProtocolManager: Redemption amount must be greater than 0");
+        require(
+            msg_amount() > 0,
+            "ProtocolManager: Redemption amount must be greater than 0",
+        );
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
         let usdf = abi(USDFToken, usdf_contract_cache.bits());

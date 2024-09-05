@@ -1,16 +1,16 @@
 library;
 
-use libraries::trove_manager_interface::data_structures::{Status};
-
-pub struct Trove {
+use libraries::trove_manager_interface::data_structures::Status;
+pub struct
+ Trove {
     pub debt: u64,
     pub coll: u64,
     pub stake: u64,
     pub array_index: u64,
     pub status: Status,
 }
-
-impl Trove {
+impl Trove
+ {
     pub fn default() -> Self {
         Trove {
             debt: 0,
@@ -21,17 +21,15 @@ impl Trove {
         }
     }
 }
-
-
-
-pub struct LocalVariablesOuterLiquidationFunction {
+pub struct
+ LocalVariablesOuterLiquidationFunction {
     pub price: u64,
     pub usdf_in_stability_pool: u64,
     pub liquidated_debt: u64,
     pub liquidated_coll: u64,
 }
-
-impl LocalVariablesOuterLiquidationFunction {
+impl LocalVariablesOuterLiquidationFunction
+ {
     pub fn default() -> Self {
         LocalVariablesOuterLiquidationFunction {
             price: 0,
@@ -41,15 +39,15 @@ impl LocalVariablesOuterLiquidationFunction {
         }
     }
 }
-
-pub struct LocalVariablesLiquidationSequence {
+pub struct
+ LocalVariablesLiquidationSequence {
     pub remaining_usdf_in_stability_pool: u64,
     pub i: u64,
     pub icr: u64,
     pub borrower: Identity,
 }
-
-impl LocalVariablesLiquidationSequence {
+impl LocalVariablesLiquidationSequence
+ {
     pub fn default() -> Self {
         LocalVariablesLiquidationSequence {
             remaining_usdf_in_stability_pool: 0,
@@ -59,8 +57,8 @@ impl LocalVariablesLiquidationSequence {
         }
     }
 }
-
-pub struct LiquidationValues {
+pub struct
+ LiquidationValues {
     pub entire_trove_debt: u64,
     pub entire_trove_coll: u64,
     pub debt_to_offset: u64,
@@ -73,8 +71,8 @@ pub struct LiquidationValues {
     pub remaining_trove_coll: u64,
     pub remaining_trove_debt: u64,
 }
-
-impl LiquidationValues {
+impl LiquidationValues
+ {
     pub fn default() -> Self {
         LiquidationValues {
             entire_trove_debt: 0,
@@ -91,8 +89,8 @@ impl LiquidationValues {
         }
     }
 }
-
-pub struct LiquidationTotals {
+pub struct
+ LiquidationTotals {
     pub total_debt_to_offset: u64,
     pub total_coll_to_send_to_sp: u64,
     pub total_debt_to_redistribute: u64,
@@ -102,8 +100,8 @@ pub struct LiquidationTotals {
     pub total_debt_in_sequence: u64,
     pub total_coll_in_sequence: u64,
 }
-
-impl LiquidationTotals {
+impl LiquidationTotals
+ {
     pub fn default() -> Self {
         LiquidationTotals {
             total_debt_to_offset: 0,
@@ -117,21 +115,21 @@ impl LiquidationTotals {
         }
     }
 }
-
-pub struct LiquidatedTroveValsInner {
+pub struct
+ LiquidatedTroveValsInner {
     pub trove_debt_to_repay: u64,
     pub trove_coll_liquidated: u64,
     pub is_partial_liquidation: bool,
 }
-
-pub struct EntireTroveDebtAndColl {
+pub struct
+ EntireTroveDebtAndColl {
     pub entire_trove_debt: u64,
     pub entire_trove_coll: u64,
     pub pending_debt_rewards: u64,
     pub pending_coll_rewards: u64,
 }
-
-pub struct RedemptionTotals {
+pub struct
+ RedemptionTotals {
     pub remaining_usdf: u64,
     pub total_usdf_to_redeem: u64,
     pub total_asset_drawn: u64,
@@ -141,8 +139,8 @@ pub struct RedemptionTotals {
     pub price: u64,
     pub total_usdf_supply_at_start: u64,
 }
-
-impl RedemptionTotals {
+impl RedemptionTotals
+ {
     pub fn default() -> Self {
         RedemptionTotals {
             remaining_usdf: 0,

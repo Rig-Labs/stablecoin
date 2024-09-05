@@ -75,7 +75,10 @@ impl VestingContract for Contract {
         // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
         let now = internal_get_current_time();
         let currently_unclaimed = calculate_redeemable_amount(now, schedule);
-        require(currently_unclaimed > 0, "VestingContract: Nothing to redeem");
+        require(
+            currently_unclaimed > 0,
+            "VestingContract: Nothing to redeem",
+        );
         schedule.claimed_amount += currently_unclaimed;
         storage.vesting_schedules.insert(address, schedule);
         transfer(address, storage.asset.read(), currently_unclaimed);

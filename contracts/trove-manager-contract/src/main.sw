@@ -362,7 +362,10 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
 #[storage(read)]
 fn require_trove_is_active(id: Identity) {
     let trove = storage.troves.get(id).read();
-    require(trove.status == Status::Active, "TroveManager: Trove is not active");
+    require(
+        trove.status == Status::Active,
+        "TroveManager: Trove is not active",
+    );
 }
 #[storage(read, write)]
 fn internal_batch_liquidate_troves(
@@ -370,7 +373,11 @@ fn internal_batch_liquidate_troves(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
-    require(borrowers.len() > 0, "TroveManager: No borrowers to liquidate");
+    require(
+        borrowers
+            .len() > 0,
+        "TroveManager: No borrowers to liquidate",
+    );
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(Oracle, storage.oracle_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();

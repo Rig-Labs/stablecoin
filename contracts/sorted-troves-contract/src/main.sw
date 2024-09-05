@@ -251,7 +251,13 @@ fn require_is_protocol_manager() {
 #[storage(read)]
 fn require_is_trove_manager() {
     let sender = msg_sender().unwrap();
-    require(storage.valid_trove_manager.get(sender).read(), "SortedTroves: Not TM");
+    require(
+        storage
+            .valid_trove_manager
+            .get(sender)
+            .read(),
+        "SortedTroves: Not TM",
+    );
 }
 #[storage(read)]
 fn require_is_bo_or_tm() {
@@ -357,8 +363,14 @@ fn internal_insert(
 ) {
     let trove_manager_contract = storage.asset_trove_manager.get(asset).read();
     require(!internal_is_full(asset), "SortedTroves: list is full");
-    require(!internal_contains(id, asset), "SortedTroves: id already exists");
-    require(null_identity_address() != id, "SortedTroves: id must not be zero");
+    require(
+        !internal_contains(id, asset),
+        "SortedTroves: id already exists",
+    );
+    require(
+        null_identity_address() != id,
+        "SortedTroves: id must not be zero",
+    );
     require(nicr > 0, "SortedTroves: icr must be greater than 0");
     let mut next_id: Identity = hint_next_id;
     let mut prev_id: Identity = hint_prev_id;
@@ -427,7 +439,10 @@ fn edit_node_neighbors(
 }
 #[storage(read, write)]
 fn internal_remove(id: Identity, asset: AssetId) {
-    require(internal_contains(id, asset), "SortedTroves: Id does not exist");
+    require(
+        internal_contains(id, asset),
+        "SortedTroves: Id does not exist",
+    );
     let mut node = storage.nodes.get((id, asset)).read();
     if (storage.size.get(asset).read() > 1) {
         if (id == internal_get_head(asset)) {

@@ -1,6 +1,6 @@
 contract;
 
-use libraries::oracle_interface::{PythCore, PythPrice, PythError, PythPriceFeedId, PythPriceFeed};
+use libraries::oracle_interface::{PythCore, PythError, PythPrice, PythPriceFeed, PythPriceFeedId};
 use std::{block::timestamp, hash::Hash};
 
 storage {
@@ -21,7 +21,16 @@ impl PythCore for Contract {
         let mut feed_index = 0;
 
         while feed_index < feeds.len() {
-            storage.latest_price_feed.insert(feeds.get(feed_index).unwrap().0, feeds.get(feed_index).unwrap().1);
+            storage
+                .latest_price_feed
+                .insert(
+                    feeds
+                        .get(feed_index)
+                        .unwrap().0,
+                    feeds
+                        .get(feed_index)
+                        .unwrap().1,
+                );
             feed_index += 1;
         }
     }
