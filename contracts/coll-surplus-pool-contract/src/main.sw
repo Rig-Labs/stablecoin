@@ -1,7 +1,6 @@
 contract;
 
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
-use libraries::fluid_math::ZERO_B256;
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -15,8 +14,8 @@ use std::{
     logging::log,
 };
 storage {
-    protocol_manager: Identity = Identity::Address(Address::from(ZERO_B256)),
-    borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    protocol_manager: Identity = Identity::Address(Address::zero()),
+    borrow_operations_contract: ContractId = ContractId::zero(),
     asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     balances: StorageMap<(Identity, AssetId), u64> = StorageMap::<(Identity, AssetId), u64> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
@@ -33,7 +32,7 @@ impl CollSurplusPool for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "CSP: Contract is already initialized",
+            "CollSurplusPool: Contract is already initialized",
         );
         storage
             .borrow_operations_contract
@@ -85,19 +84,22 @@ impl CollSurplusPool for Contract {
 #[storage(read)]
 fn require_is_valid_asset_id(contract_id: AssetId) {
     let is_valid = storage.valid_asset_ids.get(contract_id).try_read().unwrap_or(false);
-    require(is_valid, "CSP: Invalid asset");
+    require(is_valid, "CollSurplusPool: Invalid asset");
 }
 #[storage(read)]
 fn require_is_protocol_manager() {
     let caller = msg_sender().unwrap();
     let protocol_manager = storage.protocol_manager.read();
-    require(caller == protocol_manager, "CSP: Caller is not PM");
+    require(
+        caller == protocol_manager,
+        "CollSurplusPool: Caller is not PM",
+    );
 }
 #[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
     let is_valid = storage.valid_trove_managers.get(caller).read();
-    require(is_valid, "CSP: Caller is not TM");
+    require(is_valid, "CollSurplusPool: Caller is not TM");
 }
 #[storage(read)]
 fn require_is_borrow_operations_contract() {
@@ -105,6 +107,6 @@ fn require_is_borrow_operations_contract() {
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract.read());
     require(
         caller == borrow_operations_contract,
-        "CSP: Caller is not BO",
+        "CollSurplusPool: Caller is not BO",
     );
 }

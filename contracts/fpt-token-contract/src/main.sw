@@ -20,10 +20,10 @@ use std::{
 };
 
 storage {
-    vesting_contract: ContractId = ContractId::from(ZERO_B256),
-    community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
+    vesting_contract: ContractId = ContractId::zero(),
+    community_issuance_contract: ContractId = ContractId::zero(),
     is_initialized: bool = false,
-    default_asset: AssetId = AssetId::from(ZERO_B256),
+    default_asset: AssetId = AssetId::zero(),
 }
 
 // import fluid math decinals here
@@ -41,7 +41,7 @@ impl FPTToken for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "FPTToken: Contract is already initialized",
         );
         storage.vesting_contract.write(vesting_contract);
         storage

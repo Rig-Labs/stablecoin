@@ -15,10 +15,9 @@ use std::{
         msg_amount,
     },
     hash::Hasher,
-    logging::log,
 };
 storage {
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
+    sorted_troves_contract: ContractId = ContractId::zero(),
     is_initialized: bool = false,
 }
 abi HintHelper {
@@ -40,7 +39,7 @@ impl HintHelper for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Already initialized",
+            "HintHelper: Already initialized",
         );
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
@@ -60,7 +59,7 @@ impl HintHelper for Contract {
         let array_length = trove_manager.get_trove_owners_count();
 
         if array_length == 0 {
-            return (Identity::Address(Address::from(ZERO_B256)), 0, 0);
+            return (Identity::Address(Address::zero()), 0, 0);
         }
 
         let mut hint_address = sorted_troves.get_last(asset);

@@ -3,7 +3,7 @@ contract;
 mod utils;
 
 use libraries::community_issuance_interface::CommunityIssuance;
-use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_multiply_ratio, ZERO_B256};
+use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_multiply_ratio};
 use ::utils::*;
 use std::{
     asset::transfer,
@@ -24,17 +24,17 @@ use std::{
     u128::U128,
 };
 
-const ONE_WEEK_IN_SECONDS: u64 = 604800;
-const SIX_MONTHS_IN_SECONDS: u64 = 15780000;
-const ONE_YEAR_IN_SECONDS: u64 = 31104000;
+const ONE_WEEK_IN_SECONDS: u64 = 604_800;
+const SIX_MONTHS_IN_SECONDS: u64 = 15_780_000;
+const ONE_YEAR_IN_SECONDS: u64 = 31_104_000;
 
 storage {
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_token_contract: AssetId = AssetId::from(ZERO_B256),
+    stability_pool_contract: ContractId = ContractId::zero(),
+    fpt_token_contract: AssetId = AssetId::zero(),
     is_initialized: bool = false,
     total_fpt_issued: u64 = 0,
     deployment_time: u64 = 0,
-    admin: Identity = Identity::Address(Address::from(ZERO_B256)),
+    admin: Identity = Identity::Address(Address::zero()),
     debug: bool = false,
     debug_timestamp: u64 = 0,
     has_transitioned_rewards: bool = false,
@@ -54,7 +54,7 @@ impl CommunityIssuance for Contract {
             !storage
                 .is_initialized
                 .read(),
-            "Contract is already initialized",
+            "CommunityIssuance: Contract is already initialized",
         );
         storage
             .stability_pool_contract
@@ -73,11 +73,11 @@ impl CommunityIssuance for Contract {
             !storage
                 .has_transitioned_rewards
                 .read(),
-            "Rewards have already transitioned",
+            "CommunityIssuance: Rewards have already transitioned",
         );
         require(
             total_transition_time_seconds > ONE_WEEK_IN_SECONDS,
-            "Total transition time must be greater than 1 week",
+            "CommunityIssuance: Total transition time must be greater than 1 week",
         );
         storage.has_transitioned_rewards.write(true);
         storage
@@ -94,12 +94,12 @@ impl CommunityIssuance for Contract {
             !storage
                 .has_transitioned_rewards
                 .read(),
-            "Rewards have already transitioned",
+            "CommunityIssuance: Rewards have already transitioned",
         );
         let time_since_started_rewards = internal_get_current_time() - storage.deployment_time.read();
         require(
             time_since_started_rewards > ONE_YEAR_IN_SECONDS,
-            "Rewards can only be publicly increased after 1 year of inactivity",
+            "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity",
         ); // 1 year
         let total_transition_time_seconds = SIX_MONTHS_IN_SECONDS; // 6 months
         storage.has_transitioned_rewards.write(true);
@@ -155,7 +155,7 @@ impl CommunityIssuance for Contract {
             storage
                 .debug
                 .read(),
-            "Debugging must be enabled to set current time",
+            "CommunityIssuance: Debugging must be enabled to set current time",
         );
         storage.debug_timestamp.write(time);
     }
@@ -165,7 +165,7 @@ fn internal_require_caller_is_stability_pool() {
     require(
         msg_sender()
             .unwrap() == Identity::ContractId(storage.stability_pool_contract.read()),
-        "Caller must be stability pool",
+        "CommunityIssuance: Caller must be stability pool",
     );
 }
 
@@ -176,7 +176,7 @@ fn internal_require_caller_is_admin() {
             .unwrap() == storage
             .admin
             .read(),
-        "Caller must be admin",
+        "CommunityIssuance: Caller must be admin",
     );
 }
 

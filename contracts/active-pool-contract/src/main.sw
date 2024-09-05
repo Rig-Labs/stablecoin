@@ -1,7 +1,6 @@
 contract;
 
 use libraries::active_pool_interface::ActivePool;
-use libraries::fluid_math::ZERO_B256;
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -15,10 +14,10 @@ use std::{
     logging::log,
 };
 storage {
-    borrow_operations_contract: Identity = Identity::Address(Address::from(ZERO_B256)),
-    stability_pool_contract: Identity = Identity::Address(Address::from(ZERO_B256)),
-    default_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    protocol_manager_contract: Identity = Identity::Address(Address::from(ZERO_B256)),
+    borrow_operations_contract: Identity = Identity::Address(Address::zero()),
+    stability_pool_contract: Identity = Identity::Address(Address::zero()),
+    default_pool_contract: ContractId = ContractId::zero(),
+    protocol_manager_contract: Identity = Identity::Address(Address::zero()),
     asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
@@ -115,7 +114,7 @@ impl ActivePool for Contract {
 #[storage(read)]
 fn require_is_asset_id(asset_id: AssetId) {
     let valid_asset_id = storage.valid_asset_ids.get(asset_id).try_read().unwrap_or(false);
-    require(valid_asset_id, "Asset ID is not correct");
+    require(valid_asset_id, "Active Pool: Asset ID is not correct");
 }
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
@@ -126,7 +125,7 @@ fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let protocol_manager_contract = storage.protocol_manager_contract.read();
     require(
         caller == protocol_manager_contract || caller == borrow_operations_contract || valid_trove_manager || caller == stability_pool_contract,
-        "Caller is not BorrowOperations, TroveManager, ProtocolManager, or DefaultPool",
+        "Active Pool: Caller is not BorrowOperations, TroveManager, ProtocolManager, or DefaultPool",
     );
 }
 #[storage(read)]
@@ -136,7 +135,7 @@ fn require_caller_is_bo_or_tm() {
     let valid_trove_manager = storage.valid_trove_managers.get(caller).try_read().unwrap_or(false);
     require(
         caller == borrow_operations_contract || valid_trove_manager,
-        "Caller is not BorrowOperations or TroveManager",
+        "Active Pool: Caller is not BorrowOperations or TroveManager",
     );
 }
 #[storage(read)]
@@ -146,12 +145,15 @@ fn require_caller_is_borrow_operations_or_default_pool() {
     let default_pool_contract = Identity::ContractId(storage.default_pool_contract.read());
     require(
         caller == borrow_operations_contract || caller == default_pool_contract,
-        "Caller is not BorrowOperations or DefaultPool",
+        "Active Pool: Caller is not BorrowOperations or DefaultPool",
     );
 }
 #[storage(read)]
 fn require_is_protocol_manager() {
     let caller = msg_sender().unwrap();
     let protocol_manager = storage.protocol_manager_contract.read();
-    require(caller == protocol_manager, "Caller is not ProtocolManager");
+    require(
+        caller == protocol_manager,
+        "Active Pool: Caller is not ProtocolManager",
+    );
 }

@@ -45,16 +45,16 @@ use std::{
     u128::U128,
 };
 storage {
-    protocol_manager_contract: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    oracle_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    default_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    asset_contract: AssetId = AssetId::from(ZERO_B256),
+    protocol_manager_contract: ContractId = ContractId::zero(),
+    sorted_troves_contract: ContractId = ContractId::zero(),
+    borrow_operations_contract: ContractId = ContractId::zero(),
+    stability_pool_contract: ContractId = ContractId::zero(),
+    oracle_contract: ContractId = ContractId::zero(),
+    active_pool_contract: ContractId = ContractId::zero(),
+    default_pool_contract: ContractId = ContractId::zero(),
+    coll_surplus_pool_contract: ContractId = ContractId::zero(),
+    usdf_contract: ContractId = ContractId::zero(),
+    asset_contract: AssetId = AssetId::zero(),
     total_stakes: u64 = 0,
     total_stakes_snapshot: u64 = 0,
     total_collateral_snapshot: u64 = 0,
@@ -85,7 +85,7 @@ impl TroveManager for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "TM: Contract is already initialized",
+            "TroveManager: Contract is already initialized",
         );
         storage.sorted_troves_contract.write(sorted_troves);
         storage.borrow_operations_contract.write(borrow_operations);
@@ -318,7 +318,7 @@ fn internal_apply_pending_rewards(borrower: Identity) {
 fn internal_close_trove(id: Identity, close_status: Status) {
     require(
         close_status != Status::NonExistent || close_status != Status::Active,
-        "TM: Invalid status",
+        "TroveManager: Invalid status",
     );
     let asset_contract_cache = storage.asset_contract.read();
     let trove_owner_array_length = storage.trove_owners.len();
@@ -346,13 +346,13 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
     let mut trove = storage.troves.get(_borrower).read();
     require(
         trove.status != Status::NonExistent && trove.status != Status::Active,
-        "TM: Trove does not exist",
+        "TroveManager: Trove does not exist",
     );
 
     let index = trove.array_index;
     let length = _trove_array_owner_length;
     let indx_last = length - 1;
-    require(index <= indx_last, "TM: Trove does not exist");
+    require(index <= indx_last, "TroveManager: Trove does not exist");
     let address_to_move = storage.trove_owners.get(indx_last).unwrap().read();
     let mut trove_to_move = storage.troves.get(address_to_move).read();
     trove_to_move.array_index = index;
@@ -362,7 +362,10 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
 #[storage(read)]
 fn require_trove_is_active(id: Identity) {
     let trove = storage.troves.get(id).read();
-    require(trove.status == Status::Active, "TM: Trove is not active");
+    require(
+        trove.status == Status::Active,
+        "TroveManager: Trove is not active",
+    );
 }
 #[storage(read, write)]
 fn internal_batch_liquidate_troves(
@@ -370,7 +373,11 @@ fn internal_batch_liquidate_troves(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
-    require(borrowers.len() > 0, "TM: No borrowers to liquidate");
+    require(
+        borrowers
+            .len() > 0,
+        "TroveManager: No borrowers to liquidate",
+    );
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(Oracle, storage.oracle_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
@@ -387,7 +394,7 @@ fn internal_batch_liquidate_troves(
     require(
         totals
             .total_debt_in_sequence > 0,
-        "TM: No debt to liquidate",
+        "TroveManager: No debt to liquidate",
     );
     stability_pool.offset(
         totals
@@ -432,7 +439,7 @@ fn require_caller_is_borrow_operations_contract() {
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract.read());
     require(
         caller == borrow_operations_contract,
-        "TM: Caller is not the Borrow Operations contract",
+        "TroveManager: Caller is not the Borrow Operations contract",
     );
 }
 #[storage(read)]
@@ -441,7 +448,7 @@ fn require_caller_is_protocol_manager_contract() {
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract.read());
     require(
         caller == protocol_manager_contract,
-        "TM: Caller is not the Protocol Manager contract",
+        "TroveManager: Caller is not the Protocol Manager contract",
     );
 }
 #[storage(read)]
@@ -451,7 +458,7 @@ fn require_caller_is_borrow_operations_contract_or_protocol_manager() {
     let protocol_manager_contract = Identity::ContractId(storage.protocol_manager_contract.read());
     require(
         caller == borrow_operations_contract || caller == protocol_manager_contract,
-        "TM: Caller is not the Borrow Operations or Protocol Manager contract",
+        "TroveManager: Caller is not the Borrow Operations or Protocol Manager contract",
     );
 }
 #[storage(read, write)]
@@ -534,7 +541,7 @@ fn require_more_than_one_trove_in_system(
     let size = sorted_troves.get_size(asset_contract);
     require(
         trove_owner_array_length > 1 && size > 1,
-        "TM: There is only one trove in the system",
+        "TroveManager: There is only one trove in the system",
     );
 }
 #[storage(read)]
@@ -677,7 +684,7 @@ fn internal_compute_new_stake(coll: u64) -> u64 {
             storage
                 .total_stakes_snapshot
                 .read() > 0,
-            "TM: Total stakes snapshot is zero",
+            "TroveManager: Total stakes snapshot is zero",
         );
         let stake = (U128::from_u64(coll) * U128::from_u64(storage.total_stakes_snapshot.read())) / U128::from_u64(storage.total_collateral_snapshot.read());
         return stake.as_u64().unwrap();

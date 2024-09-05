@@ -25,10 +25,10 @@ use std::{
 };
 storage {
     trove_managers: StorageVec<ContractId> = StorageVec {},
-    protocol_manager: ContractId = ContractId::from(ZERO_B256),
-    stability_pool: Identity = Identity::Address(Address::from(ZERO_B256)),
-    borrower_operations: Identity = Identity::Address(Address::from(ZERO_B256)),
-    default_asset: AssetId = AssetId::from(ZERO_B256),
+    protocol_manager: ContractId = ContractId::zero(),
+    stability_pool: Identity = Identity::Address(Address::zero()),
+    borrower_operations: Identity = Identity::Address(Address::zero()),
+    default_asset: AssetId = AssetId::zero(),
     total_supply: u64 = 0,
     is_initialized: bool = false,
 }
@@ -47,7 +47,7 @@ impl USDFToken for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "USDFToken: Contract is already initialized",
         );
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
@@ -153,6 +153,6 @@ fn require_caller_is_bo_or_tm_or_sp_or_pm() {
             .read() || sender == storage
             .stability_pool
             .read() || sender == protocol_manager_id,
-        "NotAuthorized",
+        "USDFToken: NotAuthorized",
     );
 }

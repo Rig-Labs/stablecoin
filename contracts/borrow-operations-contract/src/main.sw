@@ -30,13 +30,13 @@ use std::{
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
-    usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
-    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    protocol_manager_contract: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_asset_id: AssetId = AssetId::from(ZERO_B256),
+    usdf_contract: ContractId = ContractId::zero(),
+    fpt_staking_contract: ContractId = ContractId::zero(),
+    coll_surplus_pool_contract: ContractId = ContractId::zero(),
+    active_pool_contract: ContractId = ContractId::zero(),
+    protocol_manager_contract: ContractId = ContractId::zero(),
+    sorted_troves_contract: ContractId = ContractId::zero(),
+    usdf_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
 }
 impl BorrowOperations for Contract {
@@ -53,7 +53,7 @@ impl BorrowOperations for Contract {
             !storage
                 .is_initialized
                 .read(),
-            "BorrowOperations: already initialized",
+            "Borrow Operations: already initialized",
         );
         storage.usdf_contract.write(usdf_contract);
         storage.fpt_staking_contract.write(fpt_staking_contract);
@@ -216,7 +216,7 @@ impl BorrowOperations for Contract {
             require_valid_usdf_id(msg_asset_id());
             require(
                 debt <= msg_amount(),
-                "BorrowOperations: cannot close trove with insufficient usdf balance",
+                "Borrow Operations: cannot close trove with insufficient usdf balance",
             );
         }
         trove_manager.close_trove(borrower);
@@ -359,7 +359,7 @@ fn require_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == protocol_manager,
-        "BO: Caller is not the protocol manager",
+        "Borrow Operations: Caller is not the protocol manager",
     );
 }
 #[storage(read)]
@@ -368,7 +368,7 @@ fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
     let status = trove_manager.get_trove_status(borrower);
     require(
         status != Status::Active,
-        "BorrowOperations: User already has an active Trove",
+        "Borrow Operations: User already has an active Trove",
     );
 }
 #[storage(read)]
@@ -377,36 +377,39 @@ fn require_trove_is_active(borrower: Identity, trove_manage_contract: ContractId
     let status = trove_manager.get_trove_status(borrower);
     require(
         status == Status::Active,
-        "BorrowOperations: User does not have an active Trove",
+        "Borrow Operations: User does not have an active Trove",
     );
 }
 #[storage(read)]
 fn require_non_zero_adjustment(asset_amount: u64, coll_withdrawl: u64, usdf_change: u64) {
     require(
         asset_amount > 0 || coll_withdrawl > 0 || usdf_change > 0,
-        "BorrowOperations: coll withdrawal and debt change must be greater than 0",
+        "Borrow Operations: coll withdrawal and debt change must be greater than 0",
     );
 }
 fn require_at_least_min_net_debt(_net_debt: u64) {
     require(
         _net_debt > MIN_NET_DEBT,
-        "BorrowOperations: net debt must be greater than 0",
+        "Borrow Operations: net debt must be greater than 0",
     );
 }
 fn require_non_zero_debt_change(debt_change: u64) {
     require(
         debt_change > 0,
-        "BorrowOperations: debt change must be greater than 0",
+        "Borrow Operations: debt change must be greater than 0",
     );
 }
 fn require_at_least_mcr(icr: u64) {
-    require(icr > MCR, "BO: Minimum collateral ratio not met");
+    require(
+        icr > MCR,
+        "Borrow Operations: Minimum collateral ratio not met",
+    );
 }
 #[storage(read)]
 fn require_singular_coll_change(coll_added_amount: u64, coll_withdrawl: u64) {
     require(
         coll_withdrawl == 0 || 0 == coll_added_amount,
-        "BorrowOperations: collateral change must be 0 or equal to the amount sent",
+        "Borrow Operations: collateral change must be 0 or equal to the amount sent",
     );
 }
 #[storage(read)]
@@ -416,7 +419,7 @@ fn require_valid_asset_id() {
             .valid_asset_ids
             .get(msg_asset_id())
             .read(),
-        "BO: Invalid collateral asset being transfered",
+        "Borrow Operations: Invalid collateral asset being transfered",
     );
 }
 #[storage(read)]
@@ -425,7 +428,7 @@ fn require_valid_usdf_id(recieved_asset: AssetId) {
         recieved_asset == storage
             .usdf_asset_id
             .read(),
-        "BO: Invalid USDF asset being transfered",
+        "Borrow Operations: Invalid USDF asset being transfered",
     );
 }
 #[storage(read)]

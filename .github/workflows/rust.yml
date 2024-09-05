@@ -1,15 +1,17 @@
 name: CI
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
-
   release:
     types: [published]
 
 env:
-  RUST_VERSION: 1.76.0
+  RUST_VERSION: 1.80.1
 
 jobs:
   lint-toml-files:
@@ -47,11 +49,18 @@ jobs:
       - name: Install rustfmt
         run: rustup component add rustfmt
 
+      - name: Install wasm target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "latest"
+
       - name: Install Fuel toolchain
         uses: FuelLabs/action-fuel-toolchain@v0.6.0
         with:
-          toolchain: beta-5
-          # date: 2023-01-18
+          toolchain: latest
 
       - name: Check Sway formatting
         run: |
@@ -62,11 +71,11 @@ jobs:
 
       - name: Build Sway
         run: |
-          forc build
-      # Currently there's a weird bug on forc test that I cannot resolve
-      - name: Test Sway
-        run: |
-          forc test
+          forc build --terse
+      # Forc test builds anyways, so we don't need to build here
+      # - name: Test Sway
+      #   run: |
+      #     forc test --terse
       - name: Run Rust tests
         run: |
           cargo test

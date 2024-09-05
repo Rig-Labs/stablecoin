@@ -7,10 +7,10 @@ license = "Apache-2.0"
 
 [dependencies]
 fuels = { workspace = true }
+rand = { workspace = true }
 test-utils = { path = "../../test-utils" }
 tokio = { workspace = true }
-rand = { workspace = true }
-# Not the latest version because of indexer bug o.o 
+
 
 [[test]]
 harness = true

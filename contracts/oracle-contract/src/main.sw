@@ -1,22 +1,26 @@
 contract;
 
 use libraries::{
-    oracle_interface::{PythPriceFeedId, PythPrice, PythCore},
-    oracle_interface::{Oracle, Price},
-    oracle_interface::RedstoneCore,
     fluid_math::convert_precision,
+    oracle_interface::RedstoneCore,
+    oracle_interface::{
+        Oracle,
+        Price,
+    },
+    oracle_interface::{
+        PythCore,
+        PythPrice,
+        PythPriceFeedId,
+    },
 };
-use std::{
-    block::timestamp,
-    constants::ZERO_B256,
-};
+use std::{block::timestamp, constants::ZERO_B256,};
 
 // Hack because of Sway Compiler consuming < 64GB RAM in library import location
 impl From<PythPrice> for Price {
     fn from(p: PythPrice) -> Self {
         Self {
             value: convert_precision(p.price, PYTH_PRECISION),
-            time: p.publish_time
+            time: p.publish_time,
         }
     }
 }
@@ -36,28 +40,28 @@ impl u256 {
 
 configurable {
     /// Contract Address
-    PYTH: ContractId = ContractId::from(ZERO_B256),
+    PYTH: ContractId = ContractId::zero(),
     /// Price feed to query
     PYTH_PRICE_ID: PythPriceFeedId = ZERO_B256,
     /// Precision of value returned by Pyth
     PYTH_PRECISION: u8 = 9,
     /// Contract Address
-    REDSTONE: ContractId = ContractId::from(ZERO_B256),
+    REDSTONE: ContractId = ContractId::zero(),
     /// Price feed to query
     REDSTONE_PRICE_ID: u256 = u256::min(),
     /// Precision of value returned by Redstone
     REDSTONE_PRECISION: u8 = 9,
     /// Timeout in seconds
     TIMEOUT: u64 = 0,
-
-    // Workaround for testing timestamps
     DEBUG: bool = false,
 }
 
 storage {
     /// The last price from either Pyth or Redstone
-    price: Price = Price { value: 0, time: 0 },
-
+    price: Price = Price {
+        value: 0,
+        time: 0,
+    },
     // Workaround for testing timestamps
     debug_timestamp: u64 = 0,
 }

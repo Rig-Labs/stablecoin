@@ -2,7 +2,7 @@ contract;
 
 use libraries::sorted_troves_interface::{Node, SortedTroves};
 use libraries::trove_manager_interface::TroveManager;
-use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
+use libraries::fluid_math::{null_contract, null_identity_address};
 use std::{
     asset::transfer,
     block::{
@@ -20,8 +20,8 @@ use std::{
 
 storage {
     max_size: u64 = 0,
-    protocol_manager: ContractId = ContractId::from(ZERO_B256),
-    borrower_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    protocol_manager: ContractId = ContractId::zero(),
+    borrower_operations_contract: ContractId = ContractId::zero(),
     head: StorageMap<AssetId, Identity> = StorageMap::<AssetId, Identity> {},
     tail: StorageMap<AssetId, Identity> = StorageMap::<AssetId, Identity> {},
     nodes: StorageMap<(Identity, AssetId), Node> = StorageMap::<(Identity, AssetId), Node> {},
@@ -38,12 +38,12 @@ impl SortedTroves for Contract {
         protocol_manager: ContractId,
         borrower_operations_contract: ContractId,
     ) {
-        require(size > 0, "size must be greater than 0");
+        require(size > 0, "SortedTroves: size must be greater than 0");
         require(
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "SortedTroves: Contract is already initialized",
         );
         storage.max_size.write(size);
         storage.protocol_manager.write(protocol_manager);
@@ -54,10 +54,10 @@ impl SortedTroves for Contract {
     }
     /*
      * @dev Add a node to the list
-     * @param _id Node's id
-     * @param _NICR Node's NICR
-     * @param _prevId Id of previous node for the insert position
-     * @param _nextId Id of next node for the insert position
+     * @param id Node's id
+     * @param nicr Node's NICR
+     * @param prevId Id of previous node for the insert position
+     * @param nextId Id of next node for the insert position
      */
     #[storage(read, write)]
     fn insert(
@@ -92,8 +92,8 @@ impl SortedTroves for Contract {
         asset: AssetId,
     ) {
         require_is_bo_or_tm();
-        require(internal_contains(id, asset), "ST: Id must exist");
-        require(nicr > 0, "ST: nicr must be greater than 0");
+        require(internal_contains(id, asset), "SortedTroves: Id must exist");
+        require(nicr > 0, "SortedTroves: nicr must be greater than 0");
         internal_remove(id, asset);
         internal_insert(id, nicr, prev_id, next_id, asset);
     }
@@ -165,14 +165,14 @@ fn internal_get_last(asset: AssetId) -> Identity {
 fn internal_get_next(id: Identity, asset: AssetId) -> Identity {
     match storage.nodes.get((id, asset)).try_read() {
         Some(node) => return node.next_id,
-        None => return Identity::Address(Address::from(ZERO_B256)),
+        None => return Identity::Address(Address::zero()),
     }
 }
 #[storage(read)]
 fn internal_get_prev(id: Identity, asset: AssetId) -> Identity {
     match storage.nodes.get((id, asset)).try_read() {
         Some(node) => return node.prev_id,
-        None => return Identity::Address(Address::from(ZERO_B256)),
+        None => return Identity::Address(Address::zero()),
     }
 }
 #[storage(read)]
@@ -208,14 +208,14 @@ fn internal_contains(id: Identity, asset: AssetId) -> bool {
 fn internal_get_head(asset: AssetId) -> Identity {
     match storage.head.get(asset).try_read() {
         Some(head) => return head,
-        None => return Identity::Address(Address::from(ZERO_B256)),
+        None => return Identity::Address(Address::zero()),
     }
 }
 #[storage(read)]
 fn internal_get_tail(asset: AssetId) -> Identity {
     match storage.tail.get(asset).try_read() {
         Some(tail) => return tail,
-        None => return Identity::Address(Address::from(ZERO_B256)),
+        None => return Identity::Address(Address::zero()),
     }
 }
 #[storage(read)]
@@ -245,13 +245,19 @@ fn require_is_protocol_manager() {
     let sender = msg_sender().unwrap();
     require(
         Identity::ContractId(storage.protocol_manager.read()) == sender,
-        "ST: Not PM",
+        "SortedTroves: Not PM",
     );
 }
 #[storage(read)]
 fn require_is_trove_manager() {
     let sender = msg_sender().unwrap();
-    require(storage.valid_trove_manager.get(sender).read(), "ST: Not TM");
+    require(
+        storage
+            .valid_trove_manager
+            .get(sender)
+            .read(),
+        "SortedTroves: Not TM",
+    );
 }
 #[storage(read)]
 fn require_is_bo_or_tm() {
@@ -260,7 +266,7 @@ fn require_is_bo_or_tm() {
     let is_trove_manager = storage.valid_trove_manager.get(sender).try_read().unwrap_or(false);
     require(
         borrow_operations == sender || is_trove_manager,
-        "ST: Not BO or TM",
+        "SortedTroves: Not BO or TM",
     );
 }
 #[storage(read)]
@@ -316,7 +322,7 @@ fn internal_descend_list(
     if (internal_get_head(asset) == start_id
         && nicr >= trove_manager.get_nominal_icr(start_id))
     {
-        return (Identity::Address(Address::from(ZERO_B256)), start_id);
+        return (Identity::Address(Address::zero()), start_id);
     }
     let mut prev_id = start_id;
     let mut next_id = internal_get_next(prev_id, asset);
@@ -356,10 +362,16 @@ fn internal_insert(
     asset: AssetId,
 ) {
     let trove_manager_contract = storage.asset_trove_manager.get(asset).read();
-    require(!internal_is_full(asset), "ST: list is full");
-    require(!internal_contains(id, asset), "ST: id already exists");
-    require(null_identity_address() != id, "ST: id must not be zero");
-    require(nicr > 0, "ST: icr must be greater than 0");
+    require(!internal_is_full(asset), "SortedTroves: list is full");
+    require(
+        !internal_contains(id, asset),
+        "SortedTroves: id already exists",
+    );
+    require(
+        null_identity_address() != id,
+        "SortedTroves: id must not be zero",
+    );
+    require(nicr > 0, "SortedTroves: icr must be greater than 0");
     let mut next_id: Identity = hint_next_id;
     let mut prev_id: Identity = hint_prev_id;
     if (!internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
@@ -371,8 +383,8 @@ fn internal_insert(
     }
     let mut new_node = Node {
         exists: true,
-        prev_id: Identity::Address(Address::from(ZERO_B256)),
-        next_id: Identity::Address(Address::from(ZERO_B256)),
+        prev_id: null_identity_address(),
+        next_id: null_identity_address(),
     };
     if (prev_id == null_identity_address() && next_id == null_identity_address()) {
         // Insert as head and tail
@@ -427,7 +439,10 @@ fn edit_node_neighbors(
 }
 #[storage(read, write)]
 fn internal_remove(id: Identity, asset: AssetId) {
-    require(internal_contains(id, asset), "ST: Id does not exist");
+    require(
+        internal_contains(id, asset),
+        "SortedTroves: Id does not exist",
+    );
     let mut node = storage.nodes.get((id, asset)).read();
     if (storage.size.get(asset).read() > 1) {
         if (id == internal_get_head(asset)) {

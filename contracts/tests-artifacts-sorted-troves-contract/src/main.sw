@@ -49,11 +49,9 @@ use std::{
     hash::Hash,
 };
 
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-
 storage {
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
-    borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
+    sorted_troves_contract: ContractId = ContractId::zero(),
+    borrow_operations_contract: ContractId = ContractId::zero(),
     nominal_icr: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
 }
 
@@ -120,6 +118,6 @@ fn require_caller_is_borrow_operations_contract() {
     let borrow_operations_contract = Identity::ContractId(storage.borrow_operations_contract.read());
     require(
         caller == borrow_operations_contract,
-        "Caller is not the Borrow Operations contract",
+        "TestsArtifactsSortedTrovesContract: Caller is not the Borrow Operations contract",
     );
 }

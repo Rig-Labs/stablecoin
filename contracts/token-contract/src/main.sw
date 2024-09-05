@@ -23,7 +23,7 @@ storage {
     //     symbol: "        ",
     //     decimals: 1u8,
     // },
-    owner: Identity = Identity::Address(Address::from(ZERO_B256)),
+    owner: Identity = Identity::Address(Address::zero()),
     mint_amount: u64 = 0,
     mint_list: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
 }
@@ -51,7 +51,7 @@ impl Token for Contract {
         require(
             storage
                 .owner
-                .read() == Identity::Address(Address::from(ZERO_B256)),
+                .read() == Identity::Address(Address::zero()),
             Error::CannotReinitialize,
         );
         storage.owner.write(owner);

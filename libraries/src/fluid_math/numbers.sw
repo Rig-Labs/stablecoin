@@ -1,8 +1,5 @@
 library;
-use std::{
-    u128::U128,
-    // u256::U256
-};
+use std::{u128::U128,};
 
 // impl U256 {
 //     pub fn from_u64(value: u64) -> U256 {
@@ -20,6 +17,7 @@ use std::{
 //     }
 // }
 
+
 impl U128 {
     pub fn from_u64(value: u64) -> U128 {
         U128::from((0, value))
@@ -36,6 +34,7 @@ impl U128 {
 //     }
 // }
 
+
 impl U128 {
     pub fn is_power_of_two(self) -> bool {
         self.lower() != 0 && (self & (self - U128::from(1u64))) == U128::zero()
@@ -47,6 +46,7 @@ impl U128 {
 //         self.d != 0 && (self & (self - U256::from((0, 0, 0, 1)))) == U256::from((0, 0, 0, 0))
 //     }
 // }
+
 
 fn is_power_of_two(value: u64) -> bool {
     value != 0 && (value & (value - 1)) == 0
@@ -126,6 +126,7 @@ impl U128 {
 //     }
 // }
 
+
 #[test]
 fn test_is_power_of_two() {
     assert(is_power_of_two(0) == false);
@@ -181,6 +182,7 @@ fn test_u128_modulo() {
 //         U256::from((0, 0, 0, 8)) % U256::from((0, 0, 0, 10)) == U256::from((0, 0, 0, 8)),
 //     );
 // }
+
 
 #[test]
 fn test_u128_modulo_pow_2_divisor() {

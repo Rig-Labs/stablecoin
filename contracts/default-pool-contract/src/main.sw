@@ -2,7 +2,7 @@ contract;
 
 use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
-use libraries::fluid_math::{null_contract, null_identity_address, ZERO_B256};
+use libraries::fluid_math::{null_contract, null_identity_address};
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -13,12 +13,11 @@ use std::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
 };
 
 storage {
-    protocol_manager: Identity = Identity::Address(Address::from(ZERO_B256)),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
+    protocol_manager: Identity = Identity::Address(Address::zero()),
+    active_pool_contract: ContractId = ContractId::zero(),
     asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
@@ -33,7 +32,7 @@ impl DefaultPool for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "DefaultPool: Contract is already initialized",
         );
 
         storage.protocol_manager.write(protocol_manager);
@@ -101,14 +100,14 @@ impl DefaultPool for Contract {
 fn require_is_asset_id() {
     let asset_id = msg_asset_id();
     let valid_asset_id = storage.valid_asset_ids.get(asset_id).read();
-    require(valid_asset_id, "DP: Asset is not correct");
+    require(valid_asset_id, "DefaultPool: Asset is not correct");
 }
 
 #[storage(read)]
 fn require_is_trove_manager() {
     let caller = msg_sender().unwrap();
     let is_valid_trove_manager = storage.valid_trove_managers.get(caller).read();
-    require(is_valid_trove_manager, "DP: Caller is not TM");
+    require(is_valid_trove_manager, "DefaultPool: Caller is not TM");
 }
 
 #[storage(read)]
@@ -117,7 +116,7 @@ fn require_is_active_pool_contract() {
     let active_pool_contract_contract = Identity::ContractId(storage.active_pool_contract.read());
     require(
         caller == active_pool_contract_contract,
-        "DP: Caller is not AP",
+        "DefaultPool: Caller is not AP",
     );
 }
 
@@ -125,5 +124,5 @@ fn require_is_active_pool_contract() {
 fn require_is_protocol_manager() {
     let caller = msg_sender().unwrap();
     let protocol_manager = storage.protocol_manager.read();
-    require(caller == protocol_manager, "DP: Caller is not PM");
+    require(caller == protocol_manager, "DefaultPool: Caller is not PM");
 }

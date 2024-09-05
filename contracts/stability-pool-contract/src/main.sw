@@ -17,7 +17,6 @@ use libraries::fluid_math::{
     get_default_asset_id,
     null_contract,
     null_identity_address,
-    ZERO_B256,
 };
 use std::{
     asset::transfer,
@@ -34,11 +33,11 @@ use std::{
 const SCALE_FACTOR = 1_000_000_000;
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
-    usdf_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_asset_id: AssetId = AssetId::from(ZERO_B256),
-    community_issuance_contract: ContractId = ContractId::from(ZERO_B256),
+    active_pool_contract: ContractId = ContractId::zero(),
+    protocol_manager_address: ContractId = ContractId::zero(),
+    usdf_contract: ContractId = ContractId::zero(),
+    usdf_asset_id: AssetId = AssetId::zero(),
+    community_issuance_contract: ContractId = ContractId::zero(),
     // List of assets tracked by the Stability Pool
     valid_assets: StorageVec<AssetId> = StorageVec {},
     // Asset amounts held by the Stability Pool to be claimed
@@ -90,7 +89,7 @@ impl StabilityPool for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "StabilityPool: Contract is already initialized",
         );
         storage.usdf_contract.write(usdf_contract);
         storage
@@ -292,7 +291,7 @@ fn require_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == protocol_manager,
-        "SP: Caller is not the protocol manager",
+        "StabilityPool: Caller is not the protocol manager",
     );
 }
 #[storage(read)]
@@ -301,9 +300,12 @@ fn require_usdf_is_valid_and_non_zero() {
         storage
             .usdf_asset_id
             .read() == msg_asset_id(),
-        "SP: USDF address is invalid",
+        "StabilityPool: USDF address is invalid",
     );
-    require(msg_amount() > 0, "SP: USDF amount must be greater than 0");
+    require(
+        msg_amount() > 0,
+        "StabilityPool: USDF amount must be greater than 0",
+    );
 }
 #[storage(read)]
 fn require_user_has_trove(address: Identity, trove_manager_contract: ContractId) {
@@ -311,7 +313,7 @@ fn require_user_has_trove(address: Identity, trove_manager_contract: ContractId)
     let status = trove_manager.get_trove_status(address);
     require(
         status == Status::Active,
-        "SP: User does not have an active trove",
+        "StabilityPool: User does not have an active trove",
     );
 }
 // --- Reward calculator functions for depositor and front end ---
@@ -439,7 +441,7 @@ fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
 #[storage(read)]
 fn require_user_has_asset_gain(depositor: Identity, asset_contract: AssetId) {
     let gain = internal_get_depositor_asset_gain(depositor, asset_contract);
-    require(gain > 0, "SP: User has no asset gain");
+    require(gain > 0, "StabilityPool: User has no asset gain");
 }
 #[storage(read)]
 fn require_caller_is_trove_manager() {
@@ -452,10 +454,10 @@ fn require_caller_is_trove_manager() {
         }
         i += 1;
     }
-    require(false, "SP: Caller is not a trove manager");
+    require(false, "StabilityPool: Caller is not a trove manager");
 }
 fn require_user_has_initial_deposit(deposit: u64) {
-    require(deposit > 0, "SP: User has no initial deposit");
+    require(deposit > 0, "StabilityPool: User has no initial deposit");
 }
 #[storage(read, write)]
 fn compute_rewards_per_unit_staked(
@@ -467,7 +469,7 @@ fn compute_rewards_per_unit_staked(
     let asset_numerator: U128 = U128::from_u64(coll_to_add) * U128::from_u64(DECIMAL_PRECISION) + storage.last_asset_error_offset.get(asset_contract).try_read().unwrap_or(U128::from_u64(0));
     require(
         debt_to_offset <= total_usdf_deposits,
-        "SP: Debt offset exceeds total USDF deposits",
+        "StabilityPool: Debt offset exceeds total USDF deposits",
     );
     let mut usdf_loss_per_unit_staked: U128 = U128::from_u64(0);
     if (debt_to_offset == total_usdf_deposits) {
@@ -523,7 +525,7 @@ fn update_reward_sum_and_product(
     } else {
         new_p = current_p * new_product_factor / U128::from_u64(DECIMAL_PRECISION);
     }
-    require(new_p > U128::from_u64(0), "SP: New p is 0");
+    require(new_p > U128::from_u64(0), "StabilityPool: New p is 0");
     storage.p.write(new_p);
 }
 #[storage(read, write)]

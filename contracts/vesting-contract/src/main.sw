@@ -22,12 +22,11 @@ use std::{
     hash::Hash,
     storage::storage_vec::*,
 };
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 
 storage {
     vesting_schedules: StorageMap<Identity, VestingSchedule> = StorageMap::<Identity, VestingSchedule> {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
-    asset: AssetId = AssetId::from(ZERO_B256),
+    asset: AssetId = AssetId::zero(),
     is_initialized: bool = false,
     // timestamp is used for testing purposes only, as Fuel does not support timestamp currently in integration tests
     debug: bool = false,
@@ -45,7 +44,7 @@ impl VestingContract for Contract {
             !storage
                 .is_initialized
                 .read(),
-            "Contract is already initialized",
+            "VestingContract: Contract is already initialized",
         );
         storage.asset.write(asset);
         storage.debug.write(debugging);
@@ -54,10 +53,10 @@ impl VestingContract for Contract {
             let schedule = schedules.get(i).unwrap();
             require(
                 is_valid_vesting_schedule(schedule),
-                "Invalid vesting schedule",
+                "VestingContract: Invalid vesting schedule",
             );
             match storage.vesting_schedules.get(schedule.recipient).try_read() {
-                Some(_) => require(false, "Schedule already exists"),
+                Some(_) => require(false, "VestingContract: Schedule already exists"),
                 None => {}
             }
             storage
@@ -76,7 +75,10 @@ impl VestingContract for Contract {
         // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
         let now = internal_get_current_time();
         let currently_unclaimed = calculate_redeemable_amount(now, schedule);
-        require(currently_unclaimed > 0, "Nothing to redeem");
+        require(
+            currently_unclaimed > 0,
+            "VestingContract: Nothing to redeem",
+        );
         schedule.claimed_amount += currently_unclaimed;
         storage.vesting_schedules.insert(address, schedule);
         transfer(address, storage.asset.read(), currently_unclaimed);
@@ -100,7 +102,7 @@ impl VestingContract for Contract {
             storage
                 .debug
                 .read(),
-            "Debugging must be enabled to set current time",
+            "VestingContract: Debugging must be enabled to set current time",
         );
         storage.debug_timestamp.write(time);
     }
