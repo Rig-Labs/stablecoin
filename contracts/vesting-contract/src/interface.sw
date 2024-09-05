@@ -1,8 +1,7 @@
 library;
 
 use ::data_structures::VestingSchedule;
-abi VestingContract
- {
+abi VestingContract {
     #[storage(write, read)]
     fn constructor(
         asset: AssetId,
