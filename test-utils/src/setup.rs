@@ -708,24 +708,19 @@ pub mod common {
     }
 
     pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
-        let mut path = env::current_dir().unwrap();
-        // println!("Current directory: {:?}", path);
-        let fluid_protocol_index = path
+        let current_dir = env::current_dir().unwrap();
+
+        let fluid_protocol_path = current_dir
+            .ancestors()
+            .find(|p| p.ends_with("fluid-protocol"))
+            .unwrap_or(&current_dir)
+            .to_path_buf();
+
+        fluid_protocol_path
+            .join(relative_path)
             .to_str()
             .unwrap()
-            .find("fluid-protocol/")
-            .unwrap_or_else(|| path.to_str().unwrap().len());
-
-        path.push("fluid-protocol/");
-        // length of fluid procol
-        let len = "fluid-protocol/".len();
-
-        let mut result =
-            path.to_str().unwrap().to_string()[..fluid_protocol_index + len].to_string();
-
-        result.push_str(relative_path);
-
-        result
+            .to_string()
     }
 
     pub async fn add_asset(
