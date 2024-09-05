@@ -1,0 +1,181 @@
+[[package]]
+name = "active-pool-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "borrow-operations-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "coll-surplus-pool-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "community-issuance-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "core"
+source = "path+from-root-EF1196EF955CE54B"
+
+[[package]]
+name = "default-pool-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "fpt-staking-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "fpt-token-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "hint-helper-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "libraries"
+source = "member"
+dependencies = ["std"]
+
+[[package]]
+name = "mock-pyth-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "mock-redstone-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "mock-trove-manager-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "mock-trove-manager-sp-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "multi-trove-getter-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "oracle-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "protocol-manager-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "sorted-troves-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "stability-pool-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "std"
+source = "git+https://github.com/fuellabs/sway?tag=v0.63.3#f55c81cce61aac31913ac0e87306cbaed7da679a"
+dependencies = ["core"]
+
+[[package]]
+name = "token-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "trove-manager-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "usdf-token-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
+
+[[package]]
+name = "vesting-contract"
+source = "member"
+dependencies = [
+    "libraries",
+    "std",
+]
