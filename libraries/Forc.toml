@@ -3,7 +3,3 @@ authors = ["hydrogen-labs"]
 entry = "interface.sw"
 license = "Apache-2.0"
 name = "libraries"
-
-[dependencies]
-
-[constants]
