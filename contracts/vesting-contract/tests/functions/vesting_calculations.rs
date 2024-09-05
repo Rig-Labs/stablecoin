@@ -279,7 +279,7 @@ mod success {
     #[tokio::test]
     async fn proper_json_vesting_parsing() {
         let vesting_schedules = load_vesting_schedules_from_json_file(
-            "/contracts/vesting-contract/tests/artefacts/test_vesting.json",
+            "contracts/vesting-contract/tests/artefacts/test_vesting.json",
         );
 
         assert_eq!(vesting_schedules.len(), 2);

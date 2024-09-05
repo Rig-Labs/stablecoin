@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, str::FromStr};
+use std::{fs::File, io::BufReader, path::PathBuf, str::FromStr};
 
 use fuels::prelude::{Address, Bech32Address};
 use fuels::types::AssetId;
@@ -42,9 +42,9 @@ pub async fn set_timestamp<T: Account>(
 }
 
 pub fn load_vesting_schedules_from_json_file(path: &str) -> Vec<VestingSchedule> {
-    let path = get_absolute_path_from_relative(path);
+    let absolute_path = get_absolute_path_from_relative(path);
 
-    let file = File::open(&path).unwrap();
+    let file = File::open(&absolute_path).expect("Failed to open file");
     let reader = BufReader::new(file);
 
     // Parse the JSON into a Vec<IntermediateVestingSchedule>
