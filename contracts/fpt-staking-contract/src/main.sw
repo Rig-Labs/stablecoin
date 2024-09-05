@@ -6,7 +6,6 @@ use libraries::fluid_math::{
     fm_multiply_ratio,
     null_contract,
     null_identity_address,
-    ZERO_B256,
 };
 use libraries::fpt_staking_interface::{FPTStaking, ReadStorage};
 use std::{
@@ -19,7 +18,6 @@ use std::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
     storage::storage_vec::*,
     u128::U128,
 };
@@ -31,10 +29,10 @@ storage {
     f_asset: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     f_usdf: u64 = 0,
     total_fpt_staked: u64 = 0,
-    protocol_manager_address: ContractId = ContractId::from(ZERO_B256),
-    borrower_operations_address: ContractId = ContractId::from(ZERO_B256),
-    fpt_address: AssetId = AssetId::from(ZERO_B256),
-    usdf_address: AssetId = AssetId::from(ZERO_B256),
+    protocol_manager_address: ContractId = ContractId::zero(),
+    borrower_operations_address: ContractId = ContractId::zero(),
+    fpt_address: AssetId = AssetId::zero(),
+    usdf_address: AssetId = AssetId::zero(),
     is_initialized: bool = false,
 }
 
@@ -50,7 +48,7 @@ impl FPTStaking for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Contract is already initialized",
+            "FPTStaking: Contract is already initialized",
         );
         storage
             .protocol_manager_address
@@ -243,11 +241,11 @@ fn update_user_snapshots(id: Identity) {
 fn require_user_has_stake(current_stake_amount: u64, unstake_amount: u64) {
     require(
         current_stake_amount > 0,
-        "User must have stake greater than 0",
+        "FPTStaking: User must have stake greater than 0",
     );
     require(
         current_stake_amount >= unstake_amount,
-        "Cannot unstake more than current staked amount",
+        "FPTStaking: Cannot unstake more than current staked amount",
     );
 }
 
@@ -257,7 +255,7 @@ fn require_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == protocol_manager,
-        "Caller is not the protocol manager",
+        "FPTStaking: Caller is not the protocol manager",
     );
 }
 
@@ -267,7 +265,7 @@ fn require_is_borrower_operations() {
     require(
         msg_sender()
             .unwrap() == borrower_operations,
-        "Caller is not the Borrower Operations",
+        "FPTStaking: Caller is not the Borrower Operations",
     );
 }
 
@@ -277,9 +275,12 @@ fn require_fpt_is_valid_and_non_zero() {
         storage
             .fpt_address
             .read() == msg_asset_id(),
-        "FPT contract not initialized, or wrong token",
+        "FPTStaking: FPT contract not initialized, or wrong token",
     );
-    require(msg_amount() > 0, "FPT amount must be greater than 0");
+    require(
+        msg_amount() > 0,
+        "FPTStaking: FPT amount must be greater than 0",
+    );
 }
 
 #[storage(read)]

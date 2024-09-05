@@ -11,8 +11,6 @@ tokio = { workspace = true }
 rand = { workspace = true }
 test-utils = { path = "../../test-utils" }
 
-# Not the latest version because of indexer bug o.o 
-
 [[test]]
 harness = true
 name = "tests"

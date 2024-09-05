@@ -25,19 +25,18 @@ use std::{
         msg_amount,
     },
     hash::*,
-    logging::log,
     storage::storage_vec::*,
 };
 storage {
-    admin: Identity = Identity::Address(Address::from(ZERO_B256)),
-    borrow_operations_contract: ContractId = ContractId::from(ZERO_B256),
-    fpt_staking_contract: ContractId = ContractId::from(ZERO_B256),
-    usdf_token_contract: ContractId = ContractId::from(ZERO_B256),
-    stability_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    coll_surplus_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    default_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    active_pool_contract: ContractId = ContractId::from(ZERO_B256),
-    sorted_troves_contract: ContractId = ContractId::from(ZERO_B256),
+    admin: Identity = Identity::Address(Address::zero()),
+    borrow_operations_contract: ContractId = ContractId::zero(),
+    fpt_staking_contract: ContractId = ContractId::zero(),
+    usdf_token_contract: ContractId = ContractId::zero(),
+    stability_pool_contract: ContractId = ContractId::zero(),
+    coll_surplus_pool_contract: ContractId = ContractId::zero(),
+    default_pool_contract: ContractId = ContractId::zero(),
+    active_pool_contract: ContractId = ContractId::zero(),
+    sorted_troves_contract: ContractId = ContractId::zero(),
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     assets: StorageVec<AssetId> = StorageVec {},
     is_initialized: bool = false,
@@ -59,7 +58,7 @@ impl ProtocolManager for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "PM: Already initialized",
+            "ProtocolManager: Already initialized",
         );
         storage.admin.write(admin);
         storage.borrow_operations_contract.write(borrow_operations);
@@ -122,7 +121,7 @@ impl ProtocolManager for Contract {
         // TODO Require functions
         // TODO Require bootstrap mode
         require_valid_usdf_id();
-        require(msg_amount() > 0, "Redemption amount must be greater than 0");
+        require(msg_amount() > 0, "ProtocolManager: Redemption amount must be greater than 0");
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
         let usdf = abi(USDFToken, usdf_contract_cache.bits());
@@ -203,7 +202,7 @@ impl ProtocolManager for Contract {
             );
             ind += 1;
         }
-        log(total_usdf_redeemed);
+        // log(total_usdf_redeemed);
         usdf
             .burn {
                 coins: total_usdf_redeemed,
@@ -225,13 +224,13 @@ impl ProtocolManager for Contract {
 fn require_is_admin() {
     let caller = msg_sender().unwrap();
     let admin = storage.admin.read();
-    require(caller == admin, "PM: Caller is not admin");
+    require(caller == admin, "ProtocolManager: Caller is not admin");
 }
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(
         msg_asset_id() == get_default_asset_id(storage.usdf_token_contract.read()),
-        "PM: Invalid asset being transfered",
+        "ProtocolManager: Invalid asset being transfered",
     );
 }
 #[storage(read)]

@@ -8,9 +8,7 @@ license = "Apache-2.0"
 [dev-dependencies]
 fuels = { workspace = true }
 test-utils = { path = "../../test-utils" }
-tokio = { version = "1.21.0", features = ["rt", "macros"] }
-
-# Not the latest version because of indexer bug o.o 
+tokio = { workspace = true }
 
 [[test]]
 harness = true

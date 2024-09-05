@@ -5,7 +5,6 @@ license = "Apache-2.0"
 name = "sorted-troves-contract"
 
 [constants]
-NULL_ADDRESS = { type = "b256", value = "0x0000000000000000000000000000000000000000000000000000000000000000" }
 
 [dependencies]
 libraries = { path = "../../libraries" }
