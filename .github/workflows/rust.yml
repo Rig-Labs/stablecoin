@@ -62,10 +62,10 @@ jobs:
         run: |
           cargo fmt --verbose --check
 
-      - name: Build Sway
-        run: |
-          forc build --terse
-      # Currently there's a weird bug on forc test that I cannot resolve
+      # - name: Build Sway
+      #   run: |
+      #     forc build --terse
+      # Forc test builds anyways, so we don't need to build here
       - name: Test Sway
         run: |
           forc test --terse
