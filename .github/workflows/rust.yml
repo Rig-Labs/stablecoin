@@ -29,7 +29,7 @@ jobs:
       - name: Run Cargo.toml linter
         run: git ls-files | grep Cargo.toml$ | xargs --verbose -n 1 cargo-toml-lint
 
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -73,6 +73,7 @@ jobs:
         run: |
           forc build --terse
       # Forc test builds anyways, so we don't need to build here
+      # TODO: For some reason, the forc tests stalls when compiling the oracle contracts
       # - name: Test Sway
       #   run: |
       #     forc test --terse
