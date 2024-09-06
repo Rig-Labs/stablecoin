@@ -25,12 +25,12 @@ storage {
     is_initialized: bool = false,
     default_asset: AssetId = AssetId::zero(),
 }
-
-// import fluid math decinals here
+// Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
+// import fluid math decimals here
 pub const TOTAL_SUPPLY: u64 = 100_000_000;
 impl FPTToken for Contract {
     //////////////////////////////////////
-    // Owner methods
+    // Initialization method
     //////////////////////////////////////
     #[storage(read, write)]
     fn initialize(
@@ -47,7 +47,6 @@ impl FPTToken for Contract {
         storage
             .community_issuance_contract
             .write(community_issuance_contract);
-        // storage.config.write(config);
         mint_to(
             Identity::ContractId(vesting_contract),
             ZERO_B256,

@@ -32,10 +32,10 @@ storage {
     total_supply: u64 = 0,
     is_initialized: bool = false,
 }
-
+// Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
 impl USDFToken for Contract {
     //////////////////////////////////////
-    // Owner methods
+    // Initialization method
     //////////////////////////////////////
     #[storage(read, write)]
     fn initialize(
@@ -122,7 +122,7 @@ fn require_caller_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == Identity::ContractId(storage.protocol_manager.read()),
-        "NotAuthorized",
+        "USDFToken: NotAuthorized",
     );
 }
 #[storage(read)]
@@ -132,7 +132,7 @@ fn require_caller_is_borrower_operations() {
             .unwrap() == storage
             .borrower_operations
             .read(),
-        "NotAuthorized",
+        "USDFToken: NotAuthorized",
     );
 }
 #[storage(read)]
