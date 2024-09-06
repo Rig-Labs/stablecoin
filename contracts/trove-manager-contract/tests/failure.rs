@@ -1,4 +1,4 @@
-use fuels::types::Identity;
+use fuels::types::{Address, Identity};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
@@ -50,8 +50,8 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -69,8 +69,8 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(wallet1.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .expect_err("Improper liquidation of trove not below MCR");

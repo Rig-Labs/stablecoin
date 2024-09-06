@@ -1,5 +1,13 @@
 contract;
-
+// This contract, HintHelper, provides approximate hinting functionality for the system.
+// It is used to find a trove with a nominal ICR closest to a given target ICR (cr).
+// The hint is found by simulating a random walk through the trove list.
+//
+// Key functionalities include:
+// - Initializing the contract with the SortedTroves contract ID
+// - Providing a function to get an approximate hint for the closest trove
+// - Using a random seed to ensure different hints for different inputs
+//
 // To the auditor: This contract is not used in the system. It is only used for querying the system.
 
 use libraries::trove_manager_interface::TroveManager;

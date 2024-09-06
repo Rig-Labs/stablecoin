@@ -1,5 +1,6 @@
 contract;
-
+// The USDFToken contract is responsible for managing the issuance and transfer of USDF tokens in the system.
+// It is used by the Stability Pool, Borrower Operations, and Trove Managers.
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fluid_math::{get_default_asset_id, ZERO_B256};
 use std::{
@@ -24,7 +25,7 @@ use std::{
     string::String,
 };
 storage {
-    trove_managers: StorageVec<ContractId> = StorageVec {},
+    valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
     protocol_manager: ContractId = ContractId::zero(),
     stability_pool: Identity = Identity::Address(Address::zero()),
     borrower_operations: Identity = Identity::Address(Address::zero()),
@@ -32,10 +33,10 @@ storage {
     total_supply: u64 = 0,
     is_initialized: bool = false,
 }
-
+// Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
 impl USDFToken for Contract {
     //////////////////////////////////////
-    // Owner methods
+    // Initialization method
     //////////////////////////////////////
     #[storage(read, write)]
     fn initialize(
@@ -77,7 +78,9 @@ impl USDFToken for Contract {
     #[storage(read, write)]
     fn add_trove_manager(trove_manager: ContractId) {
         require_caller_is_protocol_manager();
-        storage.trove_managers.push(trove_manager);
+        storage
+            .valid_trove_managers
+            .insert(Identity::ContractId(trove_manager), true);
     }
     //////////////////////////////////////
     // SRC-20 Read-Only methods
@@ -122,7 +125,7 @@ fn require_caller_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == Identity::ContractId(storage.protocol_manager.read()),
-        "NotAuthorized",
+        "USDFToken: NotAuthorized",
     );
 }
 #[storage(read)]
@@ -132,27 +135,23 @@ fn require_caller_is_borrower_operations() {
             .unwrap() == storage
             .borrower_operations
             .read(),
-        "NotAuthorized",
+        "USDFToken: NotAuthorized",
     );
 }
 #[storage(read)]
 fn require_caller_is_bo_or_tm_or_sp_or_pm() {
     let sender = msg_sender().unwrap();
     let protocol_manager_id = Identity::ContractId(storage.protocol_manager.read());
-    let mut i = 0;
-    while i < storage.trove_managers.len() {
-        let manager = Identity::ContractId(storage.trove_managers.get(i).unwrap().read());
-        if manager == sender {
-            return
-        }
-        i += 1;
-    }
+
+    // Check if the sender is a valid trove manager
+    let is_valid_trove_manager = storage.valid_trove_managers.get(sender).try_read().unwrap_or(false);
+
     require(
         sender == storage
             .borrower_operations
             .read() || sender == storage
             .stability_pool
-            .read() || sender == protocol_manager_id,
+            .read() || sender == protocol_manager_id || is_valid_trove_manager,
         "USDFToken: NotAuthorized",
     );
 }

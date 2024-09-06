@@ -5,7 +5,10 @@ use test_utils::interfaces::sorted_troves::sorted_troves_abi;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod sorted_troves_utils {
-    use fuels::{prelude::WalletUnlocked, types::AssetId};
+    use fuels::{
+        prelude::WalletUnlocked,
+        types::{Address, AssetId},
+    };
     use rand::{self, Rng};
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
@@ -44,7 +47,7 @@ pub mod sorted_troves_utils {
             .await
             .value;
 
-        while next.clone() != Identity::Address([0; 32].into()) {
+        while next.clone() != Identity::Address(Address::zeroed()) {
             let current_icr = get_nominal_icr(trove_manager, current.clone()).await.value;
 
             let next_icr = get_nominal_icr(trove_manager, next.clone()).await.value;
@@ -86,7 +89,7 @@ pub mod sorted_troves_utils {
             .await
             .value;
 
-        while prev.clone() != Identity::Address([0; 32].into()) {
+        while prev.clone() != Identity::Address(Address::zeroed()) {
             let current_icr = get_nominal_icr(trove_manager, current.clone()).await.value;
 
             let prev_icr = get_nominal_icr(trove_manager, prev.clone()).await.value;
@@ -130,8 +133,8 @@ pub mod sorted_troves_utils {
                 &sorted_troves,
                 Identity::Address(random_address.into()),
                 random_number,
-                Identity::Address([0; 32].into()),
-                Identity::Address([0; 32].into()),
+                Identity::Address(Address::zeroed()),
+                Identity::Address(Address::zeroed()),
                 asset,
             )
             .await

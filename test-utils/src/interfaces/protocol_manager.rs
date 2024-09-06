@@ -19,7 +19,7 @@ pub mod protocol_manager_abi {
     use crate::setup::common::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
     use fuels::types::transaction_builders::VariableOutputPolicy;
-    use fuels::types::AssetId;
+    use fuels::types::{Address, AssetId};
     use fuels::{
         prelude::{ContractId, TxPolicies},
         types::Identity,
@@ -144,14 +144,29 @@ pub mod protocol_manager_abi {
             .redeem_collateral(
                 max_iterations,
                 partial_redemption_hint,
-                upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-                lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+                upper_partial_hint.unwrap_or(Identity::Address(Address::zeroed())),
+                lower_partial_hint.unwrap_or(Identity::Address(Address::zeroed())),
             )
             .with_tx_policies(tx_params)
             .call_params(call_params)
             .unwrap()
             .with_contracts(&with_contracts)
             .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
+            .call()
+            .await
+            .unwrap()
+    }
+
+    pub async fn owner<T: Account>(protocol_manager: &ProtocolManager<T>) -> CallResponse<State> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_witness_limit(2000000)
+            .with_script_gas_limit(2000000);
+
+        protocol_manager
+            .methods()
+            .owner()
+            .with_tx_policies(tx_params)
             .call()
             .await
             .unwrap()

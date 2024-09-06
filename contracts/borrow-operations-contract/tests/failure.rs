@@ -52,8 +52,8 @@ async fn fails_open_two_troves_of_same_coll_type() {
         &contracts.active_pool,
         col_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -71,8 +71,8 @@ async fn fails_open_two_troves_of_same_coll_type() {
         &contracts.active_pool,
         col_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -211,8 +211,8 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.active_pool,
         coll_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -257,8 +257,8 @@ async fn fails_open_trove_under_min_usdf_required() {
         &contracts.active_pool,
         coll_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -303,8 +303,8 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.active_pool,
         coll_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -323,8 +323,8 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         300 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -370,8 +370,8 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.active_pool,
         coll_amount,
         debt_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -386,8 +386,8 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -448,8 +448,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -473,8 +473,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -490,8 +490,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();
@@ -531,8 +531,8 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         1 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .is_err();

@@ -151,11 +151,11 @@ pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
 }
 
 pub fn null_identity_address() -> Identity {
-    return Identity::Address(Address::from(ZERO_B256))
+    return Identity::Address(Address::zero())
 }
 
 pub fn null_contract() -> ContractId {
-    return ContractId::from(ZERO_B256)
+    return ContractId::zero()
 }
 
 #[test]

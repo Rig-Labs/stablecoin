@@ -3,3 +3,6 @@ authors = ["hydrogen-labs"]
 entry = "interface.sw"
 license = "Apache-2.0"
 name = "libraries"
+
+[dependencies]
+standards = { git = "https://github.com/FuelLabs/sway-standards", tag = "v0.6.0" }

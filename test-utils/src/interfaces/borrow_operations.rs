@@ -365,7 +365,7 @@ pub mod borrow_operations_abi {
 
 pub mod borrow_operations_utils {
     use fuels::prelude::{Account, WalletUnlocked};
-    use fuels::types::Identity;
+    use fuels::types::{Address, Identity};
 
     use super::*;
     use crate::interfaces::active_pool;
@@ -408,8 +408,8 @@ pub mod borrow_operations_utils {
             &active_pool,
             amount,
             usdf_amount,
-            Identity::Address([0; 32].into()),
-            Identity::Address([0; 32].into()),
+            Identity::Address(Address::zeroed()),
+            Identity::Address(Address::zeroed()),
         )
         .await
         .unwrap();
