@@ -53,8 +53,8 @@ async fn proper_creating_trove() {
         &contracts.active_pool,
         deposit_amount,
         borrow_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -205,8 +205,8 @@ async fn proper_increase_collateral() {
         &contracts.active_pool,
         deposit_amount,
         borrow_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -222,8 +222,8 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         deposit_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -358,8 +358,8 @@ async fn proper_decrease_collateral() {
         &contracts.active_pool,
         deposit_amount,
         borrow_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await;
 
@@ -375,8 +375,8 @@ async fn proper_decrease_collateral() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         withdraw_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -531,8 +531,8 @@ async fn proper_increase_debt() {
         &contracts.active_pool,
         deposit_amount,
         borrow_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -549,8 +549,8 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         200 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await;
 
@@ -699,8 +699,8 @@ async fn proper_decrease_debt() {
         &contracts.active_pool,
         deposit_amount,
         borrow_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -717,8 +717,8 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         repay_amount,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -890,8 +890,8 @@ async fn proper_open_multiple_troves() {
         &contracts.active_pool,
         deposit_amount1,
         borrow_amount1,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -911,8 +911,8 @@ async fn proper_open_multiple_troves() {
         &contracts.active_pool,
         deposit_amount2,
         borrow_amount2,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1039,8 +1039,8 @@ async fn proper_close_trove() {
         &contracts.active_pool,
         deposit_amount1,
         borrow_amount1,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1076,8 +1076,8 @@ async fn proper_close_trove() {
         &contracts.active_pool,
         deposit_amount2,
         borrow_amount2,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1171,8 +1171,8 @@ async fn proper_close_trove() {
         &contracts.active_pool,
         2000 * PRECISION,
         1000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1217,8 +1217,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.active_pool,
         deposit_amount1,
         borrow_amount1,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1374,8 +1374,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.active_pool,
         deposit_amount2,
         borrow_amount2,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1395,8 +1395,8 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.active_pool,
         deposit_amount1,
         borrow_amount1,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

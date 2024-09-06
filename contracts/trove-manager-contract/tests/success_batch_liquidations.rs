@@ -114,8 +114,8 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
             Identity::Address(liquidated_wallet.address().into()),
             Identity::Address(liquidated_wallet2.address().into()),
         ],
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

@@ -61,8 +61,8 @@ async fn proper_stability_deposit() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -140,8 +140,8 @@ async fn proper_stability_widthdrawl() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -241,8 +241,8 @@ async fn proper_one_sp_depositor_position() {
         &contracts.active_pool,
         6_000 * PRECISION,
         3_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -265,8 +265,8 @@ async fn proper_one_sp_depositor_position() {
         &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -302,8 +302,8 @@ async fn proper_one_sp_depositor_position() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -437,8 +437,8 @@ async fn proper_many_depositors_distribution() {
         &contracts.active_pool,
         6_000 * PRECISION,
         3_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -461,8 +461,8 @@ async fn proper_many_depositors_distribution() {
         &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -554,8 +554,8 @@ async fn proper_many_depositors_distribution() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -660,8 +660,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.active_pool,
         6_000 * PRECISION,
         3_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -684,8 +684,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.active_pool,
         1_100 * PRECISION,
         1_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -727,8 +727,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -885,8 +885,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -904,8 +904,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1092,8 +1092,8 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -1172,8 +1172,8 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

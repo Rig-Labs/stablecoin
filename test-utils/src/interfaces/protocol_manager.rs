@@ -19,7 +19,7 @@ pub mod protocol_manager_abi {
     use crate::setup::common::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
     use fuels::types::transaction_builders::VariableOutputPolicy;
-    use fuels::types::AssetId;
+    use fuels::types::{Address, AssetId};
     use fuels::{
         prelude::{ContractId, TxPolicies},
         types::Identity,
@@ -144,8 +144,8 @@ pub mod protocol_manager_abi {
             .redeem_collateral(
                 max_iterations,
                 partial_redemption_hint,
-                upper_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
-                lower_partial_hint.unwrap_or(Identity::Address([0; 32].into())),
+                upper_partial_hint.unwrap_or(Identity::Address(Address::zeroed())),
+                lower_partial_hint.unwrap_or(Identity::Address(Address::zeroed())),
             )
             .with_tx_policies(tx_params)
             .call_params(call_params)
