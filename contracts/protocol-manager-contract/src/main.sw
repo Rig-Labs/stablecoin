@@ -1,5 +1,12 @@
 contract;
-
+// This contract, ProtocolManager, is responsible for managing the overall protocol operations.
+// It acts as a central coordinator for various critical contracts and interfaces within the system.
+//
+// Key functionalities include:
+// - Initializing the protocol by registering asset contracts and setting up necessary connections
+// - Administering the ownership and access control mechanisms
+// - Facilitating the redemption process for users
+// - Interfacing with the Stability Pool for FPT issuance
 mod data_structures;
 use ::data_structures::{AssetContracts, AssetInfo, RedemptionTotals};
 use libraries::stability_pool_interface::StabilityPool;
@@ -289,7 +296,7 @@ fn get_all_assets_info() -> AssetInfo {
         current_crs: current_crs,
     }
 }
-// TODO write comments
+// Find the borrower with the lowest collateral ratio
 fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) -> (Identity, u64) {
     let mut min_borrower = current_borrowers.get(0).unwrap();
     let mut min_cr = current_crs.get(0).unwrap();

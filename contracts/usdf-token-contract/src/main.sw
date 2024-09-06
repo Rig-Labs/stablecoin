@@ -1,5 +1,6 @@
 contract;
-
+// The USDFToken contract is responsible for managing the issuance and transfer of USDF tokens in the system.
+// It is used by the Stability Pool, Borrower Operations, and Trove Managers.
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fluid_math::{get_default_asset_id, ZERO_B256};
 use std::{

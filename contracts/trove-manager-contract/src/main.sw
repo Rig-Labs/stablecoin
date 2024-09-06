@@ -1,5 +1,7 @@
 contract;
-
+// The TroveManager contract is responsible for managing the troves in the system.
+// It handles the creation, modification, and deletion of troves, as well as the distribution of rewards to trove owners.
+// It also interfaces with other core contracts like StabilityPool, ActivePool, and DefaultPool.
 mod data_structures;
 mod utils;
 

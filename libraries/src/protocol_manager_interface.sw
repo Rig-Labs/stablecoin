@@ -1,8 +1,7 @@
 library;
 
 use standards::src5::State;
-abi ProtocolManager
- {
+abi ProtocolManager {
     #[storage(read, write)]
     fn initialize(
         borrow_operations: ContractId,

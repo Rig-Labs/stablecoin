@@ -1,4 +1,13 @@
 contract;
+// This contract, MockPyth, is a mock implementation of the Pyth oracle interface.
+// It is used for testing and simulation purposes within the Fluid Protocol.
+//
+// Key functionalities include:
+// - Simulating price feeds for testing purposes
+// - Providing a mock interface for interacting with the Pyth oracle
+// - Ensuring compatibility with the Pyth oracle interface for testing
+//
+// To the auditor: This contract is not used in the system. It is only used for testing.
 
 use libraries::oracle_interface::{PythCore, PythError, PythPrice, PythPriceFeed, PythPriceFeedId};
 use std::{block::timestamp, hash::Hash};

@@ -1,4 +1,16 @@
 contract;
+// This contract, FPTToken, implements the Fluid Protocol Token (FPT) functionality.
+// FPT is the native token of the Fluid Protocol
+//
+// Key functionalities include:
+// - Minting and distributing the initial supply of FPT tokens
+// - Managing token transfers and approvals
+// - Interfacing with the Vesting and Community Issuance contracts
+//
+// The contract follows the SRC-20 standard for native assets on the Fuel network,
+// ensuring compatibility with the broader ecosystem. It manages a fixed total supply
+// of 100 million FPT tokens, distributed between the Vesting contract and the
+// Community Issuance contract upon initialization.
 
 use libraries::fpt_token_interface::FPTToken;
 use libraries::fluid_math::{DECIMAL_PRECISION, get_default_asset_id, ZERO_B256,};

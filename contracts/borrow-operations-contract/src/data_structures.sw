@@ -1,5 +1,10 @@
 library;
 
+pub struct AssetContracts {
+    pub trove_manager: ContractId,
+    pub oracle: ContractId,
+}
+
 pub struct LocalVariables_OpenTrove {
     pub price: u64,
     pub usdf_fee: u64,
@@ -9,11 +14,6 @@ pub struct LocalVariables_OpenTrove {
     pub nicr: u64,
     pub stake: u64,
     pub array_index: u64,
-}
-
-pub struct AssetContracts {
-    pub trove_manager: ContractId,
-    pub oracle: ContractId,
 }
 
 impl LocalVariables_OpenTrove {

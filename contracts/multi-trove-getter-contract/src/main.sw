@@ -1,5 +1,7 @@
 contract;
-
+// This contract, MultiTroveGetter, is used to retrieve multiple troves from the SortedTroves contract.
+// It is used for querying the system.
+//
 // To the auditor: This contract is not used in the system. It is only used for querying the system.
 
 use libraries::trove_manager_interface::TroveManager;

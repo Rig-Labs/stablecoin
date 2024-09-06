@@ -1,9 +1,18 @@
 contract;
+// This contract, BorrowOperations, manages borrowing operations for the USDF stablecoin system.
+// It handles opening and adjusting troves, which are collateralized debt positions.
+// The contract interacts with various other components of the system
+//
+// Key functionalities include:
+// - Opening new troves
+// - Adjusting existing troves (adding/removing collateral, borrowing/repaying USDF)
+// - Closing troves
+// - Managing multiple collateral asset types
+// - Enforcing system parameters and stability conditions
 
 mod data_structures;
 
 use ::data_structures::{AssetContracts, LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
-
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::active_pool_interface::ActivePool;
 use libraries::token_interface::Token;
@@ -85,6 +94,7 @@ impl BorrowOperations for Contract {
             .insert(asset_contract, asset_contracts);
     }
     // --- Borrower Trove Operations ---
+    // Open a new trove by borrowing USDF
     #[storage(read, write), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
@@ -127,6 +137,7 @@ impl BorrowOperations for Contract {
             asset_contract,
         );
     }
+    // Add collateral to an existing trove
     #[storage(read, write), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
@@ -142,6 +153,7 @@ impl BorrowOperations for Contract {
             msg_asset_id(),
         );
     }
+    // Withdraw collateral from an existing trove
     #[storage(read, write)]
     fn withdraw_coll(
         amount: u64,
@@ -161,6 +173,7 @@ impl BorrowOperations for Contract {
             asset_contract,
         );
     }
+    // Withdraw USDF from an existing trove
     #[storage(read, write)]
     fn withdraw_usdf(
         amount: u64,
@@ -180,6 +193,7 @@ impl BorrowOperations for Contract {
             asset_contract,
         );
     }
+    // Repay USDF for an existing trove
     #[storage(read, write), payable]
     fn repay_usdf(
         upper_hint: Identity,
@@ -199,6 +213,7 @@ impl BorrowOperations for Contract {
             asset_contract,
         );
     }
+    // Close an existing trove
     #[storage(read, write), payable]
     fn close_trove(asset_contract: AssetId) {
         let asset_contracts_cache = storage.asset_contracts.get(asset_contract).read();
@@ -233,6 +248,7 @@ impl BorrowOperations for Contract {
             transfer(borrower, storage.usdf_asset_id.read(), excess_usdf_returned);
         }
     }
+    // Claim collateral from liquidations
     #[storage(read)]
     fn claim_collateral(asset: AssetId) {
         let coll_surplus = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().bits());
@@ -243,6 +259,9 @@ impl BorrowOperations for Contract {
         return storage.usdf_asset_id.read();
     }
 }
+
+// --- Internal Functions ---
+
 #[storage(read)]
 fn internal_trigger_borrowing_fee(
     usdf_amount: u64,
