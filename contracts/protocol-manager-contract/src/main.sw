@@ -15,6 +15,8 @@ use libraries::protocol_manager_interface::ProtocolManager;
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::fluid_math::*;
+use sway_libs::ownership::*;
+use standards::src5::*;
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -25,10 +27,11 @@ use std::{
         msg_amount,
     },
     hash::*,
+    logging::log,
     storage::storage_vec::*,
 };
 storage {
-    admin: Identity = Identity::Address(Address::zero()),
+    owner: State = State::Uninitialized,
     borrow_operations_contract: ContractId = ContractId::zero(),
     fpt_staking_contract: ContractId = ContractId::zero(),
     usdf_token_contract: ContractId = ContractId::zero(),
@@ -52,7 +55,7 @@ impl ProtocolManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         sorted_troves: ContractId,
-        admin: Identity,
+        initial_owner: Identity,
     ) {
         require(
             storage
@@ -60,7 +63,7 @@ impl ProtocolManager for Contract {
                 .read() == false,
             "ProtocolManager: Already initialized",
         );
-        storage.admin.write(admin);
+        initialize_ownership(initial_owner);
         storage.borrow_operations_contract.write(borrow_operations);
         storage.fpt_staking_contract.write(fpt_staking);
         storage.stability_pool_contract.write(stability_pool);
@@ -77,7 +80,7 @@ impl ProtocolManager for Contract {
         trove_manager: ContractId,
         oracle: ContractId,
     ) {
-        require_is_admin();
+        only_owner();
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().bits());
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().bits());
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().bits());
@@ -108,8 +111,14 @@ impl ProtocolManager for Contract {
     }
     #[storage(read, write)]
     fn renounce_admin() {
-        require_is_admin();
-        storage.admin.write(null_identity_address());
+        only_owner();
+        storage
+            .owner
+            .write(State::Initialized(Identity::Address(Address::zero())));
+    }
+    #[storage(read)]
+    fn owner() -> State {
+        storage.owner.read()
     }
     #[storage(read), payable]
     fn redeem_collateral(
@@ -224,18 +233,13 @@ impl ProtocolManager for Contract {
 }
 // --- Helper functions ---
 #[storage(read)]
-fn require_is_admin() {
-    let caller = msg_sender().unwrap();
-    let admin = storage.admin.read();
-    require(caller == admin, "ProtocolManager: Caller is not admin");
-}
-#[storage(read)]
 fn require_valid_usdf_id() {
     require(
         msg_asset_id() == get_default_asset_id(storage.usdf_token_contract.read()),
         "ProtocolManager: Invalid asset being transfered",
     );
 }
+
 #[storage(read)]
 fn get_all_assets_info() -> AssetInfo {
     let mut assets: Vec<AssetId> = Vec::new();

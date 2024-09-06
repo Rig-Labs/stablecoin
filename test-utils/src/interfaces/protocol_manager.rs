@@ -156,4 +156,19 @@ pub mod protocol_manager_abi {
             .await
             .unwrap()
     }
+
+    pub async fn owner<T: Account>(protocol_manager: &ProtocolManager<T>) -> CallResponse<State> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_witness_limit(2000000)
+            .with_script_gas_limit(2000000);
+
+        protocol_manager
+            .methods()
+            .owner()
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
 }
