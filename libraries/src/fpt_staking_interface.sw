@@ -37,6 +37,9 @@ abi FPTStaking {
     #[storage(read)]
     fn get_pending_usdf_gain(id: Identity) -> u64;
 
+    #[storage(read)]
+    fn get_staking_balance(id: Identity) -> u64;
+
     #[storage(read, write)]
     fn increase_f_usdf(usdf_fee_amount: u64);
 
