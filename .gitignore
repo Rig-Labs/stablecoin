@@ -3,5 +3,6 @@ target
 .DS_Store
 *.DS_Store
 *.ENV
+*.lock
 *types/*
 */contracts.json
