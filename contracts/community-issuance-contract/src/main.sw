@@ -42,7 +42,32 @@ storage {
     total_transition_time_seconds: u64 = 0,
 }
 
+/// @title Community Issuance Contract
+/// @author Fluid Protocol
+/// @notice This contract manages the issuance of FPT tokens to the Stability Pool
+/// @dev Implements the CommunityIssuance interface for initializing and managing token issuance
+/// 
+/// The contract handles the following key functionalities:
+/// - Initialization of contract parameters
+/// - Starting and managing a rewards increase transition period
+/// - Issuing FPT tokens to the Stability Pool
+/// - Tracking total FPT issued and deployment time
+/// 
+/// It includes safety measures such as:
+/// - One-time initialization
+/// - Admin-only access for certain functions
+/// - Transition period constraints
+/// 
+/// The contract also supports a debug mode for testing purposes.
 impl CommunityIssuance for Contract {
+
+    /// @notice Initializes the Community Issuance contract with essential parameters
+    /// @dev Can only be called once, sets up the contract for FPT token issuance
+    /// @param stability_pool_contract The address of the Stability Pool contract
+    /// @param fpt_token_contract The asset ID of the FPT token
+    /// @param admin The address of the contract administrator
+    /// @param debugging A boolean flag to enable or disable debug mode
+    /// @custom:throws "CommunityIssuance: Contract is already initialized" if the contract has been previously initialized
     #[storage(read, write)]
     fn initialize(
         stability_pool_contract: ContractId,
@@ -66,6 +91,12 @@ impl CommunityIssuance for Contract {
         storage.deployment_time.write(internal_get_current_time());
     }
 
+    /// @notice Initiates a transition period for increasing rewards
+    /// @dev Can only be called by the admin and only once
+    /// @param total_transition_time_seconds The duration of the transition period in seconds
+    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
+    /// @custom:throws "CommunityIssuance: Total transition time must be greater than 1 week" if transition time is too short
+    /// @custom:access-control Admin only
     #[storage(read, write)]
     fn start_rewards_increase_transition(total_transition_time_seconds: u64) {
         internal_require_caller_is_admin();
@@ -88,6 +119,10 @@ impl CommunityIssuance for Contract {
             .write(total_transition_time_seconds);
     }
 
+    /// @notice Allows public initiation of rewards increase transition after a period of inactivity
+    /// @dev Can be called by anyone after 1 year of inactivity since deployment
+    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
+    /// @custom:throws "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity" if called before 1 year has passed
     #[storage(write, read)]
     fn public_start_rewards_increase_transition_after_deadline() {
         require(
@@ -111,6 +146,10 @@ impl CommunityIssuance for Contract {
             .write(total_transition_time_seconds);
     }
 
+    /// @notice Issues FPT tokens based on the current issuance schedule
+    /// @dev Can only be called by the Stability Pool contract
+    /// @custom:access-control Stability Pool only
+    /// @return The amount of FPT tokens issued in this call
     #[storage(read, write)]
     fn issue_fpt() -> u64 {
         internal_require_caller_is_stability_pool();
@@ -136,6 +175,11 @@ impl CommunityIssuance for Contract {
         return issuance
     }
 
+    /// @notice Sends FPT tokens to a specified account
+    /// @dev Can only be called by the Stability Pool contract
+    /// @param account The Identity of the account to receive the FPT tokens
+    /// @param amount The amount of FPT tokens to send
+    /// @custom:access-control Stability Pool only
     #[storage(read)]
     fn send_fpt(account: Identity, amount: u64) {
         internal_require_caller_is_stability_pool();
@@ -144,11 +188,19 @@ impl CommunityIssuance for Contract {
         }
     }
 
+    /// @notice Retrieves the current timestamp used by the contract
+    /// @dev Returns the debug timestamp if debugging is enabled, otherwise returns the current block timestamp
+    /// @return The current timestamp as a u64 value
     #[storage(read)]
     fn get_current_time() -> u64 {
         return internal_get_current_time();
     }
 
+    /// @notice Sets the current time for debugging purposes
+    /// @dev This function can only be called when debugging is enabled
+    /// @param time The timestamp to set as the current time
+    /// @custom:access-control Debug mode only
+    /// @custom:throws "CommunityIssuance: Debugging must be enabled to set current time" if debugging is not enabled
     #[storage(write, read)]
     fn set_current_time(time: u64) {
         require(
@@ -160,6 +212,10 @@ impl CommunityIssuance for Contract {
         storage.debug_timestamp.write(time);
     }
 }
+
+/// @notice Checks if the caller is the Stability Pool contract
+/// @dev This function is used to restrict access to certain functions to only the Stability Pool
+/// @custom:throws "CommunityIssuance: Caller must be stability pool" if the caller is not the Stability Pool contract
 #[storage(read)]
 fn internal_require_caller_is_stability_pool() {
     require(
@@ -169,6 +225,9 @@ fn internal_require_caller_is_stability_pool() {
     );
 }
 
+/// @notice Checks if the caller is the admin of the contract
+/// @dev This function is used to restrict access to certain functions to only the admin
+/// @custom:throws "CommunityIssuance: Caller must be admin" if the caller is not the admin
 #[storage(read)]
 fn internal_require_caller_is_admin() {
     require(
@@ -180,6 +239,10 @@ fn internal_require_caller_is_admin() {
     );
 }
 
+/// @notice Gets the current timestamp for the contract
+/// @dev Returns the debug timestamp if debugging is enabled, otherwise returns the current block timestamp
+/// @return The current timestamp as a u64 value
+/// @custom:internal This function is intended for internal use within the contract
 #[storage(read)]
 fn internal_get_current_time() -> u64 {
     if storage.debug.read() {
