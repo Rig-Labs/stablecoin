@@ -1,4 +1,13 @@
 contract;
+// This contract, MockRedstone, is a mock implementation of the Redstone oracle interface.
+// It is used for testing and simulation purposes within the Fluid Protocol.
+//
+// Key functionalities include:
+// - Simulating price feeds for testing purposes
+// - Providing a mock interface for interacting with the Redstone oracle
+// - Ensuring compatibility with the Redstone oracle interface for testing
+//
+// To the auditor: This contract is not used in the system. It is only used for testing.
 
 use libraries::oracle_interface::RedstoneCore;
 use std::hash::Hash;

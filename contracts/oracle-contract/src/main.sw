@@ -1,4 +1,19 @@
 contract;
+// This contract, Oracle, serves as an interface to query asset prices from either Pyth or Redstone oracles.
+//
+// Key functionalities include:
+// - Providing a unified interface to fetch price data from different oracle sources
+// - Converting price data from different precisions to a standardized format
+// - Implementing safeguards against potential precision issues
+// - Prioritizing price sources based on availability and recency
+//
+// Price Priority:
+// 1. Pyth Oracle: The contract first attempts to fetch the price from the Pyth oracle.
+// 2. Redstone Oracle: If the Pyth price is unavailable or outdated, the contract falls back to the Redstone oracle.
+//
+// This prioritization ensures that the most reliable and recent price data is used,
+// enhancing the overall stability and accuracy of the Fluid Protocol.
+
 
 use libraries::{
     fluid_math::convert_precision,

@@ -74,8 +74,8 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -98,8 +98,8 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.active_pool,
         9_000 * PRECISION,
         5_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -122,8 +122,8 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.active_pool,
         8_000 * PRECISION,
         5_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -290,8 +290,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.active_pool,
         coll1,
         debt1,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -316,8 +316,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.active_pool,
         coll2,
         debt2,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -342,8 +342,8 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.active_pool,
         coll3,
         debt3,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

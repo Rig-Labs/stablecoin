@@ -16,7 +16,7 @@ async fn fails_fake_usdf_deposit() {
 
     usdf_token_abi::initialize(
         &fake_usdf,
-        ContractId::new([0; 32]),
+        ContractId::zeroed(),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )
@@ -55,19 +55,19 @@ async fn fails_unauthorized() {
 
     stability_pool_abi::initialize(
         &stability_pool_attacker,
-        ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
-        ContractId::new([0; 32].into()),
+        ContractId::zeroed(),
+        ContractId::zeroed(),
+        ContractId::zeroed(),
+        ContractId::zeroed(),
     )
     .await
     .expect_err("Able to initialize stability pool with unauthorized address");
 
     stability_pool_abi::add_asset(
         &stability_pool_attacker,
-        ContractId::new([0; 32].into()),
-        [0; 32].into(),
-        ContractId::new([0; 32].into()),
+        ContractId::zeroed(),
+        AssetId::zeroed(),
+        ContractId::zeroed(),
     )
     .await
     .expect_err("Able to add asset with unauthorized address");

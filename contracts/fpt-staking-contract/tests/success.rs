@@ -174,8 +174,8 @@ async fn proper_staking_multiple_positions() {
         &contracts.active_pool,
         40_000 * PRECISION,
         20_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

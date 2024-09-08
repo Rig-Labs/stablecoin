@@ -47,7 +47,7 @@ impl LocalVariablesLiquidationSequence {
             remaining_usdf_in_stability_pool: 0,
             i: 0,
             icr: 0,
-            borrower: Identity::Address(Address::from(0x0000000000000000000000000000000000000000000000000000000000000000)),
+            borrower: Identity::Address(Address::zero()),
         }
     }
 }

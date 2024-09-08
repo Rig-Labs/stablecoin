@@ -1,4 +1,19 @@
 contract;
+// This contract, CommunityIssuance, manages the issuance of FPT (Fluid Protocol Token) to the Stability Pool.
+// It controls the distribution of FPT over time, implementing a decay function for token release.
+//
+// Key functionalities include:
+// - Initializing the contract with necessary parameters
+// - Calculating and issuing FPT based on time elapsed since deployment
+// - Managing the transition of rewards distribution from an initial rapid issuance to a more gradual long-term rate
+// - Interfacing with the Stability Pool to send FPT
+// - Providing admin functions for contract management
+//
+// The contract uses a mathematical model to determine token issuance, ensuring a controlled
+// and predictable distribution of FPT to incentivize participation in the Stability Pool.
+// It also handles the transition period between different issuance rates, allowing for
+// a smooth change in the token distribution strategy over time.
+
 
 mod utils;
 

@@ -75,8 +75,8 @@ async fn test_emissions() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -205,8 +205,8 @@ async fn test_admin_start_rewards_increase_transition() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -325,8 +325,8 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -476,8 +476,8 @@ async fn test_emissions_multiple_deposits() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -495,8 +495,8 @@ async fn test_emissions_multiple_deposits() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -514,8 +514,8 @@ async fn test_emissions_multiple_deposits() {
         &contracts.active_pool,
         1_200 * PRECISION,
         600 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

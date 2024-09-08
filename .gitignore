@@ -4,5 +4,7 @@ target
 *.DS_Store
 *.ENV
 *.lock
+*.env
+!*/.sample.env
 *types/*
 */contracts.json

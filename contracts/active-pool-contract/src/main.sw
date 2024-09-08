@@ -1,5 +1,10 @@
 contract;
-
+// The Active Pool holds the collateral assets and USDF debt (but not USDF tokens) for all active troves.
+//
+// When a trove is liquidated, its collateral assets and USDF debt are transferred from the Active Pool
+// to either the Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
+//
+// This contract supports multiple collateral assets, each managed separately.
 use libraries::active_pool_interface::ActivePool;
 use std::{
     asset::transfer,
@@ -11,17 +16,17 @@ use std::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
 };
+
 storage {
     borrow_operations_contract: Identity = Identity::Address(Address::zero()),
     stability_pool_contract: Identity = Identity::Address(Address::zero()),
     default_pool_contract: ContractId = ContractId::zero(),
     protocol_manager_contract: Identity = Identity::Address(Address::zero()),
-    asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
-    usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
-    valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
-    valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
+    asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {}, // Asset amount in the active pool
+    usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {}, // USDF debt in the active pool
+    valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {}, // Valid asset ids
+    valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {}, // Valid trove managers, one for each asset managed
     is_initialized: bool = false,
 }
 impl ActivePool for Contract {
@@ -36,7 +41,7 @@ impl ActivePool for Contract {
             storage
                 .is_initialized
                 .read() == false,
-            "Already initialized",
+            "Active Pool: Already initialized",
         );
         storage.borrow_operations_contract.write(borrow_operations);
         storage.stability_pool_contract.write(stability_pool);
@@ -75,18 +80,21 @@ impl ActivePool for Contract {
         storage.asset_amount.insert(asset_id, new_amount);
         transfer(address, asset_id, amount);
     }
+    // Increase the USDF debt for a given asset
     #[storage(read, write)]
     fn increase_usdf_debt(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm();
         let new_debt = storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0) + amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
+    // Decrease the USDF debt for a given asset
     #[storage(read, write)]
     fn decrease_usdf_debt(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
         let new_debt = storage.usdf_debt_amount.get(asset_id).read() - amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
+    // Send the collateral asset to the Default Pool
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();

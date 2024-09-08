@@ -34,14 +34,13 @@ pub fn is_valid_vesting_schedule(vesting_schedule: VestingSchedule) -> bool {
 }
 #[test]
 fn test_redeemable_calculations() {
-    let ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
     let mut vesting_schedule = VestingSchedule {
         cliff_timestamp: 100,
         cliff_amount: 100,
         end_timestamp: 200,
         total_amount: 1000,
         claimed_amount: 0,
-        recipient: Identity::Address(Address::from(ZERO_B256)),
+        recipient: Identity::Address(Address::zero()),
     };
     // Before cliff
     assert(calculate_redeemable_amount(0, vesting_schedule) == 0);
@@ -54,7 +53,7 @@ fn test_redeemable_calculations() {
         end_timestamp: 200,
         total_amount: 1000,
         claimed_amount: 100,
-        recipient: Identity::Address(Address::from(ZERO_B256)),
+        recipient: Identity::Address(Address::zero()),
     };
     assert(calculate_redeemable_amount(150, vesting_schedule) == 450);
     // At the end of the vesting period with 650 claimed
@@ -64,7 +63,7 @@ fn test_redeemable_calculations() {
         end_timestamp: 200,
         total_amount: 1000,
         claimed_amount: 650,
-        recipient: Identity::Address(Address::from(ZERO_B256)),
+        recipient: Identity::Address(Address::zero()),
     };
     assert(calculate_redeemable_amount(200, vesting_schedule) == 350);
     // After the end of the vesting period with 1000 claimed
@@ -74,7 +73,7 @@ fn test_redeemable_calculations() {
         end_timestamp: 200,
         total_amount: 1000,
         claimed_amount: 1000,
-        recipient: Identity::Address(Address::from(ZERO_B256)),
+        recipient: Identity::Address(Address::zero()),
     };
     assert(calculate_redeemable_amount(300, vesting_schedule) == 0);
 }

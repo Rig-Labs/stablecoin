@@ -71,8 +71,8 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         &contracts.active_pool,
         12_000 * PRECISION,
         10_100 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -91,8 +91,8 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         &contracts.active_pool,
         20_000 * PRECISION,
         15_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -133,8 +133,8 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(wallet1.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -294,8 +294,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         &contracts.active_pool,
         starting_col,
         starting_debt,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -314,8 +314,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -334,8 +334,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         &contracts.active_pool,
         30_000 * PRECISION,
         15_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -377,8 +377,8 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -655,8 +655,8 @@ async fn proper_partial_liquidation_empty_sp() {
         &contracts.active_pool,
         starting_col,
         starting_debt,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -675,8 +675,8 @@ async fn proper_partial_liquidation_empty_sp() {
         &contracts.active_pool,
         10_000 * PRECISION,
         5_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -695,8 +695,8 @@ async fn proper_partial_liquidation_empty_sp() {
         &contracts.active_pool,
         30_000 * PRECISION,
         15_000 * PRECISION,
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();
@@ -722,8 +722,8 @@ async fn proper_partial_liquidation_empty_sp() {
         &contracts.coll_surplus_pool,
         &contracts.usdf,
         Identity::Address(liquidated_wallet.address().into()),
-        Identity::Address([0; 32].into()),
-        Identity::Address([0; 32].into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
     )
     .await
     .unwrap();

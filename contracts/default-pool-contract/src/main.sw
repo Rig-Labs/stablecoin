@@ -1,4 +1,9 @@
 contract;
+// The Default Pool holds the Asset and USDF debt (but not USDF tokens) from liquidations that have been redistributed
+// to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
+//
+// When a trove makes an operation that applies its pending Asset and USDF debt, its pending Asset and USDF debt is moved
+// from the Default Pool to the Active Pool.
 
 use libraries::default_pool_interface::DefaultPool;
 use libraries::active_pool_interface::ActivePool;
