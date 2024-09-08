@@ -61,21 +61,20 @@ storage {
 /// @author Fluid Protocol
 /// @notice This contract manages the issuance of FPT tokens to the Stability Pool
 /// @dev Implements the CommunityIssuance interface for initializing and managing token issuance
-/// 
+///
 /// The contract handles the following key functionalities:
 /// - Initialization of contract parameters
 /// - Starting and managing a rewards increase transition period
 /// - Issuing FPT tokens to the Stability Pool
 /// - Tracking total FPT issued and deployment time
-/// 
+///
 /// It includes safety measures such as:
 /// - One-time initialization
 /// - Admin-only access for certain functions
 /// - Transition period constraints
-/// 
+///
 /// The contract also supports a debug mode for testing purposes.
 impl CommunityIssuance for Contract {
-
     /// @notice Initializes the Community Issuance contract with essential parameters
     /// @dev Can only be called once, sets up the contract for FPT token issuance
     /// @param stability_pool_contract The address of the Stability Pool contract

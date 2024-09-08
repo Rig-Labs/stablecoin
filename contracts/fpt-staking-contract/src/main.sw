@@ -40,7 +40,6 @@ storage {
 /// @notice This contract allows users to stake FPT tokens and earn rewards in USDF and other assets
 /// @dev Implements the FPTStaking interface for staking, unstaking, and reward distribution
 impl FPTStaking for Contract {
-
     /// @notice Initializes the FPT Staking contract with essential addresses and tokens
     /// @dev Can only be called once, sets up the contract for staking operations
     /// @param protocol_manager_address The address of the protocol manager contract
@@ -73,7 +72,7 @@ impl FPTStaking for Contract {
 
     /// @notice Retrieves the current storage state of the FPT Staking contract
     /// @dev Returns a ReadStorage struct containing key contract parameters and state variables
-    /// @return ReadStorage A struct containing f_usdf, total_fpt_staked, protocol_manager_address, 
+    /// @return ReadStorage A struct containing f_usdf, total_fpt_staked, protocol_manager_address,
     ///         borrower_operations_address, fpt_address, usdf_address, and is_initialized
     #[storage(read)]
     fn get_storage() -> ReadStorage {
