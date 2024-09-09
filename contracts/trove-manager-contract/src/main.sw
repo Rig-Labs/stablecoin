@@ -274,13 +274,6 @@ impl TroveManager for Contract {
         internal_batch_liquidate_troves(borrowers, upper_partial_hint, lower_partial_hint);
     }
     #[storage(read, write)]
-    fn liquidate_troves(
-        num_troves: u64,
-        upper_partial_hint: Identity,
-        lower_partial_hint: Identity,
-    ) {}
-    // TODO
-    #[storage(read, write)]
     fn update_trove_reward_snapshots(id: Identity) {
         require_caller_is_borrow_operations_contract();
         internal_update_trove_reward_snapshots(id);
@@ -772,7 +765,6 @@ fn internal_redeem_collateral_from_trove(
         internal_redeem_close_trove(borrower, 0, new_coll);
     } else {
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
-        // TODO Consider removing this check
         if (new_debt < MIN_NET_DEBT) {
             single_redemption_values.cancelled_partial = true;
             return single_redemption_values;

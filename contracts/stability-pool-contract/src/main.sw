@@ -390,10 +390,7 @@ fn internal_increase_asset(total_asset_to_increase: u64, asset_contract: AssetId
 fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     storage.deposits.insert(depositor, amount);
     if (amount == 0) {
-        // TODO use storage remove when available
-        storage
-            .deposit_snapshots
-            .insert(depositor, Snapshots::default());
+        let _ = storage.deposit_snapshots.remove(depositor);
     }
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
@@ -405,7 +402,6 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
         P: current_p,
         G: current_g,
     };
-    // TODO use itterator when available
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap().read();

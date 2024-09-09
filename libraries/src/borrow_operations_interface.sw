@@ -18,13 +18,13 @@ abi BorrowOperations {
         oracle_contract: ContractId,
     );
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn withdraw_coll(
         amount: u64,
         upper_hint: Identity,
@@ -32,7 +32,7 @@ abi BorrowOperations {
         asset: AssetId,
     );
 
-    #[storage(read, write)]
+    #[storage(read)]
     fn withdraw_usdf(
         amount: u64,
         upper_hint: Identity,
@@ -40,10 +40,10 @@ abi BorrowOperations {
         asset: AssetId,
     );
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn repay_usdf(upper_hint: Identity, lower_hint: Identity, asset: AssetId);
 
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn close_trove(asset: AssetId);
 
     #[storage(read)]

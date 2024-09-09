@@ -8,3 +8,4 @@ target
 !*/.sample.env
 *types/*
 */contracts.json
+contracts.json

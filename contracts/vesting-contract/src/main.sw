@@ -72,7 +72,6 @@ impl VestingContract for Contract {
     fn claim_vested_tokens() {
         let address = msg_sender().unwrap();
         let mut schedule = storage.vesting_schedules.get(address).read();
-        // TODO switch back to timestamp, but currently not supported by Fuel for unit testing
         let now = internal_get_current_time();
         let currently_unclaimed = calculate_redeemable_amount(now, schedule);
         require(

@@ -34,7 +34,6 @@ use std::{
         msg_amount,
     },
     hash::*,
-    logging::log,
 };
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
@@ -95,7 +94,7 @@ impl BorrowOperations for Contract {
     }
     // --- Borrower Trove Operations ---
     // Open a new trove by borrowing USDF
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
         let asset_contract = msg_asset_id();
@@ -138,7 +137,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Add collateral to an existing trove
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
         internal_adjust_trove(
@@ -154,7 +153,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Withdraw collateral from an existing trove
-    #[storage(read, write)]
+    #[storage(read)]
     fn withdraw_coll(
         amount: u64,
         upper_hint: Identity,
@@ -174,7 +173,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Withdraw USDF from an existing trove
-    #[storage(read, write)]
+    #[storage(read)]
     fn withdraw_usdf(
         amount: u64,
         upper_hint: Identity,
@@ -194,7 +193,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Repay USDF for an existing trove
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn repay_usdf(
         upper_hint: Identity,
         lower_hint: Identity,
@@ -214,7 +213,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Close an existing trove
-    #[storage(read, write), payable]
+    #[storage(read), payable]
     fn close_trove(asset_contract: AssetId) {
         let asset_contracts_cache = storage.asset_contracts.get(asset_contract).read();
         let usdf_contract_cache = storage.usdf_contract.read();
@@ -262,7 +261,6 @@ impl BorrowOperations for Contract {
 
 // --- Internal Functions ---
 
-#[storage(read)]
 fn internal_trigger_borrowing_fee(
     usdf_amount: u64,
     usdf_contract: ContractId,
@@ -381,7 +379,6 @@ fn require_is_protocol_manager() {
         "Borrow Operations: Caller is not the protocol manager",
     );
 }
-#[storage(read)]
 fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
     let trove_manager = abi(TroveManager, trove_manager.bits());
     let status = trove_manager.get_trove_status(borrower);
@@ -390,7 +387,6 @@ fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
         "Borrow Operations: User already has an active Trove",
     );
 }
-#[storage(read)]
 fn require_trove_is_active(borrower: Identity, trove_manage_contract: ContractId) {
     let trove_manager = abi(TroveManager, trove_manage_contract.bits());
     let status = trove_manager.get_trove_status(borrower);
@@ -399,7 +395,6 @@ fn require_trove_is_active(borrower: Identity, trove_manage_contract: ContractId
         "Borrow Operations: User does not have an active Trove",
     );
 }
-#[storage(read)]
 fn require_non_zero_adjustment(asset_amount: u64, coll_withdrawl: u64, usdf_change: u64) {
     require(
         asset_amount > 0 || coll_withdrawl > 0 || usdf_change > 0,
@@ -424,7 +419,6 @@ fn require_at_least_mcr(icr: u64) {
         "Borrow Operations: Minimum collateral ratio not met",
     );
 }
-#[storage(read)]
 fn require_singular_coll_change(coll_added_amount: u64, coll_withdrawl: u64) {
     require(
         coll_withdrawl == 0 || 0 == coll_added_amount,
@@ -450,7 +444,6 @@ fn require_valid_usdf_id(recieved_asset: AssetId) {
         "Borrow Operations: Invalid USDF asset being transfered",
     );
 }
-#[storage(read)]
 fn internal_withdraw_usdf(
     recipient: Identity,
     amount: u64,
@@ -510,7 +503,6 @@ fn internal_get_new_nominal_icr_from_trove_change(
     let new_icr = fm_compute_nominal_cr(new_position.0, new_position.1);
     return new_icr;
 }
-#[storage(read)]
 fn internal_update_trove_from_adjustment(
     borrower: Identity,
     coll_change: u64,
@@ -554,7 +546,6 @@ fn internal_get_new_trove_amounts(
     };
     return (new_coll, new_debt);
 }
-#[storage(read)]
 fn internal_active_pool_add_coll(coll_change: u64, asset: AssetId, active_pool: ContractId) {
     let active_pool = abi(ActivePool, active_pool.bits());
     active_pool

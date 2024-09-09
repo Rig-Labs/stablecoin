@@ -490,11 +490,7 @@ fn internal_remove(id: Identity, asset: AssetId) {
         storage.head.insert(asset, null_identity_address());
         storage.tail.insert(asset, null_identity_address());
     }
-    // TODO use storage.nodes.remove(id) when available
-    node.exists = false;
-    node.prev_id = null_identity_address();
-    node.next_id = null_identity_address();
-    storage.nodes.insert((id, asset), node);
+    let _ = storage.nodes.remove((id, asset));
     let new_size = storage.size.get(asset).read() - 1;
     storage.size.insert(asset, new_size);
 }

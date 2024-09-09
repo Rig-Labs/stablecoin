@@ -19,7 +19,6 @@ use std::{
     },
     hash::Hash,
     storage::storage_vec::*,
-    u128::U128,
 };
 storage {
     valid_assets: StorageVec<AssetId> = StorageVec {},

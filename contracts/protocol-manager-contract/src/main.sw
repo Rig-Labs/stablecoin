@@ -34,7 +34,6 @@ use std::{
         msg_amount,
     },
     hash::*,
-    logging::log,
     storage::storage_vec::*,
 };
 storage {
@@ -134,8 +133,6 @@ impl ProtocolManager for Contract {
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     ) {
-        // TODO Require functions
-        // TODO Require bootstrap mode
         require_valid_usdf_id();
         require(
             msg_amount() > 0,
@@ -198,7 +195,6 @@ impl ProtocolManager for Contract {
                 continue;
             }
             totals.asset_fee = fm_compute_redemption_fee(totals.total_asset_drawn);
-            // TODO require user accepts fee
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
             // Send to stakers instead of oracle when implemented
             active_pool.send_asset(

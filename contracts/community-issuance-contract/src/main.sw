@@ -36,7 +36,6 @@ use std::{
         balance_of,
         msg_amount,
     },
-    u128::U128,
 };
 
 const ONE_WEEK_IN_SECONDS: u64 = 604_800;
