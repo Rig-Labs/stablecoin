@@ -21,7 +21,7 @@ abi BorrowOperations {
     #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read,), payable]
+    #[storage(read), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity);
 
     #[storage(read)]
