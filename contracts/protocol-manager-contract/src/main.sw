@@ -34,7 +34,6 @@ use std::{
         msg_amount,
     },
     hash::*,
-    logging::log,
     storage::storage_vec::*,
 };
 storage {

@@ -17,7 +17,6 @@ use std::{
         msg_amount,
     },
     hash::Hasher,
-    logging::log,
 };
 
 storage {}

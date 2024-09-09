@@ -34,7 +34,6 @@ use std::{
         msg_amount,
     },
     hash::*,
-    logging::log,
 };
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
