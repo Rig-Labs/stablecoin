@@ -3,7 +3,6 @@ library;
 use libraries::fluid_math::{dec_pow, DECIMAL_PRECISION, fm_abs_diff, fm_min};
 use std::u128::U128;
 // 32_000_000 * 1_000_000_000
-// TODO replace FPT_SUPPLY_CAP with actual amount
 pub const FPT_SUPPLY_CAP = 32_000_000_000_000_000;
 pub const SECONDS_IN_ONE_MINUTE = 60;
 pub const ISSUANCE_FACTOR = 999_998_681;

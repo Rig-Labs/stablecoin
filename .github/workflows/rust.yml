@@ -72,11 +72,6 @@ jobs:
       - name: Build Sway
         run: |
           forc build --terse
-      # Forc test builds anyways, so we don't need to build here
-      # TODO: For some reason, the forc tests stalls when compiling the oracle contracts
-      # - name: Test Sway
-      #   run: |
-      #     forc test --terse
       - name: Run Rust tests
         run: |
           cargo test
