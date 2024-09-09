@@ -7,7 +7,7 @@ export $(shell sed 's/=.*//' .env)
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
------------------------------: ## 
+-----------------------------: 
 
 build-and-test: ## Build and run tests
 	@sh scripts/build-and-test.sh
@@ -15,8 +15,16 @@ build-and-test: ## Build and run tests
 generate-types: ## Generate types
 	@sh scripts/generate-types.sh
 
+format: ## Format the code
+	forc fmt && cargo fmt
+
+-------Deployer Scripts-------:
+
 deploy: ## Run the deployment script for core contracts
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
 
 add-assets: ## Run the script to add assets to the protocol
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-assets
+
+# TODO: add a script to pause minting the protocol
+# TODO: add a script to unpause minting the protocol

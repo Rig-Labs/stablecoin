@@ -105,7 +105,6 @@ pub mod deployment {
 
         //--------------- Deploy ---------------
         // TODO: Figure out max size
-        // TODO: timestamp for pyth needs to be set somewhere
         let contracts = deployment::deploy_and_initialize_all_core_contracts(wallet, 100_000).await;
 
         //--------------- Write to file ---------------

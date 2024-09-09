@@ -41,103 +41,6 @@ pub async fn add_assets() {
     println!("Asset contracts");
 }
 
-fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
-    let json = std::fs::read_to_string("contracts.json").unwrap();
-    let contracts: serde_json::Value = serde_json::from_str(&json).unwrap();
-
-    let borrow_operations_contract_id: Bech32ContractId = contracts["borrow_operations"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let borrow_operations = BorrowOperations::new(borrow_operations_contract_id, wallet.clone());
-
-    let usdf_contract_id: Bech32ContractId = contracts["usdf"].as_str().unwrap().parse().unwrap();
-    let usdf = test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone());
-
-    let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let stability_pool = StabilityPool::new(stability_pool_contract_id, wallet.clone());
-
-    let protocol_manager_contract_id: Bech32ContractId = contracts["protocol_manager"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let protocol_manager = ProtocolManager::new(protocol_manager_contract_id, wallet.clone());
-
-    let fpt_staking_contract_id: Bech32ContractId =
-        contracts["fpt_staking"].as_str().unwrap().parse().unwrap();
-    let fpt_staking = FPTStaking::new(fpt_staking_contract_id, wallet.clone());
-
-    let fpt_token_contract_id: Bech32ContractId =
-        contracts["fpt_token"].as_str().unwrap().parse().unwrap();
-    let fpt_token = FPTToken::new(fpt_token_contract_id.clone(), wallet.clone());
-
-    let community_issuance_contract_id: Bech32ContractId = contracts["community_issuance"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let community_issuance = CommunityIssuance::new(community_issuance_contract_id, wallet.clone());
-
-    let coll_surplus_pool_contract_id: Bech32ContractId = contracts["coll_surplus_pool"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let coll_surplus_pool = CollSurplusPool::new(coll_surplus_pool_contract_id, wallet.clone());
-
-    let default_pool_contract_id: Bech32ContractId =
-        contracts["default_pool"].as_str().unwrap().parse().unwrap();
-    let default_pool = DefaultPool::new(default_pool_contract_id, wallet.clone());
-
-    let active_pool_contract_id: Bech32ContractId =
-        contracts["active_pool"].as_str().unwrap().parse().unwrap();
-    let active_pool = ActivePool::new(active_pool_contract_id, wallet.clone());
-
-    let sorted_troves_contract_id: Bech32ContractId = contracts["sorted_troves"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let sorted_troves = SortedTroves::new(sorted_troves_contract_id, wallet.clone());
-
-    let vesting_contract_id: Bech32ContractId = contracts["vesting_contract"]
-        .as_str()
-        .unwrap()
-        .parse()
-        .unwrap();
-    let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
-
-    // TODO: remove this since it's redundant with fpt token
-    let fpt = Token::new(fpt_token_contract_id.clone(), wallet.clone());
-
-    let asset_contracts = vec![];
-
-    let protocol_contracts = ProtocolContracts {
-        borrow_operations,
-        usdf,
-        stability_pool,
-        protocol_manager,
-        asset_contracts,
-        fpt_staking,
-        fpt_token,
-        fpt,
-        community_issuance,
-        vesting_contract,
-        coll_surplus_pool,
-        sorted_troves,
-        default_pool,
-        active_pool,
-    };
-
-    protocol_contracts
-}
-
 async fn deploy_and_initialize_assets(
     wallet: WalletUnlocked,
     core_contracts: ProtocolContracts<WalletUnlocked>,
@@ -167,24 +70,6 @@ async fn deploy_and_initialize_assets(
     // asset_contracts.push(stfuel_asset);
 
     asset_contracts
-}
-
-fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnlocked>>) {
-    let mut file = File::create("asset_contracts.json").unwrap();
-
-    let json = json!({
-        "asset_contracts": asset_contracts.iter().map(|asset_contract| {
-            json!({
-                "oracle": asset_contract.oracle.contract_id().to_string(),
-                "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
-                "asset_contract": asset_contract.asset.contract_id().to_string(),
-                "asset_id": asset_contract.asset_id.to_string(),
-            })
-        }).collect::<Vec<serde_json::Value>>()
-    });
-
-    file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes())
-        .unwrap();
 }
 
 pub async fn upload_asset(
@@ -340,4 +225,119 @@ pub async fn initialize_asset<T: Account>(
 pub fn wait() {
     // Necessary for random instances where the 'UTXO' cannot be found
     std::thread::sleep(std::time::Duration::from_secs(15));
+}
+
+fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
+    let json = std::fs::read_to_string("contracts.json").unwrap();
+    let contracts: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+    let borrow_operations_contract_id: Bech32ContractId = contracts["borrow_operations"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let borrow_operations = BorrowOperations::new(borrow_operations_contract_id, wallet.clone());
+
+    let usdf_contract_id: Bech32ContractId = contracts["usdf"].as_str().unwrap().parse().unwrap();
+    let usdf = test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone());
+
+    let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let stability_pool = StabilityPool::new(stability_pool_contract_id, wallet.clone());
+
+    let protocol_manager_contract_id: Bech32ContractId = contracts["protocol_manager"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let protocol_manager = ProtocolManager::new(protocol_manager_contract_id, wallet.clone());
+
+    let fpt_staking_contract_id: Bech32ContractId =
+        contracts["fpt_staking"].as_str().unwrap().parse().unwrap();
+    let fpt_staking = FPTStaking::new(fpt_staking_contract_id, wallet.clone());
+
+    let fpt_token_contract_id: Bech32ContractId =
+        contracts["fpt_token"].as_str().unwrap().parse().unwrap();
+    let fpt_token = FPTToken::new(fpt_token_contract_id.clone(), wallet.clone());
+
+    let community_issuance_contract_id: Bech32ContractId = contracts["community_issuance"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let community_issuance = CommunityIssuance::new(community_issuance_contract_id, wallet.clone());
+
+    let coll_surplus_pool_contract_id: Bech32ContractId = contracts["coll_surplus_pool"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let coll_surplus_pool = CollSurplusPool::new(coll_surplus_pool_contract_id, wallet.clone());
+
+    let default_pool_contract_id: Bech32ContractId =
+        contracts["default_pool"].as_str().unwrap().parse().unwrap();
+    let default_pool = DefaultPool::new(default_pool_contract_id, wallet.clone());
+
+    let active_pool_contract_id: Bech32ContractId =
+        contracts["active_pool"].as_str().unwrap().parse().unwrap();
+    let active_pool = ActivePool::new(active_pool_contract_id, wallet.clone());
+
+    let sorted_troves_contract_id: Bech32ContractId = contracts["sorted_troves"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let sorted_troves = SortedTroves::new(sorted_troves_contract_id, wallet.clone());
+
+    let vesting_contract_id: Bech32ContractId = contracts["vesting_contract"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
+
+    // TODO: remove this since it's redundant with fpt token
+    let fpt = Token::new(fpt_token_contract_id.clone(), wallet.clone());
+
+    let asset_contracts = vec![];
+
+    let protocol_contracts = ProtocolContracts {
+        borrow_operations,
+        usdf,
+        stability_pool,
+        protocol_manager,
+        asset_contracts,
+        fpt_staking,
+        fpt_token,
+        fpt,
+        community_issuance,
+        vesting_contract,
+        coll_surplus_pool,
+        sorted_troves,
+        default_pool,
+        active_pool,
+    };
+
+    protocol_contracts
+}
+
+fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnlocked>>) {
+    let mut file = File::create("asset_contracts.json").unwrap();
+
+    let json = json!({
+        "asset_contracts": asset_contracts.iter().map(|asset_contract| {
+            json!({
+                "oracle": asset_contract.oracle.contract_id().to_string(),
+                "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
+                "asset_contract": asset_contract.asset.contract_id().to_string(),
+                "asset_id": asset_contract.asset_id.to_string(),
+            })
+        }).collect::<Vec<serde_json::Value>>()
+    });
+
+    file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes())
+        .unwrap();
 }
