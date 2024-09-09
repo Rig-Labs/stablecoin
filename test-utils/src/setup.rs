@@ -48,7 +48,7 @@ pub mod common {
         programs::responses::CallResponse,
         types::{ContractId, Identity},
     };
-    use pbr::ProgressBar;
+    // use pbr::ProgressBar;
     use rand::Rng;
     use std::env;
 
