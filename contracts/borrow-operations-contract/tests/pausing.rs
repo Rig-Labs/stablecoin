@@ -246,6 +246,3 @@ async fn test_paused_operations() {
         "Should be able to withdraw USDF while unpaused"
     );
 }
-
-#[tokio::test]
-async fn test_unauthorized_pause() {}

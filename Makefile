@@ -3,7 +3,7 @@ include .env
 export $(shell sed 's/=.*//' .env)
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-.PHONY: help tests build-and-test generate-types deploy
+.PHONY: help tests build-and-test generate-types deploy add-asset pause unpause
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -26,5 +26,9 @@ deploy: ## Run the deployment script for core contracts
 add-asset: ## Run the script to add assets to the protocol
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset
 
-# TODO: add a script to pause minting the protocol
-# TODO: add a script to unpause minting the protocol
+pause: ## Pause the protocol
+	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run pause
+
+unpause: ## Unpause the protocol
+	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run unpause
+

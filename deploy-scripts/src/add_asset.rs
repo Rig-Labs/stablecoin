@@ -229,7 +229,7 @@ pub async fn initialize_asset<T: Account>(
     pb.inc();
 }
 
-fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
+pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
     let json = std::fs::read_to_string("contracts.json").unwrap();
     let contracts: serde_json::Value = serde_json::from_str(&json).unwrap();
 
