@@ -1,7 +1,7 @@
 use crate::deploy::deployment::*;
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::{Bits256, Identity};
+use fuels::types::{Bits256, Identity, U256};
 use pbr::ProgressBar;
 use serde_json::json;
 use std::{fs::File, io::Write};
@@ -9,11 +9,9 @@ use test_utils::data_structures::PRECISION;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::protocol_manager_abi;
 use test_utils::interfaces::pyth_oracle::{
-    pyth_oracle_abi, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP,
+    pyth_oracle_abi, PythPrice, PythPriceFeed, PYTH_TIMESTAMP,
 };
-use test_utils::interfaces::redstone_oracle::{
-    redstone_oracle_abi, redstone_price_feed, DEFAULT_REDSTONE_PRICE_ID,
-};
+use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id};
 use test_utils::interfaces::token::token_abi;
 use test_utils::interfaces::trove_manager::trove_manager_abi;
 use test_utils::interfaces::{
@@ -26,13 +24,10 @@ use test_utils::interfaces::{
 };
 use test_utils::setup::common::*;
 
-pub async fn add_assets() {
+pub async fn add_asset() {
     dotenv().ok();
 
-    let rpc = std::env::var("RPC").expect("❌ Cannot find RPC in .env file");
-    println!("RPC: {}", rpc);
-
-    let wallet = setup_wallet(&rpc).await;
+    let wallet = setup_wallet().await;
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
@@ -42,7 +37,7 @@ pub async fn add_assets() {
 
     query_oracles(&asset_contracts).await;
 
-    println!("Are you want to initialize the asset? (y/n)");
+    println!("Are you sure you want to initialize the asset? (y/n)");
     let mut input = String::new();
     std::io::stdin()
         .read_line(&mut input)
@@ -103,26 +98,29 @@ pub async fn upload_asset(
             };
         }
         None => {
+            let asset = deploy_token(&wallet).await;
+            pb.inc();
+            let asset_id: AssetId = asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into();
+
+            let pyth_price_id = Bits256::from(asset_id);
+            let redstone_price_id = U256::from(pyth_price_id.0);
+
             let pyth = deploy_mock_pyth_oracle(&wallet).await;
             let redstone = deploy_mock_redstone_oracle(&wallet).await;
             let oracle = deploy_oracle(
                 &wallet,
                 pyth.contract_id().into(),
                 9,
-                DEFAULT_PYTH_PRICE_ID,
+                pyth_price_id,
                 redstone.contract_id().into(),
                 9,
-                DEFAULT_REDSTONE_PRICE_ID,
+                redstone_price_id,
             )
             .await;
             pb.inc();
-            let asset = deploy_token(&wallet).await;
-            pb.inc();
-
-            let asset_id: AssetId = asset
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into();
 
             println!("Deploying asset contracts... Done");
             println!("Oracle: {}", oracle.contract_id());
@@ -140,9 +138,8 @@ pub async fn upload_asset(
             )
             .await;
             pb.inc();
-
             let pyth_feed = vec![(
-                DEFAULT_PYTH_PRICE_ID,
+                pyth_price_id,
                 PythPriceFeed {
                     price: PythPrice {
                         price: 1 * PRECISION,
@@ -150,8 +147,7 @@ pub async fn upload_asset(
                     },
                 },
             )];
-
-            let redstone_feed = redstone_price_feed(vec![1]);
+            let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
@@ -168,9 +164,9 @@ pub async fn upload_asset(
                 trove_manager,
                 asset,
                 asset_id,
-                pyth_price_id: DEFAULT_PYTH_PRICE_ID,
+                pyth_price_id,
                 pyth_precision: 9,
-                redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
+                redstone_price_id,
                 redstone_precision: 9,
             };
         }
@@ -332,7 +328,7 @@ fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlock
 
 fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnlocked>>) {
     let mut file = File::create("asset_contracts.json").unwrap();
-
+    // TODO try and add the pyth price id
     let json = json!({
         "asset_contracts": asset_contracts.iter().map(|asset_contract| {
             json!({
@@ -340,6 +336,11 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
                 "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": asset_contract.asset_id.to_string(),
+                "pyth_precision": asset_contract.pyth_precision,
+                "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
+                "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
+                "redstone_price_id": asset_contract.redstone_price_id.to_string(),
+                "redstone_precision": asset_contract.redstone_precision,
             })
         }).collect::<Vec<serde_json::Value>>()
     });

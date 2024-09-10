@@ -23,8 +23,8 @@ format: ## Format the code
 deploy: ## Run the deployment script for core contracts
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
 
-add-assets: ## Run the script to add assets to the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-assets
+add-asset: ## Run the script to add assets to the protocol
+	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset
 
 # TODO: add a script to pause minting the protocol
 # TODO: add a script to unpause minting the protocol

@@ -8,8 +8,10 @@ use test_utils::interfaces::{
 };
 
 pub mod deployment {
+    const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/test_vesting.json";
     use fuels::types::Identity;
     use pbr::ProgressBar;
+    use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_json_file};
 
     use super::*;
 
@@ -28,16 +30,11 @@ pub mod deployment {
     };
 
     pub async fn deploy() {
+        //--------------- Deploy ---------------
         dotenv().ok();
 
-        let rpc = match std::env::var("RPC") {
-            Ok(s) => s,
-            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
-        };
-        println!("RPC: {}", rpc);
-
         //--------------- WALLET ---------------
-        let wallet = setup_wallet(&rpc).await;
+        let wallet = setup_wallet().await;
         let address = wallet.address();
         println!("🔑 Wallet address: {}", address);
 
@@ -54,7 +51,7 @@ pub mod deployment {
         wallet: WalletUnlocked,
         max_size: u64,
     ) -> ProtocolContracts<WalletUnlocked> {
-        println!("Deploying parent contracts...");
+        println!("Deploying core contracts...");
         let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(&wallet).await;
@@ -109,10 +106,12 @@ pub mod deployment {
         println!("Sorted Troves {}", sorted_troves.contract_id());
         println!("Initializing contracts...");
 
-        let mut pb = ProgressBar::new(7);
+        let mut pb = ProgressBar::new(8);
 
         let asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
         wait();
+
+        let fpt_token_id: AssetId = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
 
         let _ = community_issuance_abi::initialize(
             &community_issuance,
@@ -127,7 +126,7 @@ pub mod deployment {
         .await;
         pb.inc();
 
-        fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
+        let _ = fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
         pb.inc();
 
         let _ = usdf_token_abi::initialize(
@@ -168,10 +167,7 @@ pub mod deployment {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt_token
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
+            fpt_token_id,
             usdf.contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
@@ -236,6 +232,14 @@ pub mod deployment {
         wait();
         pb.inc();
 
+        let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
+        let _ = vesting::instantiate_vesting_contract(
+            &vesting_contract,
+            &fpt_token_id,
+            vesting_schedules,
+        )
+        .await;
+
         pb.finish();
 
         let contracts = ProtocolContracts {
@@ -258,7 +262,13 @@ pub mod deployment {
         return contracts;
     }
 
-    pub async fn setup_wallet(rpc: &str) -> WalletUnlocked {
+    pub async fn setup_wallet() -> WalletUnlocked {
+        let rpc = match std::env::var("RPC") {
+            Ok(s) => s,
+            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
+        };
+        println!("RPC: {}", rpc);
+
         let provider = match Provider::connect(rpc).await {
             Ok(p) => p,
             Err(error) => panic!("❌ Problem creating provider: {:#?}", error),

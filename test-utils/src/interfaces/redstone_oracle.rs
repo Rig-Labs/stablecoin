@@ -18,6 +18,14 @@ pub fn redstone_price_feed(prices: Vec<u64>) -> Vec<(U256, U256)> {
     feed
 }
 
+pub fn redstone_price_feed_with_id(price_id: U256, prices: Vec<u64>) -> Vec<(U256, U256)> {
+    let mut feed = Vec::with_capacity(prices.len());
+    for price in prices {
+        feed.push((price_id, U256::from(price * PRECISION)));
+    }
+    feed
+}
+
 pub mod redstone_oracle_abi {
 
     use super::*;
