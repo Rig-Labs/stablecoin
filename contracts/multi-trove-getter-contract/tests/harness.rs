@@ -11,7 +11,7 @@ use test_utils::{
 #[ignore = "MemoryWriteOverlap Fuel Error in current version"]
 #[tokio::test]
 async fn proper_hint_generations() {
-    let (contracts, _admin, mut wallets) = setup_protocol(100, 20, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(100, 20, false, false).await;
     let wallet = wallets.pop().unwrap();
 
     let hint_helper = deploy_hint_helper(&wallet).await;

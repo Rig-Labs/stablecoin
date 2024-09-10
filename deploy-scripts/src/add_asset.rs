@@ -314,7 +314,6 @@ pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUn
         asset_contracts,
         fpt_staking,
         fpt_token,
-        fpt,
         community_issuance,
         vesting_contract,
         coll_surplus_pool,

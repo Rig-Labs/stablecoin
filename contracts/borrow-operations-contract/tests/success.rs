@@ -20,7 +20,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_creating_trove() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -173,7 +173,7 @@ async fn proper_creating_trove() {
 
 #[tokio::test]
 async fn proper_increase_collateral() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -323,7 +323,7 @@ async fn proper_increase_collateral() {
 
 #[tokio::test]
 async fn proper_decrease_collateral() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -490,7 +490,7 @@ async fn proper_decrease_collateral() {
 
 #[tokio::test]
 async fn proper_increase_debt() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -658,7 +658,7 @@ async fn proper_increase_debt() {
 
 #[tokio::test]
 async fn proper_decrease_debt() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false).await;
+    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -837,7 +837,7 @@ async fn proper_decrease_debt() {
 
 #[tokio::test]
 async fn proper_open_multiple_troves() {
-    let (contracts, _admin, mut wallets) = setup_protocol(100, 4, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(100, 4, false, false).await;
 
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
@@ -986,7 +986,7 @@ async fn proper_open_multiple_troves() {
 
 #[tokio::test]
 async fn proper_close_trove() {
-    let (contracts, admin, mut wallets) = setup_protocol(100, 4, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(100, 4, false, false).await;
 
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
@@ -1181,7 +1181,7 @@ async fn proper_close_trove() {
 
 #[tokio::test]
 async fn proper_creating_trove_with_2nd_asset() {
-    let (contracts, admin, mut wallets) = setup_protocol(100, 2, true).await;
+    let (contracts, admin, mut wallets) = setup_protocol(100, 2, true, false).await;
 
     let wallet2 = wallets.pop().unwrap();
 
