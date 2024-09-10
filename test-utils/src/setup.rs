@@ -116,8 +116,14 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let contracts =
-            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset, use_test_fpt).await;
+        let contracts = deploy_and_initialize_all(
+            wallet.clone(),
+            max_size,
+            false,
+            deploy_2nd_asset,
+            use_test_fpt,
+        )
+        .await;
 
         (contracts, wallet, wallets)
     }
@@ -147,7 +153,6 @@ pub mod common {
         let community_issuance = deploy_community_issuance(&wallet).await;
         // pb.inc();
 
-
         let mock_fpt_token = deploy_token(&wallet).await;
 
         token_abi::initialize(
@@ -161,16 +166,10 @@ pub mod common {
         .unwrap();
 
         let fpt_token = if use_test_fpt {
-
-            FPTToken::new(
-                mock_fpt_token.contract_id().clone(),
-                wallet.clone(),
-            )
+            FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
         } else {
             deploy_fpt_token(&wallet).await
         };
-        
-
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
         // pb.inc();
@@ -207,7 +206,7 @@ pub mod common {
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
-        if !use_test_fpt{
+        if !use_test_fpt {
             fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
         }
 
@@ -262,7 +261,10 @@ pub mod common {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt_token.contract_id().asset_id(&AssetId::zeroed().into()).into(),
+            fpt_token
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             usdf.contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),

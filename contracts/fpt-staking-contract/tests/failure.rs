@@ -1,14 +1,16 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::PRECISION,
-    interfaces::{fpt_staking::fpt_staking_abi, token::{token_abi, Token}},
+    interfaces::{
+        fpt_staking::fpt_staking_abi,
+        token::{token_abi, Token},
+    },
     setup::common::setup_protocol,
 };
 
 #[tokio::test]
 async fn fails_unstake_wrong_amount() {
     let (contracts, admin, mut _wallets) = setup_protocol(10, 4, false, true).await;
-
 
     let mock_token = Token::new(
         contracts.fpt_token.contract_id().clone(),
