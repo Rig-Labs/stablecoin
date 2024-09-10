@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, str::FromStr};
+use std::{fs::File, io::Write};
 
 use dotenv::dotenv;
 use fuels::prelude::*;
@@ -6,7 +6,6 @@ use serde_json::json;
 use test_utils::interfaces::{
     community_issuance::community_issuance_abi, fpt_token::fpt_token_abi,
 };
-use test_utils::setup::common::ExistingAssetContracts;
 
 pub mod deployment {
     use fuels::types::Identity;
@@ -43,72 +42,13 @@ pub mod deployment {
         let address = wallet.address();
         println!("🔑 Wallet address: {}", address);
 
-        //--------------- Assets ---------------
-
-        let eth_contracts = ExistingAssetContracts {
-            asset: ContractId::from(
-                Bech32ContractId::from_str(
-                    "fuel1ql6d5vjmuqs0v2tev7su73zjrpajffy9cjccvll38mxmamaeteuqml4pxl",
-                )
-                .unwrap(),
-            ),
-            oracle: ContractId::from(
-                Bech32ContractId::from_str(
-                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
-                )
-                .unwrap(),
-            ),
-            pyth_oracle: ContractId::from(
-                // TODO: change id?
-                Bech32ContractId::from_str(
-                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
-                )
-                .unwrap(),
-            ),
-            redstone_oracle: ContractId::from(
-                // TODO: change id?
-                Bech32ContractId::from_str(
-                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
-                )
-                .unwrap(),
-            ),
-        };
-
-        let st_eth_contracts = ExistingAssetContracts {
-            asset: ContractId::from(
-                Bech32ContractId::from_str(
-                    "fuel1hud0p86m45k2qvhqpqwlz6c2h2pgj32w8tqhq0240dp6y2q26pvqg802xv",
-                )
-                .unwrap(),
-            ),
-            oracle: ContractId::from(
-                Bech32ContractId::from_str(
-                    "fuel1apa7t7dhpajrxg8xt4thmmaqq6378j4g8femnsz6u6etu3aeajksjzsdld",
-                )
-                .unwrap(),
-            ),
-            pyth_oracle: ContractId::from(
-                // TODO: change id?
-                Bech32ContractId::from_str(
-                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
-                )
-                .unwrap(),
-            ),
-            redstone_oracle: ContractId::from(
-                // TODO: change id?
-                Bech32ContractId::from_str(
-                    "fuel129gw5u3rlacka3smhngevvgq4awllx8u4l5fktpr506yaxv8gx4qz6y4k3",
-                )
-                .unwrap(),
-            ),
-        };
-
         //--------------- Deploy ---------------
         // TODO: Figure out max size
-        let contracts = deployment::deploy_and_initialize_all_core_contracts(wallet, 100_000).await;
+        let core_contracts =
+            deployment::deploy_and_initialize_all_core_contracts(wallet, 100_000).await;
 
         //--------------- Write to file ---------------
-        write_contracts_to_file(contracts)
+        write_contracts_to_file(core_contracts)
     }
 
     pub async fn deploy_and_initialize_all_core_contracts(

@@ -8,7 +8,7 @@ abigen!(Contract(
     abi = "contracts/mock-pyth-contract/out/debug/mock-pyth-contract-abi.json"
 ));
 
-pub const PYTH_PRICE_ID: Bits256 = Bits256([0; 32]);
+pub const DEFAULT_PYTH_PRICE_ID: Bits256 = Bits256([0; 32]);
 pub const PYTH_TIMESTAMP: u64 = 1724166967;
 
 pub fn pyth_price_feed(price: u64) -> Vec<(Bits256, PythPriceFeed)> {
@@ -42,12 +42,12 @@ pub mod pyth_oracle_abi {
 
     pub async fn price<T: Account>(
         oracle: &PythCore<T>,
-        price_feed_id: Bits256,
+        price_feed_id: &Bits256,
     ) -> CallResponse<PythPrice> {
         let tx_params = TxPolicies::default().with_tip(1);
         oracle
             .methods()
-            .price(price_feed_id)
+            .price(price_feed_id.clone())
             .with_tx_policies(tx_params)
             .call()
             .await

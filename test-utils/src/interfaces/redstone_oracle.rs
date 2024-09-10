@@ -8,7 +8,7 @@ abigen!(Contract(
     abi = "contracts/mock-redstone-contract/out/debug/mock-redstone-contract-abi.json"
 ));
 
-pub const REDSTONE_PRICE_ID: U256 = U256::zero();
+pub const DEFAULT_REDSTONE_PRICE_ID: U256 = U256::zero();
 
 pub fn redstone_price_feed(prices: Vec<u64>) -> Vec<(U256, U256)> {
     let mut feed = Vec::with_capacity(prices.len());
