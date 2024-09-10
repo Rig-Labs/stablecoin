@@ -64,7 +64,6 @@ pub mod common {
         pub default_pool: DefaultPool<T>,
         pub active_pool: ActivePool<T>,
         pub fpt_token: FPTToken<T>,
-        pub fpt: Token<T>,
         pub community_issuance: CommunityIssuance<T>,
         pub vesting_contract: VestingContract<T>,
     }
@@ -97,6 +96,7 @@ pub mod common {
         max_size: u64,
         num_wallets: u64,
         deploy_2nd_asset: bool,
+        use_test_fpt: bool,
     ) -> (
         ProtocolContracts<WalletUnlocked>,
         WalletUnlocked,
@@ -116,8 +116,14 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let contracts =
-            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset).await;
+        let contracts = deploy_and_initialize_all(
+            wallet.clone(),
+            max_size,
+            false,
+            deploy_2nd_asset,
+            use_test_fpt,
+        )
+        .await;
 
         (contracts, wallet, wallets)
     }
@@ -127,6 +133,7 @@ pub mod common {
         _max_size: u64,
         is_testnet: bool,
         deploy_2nd_asset: bool,
+        use_test_fpt: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
         // let mut pb = ProgressBar::new(12);
@@ -146,11 +153,23 @@ pub mod common {
         let community_issuance = deploy_community_issuance(&wallet).await;
         // pb.inc();
 
-        let fpt_token = deploy_fpt_token(&wallet).await;
-        // pb.inc();
+        let mock_fpt_token = deploy_token(&wallet).await;
 
-        let fpt = deploy_token(&wallet).await;
-        // pb.inc();
+        token_abi::initialize(
+            &mock_fpt_token,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+        )
+        .await
+        .unwrap();
+
+        let fpt_token = if use_test_fpt {
+            FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
+        } else {
+            deploy_fpt_token(&wallet).await
+        };
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
         // pb.inc();
@@ -187,6 +206,10 @@ pub mod common {
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
+        if !use_test_fpt {
+            fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
+        }
+
         community_issuance_abi::initialize(
             &community_issuance,
             stability_pool.contract_id().into(),
@@ -196,21 +219,6 @@ pub mod common {
                 .into(),
             &Identity::Address(wallet.address().into()),
             true,
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        // pb.inc();
-
-        // mock token for testing staking
-        token_abi::initialize(
-            &fpt,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
-            "FPT Token".to_string(),
-            "FPT".to_string(),
         )
         .await
         .unwrap();
@@ -253,7 +261,10 @@ pub mod common {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt.contract_id().asset_id(&AssetId::zeroed().into()).into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
+            fpt_token
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
             usdf.contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
@@ -365,7 +376,6 @@ pub mod common {
             protocol_manager,
             fpt_staking,
             fpt_token,
-            fpt,
             coll_surplus_pool,
             default_pool,
             active_pool,
@@ -391,7 +401,7 @@ pub mod common {
         .await;
 
         match id {
-            Ok(id) => return Token::new(id, wallet.clone()),
+            Ok(id) => return Token::new(id.clone(), wallet.clone()),
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
@@ -403,7 +413,7 @@ pub mod common {
                 .await
                 .unwrap();
 
-                return Token::new(id, wallet.clone());
+                return Token::new(id.clone(), wallet.clone());
             }
         }
     }

@@ -20,7 +20,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_batch_liquidations_enough_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(

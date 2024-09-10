@@ -17,7 +17,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_multi_collateral_redemption_from_partially_closed() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true, false).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();

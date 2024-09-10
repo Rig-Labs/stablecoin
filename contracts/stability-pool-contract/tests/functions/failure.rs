@@ -10,7 +10,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_fake_usdf_deposit() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, false).await;
 
     let fake_usdf = deploy_usdf_token(&admin).await;
 
@@ -44,7 +44,7 @@ async fn fails_fake_usdf_deposit() {
 
 #[tokio::test]
 async fn fails_unauthorized() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 4, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(10, 4, false, false).await;
 
     let attacker = wallets.pop().unwrap();
 

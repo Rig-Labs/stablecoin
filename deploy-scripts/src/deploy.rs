@@ -63,9 +63,6 @@ pub mod deployment {
         let fpt_token = deploy_fpt_token(&wallet).await;
         pb.inc();
 
-        let _fpt = deploy_token(&wallet).await;
-        pb.inc();
-
         let fpt_staking = deploy_fpt_staking(&wallet).await;
         pb.inc();
 
@@ -250,7 +247,6 @@ pub mod deployment {
             asset_contracts,
             fpt_staking,
             fpt_token,
-            fpt: _fpt,
             community_issuance,
             coll_surplus_pool,
             default_pool,
