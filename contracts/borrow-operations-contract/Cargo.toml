@@ -10,7 +10,6 @@ fuels = { workspace = true }
 test-utils = { workspace = true }
 tokio = { workspace = true }
 
-
 [[test]]
 harness = true
 name = "tests"
