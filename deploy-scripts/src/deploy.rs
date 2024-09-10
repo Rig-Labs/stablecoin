@@ -23,9 +23,8 @@ pub mod deployment {
     use test_utils::setup::common::{
         deploy_active_pool, deploy_borrow_operations, deploy_coll_surplus_pool,
         deploy_community_issuance, deploy_default_pool, deploy_fpt_staking, deploy_fpt_token,
-        deploy_mock_pyth_oracle, deploy_protocol_manager, deploy_sorted_troves,
-        deploy_stability_pool, deploy_token, deploy_usdf_token, deploy_vesting_contract,
-        AssetContracts, ProtocolContracts,
+        deploy_protocol_manager, deploy_sorted_troves, deploy_stability_pool, deploy_token,
+        deploy_usdf_token, deploy_vesting_contract, AssetContracts, ProtocolContracts,
     };
 
     pub async fn deploy() {
@@ -96,9 +95,6 @@ pub mod deployment {
 
         let vesting_contract = deploy_vesting_contract(&wallet).await;
         pb.inc();
-
-        let pyth = deploy_mock_pyth_oracle(&wallet).await;
-        let redstone = deploy_mock_pyth_oracle(&wallet).await;
 
         println!("Borrow operations: {}", borrow_operations.contract_id());
         println!("USDF Token: {}", usdf.contract_id());

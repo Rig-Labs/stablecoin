@@ -7,7 +7,7 @@ license = "Apache-2.0"
 
 [dependencies]
 fuels = { workspace = true }
-test-utils = { path = "../../test-utils" }
+test-utils = { workspace = true }
 tokio = { workspace = true }
 
 
