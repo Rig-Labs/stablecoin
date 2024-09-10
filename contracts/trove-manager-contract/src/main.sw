@@ -561,7 +561,6 @@ fn internal_remove_stake(borrower: Identity) {
     storage
         .total_stakes
         .write(storage.total_stakes.read() - trove.stake);
-    // TODO use update function when available
     trove.stake = 0;
     storage.troves.insert(borrower, trove);
 }

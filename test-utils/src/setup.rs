@@ -9,8 +9,8 @@ use super::interfaces::{
     hint_helper::HintHelper,
     oracle::{Oracle, OracleConfigurables, ORACLE_TIMEOUT},
     protocol_manager::ProtocolManager,
-    pyth_oracle::{PythCore, PYTH_PRICE_ID},
-    redstone_oracle::{RedstoneCore, REDSTONE_PRICE_ID},
+    pyth_oracle::{PythCore, DEFAULT_PYTH_PRICE_ID},
+    redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::SortedTroves,
     stability_pool::StabilityPool,
     token::Token,
@@ -46,9 +46,9 @@ pub mod common {
         // accounts::rand::{self, Rng},
         prelude::*,
         programs::responses::CallResponse,
-        types::{ContractId, Identity},
+        types::{Bits256, ContractId, Identity, U256},
     };
-    use pbr::ProgressBar;
+    // use pbr::ProgressBar;
     use rand::Rng;
     use std::env;
 
@@ -76,13 +76,21 @@ pub mod common {
         pub mock_redstone_oracle: RedstoneCore<T>,
         pub trove_manager: TroveManagerContract<T>,
         pub asset_id: AssetId,
+        pub pyth_price_id: Bits256,
+        pub pyth_precision: u8,
+        pub redstone_price_id: U256,
+        pub redstone_precision: u8,
     }
 
     pub struct ExistingAssetContracts {
         pub asset: ContractId,
         pub oracle: ContractId,
         pub pyth_oracle: ContractId,
+        pub pyth_price_id: Bits256,
+        pub pyth_precision: u8,
         pub redstone_oracle: ContractId,
+        pub redstone_price_id: U256,
+        pub redstone_precision: u8,
     }
 
     pub async fn setup_protocol(
@@ -597,8 +605,10 @@ pub mod common {
         wallet: &WalletUnlocked,
         pyth: ContractId,
         pyth_precision: u8,
+        pyth_price_id: Bits256,
         redstone: ContractId,
         redstone_precison: u8,
+        redstone_price_id: U256,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -607,11 +617,11 @@ pub mod common {
         let configurables = OracleConfigurables::default()
             .with_PYTH(pyth)
             .unwrap()
-            .with_PYTH_PRICE_ID(PYTH_PRICE_ID)
+            .with_PYTH_PRICE_ID(pyth_price_id)
             .unwrap()
             .with_REDSTONE(redstone)
             .unwrap()
-            .with_REDSTONE_PRICE_ID(REDSTONE_PRICE_ID)
+            .with_REDSTONE_PRICE_ID(redstone_price_id)
             .unwrap()
             .with_TIMEOUT(ORACLE_TIMEOUT)
             .unwrap()
@@ -744,8 +754,10 @@ pub mod common {
             &wallet,
             pyth.contract_id().into(),
             9,
+            DEFAULT_PYTH_PRICE_ID,
             redstone.contract_id().into(),
             9,
+            DEFAULT_REDSTONE_PRICE_ID,
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
@@ -822,6 +834,10 @@ pub mod common {
             trove_manager,
             asset,
             asset_id,
+            pyth_price_id: DEFAULT_PYTH_PRICE_ID,
+            pyth_precision: 9,
+            redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
+            redstone_precision: 9,
         };
     }
 

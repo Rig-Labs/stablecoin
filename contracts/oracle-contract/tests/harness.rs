@@ -4,8 +4,11 @@ use test_utils::{
     data_structures::PRECISION,
     interfaces::{
         oracle::{oracle_abi, Oracle, ORACLE_TIMEOUT},
-        pyth_oracle::{pyth_oracle_abi, pyth_price_feed_with_time, PythCore, PYTH_TIMESTAMP},
-        redstone_oracle::{redstone_oracle_abi, RedstoneCore},
+        pyth_oracle::{
+            pyth_oracle_abi, pyth_price_feed_with_time, PythCore, DEFAULT_PYTH_PRICE_ID,
+            PYTH_TIMESTAMP,
+        },
+        redstone_oracle::{redstone_oracle_abi, RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
@@ -41,8 +44,10 @@ async fn setup() -> (
         &wallet,
         pyth.contract_id().into(),
         PYTH_PRECISION,
+        DEFAULT_PYTH_PRICE_ID,
         redstone.contract_id().into(),
         REDSTONE_PRECISION,
+        DEFAULT_REDSTONE_PRICE_ID,
     )
     .await;
 
@@ -50,7 +55,7 @@ async fn setup() -> (
 }
 
 fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
-    vec![(U256::zero(), U256::from(price * PRECISION))]
+    vec![(DEFAULT_REDSTONE_PRICE_ID, U256::from(price * PRECISION))]
 }
 
 fn convert_precision(price: u64, current_precision: u32) -> u64 {
@@ -215,6 +220,7 @@ mod tests {
                     .await;
                     redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
                     redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
                     assert_eq!(expected_price, price);
@@ -254,6 +260,18 @@ mod tests {
                     redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP + 1).await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
 
+                    let redstone_price = redstone_oracle_abi::read_prices(
+                        &redstone,
+                        vec![DEFAULT_REDSTONE_PRICE_ID],
+                    )
+                    .await
+                    .value[0]
+                        .as_u64();
+
+                    let converted_redstone_price =
+                        convert_precision(redstone_price, REDSTONE_PRECISION.into());
+
+                    assert_eq!(expected_price_redstone, converted_redstone_price);
                     assert_eq!(expected_price_redstone, price);
                 }
 

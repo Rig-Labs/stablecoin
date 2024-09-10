@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader, path::PathBuf, str::FromStr};
+use std::{fs::File, io::BufReader, str::FromStr};
 
 use fuels::prelude::{Address, Bech32Address};
 use fuels::types::AssetId;
