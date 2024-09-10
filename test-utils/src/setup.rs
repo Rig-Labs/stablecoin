@@ -64,7 +64,6 @@ pub mod common {
         pub default_pool: DefaultPool<T>,
         pub active_pool: ActivePool<T>,
         pub fpt_token: FPTToken<T>,
-        pub fpt: Token<T>,
         pub community_issuance: CommunityIssuance<T>,
         pub vesting_contract: VestingContract<T>,
     }
@@ -148,13 +147,30 @@ pub mod common {
         let community_issuance = deploy_community_issuance(&wallet).await;
         // pb.inc();
 
-        if use_test_fpt {
-            let fpt_token = deploy_token(&wallet).await;
+
+        let mock_fpt_token = deploy_token(&wallet).await;
+
+        token_abi::initialize(
+            &mock_fpt_token,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            "FPT Token".to_string(),
+            "FPT".to_string(),
+        )
+        .await
+        .unwrap();
+
+        let fpt_token = if use_test_fpt {
+
+            FPTToken::new(
+                mock_fpt_token.contract_id().clone(),
+                wallet.clone(),
+            )
         } else {
-            let fpt_token = deploy_fpt_token(&wallet).await;
-        }
+            deploy_fpt_token(&wallet).await
+        };
         
-        // pb.inc();
+
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
         // pb.inc();
@@ -191,6 +207,10 @@ pub mod common {
 
         let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
 
+        if !use_test_fpt{
+            fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
+        }
+
         community_issuance_abi::initialize(
             &community_issuance,
             stability_pool.contract_id().into(),
@@ -204,21 +224,6 @@ pub mod common {
         .await
         .unwrap();
         // pb.inc();
-
-        if use_test_fpt{
-            // mock token for testing staking
-            token_abi::initialize(
-                &fpt_token,
-                1_000_000_000,
-                &Identity::Address(wallet.address().into()),
-                "FPT Token".to_string(),
-                "FPT".to_string(),
-            )
-            .await
-            .unwrap();
-        } else {
-            fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        }
 
         usdf_token_abi::initialize(
             &usdf,
@@ -394,7 +399,7 @@ pub mod common {
         .await;
 
         match id {
-            Ok(id) => return Token::new(id, wallet.clone()),
+            Ok(id) => return Token::new(id.clone(), wallet.clone()),
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
@@ -406,7 +411,7 @@ pub mod common {
                 .await
                 .unwrap();
 
-                return Token::new(id, wallet.clone());
+                return Token::new(id.clone(), wallet.clone());
             }
         }
     }
