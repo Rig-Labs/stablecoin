@@ -7,7 +7,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_unstake_wrong_amount() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, true).await;
 
     token_abi::mint_to_id(
         &contracts.fpt,

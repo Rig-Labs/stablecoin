@@ -97,6 +97,7 @@ pub mod common {
         max_size: u64,
         num_wallets: u64,
         deploy_2nd_asset: bool,
+        use_test_fpt: bool,
     ) -> (
         ProtocolContracts<WalletUnlocked>,
         WalletUnlocked,
@@ -117,7 +118,7 @@ pub mod common {
         let wallet = wallets.pop().unwrap();
 
         let contracts =
-            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset).await;
+            deploy_and_initialize_all(wallet.clone(), max_size, false, deploy_2nd_asset, use_test_fpt).await;
 
         (contracts, wallet, wallets)
     }
@@ -127,6 +128,7 @@ pub mod common {
         _max_size: u64,
         is_testnet: bool,
         deploy_2nd_asset: bool,
+        use_test_fpt: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying parent contracts...");
         // let mut pb = ProgressBar::new(12);
@@ -146,10 +148,12 @@ pub mod common {
         let community_issuance = deploy_community_issuance(&wallet).await;
         // pb.inc();
 
-        let fpt_token = deploy_fpt_token(&wallet).await;
-        // pb.inc();
-
-        let fpt = deploy_token(&wallet).await;
+        if use_test_fpt {
+            let fpt_token = deploy_token(&wallet).await;
+        } else {
+            let fpt_token = deploy_fpt_token(&wallet).await;
+        }
+        
         // pb.inc();
 
         let protocol_manager = deploy_protocol_manager(&wallet).await;
@@ -201,20 +205,20 @@ pub mod common {
         .unwrap();
         // pb.inc();
 
-        fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        // pb.inc();
-
-        // mock token for testing staking
-        token_abi::initialize(
-            &fpt,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
-            "FPT Token".to_string(),
-            "FPT".to_string(),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
+        if use_test_fpt{
+            // mock token for testing staking
+            token_abi::initialize(
+                &fpt_token,
+                1_000_000_000,
+                &Identity::Address(wallet.address().into()),
+                "FPT Token".to_string(),
+                "FPT".to_string(),
+            )
+            .await
+            .unwrap();
+        } else {
+            fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
+        }
 
         usdf_token_abi::initialize(
             &usdf,
@@ -253,7 +257,7 @@ pub mod common {
             &fpt_staking,
             protocol_manager.contract_id().into(),
             borrow_operations.contract_id().into(),
-            fpt.contract_id().asset_id(&AssetId::zeroed().into()).into(), // TODO switch this from `fpt` to `fpt_token`, mock token for testing
+            fpt_token.contract_id().asset_id(&AssetId::zeroed().into()).into(),
             usdf.contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
@@ -365,7 +369,6 @@ pub mod common {
             protocol_manager,
             fpt_staking,
             fpt_token,
-            fpt,
             coll_surplus_pool,
             default_pool,
             active_pool,
