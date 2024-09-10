@@ -97,7 +97,7 @@ async fn proper_staking_multiple_positions() {
 
     let mock_token = Token::new(
         contracts.fpt_token.contract_id().clone(),
-        wallets.pop().unwrap().clone(),
+        healthy_wallet1.clone(),
     );
 
     token_abi::mint_to_id(
