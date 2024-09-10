@@ -46,6 +46,8 @@ storage {
     sorted_troves_contract: ContractId = ContractId::zero(),
     usdf_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
+    is_paused: bool = false,
+    pauser: Identity = Identity::Address(Address::zero()),
 }
 impl BorrowOperations for Contract {
     #[storage(read, write)]
@@ -74,6 +76,7 @@ impl BorrowOperations for Contract {
         storage
             .usdf_asset_id
             .write(get_default_asset_id(usdf_contract));
+        storage.pauser.write(msg_sender().unwrap());
         storage.is_initialized.write(true);
     }
     #[storage(read, write)]
@@ -96,6 +99,7 @@ impl BorrowOperations for Contract {
     // Open a new trove by borrowing USDF
     #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity) {
+        require_is_not_paused();
         require_valid_asset_id();
         let asset_contract = msg_asset_id();
         let asset_contracts = storage.asset_contracts.get(asset_contract).read();
@@ -180,6 +184,7 @@ impl BorrowOperations for Contract {
         lower_hint: Identity,
         asset_contract: AssetId,
     ) {
+        require_is_not_paused();
         internal_adjust_trove(
             msg_sender()
                 .unwrap(),
@@ -257,6 +262,21 @@ impl BorrowOperations for Contract {
     fn get_usdf_asset_id() -> AssetId {
         return storage.usdf_asset_id.read();
     }
+    #[storage(read, write)]
+    fn set_pause_status(is_paused: bool) {
+        require_is_pauser();
+        storage.is_paused.write(is_paused);
+    }
+
+    #[storage(read)]
+    fn get_pauser() -> Identity {
+        return storage.pauser.read();
+    }
+
+    #[storage(read)]
+    fn get_is_paused() -> bool {
+        return storage.is_paused.read();
+    }
 }
 
 // --- Internal Functions ---
@@ -297,6 +317,7 @@ fn internal_adjust_trove(
     let price = oracle.get_price();
     let mut vars = LocalVariables_AdjustTrove::new();
     if is_debt_increase {
+        require_is_not_paused();
         require_non_zero_debt_change(usdf_change);
     }
     require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
@@ -377,6 +398,25 @@ fn require_is_protocol_manager() {
         msg_sender()
             .unwrap() == protocol_manager,
         "Borrow Operations: Caller is not the protocol manager",
+    );
+}
+#[storage(read)]
+fn require_is_pauser() {
+    require(
+        msg_sender()
+            .unwrap() == storage
+            .pauser
+            .read(),
+        "Borrow Operations: Caller is not the pauser",
+    );
+}
+#[storage(read)]
+fn require_is_not_paused() {
+    require(
+        !storage
+            .is_paused
+            .read(),
+        "Borrow Operations: Contract is paused",
     );
 }
 fn require_trove_is_not_active(borrower: Identity, trove_manager: ContractId) {
