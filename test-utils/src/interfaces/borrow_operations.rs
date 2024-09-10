@@ -80,7 +80,6 @@ pub mod borrow_operations_abi {
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fuel_amount_deposit)
             .with_asset_id(asset_id);
-        println!("call_params: {:?}", call_params);
 
         return borrow_operations
             .methods()
@@ -206,7 +205,7 @@ pub mod borrow_operations_abi {
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -234,7 +233,6 @@ pub mod borrow_operations_abi {
             .with_tx_policies(tx_params)
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn repay_usdf<T: Account>(
@@ -360,6 +358,52 @@ pub mod borrow_operations_abi {
             .with_tx_policies(tx_params)
             .call()
             .await;
+    }
+
+    pub async fn set_pause_status<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        is_paused: bool,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .set_pause_status(is_paused)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn get_pauser<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+    ) -> Result<CallResponse<Identity>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .get_pauser()
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn get_is_paused<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+    ) -> Result<CallResponse<bool>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .get_is_paused()
+            .with_tx_policies(tx_params)
+            .call()
+            .await
     }
 }
 
