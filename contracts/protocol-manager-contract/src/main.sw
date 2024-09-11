@@ -214,8 +214,10 @@ impl ProtocolManager for Contract {
             // Send redemption fee to FPT stakers
             active_pool.send_asset(
                 Identity::ContractId(fpt_staking_contract_cache),
-                totals.asset_fee,
-                contracts_cache.asset_address,
+                totals
+                    .asset_fee,
+                contracts_cache
+                    .asset_address,
             );
             fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(ind).unwrap());
 
@@ -225,24 +227,29 @@ impl ProtocolManager for Contract {
 
             // Send redeemed collateral to the user
             active_pool.send_asset(
-                msg_sender().unwrap(),
-                totals.asset_to_send_to_redeemer,
-                contracts_cache.asset_address,
+                msg_sender()
+                    .unwrap(),
+                totals
+                    .asset_to_send_to_redeemer,
+                contracts_cache
+                    .asset_address,
             );
 
             ind += 1;
         }
 
         // Burn the redeemed USDF
-        usdf.burn {
-            coins: total_usdf_redeemed,
-            asset_id: get_default_asset_id(usdf_contract_cache).bits(),
-        }();
+        usdf
+            .burn {
+                coins: total_usdf_redeemed,
+                asset_id: get_default_asset_id(usdf_contract_cache).bits(),
+            }();
 
         // Return any remaining USDF to the redeemer
         if (remaining_usdf > 0) {
             transfer(
-                msg_sender().unwrap(),
+                msg_sender()
+                    .unwrap(),
                 get_default_asset_id(usdf_contract_cache),
                 remaining_usdf,
             );
@@ -258,6 +265,7 @@ fn require_valid_usdf_id() {
     );
 }
 
+// Get information about all assets in the system
 #[storage(read)]
 fn get_all_assets_info() -> AssetInfo {
     let mut assets: Vec<AssetId> = Vec::new();

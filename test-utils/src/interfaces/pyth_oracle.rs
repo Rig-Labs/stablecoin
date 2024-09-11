@@ -35,6 +35,21 @@ pub fn pyth_price_feed_with_time(price: u64, unix_timestamp: u64) -> Vec<(Bits25
     )]
 }
 
+pub fn pyth_price_no_precision_with_time(
+    price: u64,
+    unix_timestamp: u64,
+) -> Vec<(Bits256, PythPriceFeed)> {
+    vec![(
+        Bits256::zeroed(),
+        PythPriceFeed {
+            price: PythPrice {
+                price: price,
+                publish_time: unix_timestamp,
+            },
+        },
+    )]
+}
+
 pub mod pyth_oracle_abi {
 
     use super::*;

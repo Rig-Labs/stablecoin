@@ -161,6 +161,11 @@ async fn proper_stability_widthdrawl() {
         &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].trove_manager,
         300 * PRECISION,
     )
     .await

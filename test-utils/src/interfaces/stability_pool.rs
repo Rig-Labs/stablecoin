@@ -1,7 +1,12 @@
 use fuels::prelude::abigen;
 
 use crate::interfaces::community_issuance::CommunityIssuance;
+use crate::interfaces::oracle::Oracle;
+use crate::interfaces::pyth_oracle::PythCore;
+use crate::interfaces::redstone_oracle::RedstoneCore;
+use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::token::Token;
+use crate::interfaces::trove_manager::TroveManagerContract;
 use crate::interfaces::usdf_token::USDFToken;
 
 abigen!(Contract(
@@ -10,6 +15,9 @@ abigen!(Contract(
 ));
 
 pub mod stability_pool_abi {
+
+    use crate::interfaces::{pyth_oracle, redstone_oracle};
+
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},
@@ -24,6 +32,7 @@ pub mod stability_pool_abi {
         community_issuance_address: ContractId,
         protocol_manager_contract: ContractId,
         active_pool: ContractId,
+        sorted_troves: ContractId,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
@@ -34,6 +43,7 @@ pub mod stability_pool_abi {
                 community_issuance_address,
                 protocol_manager_contract,
                 active_pool,
+                sorted_troves,
             )
             .with_tx_policies(tx_params)
             .call()
@@ -146,6 +156,11 @@ pub mod stability_pool_abi {
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         fuel_token: &Token<T>,
+        sorted_troves: &SortedTroves<T>,
+        oracle: &Oracle<T>,
+        pyth_oracle: &PythCore<T>,
+        redstone_oracle: &RedstoneCore<T>,
+        trove_manager: &TroveManagerContract<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -155,7 +170,16 @@ pub mod stability_pool_abi {
             .withdraw_from_stability_pool(amount)
             .with_tx_policies(tx_params)
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
-            .with_contracts(&[usdf_token, fuel_token, community_issuance])
+            .with_contracts(&[
+                usdf_token,
+                fuel_token,
+                community_issuance,
+                sorted_troves,
+                oracle,
+                pyth_oracle,
+                redstone_oracle,
+                trove_manager,
+            ])
             .call()
             .await
     }

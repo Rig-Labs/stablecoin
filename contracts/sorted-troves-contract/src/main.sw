@@ -227,9 +227,7 @@ fn internal_valid_insert_position(
 ) -> bool {
     let trove_manager_contract = storage.asset_trove_manager.get(asset).read();
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
-    if (next_id == null_identity_address()
-        && prev_id == null_identity_address())
-    {
+    if (next_id == null_identity_address() && prev_id == null_identity_address()) {
         // `(null, null)` is a valid insert position if the list is empty
         return internal_is_empty(asset);
     } else if (prev_id == null_identity_address()) {
@@ -242,7 +240,7 @@ fn internal_valid_insert_position(
         // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
         return storage.nodes.get((prev_id, asset)).read().next_id == next_id && trove_manager.get_nominal_icr(prev_id) >= nicr && nicr >= trove_manager.get_nominal_icr(next_id);
     }
-    r
+    return false;
 }
 #[storage(read)]
 fn require_is_protocol_manager() {

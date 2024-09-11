@@ -3,7 +3,7 @@ use rand::{self, Rng};
 
 use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
-use test_utils::interfaces::sorted_troves::SortedTroves;
+use test_utils::interfaces::sorted_troves::{self, SortedTroves};
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
 use test_utils::setup::common::{
@@ -164,6 +164,7 @@ pub async fn setup(
     let wallet4 = wallets.pop().unwrap();
 
     let stability_pool = deploy_stability_pool(&wallet).await;
+    let sorted_troves = deploy_mock_trove_manager_contract(&wallet).await;
     let trove_instance = deploy_mock_trove_manager_contract(&wallet2).await;
 
     let fuel_token = deploy_token(&wallet).await;
@@ -197,6 +198,7 @@ pub async fn setup(
         stability_pool.contract_id().into(),
         fuel_token.contract_id().into(),
         active_pool.contract_id().into(),
+        sorted_troves.contract_id().into(),
     )
     .await
     .unwrap();
