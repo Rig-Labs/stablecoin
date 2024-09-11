@@ -89,7 +89,7 @@ impl FPTStaking for Contract {
             internal_send_pending_asset_gain_to_user(id);
         }
 
-        update_user_snapshots(id);
+        internal_update_user_snapshots(id);
 
         let new_stake = current_stake + amount;
         storage.stakes.insert(id, new_stake); //overwrite previous balance
@@ -112,7 +112,7 @@ impl FPTStaking for Contract {
         internal_send_usdf_gain_to_user(usdf_gain);
         internal_send_pending_asset_gain_to_user(id);
 
-        update_user_snapshots(id);
+        internal_update_user_snapshots(id);
 
         if (amount > 0) {
             let amount_to_withdraw = fm_min(amount, current_stake);
@@ -284,7 +284,7 @@ fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
 /// @dev This function updates the user's snapshots for USDF and all valid assets
 /// @param id The Identity of the user whose snapshots are being updated
 #[storage(read, write)]
-fn update_user_snapshots(id: Identity) {
+fn internal_update_user_snapshots(id: Identity) {
     storage.usdf_snapshot.insert(id, storage.f_usdf.read());
 
     let mut ind = 0;

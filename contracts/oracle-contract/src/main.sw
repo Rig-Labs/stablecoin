@@ -67,9 +67,10 @@ configurable {
     /// Precision of value returned by Redstone
     REDSTONE_PRECISION: u8 = 9,
     /// Timeout in seconds
-    TIMEOUT: u64 = 0,
     DEBUG: bool = false,
 }
+// 4 hours in seconds
+const TIMEOUT: u64 = 14400;
 
 storage {
     /// The last price from either Pyth or Redstone

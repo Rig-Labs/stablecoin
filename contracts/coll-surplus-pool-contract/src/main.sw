@@ -75,6 +75,7 @@ impl CollSurplusPool for Contract {
         storage
             .asset_amount
             .insert(asset, current_asset_amount + amount);
+        
         let mut balance = storage.balances.get((account, asset)).try_read().unwrap_or(0);
         balance += amount;
         storage.balances.insert((account, asset), balance);

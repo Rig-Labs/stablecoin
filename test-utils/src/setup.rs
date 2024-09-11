@@ -633,8 +633,6 @@ pub mod common {
             .unwrap()
             .with_REDSTONE_PRICE_ID(redstone_price_id)
             .unwrap()
-            .with_TIMEOUT(ORACLE_TIMEOUT)
-            .unwrap()
             .with_DEBUG(true)
             .unwrap()
             .with_PYTH_PRECISION(pyth_precision)
