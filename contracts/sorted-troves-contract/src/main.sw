@@ -220,25 +220,27 @@ fn internal_get_tail(asset: AssetId) -> Identity {
 }
 #[storage(read)]
 fn internal_valid_insert_position(
-    icr: u64,
+    nicr: u64,
     prev_id: Identity,
     next_id: Identity,
     asset: AssetId,
 ) -> bool {
     let trove_manager_contract = storage.asset_trove_manager.get(asset).read();
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
-    if (next_id == null_identity_address()
-        && prev_id == null_identity_address())
-    {
+    if (next_id == null_identity_address() && prev_id == null_identity_address()) {
+        // `(null, null)` is a valid insert position if the list is empty
         return internal_is_empty(asset);
     } else if (prev_id == null_identity_address()) {
-        return internal_get_head(asset) == next_id && icr >= trove_manager.get_nominal_icr(next_id);
+        // `(null, next_id)` is a valid insert position if `prev_id` is the head
+        return internal_get_head(asset) == next_id && nicr >= trove_manager.get_nominal_icr(next_id);
     } else if (next_id == null_identity_address()) {
-        return internal_get_tail(asset) == prev_id && icr <= trove_manager.get_nominal_icr(prev_id);
+        // `(prev_id, null)` is a valid insert position if `next_id` is the tail
+        return internal_get_tail(asset) == prev_id && nicr <= trove_manager.get_nominal_icr(prev_id);
     } else {
-        return storage.nodes.get((prev_id, asset)).read().next_id == next_id && trove_manager.get_nominal_icr(prev_id) >= icr && icr >= trove_manager.get_nominal_icr(next_id);
+        // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
+        return storage.nodes.get((prev_id, asset)).read().next_id == next_id && trove_manager.get_nominal_icr(prev_id) >= nicr && nicr >= trove_manager.get_nominal_icr(next_id);
     }
-    return true;
+    return false;
 }
 #[storage(read)]
 fn require_is_protocol_manager() {

@@ -7,6 +7,7 @@ abi StabilityPool {
         community_issuance_address: ContractId,
         protocol_manager: ContractId,
         active_pool: ContractId,
+        sorted_troves: ContractId,
     );
 
     #[storage(read, write)]

@@ -154,6 +154,7 @@ pub mod deployment {
             community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
             active_pool.contract_id().into(),
+            sorted_troves.contract_id().into(),
         )
         .await
         .unwrap();

@@ -6,15 +6,18 @@ use ::data_structures::{AssetContracts, Snapshots};
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::usdf_token_interface::USDFToken;
+use libraries::oracle_interface::Oracle;
 use libraries::active_pool_interface::ActivePool;
 use libraries::trove_manager_interface::TroveManager;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::community_issuance_interface::CommunityIssuance;
+use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::numbers::*;
 use libraries::fluid_math::{
     DECIMAL_PRECISION,
     fm_min,
     get_default_asset_id,
+    MCR,
     null_contract,
     null_identity_address,
 };
@@ -38,6 +41,7 @@ storage {
     usdf_contract: ContractId = ContractId::zero(),
     usdf_asset_id: AssetId = AssetId::zero(),
     community_issuance_contract: ContractId = ContractId::zero(),
+    sorted_troves_contract: ContractId = ContractId::zero(),
     // List of assets tracked by the Stability Pool
     valid_assets: StorageVec<AssetId> = StorageVec {},
     // Asset amounts held by the Stability Pool to be claimed
@@ -84,6 +88,7 @@ impl StabilityPool for Contract {
         community_issuance_contract: ContractId,
         protocol_manager: ContractId,
         active_pool_contract: ContractId,
+        sorted_troves_contract: ContractId,
     ) {
         require(
             storage
@@ -97,6 +102,7 @@ impl StabilityPool for Contract {
             .write(community_issuance_contract);
         storage.protocol_manager_address.write(protocol_manager);
         storage.active_pool_contract.write(active_pool_contract);
+        storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
         storage
             .usdf_asset_id
@@ -154,6 +160,7 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write)]
     fn withdraw_from_stability_pool(amount: u64) {
+        require_no_undercollateralized_troves();
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         require_user_has_initial_deposit(initial_deposit);
         internal_trigger_fpt_issuance();
@@ -166,6 +173,11 @@ impl StabilityPool for Contract {
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
     }
+    /*
+    * Cancels out the specified debt against the USDF contained in the Stability Pool (as far as possible)
+    * and transfers the Trove's asset collateral from ActivePool to StabilityPool.
+    * Only called by liquidation functions in the TroveManager.
+    */
     #[storage(read, write)]
     fn offset(
         debt_to_offset: u64,
@@ -451,6 +463,29 @@ fn require_caller_is_trove_manager() {
         i += 1;
     }
     require(false, "StabilityPool: Caller is not a trove manager");
+}
+#[storage(read)]
+fn require_no_undercollateralized_troves() {
+    let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().into());
+
+    let mut i = 0;
+    while i < storage.valid_assets.len() {
+        let asset = storage.valid_assets.get(i).unwrap().read();
+        let asset_contracts = storage.asset_contracts.get(asset).read();
+        let trove_manager = abi(TroveManager, asset_contracts.trove_manager.into());
+        let oracle = abi(Oracle, asset_contracts.oracle.into());
+
+        let price = oracle.get_price();
+        let first = sorted_troves.get_first(asset);
+
+        require(
+            first == Identity::Address(Address::zero()) || trove_manager
+                .get_current_icr(first, price) > MCR,
+            "StabilityPool: There are undercollateralized troves",
+        );
+
+        i += 1;
+    }
 }
 fn require_user_has_initial_deposit(deposit: u64) {
     require(deposit > 0, "StabilityPool: User has no initial deposit");

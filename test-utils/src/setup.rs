@@ -252,6 +252,7 @@ pub mod common {
             community_issuance.contract_id().into(),
             protocol_manager.contract_id().into(),
             active_pool.contract_id().into(),
+            sorted_troves.contract_id().into(),
         )
         .await
         .unwrap();
@@ -632,8 +633,6 @@ pub mod common {
             .with_REDSTONE(redstone)
             .unwrap()
             .with_REDSTONE_PRICE_ID(redstone_price_id)
-            .unwrap()
-            .with_TIMEOUT(ORACLE_TIMEOUT)
             .unwrap()
             .with_DEBUG(true)
             .unwrap()

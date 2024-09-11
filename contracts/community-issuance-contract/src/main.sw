@@ -14,7 +14,6 @@ contract;
 // It also handles the transition period between different issuance rates, allowing for
 // a smooth change in the token distribution strategy over time.
 
-
 mod utils;
 
 use libraries::community_issuance_interface::CommunityIssuance;
@@ -104,61 +103,6 @@ impl CommunityIssuance for Contract {
         storage.deployment_time.write(internal_get_current_time());
     }
 
-    /// @notice Initiates a transition period for increasing rewards
-    /// @dev Can only be called by the admin and only once
-    /// @param total_transition_time_seconds The duration of the transition period in seconds
-    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
-    /// @custom:throws "CommunityIssuance: Total transition time must be greater than 1 week" if transition time is too short
-    /// @custom:access-control Admin only
-    #[storage(read, write)]
-    fn start_rewards_increase_transition(total_transition_time_seconds: u64) {
-        internal_require_caller_is_admin();
-        require(
-            !storage
-                .has_transitioned_rewards
-                .read(),
-            "CommunityIssuance: Rewards have already transitioned",
-        );
-        require(
-            total_transition_time_seconds > ONE_WEEK_IN_SECONDS,
-            "CommunityIssuance: Total transition time must be greater than 1 week",
-        );
-        storage.has_transitioned_rewards.write(true);
-        storage
-            .time_transition_started
-            .write(internal_get_current_time());
-        storage
-            .total_transition_time_seconds
-            .write(total_transition_time_seconds);
-    }
-
-    /// @notice Allows public initiation of rewards increase transition after a period of inactivity
-    /// @dev Can be called by anyone after 1 year of inactivity since deployment
-    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
-    /// @custom:throws "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity" if called before 1 year has passed
-    #[storage(write, read)]
-    fn public_start_rewards_increase_transition_after_deadline() {
-        require(
-            !storage
-                .has_transitioned_rewards
-                .read(),
-            "CommunityIssuance: Rewards have already transitioned",
-        );
-        let time_since_started_rewards = internal_get_current_time() - storage.deployment_time.read();
-        require(
-            time_since_started_rewards > ONE_YEAR_IN_SECONDS,
-            "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity",
-        ); // 1 year
-        let total_transition_time_seconds = SIX_MONTHS_IN_SECONDS; // 6 months
-        storage.has_transitioned_rewards.write(true);
-        storage
-            .time_transition_started
-            .write(internal_get_current_time());
-        storage
-            .total_transition_time_seconds
-            .write(total_transition_time_seconds);
-    }
-
     /// @notice Issues FPT tokens based on the current issuance schedule
     /// @dev Can only be called by the Stability Pool contract
     /// @custom:access-control Stability Pool only
@@ -223,6 +167,61 @@ impl CommunityIssuance for Contract {
             "CommunityIssuance: Debugging must be enabled to set current time",
         );
         storage.debug_timestamp.write(time);
+    }
+
+    /// @notice Initiates a transition period for increasing rewards
+    /// @dev Can only be called by the admin and only once
+    /// @param total_transition_time_seconds The duration of the transition period in seconds
+    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
+    /// @custom:throws "CommunityIssuance: Total transition time must be greater than 1 week" if transition time is too short
+    /// @custom:access-control Admin only
+    #[storage(read, write)]
+    fn start_rewards_increase_transition(total_transition_time_seconds: u64) {
+        internal_require_caller_is_admin();
+        require(
+            !storage
+                .has_transitioned_rewards
+                .read(),
+            "CommunityIssuance: Rewards have already transitioned",
+        );
+        require(
+            total_transition_time_seconds > ONE_WEEK_IN_SECONDS,
+            "CommunityIssuance: Total transition time must be greater than 1 week",
+        );
+        storage.has_transitioned_rewards.write(true);
+        storage
+            .time_transition_started
+            .write(internal_get_current_time());
+        storage
+            .total_transition_time_seconds
+            .write(total_transition_time_seconds);
+    }
+
+    /// @notice Allows public initiation of rewards increase transition after a period of inactivity
+    /// @dev Can be called by anyone after 1 year of inactivity since deployment
+    /// @custom:throws "CommunityIssuance: Rewards have already transitioned" if transition has already occurred
+    /// @custom:throws "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity" if called before 1 year has passed
+    #[storage(write, read)]
+    fn public_start_rewards_increase_transition_after_deadline() {
+        require(
+            !storage
+                .has_transitioned_rewards
+                .read(),
+            "CommunityIssuance: Rewards have already transitioned",
+        );
+        let time_since_started_rewards = internal_get_current_time() - storage.deployment_time.read();
+        require(
+            time_since_started_rewards > ONE_YEAR_IN_SECONDS,
+            "CommunityIssuance: Rewards can only be publicly increased after 1 year of inactivity",
+        ); // 1 year
+        let total_transition_time_seconds = SIX_MONTHS_IN_SECONDS; // 6 months
+        storage.has_transitioned_rewards.write(true);
+        storage
+            .time_transition_started
+            .write(internal_get_current_time());
+        storage
+            .total_transition_time_seconds
+            .write(total_transition_time_seconds);
     }
 }
 

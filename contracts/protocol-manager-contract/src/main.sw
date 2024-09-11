@@ -148,6 +148,8 @@ impl ProtocolManager for Contract {
         let mut remaining_usdf = msg_amount();
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
         let mut remaining_itterations = max_itterations;
+
+        // Iterate through troves, redeeming collateral until conditions are met
         while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_itterations > 0) {
             let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
@@ -155,7 +157,11 @@ impl ProtocolManager for Contract {
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
             remaining_itterations -= 1;
             let next_user_to_check = sorted_troves.get_prev(current_borrower, contracts_cache.asset_address);
+
+            // Apply pending rewards to ensure up-to-date trove state
             trove_manager_contract.apply_pending_rewards(current_borrower);
+
+            // Attempt to redeem collateral from the current trove
             let single_redemption = trove_manager_contract.redeem_collateral_from_trove(
                 current_borrower,
                 remaining_usdf,
@@ -164,9 +170,13 @@ impl ProtocolManager for Contract {
                 upper_partial_hint,
                 lower_partial_hint,
             );
+
+            // Break if partial redemption was cancelled
             if (single_redemption.cancelled_partial) {
                 break;
             }
+
+            // Update totals and remaining USDF
             totals.total_usdf_to_redeem += single_redemption.usdf_lot;
             totals.total_asset_drawn += single_redemption.asset_lot;
             remaining_usdf -= single_redemption.usdf_lot;
@@ -182,21 +192,26 @@ impl ProtocolManager for Contract {
             current_borrower = next_borrower.0;
             index = next_borrower.1;
         }
+
         let mut total_usdf_redeemed = 0;
         let mut ind = 0;
+
+        // Process redemptions for each asset
         while (ind < assets_info.assets.len()) {
             let contracts_cache = assets_info.asset_contracts.get(ind).unwrap();
-            let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
-            let price = assets_info.prices.get(ind).unwrap();
+
             let mut totals = assets_info.redemption_totals.get(ind).unwrap();
-            // let total_usdf_supply_at_start = usdf.total_supply();
+
             if (totals.total_usdf_to_redeem == 0) {
                 ind += 1;
                 continue;
             }
+
+            // Calculate redemption fee and amount to send to redeemer
             totals.asset_fee = fm_compute_redemption_fee(totals.total_asset_drawn);
             totals.asset_to_send_to_redeemer = totals.total_asset_drawn - totals.asset_fee;
-            // Send to stakers instead of oracle when implemented
+
+            // Send redemption fee to FPT stakers
             active_pool.send_asset(
                 Identity::ContractId(fpt_staking_contract_cache),
                 totals
@@ -205,8 +220,12 @@ impl ProtocolManager for Contract {
                     .asset_address,
             );
             fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(ind).unwrap());
+
+            // Update total USDF redeemed and decrease USDF debt
             total_usdf_redeemed += totals.total_usdf_to_redeem;
             active_pool.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
+
+            // Send redeemed collateral to the user
             active_pool.send_asset(
                 msg_sender()
                     .unwrap(),
@@ -215,16 +234,19 @@ impl ProtocolManager for Contract {
                 contracts_cache
                     .asset_address,
             );
+
             ind += 1;
         }
-        // log(total_usdf_redeemed);
+
+        // Burn the redeemed USDF
         usdf
             .burn {
                 coins: total_usdf_redeemed,
                 asset_id: get_default_asset_id(usdf_contract_cache).bits(),
             }();
+
+        // Return any remaining USDF to the redeemer
         if (remaining_usdf > 0) {
-            // Return remaining usdf to redeemer
             transfer(
                 msg_sender()
                     .unwrap(),
@@ -243,6 +265,7 @@ fn require_valid_usdf_id() {
     );
 }
 
+// Get information about all assets in the system
 #[storage(read)]
 fn get_all_assets_info() -> AssetInfo {
     let mut assets: Vec<AssetId> = Vec::new();

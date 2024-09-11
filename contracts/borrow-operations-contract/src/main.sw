@@ -79,24 +79,10 @@ impl BorrowOperations for Contract {
         storage.pauser.write(msg_sender().unwrap());
         storage.is_initialized.write(true);
     }
-    #[storage(read, write)]
-    fn add_asset(
-        asset_contract: AssetId,
-        trove_manager_contract: ContractId,
-        oracle_contract: ContractId,
-    ) {
-        require_is_protocol_manager();
-        let asset_contracts = AssetContracts {
-            trove_manager: trove_manager_contract,
-            oracle: oracle_contract,
-        };
-        storage.valid_asset_ids.insert(asset_contract, true);
-        storage
-            .asset_contracts
-            .insert(asset_contract, asset_contracts);
-    }
+
     // --- Borrower Trove Operations ---
     // Open a new trove by borrowing USDF
+    // Differences from Liquity:0% frontend fees, no recovery mode, no gas compensation
     #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity) {
         require_is_not_paused();
@@ -238,8 +224,9 @@ impl BorrowOperations for Contract {
                 "Borrow Operations: cannot close trove with insufficient usdf balance",
             );
         }
-        trove_manager.close_trove(borrower);
         trove_manager.remove_stake(borrower);
+        trove_manager.close_trove(borrower);
+
         internal_repay_usdf(
             debt,
             active_pool_contract_cache,
@@ -277,10 +264,26 @@ impl BorrowOperations for Contract {
     fn get_is_paused() -> bool {
         return storage.is_paused.read();
     }
+    #[storage(read, write)]
+    fn add_asset(
+        asset_contract: AssetId,
+        trove_manager_contract: ContractId,
+        oracle_contract: ContractId,
+    ) {
+        require_is_protocol_manager();
+        let asset_contracts = AssetContracts {
+            trove_manager: trove_manager_contract,
+            oracle: oracle_contract,
+        };
+        storage.valid_asset_ids.insert(asset_contract, true);
+        storage
+            .asset_contracts
+            .insert(asset_contract, asset_contracts);
+    }
 }
 
 // --- Internal Functions ---
-
+// Note: flat borrowing fee
 fn internal_trigger_borrowing_fee(
     usdf_amount: u64,
     usdf_contract: ContractId,
@@ -289,12 +292,15 @@ fn internal_trigger_borrowing_fee(
     let usdf = abi(USDFToken, usdf_contract.bits());
     let fpt_staking = abi(FPTStaking, fpt_staking_contract.bits());
     let usdf_fee = fm_compute_borrow_fee(usdf_amount);
-    // Mint usdf to fpt staking contract
-    usdf.mint(usdf_fee, Identity::ContractId(fpt_staking_contract));
+
     //increase fpt staking rewards
     fpt_staking.increase_f_usdf(usdf_fee);
+    // Mint usdf to fpt staking contract
+    usdf.mint(usdf_fee, Identity::ContractId(fpt_staking_contract));
+
     return usdf_fee
 }
+// Note: no frontend fees
 #[storage(read)]
 fn internal_adjust_trove(
     borrower: Identity,
@@ -357,6 +363,10 @@ fn internal_adjust_trove(
     // TODO if debt increase and usdf change > 0 
     if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
+        require(
+            msg_amount() >= vars.net_debt_change,
+            "Borrow Operations: caller does not have enough balance to repay debt",
+        );
     }
 
     let new_position_res = internal_update_trove_from_adjustment(

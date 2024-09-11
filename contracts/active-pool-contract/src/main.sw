@@ -63,15 +63,7 @@ impl ActivePool for Contract {
     fn get_usdf_debt(asset_id: AssetId) -> u64 {
         return storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0);
     }
-    // --- Support multiple assets functionality ---
-    #[storage(read, write)]
-    fn add_asset(asset: AssetId, trove_manager: Identity) {
-        require_is_protocol_manager();
-        storage.valid_asset_ids.insert(asset, true);
-        storage.valid_trove_managers.insert(trove_manager, true);
-        storage.asset_amount.insert(asset, 0);
-        storage.usdf_debt_amount.insert(asset, 0);
-    }
+
     // --- Pool functionality ---
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64, asset_id: AssetId) {
@@ -94,7 +86,7 @@ impl ActivePool for Contract {
         let new_debt = storage.usdf_debt_amount.get(asset_id).read() - amount;
         storage.usdf_debt_amount.insert(asset_id, new_debt);
     }
-    // Send the collateral asset to the Default Pool
+    // Send the collateral asset to the Default Pool to manually simulate asset recieve fallback
     #[storage(read, write)]
     fn send_asset_to_default_pool(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
@@ -116,6 +108,15 @@ impl ActivePool for Contract {
         require_is_asset_id(asset_id);
         let new_amount = storage.asset_amount.get(asset_id).try_read().unwrap_or(0) + msg_amount();
         storage.asset_amount.insert(asset_id, new_amount);
+    }
+    // --- Support multiple assets functionality ---
+    #[storage(read, write)]
+    fn add_asset(asset: AssetId, trove_manager: Identity) {
+        require_is_protocol_manager();
+        storage.valid_asset_ids.insert(asset, true);
+        storage.valid_trove_managers.insert(trove_manager, true);
+        storage.asset_amount.insert(asset, 0);
+        storage.usdf_debt_amount.insert(asset, 0);
     }
 }
 // --- Helper functions ---
