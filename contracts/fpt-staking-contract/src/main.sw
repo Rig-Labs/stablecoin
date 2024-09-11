@@ -30,8 +30,8 @@ storage {
     total_fpt_staked: u64 = 0,
     protocol_manager_address: ContractId = ContractId::zero(),
     borrower_operations_address: ContractId = ContractId::zero(),
-    fpt_address: AssetId = AssetId::zero(),
-    usdf_address: AssetId = AssetId::zero(),
+    fpt_asset_id: AssetId = AssetId::zero(),
+    usdf_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
 }
 /// @title FPT Staking Contract
@@ -43,14 +43,14 @@ impl FPTStaking for Contract {
     /// @dev Can only be called once, sets up the contract for staking operations
     /// @param protocol_manager_address The address of the protocol manager contract
     /// @param borrower_operations_address The address of the borrower operations contract
-    /// @param fpt_address The asset ID of the FPT token
-    /// @param usdf_address The asset ID of the USDF token
+    /// @param fpt_asset_id The asset ID of the FPT token
+    /// @param usdf_asset_id The asset ID of the USDF token
     #[storage(read, write)]
     fn initialize(
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
-        fpt_address: AssetId,
-        usdf_address: AssetId,
+        fpt_asset_id: AssetId,
+        usdf_asset_id: AssetId,
     ) {
         require(
             storage
@@ -64,26 +64,9 @@ impl FPTStaking for Contract {
         storage
             .borrower_operations_address
             .write(borrower_operations_address);
-        storage.fpt_address.write(fpt_address);
-        storage.usdf_address.write(usdf_address);
+        storage.fpt_asset_id.write(fpt_asset_id);
+        storage.usdf_asset_id.write(usdf_asset_id);
         storage.is_initialized.write(true);
-    }
-
-    /// @notice Retrieves the current storage state of the FPT Staking contract
-    /// @dev Returns a ReadStorage struct containing key contract parameters and state variables
-    /// @return ReadStorage A struct containing f_usdf, total_fpt_staked, protocol_manager_address,
-    ///         borrower_operations_address, fpt_address, usdf_address, and is_initialized
-    #[storage(read)]
-    fn get_storage() -> ReadStorage {
-        return ReadStorage {
-            f_usdf: storage.f_usdf.read(),
-            total_fpt_staked: storage.total_fpt_staked.read(),
-            protocol_manager_address: storage.protocol_manager_address.read(),
-            borrower_operations_address: storage.borrower_operations_address.read(),
-            fpt_address: storage.fpt_address.read(),
-            usdf_address: storage.usdf_address.read(),
-            is_initialized: storage.is_initialized.read(),
-        }
     }
 
     /// @notice Allows users to stake their FPT tokens
@@ -103,7 +86,7 @@ impl FPTStaking for Contract {
             let usdf_gain = internal_get_pending_usdf_gain(id);
             internal_send_usdf_gain_to_user(usdf_gain);
 
-            internal_send_asset_gain_to_user(id);
+            internal_send_pending_asset_gain_to_user(id);
         }
 
         update_user_snapshots(id);
@@ -127,7 +110,7 @@ impl FPTStaking for Contract {
 
         let usdf_gain = internal_get_pending_usdf_gain(id);
         internal_send_usdf_gain_to_user(usdf_gain);
-        internal_send_asset_gain_to_user(id);
+        internal_send_pending_asset_gain_to_user(id);
 
         update_user_snapshots(id);
 
@@ -145,7 +128,7 @@ impl FPTStaking for Contract {
                     msg_sender()
                         .unwrap(),
                     storage
-                        .fpt_address
+                        .fpt_asset_id
                         .read(),
                     amount_to_withdraw,
                 );
@@ -231,6 +214,23 @@ impl FPTStaking for Contract {
             );
             let mut new_f_asset = storage.f_asset.get(asset_address).read() + asset_fee_per_fpt_staked;
             storage.f_asset.insert(asset_address, new_f_asset);
+        }
+    }
+
+    /// @notice Retrieves the current storage state of the FPT Staking contract
+    /// @dev Returns a ReadStorage struct containing key contract parameters and state variables
+    /// @return ReadStorage A struct containing f_usdf, total_fpt_staked, protocol_manager_address,
+    ///         borrower_operations_address, fpt_asset_id, usdf_asset_id, and is_initialized
+    #[storage(read)]
+    fn get_storage() -> ReadStorage {
+        return ReadStorage {
+            f_usdf: storage.f_usdf.read(),
+            total_fpt_staked: storage.total_fpt_staked.read(),
+            protocol_manager_address: storage.protocol_manager_address.read(),
+            borrower_operations_address: storage.borrower_operations_address.read(),
+            fpt_asset_id: storage.fpt_asset_id.read(),
+            usdf_asset_id: storage.usdf_asset_id.read(),
+            is_initialized: storage.is_initialized.read(),
         }
     }
 }
@@ -349,7 +349,7 @@ fn require_is_borrower_operations() {
 fn require_fpt_is_valid_and_non_zero() {
     require(
         storage
-            .fpt_address
+            .fpt_asset_id
             .read() == msg_asset_id(),
         "FPTStaking: FPT contract not initialized, or wrong token",
     );
@@ -364,7 +364,7 @@ fn require_fpt_is_valid_and_non_zero() {
 /// @param id The Identity of the user to receive the asset gains
 /// @custom:internal This function is intended for internal use within the contract
 #[storage(read)]
-fn internal_send_asset_gain_to_user(id: Identity) {
+fn internal_send_pending_asset_gain_to_user(id: Identity) {
     // when fuel adds a .contains or .indexOf for StorageVec, double check asset address is in valid_assets here
     let mut ind = 0;
     while ind < storage.valid_assets.len() {
@@ -384,6 +384,6 @@ fn internal_send_asset_gain_to_user(id: Identity) {
 #[storage(read)]
 fn internal_send_usdf_gain_to_user(amount: u64) {
     if (amount > 0) {
-        transfer(msg_sender().unwrap(), storage.usdf_address.read(), amount);
+        transfer(msg_sender().unwrap(), storage.usdf_asset_id.read(), amount);
     }
 }
