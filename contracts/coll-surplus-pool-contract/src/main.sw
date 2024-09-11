@@ -1,5 +1,12 @@
 contract;
-
+// This contract, CollSurplusPool, manages the surplus collateral from liquidations and redemptions in the Fluid Protocol.
+// It holds excess collateral that can be claimed by users whose troves have been liquidated or redeemed.
+//
+// Key functionalities include:
+// - Storing and managing surplus collateral for multiple asset types
+// - Allowing users to claim their surplus collateral
+// - Interfacing with other core contracts like BorrowOperations and TroveManager
+// - Maintaining access control to ensure only authorized contracts can interact with it
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
 use std::{
     asset::transfer,

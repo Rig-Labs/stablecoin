@@ -33,6 +33,10 @@ pub fn internal_get_cumulative_issuance_fraction(current_time: u64, deployment_t
     let time_passed_in_minutes = (current_time - deployment_time) / SECONDS_IN_ONE_MINUTE;
     let power = dec_pow(ISSUANCE_FACTOR, time_passed_in_minutes);
     let cumulative_issuance_fraction = U128::from_u64(DECIMAL_PRECISION) - power;
+    require(
+        cumulative_issuance_fraction <= U128::from_u64(DECIMAL_PRECISION),
+        "CommunityIssuance: Cumulative issuance fraction is greater than DECIMAL_PRECISION",
+    );
     return cumulative_issuance_fraction.as_u64().unwrap()
 }
 // ad u128 to production function
