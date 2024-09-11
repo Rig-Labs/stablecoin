@@ -69,89 +69,94 @@ configurable {
     /// Timeout in seconds
     DEBUG: bool = false,
 }
-// 4 hours in seconds
+// Timeout period for considering oracle data as stale (4 hours in seconds)
 const TIMEOUT: u64 = 14400;
 
 storage {
-    /// The last price from either Pyth or Redstone
+    /// The last valid price from either Pyth or Redstone
     price: Price = Price {
         value: 0,
         time: 0,
     },
-    // Workaround for testing timestamps
+    // Used for simulating different timestamps during testing
     debug_timestamp: u64 = 0,
 }
 
 impl Oracle for Contract {
     #[storage(read, write)]
     fn get_price() -> u64 {
-        // Fetch the current time and price to evaluate if a price may be stale
+        // Determine the current timestamp based on debug mode
         let current_time = match DEBUG {
             true => storage.debug_timestamp.read(),
             false => timestamp(),
         };
+        // Read the last stored valid price
         let last_price = storage.price.read();
 
-        // Query the primary module for its price feed
+        // Step 1: Query the Pyth oracle (primary source)
         let pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
 
-        // If the primary module is determined to be stale then fallback to the next best metric
+        // Check if Pyth data is stale
         if current_time - pyth_price.publish_time > TIMEOUT {
-            // Query the fallback module for its price
-
-            // Define the redstone price feed arguments
+            // Step 2: Pyth is stale, query Redstone oracle (fallback source)
             let mut feed = Vec::with_capacity(1);
             feed.push(REDSTONE_PRICE_ID);
 
-            // Fuel Bug: trait coherence
+            // Fuel Bug workaround: trait coherence
             let id = REDSTONE.bits();
             let redstone = abi(RedstoneCore, id);
             let redstone_prices = redstone.read_prices(feed);
             let redstone_timestamp = redstone.read_timestamp();
             let redstone_price = convert_precision(redstone_prices.get(0).unwrap().to_u64(), REDSTONE_PRECISION);
 
-            // if the fallback oracle is also stale then compare the oracle times and the last price 
-            // to determine which value is the latest
+            // Check if Redstone data is also stale
             if current_time - redstone_timestamp > TIMEOUT {
-                // redstone is also stale so use the latest price we have available
+                // Both oracles are stale, use the most recent data available
                 if redstone_timestamp <= pyth_price.publish_time {
+                    // Pyth data is more recent
                     if last_price.time < pyth_price.publish_time {
                         let price: Price = pyth_price.into();
                         storage.price.write(price);
                         return price.value;
                     }
                 } else {
+                    // Redstone data is more recent
                     if last_price.time < redstone_timestamp {
                         let price = Price::new(redstone_price, redstone_timestamp);
                         storage.price.write(price);
                         return price.value;
                     }
                 }
+                // If both new prices are older than the last stored price, return the last price
                 return last_price.value;
             }
 
-            // oracle is live so compare if it has the latest data
+            // Redstone data is fresh, update if it's newer than the last stored price
             if last_price.time < redstone_timestamp {
                 let price = Price::new(redstone_price, redstone_timestamp);
                 storage.price.write(price);
                 return price.value;
             }
 
+            // Otherwise, return the last stored price
             return last_price.value;
         }
 
-        // oracle is live so compare if it has the latest data
+        // Pyth data is fresh, update if it's newer than the last stored price
         if last_price.time < pyth_price.publish_time {
             let price: Price = pyth_price.into();
             storage.price.write(price);
             return price.value;
         }
 
+        // If the new Pyth price is older than the last stored price, return the last price
         return last_price.value;
     }
 
     #[storage(write)]
     fn set_debug_timestamp(timestamp: u64) {
+        // Allow setting a custom timestamp for testing, but only in debug mode
+        require(DEBUG, "ORACLE: Debug is not enabled");
         storage.debug_timestamp.write(timestamp);
     }
 }
