@@ -49,6 +49,7 @@ storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     assets: StorageVec<AssetId> = StorageVec {},
     is_initialized: bool = false,
+    lock_redeem_collateral: bool = false,
 }
 impl ProtocolManager for Contract {
     #[storage(read, write)]
@@ -126,13 +127,21 @@ impl ProtocolManager for Contract {
     fn owner() -> State {
         storage.owner.read()
     }
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn redeem_collateral(
         max_itterations: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     ) {
+        require(
+            storage
+                .lock_redeem_collateral
+                .read() == false,
+            "ProtocolManager: Redeem collateral is locked",
+        );
+        storage.lock_redeem_collateral.write(true);
+
         require_valid_usdf_id();
         require(
             msg_amount() > 0,
@@ -254,6 +263,8 @@ impl ProtocolManager for Contract {
                 remaining_usdf,
             );
         }
+
+        storage.lock_redeem_collateral.write(false);
     }
 }
 // --- Helper functions ---

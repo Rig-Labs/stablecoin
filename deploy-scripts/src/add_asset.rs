@@ -301,9 +301,6 @@ pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUn
         .unwrap();
     let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
 
-    // TODO: remove this since it's redundant with fpt token
-    let fpt = Token::new(fpt_token_contract_id.clone(), wallet.clone());
-
     let asset_contracts = vec![];
 
     let protocol_contracts = ProtocolContracts {

@@ -21,10 +21,10 @@ abi BorrowOperations {
     #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity);
 
-    #[storage(read)]
+    #[storage(read, write)]
     fn withdraw_coll(
         amount: u64,
         upper_hint: Identity,
@@ -32,7 +32,7 @@ abi BorrowOperations {
         asset: AssetId,
     );
 
-    #[storage(read)]
+    #[storage(read, write)]
     fn withdraw_usdf(
         amount: u64,
         upper_hint: Identity,
@@ -40,10 +40,10 @@ abi BorrowOperations {
         asset: AssetId,
     );
 
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn repay_usdf(upper_hint: Identity, lower_hint: Identity, asset: AssetId);
 
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn close_trove(asset: AssetId);
 
     #[storage(read)]
