@@ -80,6 +80,10 @@ storage {
     last_asset_error_offset: StorageMap<AssetId, U128> = StorageMap::<AssetId, U128> {},
     last_usdf_error_offset: U128 = U128::from_u64(0),
     is_initialized: bool = false,
+    // Locks to prevent reentrancy for functions not using Checks-Effects-Interactions pattern
+    lock_provide_to_stability_pool: bool = false,
+    lock_withdraw_from_stability_pool: bool = false,
+    lock_offset: bool = false,
 }
 impl StabilityPool for Contract {
     #[storage(read, write)]
@@ -137,11 +141,18 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write), payable]
     fn provide_to_stability_pool() {
+        require(
+            storage
+                .lock_provide_to_stability_pool
+                .read() == false,
+            "StabilityPool: Contract is locked",
+        );
+        storage.lock_provide_to_stability_pool.write(true);
         require_usdf_is_valid_and_non_zero();
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         internal_trigger_fpt_issuance();
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-
+        // loss only for events
         let usdf_loss = initial_deposit - compounded_usdf_deposit;
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap());
@@ -150,6 +161,7 @@ impl StabilityPool for Contract {
         storage
             .total_usdf_deposits
             .write(storage.total_usdf_deposits.read() + msg_amount());
+        storage.lock_provide_to_stability_pool.write(false);
     }
     /*
     * - Triggers a FPT issuance, based on time passed since the last issuance. The FPT issuance is shared between *all* depositors
@@ -160,6 +172,14 @@ impl StabilityPool for Contract {
     */
     #[storage(read, write)]
     fn withdraw_from_stability_pool(amount: u64) {
+        require(
+            storage
+                .lock_withdraw_from_stability_pool
+                .read() == false,
+            "StabilityPool: Withdraw is locked",
+        );
+        storage.lock_withdraw_from_stability_pool.write(true);
+
         require_no_undercollateralized_troves();
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         require_user_has_initial_deposit(initial_deposit);
@@ -172,6 +192,8 @@ impl StabilityPool for Contract {
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
+
+        storage.lock_withdraw_from_stability_pool.write(false);
     }
     /*
     * Cancels out the specified debt against the USDF contained in the Stability Pool (as far as possible)
@@ -184,9 +206,18 @@ impl StabilityPool for Contract {
         coll_to_offset: u64,
         asset_contract: AssetId,
     ) {
+        require(
+            storage
+                .lock_offset
+                .read() == false,
+            "StabilityPool: Offset is locked",
+        );
+        storage.lock_offset.write(true);
+
         require_caller_is_trove_manager();
         let total_usdf = storage.total_usdf_deposits.read();
         if total_usdf == 0 || debt_to_offset == 0 {
+            storage.lock_offset.write(false);
             return;
         }
         internal_trigger_fpt_issuance();
@@ -203,6 +234,8 @@ impl StabilityPool for Contract {
             asset_contract,
             asset_contractes_cache,
         );
+
+        storage.lock_offset.write(false);
     }
     #[storage(read)]
     fn get_asset(asset_contract: AssetId) -> u64 {

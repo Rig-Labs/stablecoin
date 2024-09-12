@@ -48,6 +48,8 @@ storage {
     is_initialized: bool = false,
     is_paused: bool = false,
     pauser: Identity = Identity::Address(Address::zero()),
+    lock_close_trove: bool = false,
+    lock_internal_adjust_trove: bool = false,
 }
 impl BorrowOperations for Contract {
     #[storage(read, write)]
@@ -127,7 +129,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Add collateral to an existing trove
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn add_coll(upper_hint: Identity, lower_hint: Identity) {
         require_valid_asset_id();
         internal_adjust_trove(
@@ -143,7 +145,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Withdraw collateral from an existing trove
-    #[storage(read)]
+    #[storage(read, write)]
     fn withdraw_coll(
         amount: u64,
         upper_hint: Identity,
@@ -163,7 +165,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Withdraw USDF from an existing trove
-    #[storage(read)]
+    #[storage(read, write)]
     fn withdraw_usdf(
         amount: u64,
         upper_hint: Identity,
@@ -184,7 +186,7 @@ impl BorrowOperations for Contract {
         );
     }
     // Repay USDF for an existing trove
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn repay_usdf(
         upper_hint: Identity,
         lower_hint: Identity,
@@ -204,14 +206,27 @@ impl BorrowOperations for Contract {
         );
     }
     // Close an existing trove
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn close_trove(asset_contract: AssetId) {
+        require(
+            storage
+                .lock_close_trove
+                .read() == false,
+            "BorrowOperations: Close trove is locked",
+        );
+        storage.lock_close_trove.write(true);
+
+        // Read all storage values at the beginning
         let asset_contracts_cache = storage.asset_contracts.get(asset_contract).read();
         let usdf_contract_cache = storage.usdf_contract.read();
         let active_pool_contract_cache = storage.active_pool_contract.read();
+        let usdf_asset_id = storage.usdf_asset_id.read();
+
         let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.bits());
         let active_pool = abi(ActivePool, active_pool_contract_cache.bits());
         let borrower = msg_sender().unwrap();
+
+        // Checks
         require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
         trove_manager.apply_pending_rewards(borrower);
         let coll = trove_manager.get_trove_coll(borrower);
@@ -224,9 +239,12 @@ impl BorrowOperations for Contract {
                 "Borrow Operations: cannot close trove with insufficient usdf balance",
             );
         }
+
+        // Effects
         trove_manager.remove_stake(borrower);
         trove_manager.close_trove(borrower);
 
+        // Interactions
         internal_repay_usdf(
             debt,
             active_pool_contract_cache,
@@ -236,8 +254,10 @@ impl BorrowOperations for Contract {
         active_pool.send_asset(borrower, coll, asset_contract);
         if (debt < msg_amount()) {
             let excess_usdf_returned = msg_amount() - debt;
-            transfer(borrower, storage.usdf_asset_id.read(), excess_usdf_returned);
+            transfer(borrower, usdf_asset_id, excess_usdf_returned);
         }
+
+        storage.lock_close_trove.write(false);
     }
     // Claim collateral from liquidations
     #[storage(read)]
@@ -301,7 +321,7 @@ fn internal_trigger_borrowing_fee(
     return usdf_fee
 }
 // Note: no frontend fees
-#[storage(read)]
+#[storage(read, write)]
 fn internal_adjust_trove(
     borrower: Identity,
     asset_coll_added: u64,
@@ -312,6 +332,14 @@ fn internal_adjust_trove(
     lower_hint: Identity,
     asset: AssetId,
 ) {
+    require(
+        storage
+            .lock_internal_adjust_trove
+            .read() == false,
+        "BorrowOperations: Internal adjust trove is locked",
+    );
+    storage.lock_internal_adjust_trove.write(true);
+
     let asset_contracts_cache = storage.asset_contracts.get(asset).read();
     let usdf_contract_cache = storage.usdf_contract.read();
     let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
@@ -399,6 +427,8 @@ fn internal_adjust_trove(
         active_pool_contract_cache,
         usdf_contract_cache,
     );
+
+    storage.lock_internal_adjust_trove.write(false);
 }
 
 #[storage(read)]

@@ -22,7 +22,7 @@ abi ProtocolManager {
     );
     #[storage(read, write)]
     fn renounce_admin();
-    #[storage(read), payable]
+    #[storage(read, write), payable]
     fn redeem_collateral(
         max_itterations: u64,
         partial_redemption_hint: u64,

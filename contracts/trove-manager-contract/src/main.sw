@@ -68,6 +68,9 @@ storage {
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap::<Identity, RewardSnapshot> {},
     is_initialized: bool = false,
+    lock_internal_close_trove: bool = false,
+    lock_internal_batch_liquidate_troves: bool = false,
+    lock_internal_redeem_collateral_from_trove: bool = false,
 }
 impl TroveManager for Contract {
     #[storage(read, write)]
@@ -299,6 +302,7 @@ fn internal_update_trove_reward_snapshots(id: Identity) {
 #[storage(read, write)]
 fn internal_apply_pending_rewards(borrower: Identity) {
     if (internal_has_pending_rewards(borrower)) {
+        require_trove_is_active(borrower);
         let pending_asset = internal_get_pending_asset_reward(borrower);
         let pending_usdf = internal_get_pending_usdf_reward(borrower);
         let mut trove = storage.troves.get(borrower).read();
@@ -311,6 +315,14 @@ fn internal_apply_pending_rewards(borrower: Identity) {
 }
 #[storage(read, write)]
 fn internal_close_trove(id: Identity, close_status: Status) {
+    require(
+        storage
+            .lock_internal_close_trove
+            .read() == false,
+        "TroveManager: Internal close trove is locked",
+    );
+    storage.lock_internal_close_trove.write(true);
+
     require(
         close_status != Status::NonExistent || close_status != Status::Active,
         "TroveManager: Invalid status",
@@ -335,6 +347,8 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     storage.reward_snapshots.insert(id, rewards_snapshot);
     internal_remove_trove_owner(id, trove_owner_array_length);
     sorted_troves.remove(id, asset_contract_cache);
+
+    storage.lock_internal_close_trove.write(false);
 }
 #[storage(read, write)]
 fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u64) {
@@ -348,10 +362,13 @@ fn internal_remove_trove_owner(_borrower: Identity, _trove_array_owner_length: u
     let length = _trove_array_owner_length;
     let indx_last = length - 1;
     require(index <= indx_last, "TroveManager: Trove does not exist");
+
     let address_to_move = storage.trove_owners.get(indx_last).unwrap().read();
+
     let mut trove_to_move = storage.troves.get(address_to_move).read();
     trove_to_move.array_index = index;
     storage.troves.insert(address_to_move, trove_to_move);
+
     let _ = storage.trove_owners.swap_remove(index);
 }
 #[storage(read)]
@@ -368,6 +385,14 @@ fn internal_batch_liquidate_troves(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
+    require(
+        storage
+            .lock_internal_batch_liquidate_troves
+            .read() == false,
+        "TroveManager: Internal batch liquidate troves is locked",
+    );
+    storage.lock_internal_batch_liquidate_troves.write(true);
+
     require(
         borrowers
             .len() > 0,
@@ -427,6 +452,8 @@ fn internal_batch_liquidate_troves(
         totals
             .total_coll_to_redistribute,
     );
+
+    storage.lock_internal_batch_liquidate_troves.write(false);
 }
 #[storage(read)]
 fn require_caller_is_borrow_operations_contract() {
@@ -500,6 +527,7 @@ fn internal_get_totals_from_batch_liquidate(
     while i < borrowers.len() {
         vars.borrower = borrowers.get(i).unwrap();
         vars.icr = internal_get_current_icr(vars.borrower, price);
+        // If the trove is undercollateralized, liquidate it
         if vars.icr < MCR {
             let position = internal_get_entire_debt_and_coll(vars.borrower);
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
@@ -587,6 +615,7 @@ fn internal_apply_liquidation(
     lower_partial_hint: Identity,
 ) {
     let asset_contract_cache = storage.asset_contract.read();
+    // partial liquidation reinserted into sorted troves
     if (liquidation_values.is_partial_liquidation) {
         let mut trove = storage.troves.get(borrower).read();
         trove.coll = liquidation_values.remaining_trove_coll;
@@ -603,6 +632,7 @@ fn internal_apply_liquidation(
             asset_contract_cache,
         );
     } else {
+        // liquidation of entire trove, sends the surplus to the coll surplus pool
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().into());
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByLiquidation);
@@ -748,6 +778,16 @@ fn internal_redeem_collateral_from_trove(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) -> SingleRedemptionValues {
+    require(
+        storage
+            .lock_internal_redeem_collateral_from_trove
+            .read() == false,
+        "TroveManager: Internal redeem collateral from trove is locked",
+    );
+    storage
+        .lock_internal_redeem_collateral_from_trove
+        .write(true);
+
     let mut single_redemption_values = SingleRedemptionValues::default();
     let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
@@ -781,6 +821,10 @@ fn internal_redeem_collateral_from_trove(
         storage.troves.insert(borrower, trove);
         let _ = internal_update_stake_and_total_stakes(borrower);
     }
+
+    storage
+        .lock_internal_redeem_collateral_from_trove
+        .write(false);
     return single_redemption_values;
 }
 #[storage(read, write)]
@@ -803,8 +847,4 @@ fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amoun
         asset_amount,
         asset_contract,
     );
-}
-#[storage(read)]
-fn require_valid_usdf_id() {
-    // require(msg_asset_id() == storage.usdf_contract.read(), "TM: Invalid asset being transfered");
 }
