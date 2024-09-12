@@ -45,7 +45,7 @@ pub struct AssetContracts<T: Account> {
 
 pub struct ExistingAssetContracts {
     pub asset: ContractId,
-    pub oracle: ContractId,
+    pub asset_id: AssetId,
     pub pyth_oracle: ContractId,
     pub pyth_price_id: Bits256,
     pub pyth_precision: u8,

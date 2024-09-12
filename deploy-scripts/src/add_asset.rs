@@ -1,29 +1,21 @@
 use crate::deploy::deployment::*;
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::{Bits256, Identity, U256};
-use pbr::ProgressBar;
+use fuels::types::{Bits256, U256};
 use serde_json::json;
 use std::str::FromStr;
 use std::{fs::File, io::Write};
-use test_utils::data_structures::{
-    AssetContracts, ExistingAssetContracts, ProtocolContracts, PRECISION,
-};
+use test_utils::data_structures::{AssetContracts, ExistingAssetContracts, ProtocolContracts};
 use test_utils::interfaces::oracle::oracle_abi;
-use test_utils::interfaces::protocol_manager::protocol_manager_abi;
-use test_utils::interfaces::pyth_oracle::{
-    pyth_oracle_abi, PythPrice, PythPriceFeed, PYTH_TIMESTAMP,
-};
-use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id};
-use test_utils::interfaces::token::token_abi;
-use test_utils::interfaces::trove_manager::trove_manager_abi;
+use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
+use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
+
 use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
-    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
-    protocol_manager::ProtocolManager, pyth_oracle::PythCore, redstone_oracle::RedstoneCore,
-    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
+    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
+    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
+    vesting::VestingContract,
 };
 use test_utils::setup::common::*;
 
@@ -36,7 +28,30 @@ pub async fn add_asset() {
 
     let core_contracts = load_core_contracts(wallet.clone());
 
-    let asset_contracts = deploy_asset_contracts(&wallet, &None).await;
+    // you will need to set the existing asset contracts here manually and uncomment the below line
+    let mut existing_asset_to_initialize: Option<ExistingAssetContracts> =
+        Some(ExistingAssetContracts {
+            asset: ContractId::zeroed(),
+            asset_id: AssetId::zeroed(),
+            pyth_oracle: ContractId::zeroed(),
+            pyth_precision: 9,
+            pyth_price_id: Bits256::zeroed(),
+            redstone_oracle: ContractId::zeroed(),
+            redstone_price_id: U256::zero(),
+            redstone_precision: 9,
+        });
+    existing_asset_to_initialize = None;
+
+    match existing_asset_to_initialize {
+        Some(_) => {
+            println!("Existing asset to initialize");
+        }
+        None => {
+            println!("Initializing new asset");
+        }
+    }
+    // Deploy the asset contracts
+    let asset_contracts = deploy_asset_contracts(&wallet, &existing_asset_to_initialize).await;
 
     query_oracles(&asset_contracts).await;
 
@@ -55,56 +70,6 @@ pub async fn add_asset() {
     write_asset_contracts_to_file(vec![asset_contracts]);
 
     println!("Asset contracts added successfully");
-}
-
-pub async fn initialize_asset<T: Account>(
-    core_protocol_contracts: &ProtocolContracts<T>,
-    asset_contracts: &AssetContracts<T>,
-) -> () {
-    println!("Initializing asset contracts...");
-    let mut pb = ProgressBar::new(2);
-
-    let _ = trove_manager_abi::initialize(
-        &asset_contracts.trove_manager,
-        core_protocol_contracts
-            .borrow_operations
-            .contract_id()
-            .into(),
-        core_protocol_contracts.sorted_troves.contract_id().into(),
-        asset_contracts.oracle.contract_id().into(),
-        core_protocol_contracts.stability_pool.contract_id().into(),
-        core_protocol_contracts.default_pool.contract_id().into(),
-        core_protocol_contracts.active_pool.contract_id().into(),
-        core_protocol_contracts
-            .coll_surplus_pool
-            .contract_id()
-            .into(),
-        core_protocol_contracts.usdf.contract_id().into(),
-        asset_contracts.asset_id,
-        core_protocol_contracts
-            .protocol_manager
-            .contract_id()
-            .into(),
-    )
-    .await;
-    pb.inc();
-
-    let _ = protocol_manager_abi::register_asset(
-        &core_protocol_contracts.protocol_manager,
-        asset_contracts.asset_id,
-        asset_contracts.trove_manager.contract_id().into(),
-        asset_contracts.oracle.contract_id().into(),
-        &core_protocol_contracts.borrow_operations,
-        &core_protocol_contracts.stability_pool,
-        &core_protocol_contracts.usdf,
-        &core_protocol_contracts.fpt_staking,
-        &core_protocol_contracts.coll_surplus_pool,
-        &core_protocol_contracts.default_pool,
-        &core_protocol_contracts.active_pool,
-        &core_protocol_contracts.sorted_troves,
-    )
-    .await;
-    pb.inc();
 }
 
 pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {

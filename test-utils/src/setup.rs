@@ -655,11 +655,6 @@ pub mod common {
         match existing_contracts {
             Some(contracts) => {
                 pb.finish();
-                let asset = Token::new(contracts.asset, wallet.clone());
-                let asset_id: AssetId = asset
-                    .contract_id()
-                    .asset_id(&AssetId::zeroed().into())
-                    .into();
 
                 let oracle = deploy_oracle(
                     &wallet,
@@ -679,9 +674,9 @@ pub mod common {
                         contracts.redstone_oracle,
                         wallet.clone(),
                     ),
-                    asset,
                     trove_manager,
-                    asset_id,
+                    asset: Token::new(contracts.asset, wallet.clone()),
+                    asset_id: contracts.asset_id,
                     pyth_price_id: contracts.pyth_price_id,
                     pyth_precision: contracts.pyth_precision,
                     redstone_price_id: contracts.redstone_price_id,
