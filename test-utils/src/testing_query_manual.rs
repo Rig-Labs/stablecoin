@@ -42,7 +42,6 @@ pub async fn testing_query() {
         .parse()
         .expect("Invalid ID");
 
-    // TODO: each oracle needs to have its own ID rather than the same one
     let oracle = Oracle::new(id.clone(), wallet.clone());
     let pyth = PythCore::new(id.clone(), wallet.clone());
     let redstone = RedstoneCore::new(id, wallet.clone());

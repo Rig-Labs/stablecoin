@@ -7,9 +7,9 @@ use super::interfaces::{
     fpt_staking::FPTStaking,
     fpt_token::FPTToken,
     hint_helper::HintHelper,
-    oracle::{Oracle, OracleConfigurables, ORACLE_TIMEOUT},
+    oracle::{Oracle, OracleConfigurables},
     protocol_manager::ProtocolManager,
-    pyth_oracle::{PythCore, DEFAULT_PYTH_PRICE_ID},
+    pyth_oracle::{PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::SortedTroves,
     stability_pool::StabilityPool,
@@ -24,6 +24,7 @@ use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
 pub mod common {
     use super::*;
     use crate::{
+        data_structures::{AssetContracts, ExistingAssetContracts, ProtocolContracts, PRECISION},
         interfaces::{
             active_pool::active_pool_abi,
             borrow_operations::borrow_operations_abi,
@@ -32,8 +33,10 @@ pub mod common {
             default_pool::default_pool_abi,
             fpt_staking::fpt_staking_abi,
             fpt_token::fpt_token_abi,
+            oracle::oracle_abi,
             protocol_manager::protocol_manager_abi,
             pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
+            redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id},
             sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi,
             token::token_abi,
@@ -48,49 +51,10 @@ pub mod common {
         programs::responses::CallResponse,
         types::{Bits256, ContractId, Identity, U256},
     };
+    use pbr::ProgressBar;
     // use pbr::ProgressBar;
     use rand::Rng;
     use std::env;
-
-    pub struct ProtocolContracts<T: Account> {
-        pub borrow_operations: BorrowOperations<T>,
-        pub usdf: USDFToken<T>,
-        pub stability_pool: StabilityPool<T>,
-        pub protocol_manager: ProtocolManager<T>,
-        pub asset_contracts: Vec<AssetContracts<T>>,
-        pub fpt_staking: FPTStaking<T>,
-        pub coll_surplus_pool: CollSurplusPool<T>,
-        pub sorted_troves: SortedTroves<T>,
-        pub default_pool: DefaultPool<T>,
-        pub active_pool: ActivePool<T>,
-        pub fpt_token: FPTToken<T>,
-        pub community_issuance: CommunityIssuance<T>,
-        pub vesting_contract: VestingContract<T>,
-    }
-
-    pub struct AssetContracts<T: Account> {
-        pub asset: Token<T>,
-        pub oracle: Oracle<T>,
-        pub mock_pyth_oracle: PythCore<T>,
-        pub mock_redstone_oracle: RedstoneCore<T>,
-        pub trove_manager: TroveManagerContract<T>,
-        pub asset_id: AssetId,
-        pub pyth_price_id: Bits256,
-        pub pyth_precision: u8,
-        pub redstone_price_id: U256,
-        pub redstone_precision: u8,
-    }
-
-    pub struct ExistingAssetContracts {
-        pub asset: ContractId,
-        pub oracle: ContractId,
-        pub pyth_oracle: ContractId,
-        pub pyth_price_id: Bits256,
-        pub pyth_precision: u8,
-        pub redstone_oracle: ContractId,
-        pub redstone_price_id: U256,
-        pub redstone_precision: u8,
-    }
 
     pub async fn setup_protocol(
         max_size: u64,
@@ -116,276 +80,210 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let contracts = deploy_and_initialize_all(
-            wallet.clone(),
-            max_size,
-            false,
-            deploy_2nd_asset,
-            use_test_fpt,
+        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt).await;
+
+        // Add the first asset (Fuel)
+        let mock_asset_contracts = add_asset(
+            &mut contracts,
+            &wallet,
+            "MOCK".to_string(),
+            "MCK".to_string(),
         )
         .await;
+        contracts.asset_contracts.push(mock_asset_contracts);
+
+        // Add the second asset if required, we often don't deploy the second asset to save on test time
+        if deploy_2nd_asset {
+            let rock_asset_contracts = add_asset(
+                &mut contracts,
+                &wallet,
+                "ROCK".to_string(),
+                "RCK".to_string(),
+            )
+            .await;
+            contracts.asset_contracts.push(rock_asset_contracts);
+        }
 
         (contracts, wallet, wallets)
     }
 
-    pub async fn deploy_and_initialize_all(
-        wallet: WalletUnlocked,
-        _max_size: u64,
-        is_testnet: bool,
-        deploy_2nd_asset: bool,
+    pub async fn deploy_core_contracts(
+        wallet: &WalletUnlocked,
         use_test_fpt: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
-        println!("Deploying parent contracts...");
-        // let mut pb = ProgressBar::new(12);
+        println!("Deploying core contracts...");
 
-        let borrow_operations = deploy_borrow_operations(&wallet).await;
-        // pb.inc();
-
-        let usdf = deploy_usdf_token(&wallet).await;
-        // pb.inc();
-
-        let stability_pool = deploy_stability_pool(&wallet).await;
-        // pb.inc();
-
-        let fpt_staking = deploy_fpt_staking(&wallet).await;
-        // pb.inc();
-
-        let community_issuance = deploy_community_issuance(&wallet).await;
-        // pb.inc();
-
-        let mock_fpt_token = deploy_token(&wallet).await;
-
-        token_abi::initialize(
-            &mock_fpt_token,
-            1_000_000_000,
-            &Identity::Address(wallet.address().into()),
-            "FPT Token".to_string(),
-            "FPT".to_string(),
-        )
-        .await
-        .unwrap();
-
+        let borrow_operations = deploy_borrow_operations(wallet).await;
+        let usdf = deploy_usdf_token(wallet).await;
+        let stability_pool = deploy_stability_pool(wallet).await;
+        let fpt_staking = deploy_fpt_staking(wallet).await;
+        let community_issuance = deploy_community_issuance(wallet).await;
         let fpt_token = if use_test_fpt {
-            FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
+            deploy_test_fpt_token(wallet).await
         } else {
-            deploy_fpt_token(&wallet).await
+            deploy_fpt_token(wallet).await
         };
+        let protocol_manager = deploy_protocol_manager(wallet).await;
+        let coll_surplus_pool = deploy_coll_surplus_pool(wallet).await;
+        let default_pool = deploy_default_pool(wallet).await;
+        let active_pool = deploy_active_pool(wallet).await;
+        let sorted_troves = deploy_sorted_troves(wallet).await;
+        let vesting_contract = deploy_vesting_contract(wallet).await;
 
-        let protocol_manager = deploy_protocol_manager(&wallet).await;
-        // pb.inc();
+        let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
 
-        let coll_surplus_pool = deploy_coll_surplus_pool(&wallet).await;
-        // pb.inc();
-
-        let default_pool = deploy_default_pool(&wallet).await;
-        // pb.inc();
-
-        let active_pool = deploy_active_pool(&wallet).await;
-        // pb.inc();
-
-        let sorted_troves = deploy_sorted_troves(&wallet).await;
-
-        let vesting_contract = deploy_vesting_contract(&wallet).await;
-        // pb.inc();
-
-        // pb.finish_println("Parent Contracts deployed");
-
-        if is_testnet {
-            println!("Borrow operations: {}", borrow_operations.contract_id());
-            println!("Usdf: {}", usdf.contract_id());
-            println!("Stability Pool: {}", stability_pool.contract_id());
-            println!("Protocol Manager: {}", protocol_manager.contract_id());
-            println!("FPT Staking: {}", fpt_staking.contract_id());
-            println!("FPT Token: {}", fpt_token.contract_id());
-            println!("Community Issuance: {}", community_issuance.contract_id());
-            println!("Coll Surplus Pool: {}", coll_surplus_pool.contract_id());
-            println!("Default Pool: {}", default_pool.contract_id());
-        }
-
-        // let mut pb = ProgressBar::new(12);
-
-        let mut asset_contracts: Vec<AssetContracts<WalletUnlocked>> = vec![];
-
-        if !use_test_fpt {
-            fpt_token_abi::initialize(&fpt_token, &vesting_contract, &community_issuance).await;
-        }
-
-        community_issuance_abi::initialize(
-            &community_issuance,
-            stability_pool.contract_id().into(),
-            fpt_token
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
-            &Identity::Address(wallet.address().into()),
-            true,
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        usdf_token_abi::initialize(
-            &usdf,
-            protocol_manager.contract_id().into(),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            Identity::ContractId(borrow_operations.contract_id().into()),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        borrow_operations_abi::initialize(
-            &borrow_operations,
-            usdf.contract_id().into(),
-            fpt_staking.contract_id().into(),
-            protocol_manager.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
-            active_pool.contract_id().into(),
-            sorted_troves.contract_id().into(),
-        )
-        .await;
-        // pb.inc();
-
-        stability_pool_abi::initialize(
-            &stability_pool,
-            usdf.contract_id().into(),
-            community_issuance.contract_id().into(),
-            protocol_manager.contract_id().into(),
-            active_pool.contract_id().into(),
-            sorted_troves.contract_id().into(),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        fpt_staking_abi::initialize(
-            &fpt_staking,
-            protocol_manager.contract_id().into(),
-            borrow_operations.contract_id().into(),
-            fpt_token
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
-            usdf.contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
-        )
-        .await;
-        // pb.inc();
-
-        protocol_manager_abi::initialize(
-            &protocol_manager,
-            borrow_operations.contract_id().into(),
-            stability_pool.contract_id().into(),
-            fpt_staking.contract_id().into(),
-            usdf.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
-            default_pool.contract_id().into(),
-            active_pool.contract_id().into(),
-            sorted_troves.contract_id().into(),
-            Identity::Address(wallet.address().into()),
-        )
-        .await;
-        // pb.inc();
-
-        coll_surplus_pool_abi::initialize(
-            &coll_surplus_pool,
-            borrow_operations.contract_id().into(),
-            Identity::ContractId(protocol_manager.contract_id().into()),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        default_pool_abi::initialize(
-            &default_pool,
-            Identity::ContractId(protocol_manager.contract_id().into()),
-            active_pool.contract_id().into(),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        active_pool_abi::initialize(
-            &active_pool,
-            Identity::ContractId(borrow_operations.contract_id().into()),
-            Identity::ContractId(stability_pool.contract_id().into()),
-            default_pool.contract_id().into(),
-            Identity::ContractId(protocol_manager.contract_id().into()),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        sorted_troves_abi::initialize(
-            &sorted_troves,
-            100,
-            protocol_manager.contract_id().into(),
-            borrow_operations.contract_id().into(),
-        )
-        .await
-        .unwrap();
-        // pb.inc();
-
-        let fuel_asset_contracts = add_asset(
-            &borrow_operations,
-            &stability_pool,
-            &protocol_manager,
-            &usdf,
-            &fpt_staking,
-            &coll_surplus_pool,
-            &default_pool,
-            &active_pool,
-            &sorted_troves,
-            wallet.clone(),
-            "Fuel".to_string(),
-            "FUEL".to_string(),
-            is_testnet,
-        )
-        .await;
-
-        if deploy_2nd_asset {
-            let usdf_asset_contracts = add_asset(
-                &borrow_operations,
-                &stability_pool,
-                &protocol_manager,
-                &usdf,
-                &fpt_staking,
-                &coll_surplus_pool,
-                &default_pool,
-                &active_pool,
-                &sorted_troves,
-                wallet,
-                "stFuel".to_string(),
-                "stFUEL".to_string(),
-                is_testnet,
-            )
-            .await;
-            // pb.finish();
-
-            asset_contracts.push(usdf_asset_contracts);
-        }
-        // pb.finish();
-
-        asset_contracts.push(fuel_asset_contracts);
-
-        let contracts = ProtocolContracts {
+        ProtocolContracts {
             borrow_operations,
             usdf,
             stability_pool,
-            asset_contracts,
+            asset_contracts: vec![],
             protocol_manager,
             fpt_staking,
             fpt_token,
+            fpt_asset_id,
             coll_surplus_pool,
             default_pool,
             active_pool,
             sorted_troves,
             community_issuance,
             vesting_contract,
-        };
+        }
+    }
 
-        return contracts;
+    pub async fn initialize_core_contracts(
+        contracts: &mut ProtocolContracts<WalletUnlocked>,
+        wallet: &WalletUnlocked,
+        use_test_fpt: bool,
+    ) {
+        println!("Initializing core contracts...");
+        if !use_test_fpt {
+            fpt_token_abi::initialize(
+                &contracts.fpt_token,
+                &contracts.vesting_contract,
+                &contracts.community_issuance,
+            )
+            .await;
+        }
+
+        community_issuance_abi::initialize(
+            &contracts.community_issuance,
+            contracts.stability_pool.contract_id().into(),
+            contracts.fpt_asset_id,
+            &Identity::Address(wallet.address().into()),
+            true,
+        )
+        .await
+        .unwrap();
+
+        usdf_token_abi::initialize(
+            &contracts.usdf,
+            contracts.protocol_manager.contract_id().into(),
+            Identity::ContractId(contracts.stability_pool.contract_id().into()),
+            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
+        )
+        .await
+        .unwrap();
+
+        borrow_operations_abi::initialize(
+            &contracts.borrow_operations,
+            contracts.usdf.contract_id().into(),
+            contracts.fpt_staking.contract_id().into(),
+            contracts.protocol_manager.contract_id().into(),
+            contracts.coll_surplus_pool.contract_id().into(),
+            contracts.active_pool.contract_id().into(),
+            contracts.sorted_troves.contract_id().into(),
+        )
+        .await;
+
+        stability_pool_abi::initialize(
+            &contracts.stability_pool,
+            contracts.usdf.contract_id().into(),
+            contracts.community_issuance.contract_id().into(),
+            contracts.protocol_manager.contract_id().into(),
+            contracts.active_pool.contract_id().into(),
+            contracts.sorted_troves.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
+        fpt_staking_abi::initialize(
+            &contracts.fpt_staking,
+            contracts.protocol_manager.contract_id().into(),
+            contracts.borrow_operations.contract_id().into(),
+            contracts.fpt_asset_id,
+            contracts
+                .usdf
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
+        )
+        .await;
+
+        protocol_manager_abi::initialize(
+            &contracts.protocol_manager,
+            contracts.borrow_operations.contract_id().into(),
+            contracts.stability_pool.contract_id().into(),
+            contracts.fpt_staking.contract_id().into(),
+            contracts.usdf.contract_id().into(),
+            contracts.coll_surplus_pool.contract_id().into(),
+            contracts.default_pool.contract_id().into(),
+            contracts.active_pool.contract_id().into(),
+            contracts.sorted_troves.contract_id().into(),
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+
+        coll_surplus_pool_abi::initialize(
+            &contracts.coll_surplus_pool,
+            contracts.borrow_operations.contract_id().into(),
+            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+        )
+        .await
+        .unwrap();
+
+        default_pool_abi::initialize(
+            &contracts.default_pool,
+            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            contracts.active_pool.contract_id().into(),
+        )
+        .await
+        .unwrap();
+
+        active_pool_abi::initialize(
+            &contracts.active_pool,
+            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
+            Identity::ContractId(contracts.stability_pool.contract_id().into()),
+            contracts.default_pool.contract_id().into(),
+            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+        )
+        .await
+        .unwrap();
+
+        sorted_troves_abi::initialize(
+            &contracts.sorted_troves,
+            100_000_000,
+            contracts.protocol_manager.contract_id().into(),
+            contracts.borrow_operations.contract_id().into(),
+        )
+        .await
+        .unwrap();
+    }
+
+    async fn deploy_test_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+        let mock_fpt_token = deploy_token(wallet).await;
+
+        token_abi::initialize(
+            &mock_fpt_token,
+            1_000_000_000,
+            &Identity::Address(wallet.address().into()),
+            "Mock FPT Token".to_string(),
+            "mFPT".to_string(),
+        )
+        .await
+        .unwrap();
+
+        FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
@@ -742,25 +640,133 @@ pub mod common {
             .to_string()
     }
 
+    pub async fn deploy_asset_contracts(
+        wallet: &WalletUnlocked,
+        existing_contracts: &Option<ExistingAssetContracts>,
+    ) -> AssetContracts<WalletUnlocked> {
+        println!("Deploying asset contracts...");
+        let mut pb = ProgressBar::new(6);
+        let trove_manager = deploy_trove_manager_contract(&wallet).await;
+
+        pb.inc();
+
+        match existing_contracts {
+            Some(contracts) => {
+                pb.finish();
+
+                let oracle = deploy_oracle(
+                    &wallet,
+                    contracts.pyth_oracle,
+                    contracts.pyth_precision,
+                    contracts.pyth_price_id,
+                    contracts.redstone_oracle,
+                    contracts.redstone_precision,
+                    contracts.redstone_price_id,
+                )
+                .await;
+
+                return AssetContracts {
+                    oracle,
+                    mock_pyth_oracle: PythCore::new(contracts.pyth_oracle, wallet.clone()),
+                    mock_redstone_oracle: RedstoneCore::new(
+                        contracts.redstone_oracle,
+                        wallet.clone(),
+                    ),
+                    trove_manager,
+                    asset: Token::new(contracts.asset, wallet.clone()),
+                    asset_id: contracts.asset_id,
+                    pyth_price_id: contracts.pyth_price_id,
+                    pyth_precision: contracts.pyth_precision,
+                    redstone_price_id: contracts.redstone_price_id,
+                    redstone_precision: contracts.redstone_precision,
+                };
+            }
+            None => {
+                let asset = deploy_token(&wallet).await;
+                pb.inc();
+                let asset_id: AssetId = asset
+                    .contract_id()
+                    .asset_id(&AssetId::zeroed().into())
+                    .into();
+
+                let pyth_price_id = Bits256::from(asset_id);
+                let redstone_price_id = U256::from(pyth_price_id.0);
+
+                let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                let redstone = deploy_mock_redstone_oracle(&wallet).await;
+                let oracle = deploy_oracle(
+                    &wallet,
+                    pyth.contract_id().into(),
+                    9,
+                    pyth_price_id,
+                    redstone.contract_id().into(),
+                    9,
+                    redstone_price_id,
+                )
+                .await;
+                pb.inc();
+
+                println!("Deploying asset contracts... Done");
+                println!("Oracle: {}", oracle.contract_id());
+                println!("Mock Pyth Oracle: {}", pyth.contract_id());
+                println!("Mock Redstone Oracle: {}", redstone.contract_id());
+                println!("Trove Manager: {}", trove_manager.contract_id());
+                println!("Asset: {}", asset.contract_id());
+
+                let _ = token_abi::initialize(
+                    &asset,
+                    1_000_000_000,
+                    &Identity::Address(wallet.address().into()),
+                    "MOCK".to_string(),
+                    "MOCK".to_string(),
+                )
+                .await;
+                pb.inc();
+                let pyth_feed = vec![(
+                    pyth_price_id,
+                    PythPriceFeed {
+                        price: PythPrice {
+                            price: 1 * PRECISION,
+                            publish_time: PYTH_TIMESTAMP,
+                        },
+                    },
+                )];
+                let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
+
+                oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+                pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
+                pb.inc();
+
+                redstone_oracle_abi::write_prices(&redstone, redstone_feed).await;
+                redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+                pb.inc();
+
+                return AssetContracts {
+                    oracle,
+                    mock_pyth_oracle: pyth,
+                    mock_redstone_oracle: redstone,
+                    trove_manager,
+                    asset,
+                    asset_id,
+                    pyth_price_id,
+                    pyth_precision: 9,
+                    redstone_price_id,
+                    redstone_precision: 9,
+                };
+            }
+        }
+    }
+
     pub async fn add_asset(
-        borrow_operations: &BorrowOperations<WalletUnlocked>,
-        stability_pool: &StabilityPool<WalletUnlocked>,
-        protocol_manager: &ProtocolManager<WalletUnlocked>,
-        usdf: &USDFToken<WalletUnlocked>,
-        fpt_staking: &FPTStaking<WalletUnlocked>,
-        coll_surplus_pool: &CollSurplusPool<WalletUnlocked>,
-        default_pool: &DefaultPool<WalletUnlocked>,
-        active_pool: &ActivePool<WalletUnlocked>,
-        sorted_troves: &SortedTroves<WalletUnlocked>,
-        wallet: WalletUnlocked,
+        contracts: &mut ProtocolContracts<WalletUnlocked>,
+        wallet: &WalletUnlocked,
         name: String,
         symbol: String,
-        is_testnet: bool,
     ) -> AssetContracts<WalletUnlocked> {
-        let pyth = deploy_mock_pyth_oracle(&wallet).await;
-        let redstone = deploy_mock_redstone_oracle(&wallet).await;
+        let pyth = deploy_mock_pyth_oracle(wallet).await;
+        let redstone = deploy_mock_redstone_oracle(wallet).await;
         let oracle = deploy_oracle(
-            &wallet,
+            wallet,
             pyth.contract_id().into(),
             9,
             DEFAULT_PYTH_PRICE_ID,
@@ -769,43 +775,34 @@ pub mod common {
             DEFAULT_REDSTONE_PRICE_ID,
         )
         .await;
-        let trove_manager = deploy_trove_manager_contract(&wallet).await;
-        let asset = deploy_token(&wallet).await;
-
-        if is_testnet {
-            println!("Deployed asset: {}", asset.contract_id());
-            println!("Deployed trove manager: {}", trove_manager.contract_id());
-            println!("Deployed oracle: {}", oracle.contract_id());
-            println!("Deployed mock pyth oracle: {}", pyth.contract_id());
-            println!("Deployed mock redstone oracle: {}", redstone.contract_id());
-            println!("Deployed fpt staking: {}", fpt_staking.contract_id());
-        }
+        let trove_manager = deploy_trove_manager_contract(wallet).await;
+        let asset = deploy_token(wallet).await;
 
         token_abi::initialize(
             &asset,
             1_000_000_000,
             &Identity::Address(wallet.address().into()),
-            name.to_string(),
-            symbol.to_string(),
+            name,
+            symbol,
         )
         .await
         .unwrap();
 
         trove_manager_abi::initialize(
             &trove_manager,
-            borrow_operations.contract_id().into(),
-            sorted_troves.contract_id().into(),
+            contracts.borrow_operations.contract_id().into(),
+            contracts.sorted_troves.contract_id().into(),
             oracle.contract_id().into(),
-            stability_pool.contract_id().into(),
-            default_pool.contract_id().into(),
-            active_pool.contract_id().into(),
-            coll_surplus_pool.contract_id().into(),
-            usdf.contract_id().into(),
+            contracts.stability_pool.contract_id().into(),
+            contracts.default_pool.contract_id().into(),
+            contracts.active_pool.contract_id().into(),
+            contracts.coll_surplus_pool.contract_id().into(),
+            contracts.usdf.contract_id().into(),
             asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
-            protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract_id().into(),
         )
         .await
         .unwrap();
@@ -813,21 +810,21 @@ pub mod common {
         pyth_oracle_abi::update_price_feeds(&pyth, pyth_price_feed(1)).await;
 
         protocol_manager_abi::register_asset(
-            &protocol_manager,
+            &contracts.protocol_manager,
             asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             trove_manager.contract_id().into(),
             oracle.contract_id().into(),
-            borrow_operations,
-            stability_pool,
-            usdf,
-            fpt_staking,
-            &coll_surplus_pool,
-            default_pool,
-            active_pool,
-            &sorted_troves,
+            &contracts.borrow_operations,
+            &contracts.stability_pool,
+            &contracts.usdf,
+            &contracts.fpt_staking,
+            &contracts.coll_surplus_pool,
+            &contracts.default_pool,
+            &contracts.active_pool,
+            &contracts.sorted_troves,
         )
         .await;
 
@@ -836,7 +833,7 @@ pub mod common {
             .asset_id(&AssetId::zeroed().into())
             .into();
 
-        return AssetContracts {
+        AssetContracts {
             oracle,
             mock_pyth_oracle: pyth,
             mock_redstone_oracle: redstone,
@@ -847,7 +844,57 @@ pub mod common {
             pyth_precision: 9,
             redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
             redstone_precision: 9,
-        };
+        }
+    }
+
+    pub async fn initialize_asset<T: Account>(
+        core_protocol_contracts: &ProtocolContracts<T>,
+        asset_contracts: &AssetContracts<T>,
+    ) -> () {
+        println!("Initializing asset contracts...");
+        let mut pb = ProgressBar::new(2);
+
+        let _ = trove_manager_abi::initialize(
+            &asset_contracts.trove_manager,
+            core_protocol_contracts
+                .borrow_operations
+                .contract_id()
+                .into(),
+            core_protocol_contracts.sorted_troves.contract_id().into(),
+            asset_contracts.oracle.contract_id().into(),
+            core_protocol_contracts.stability_pool.contract_id().into(),
+            core_protocol_contracts.default_pool.contract_id().into(),
+            core_protocol_contracts.active_pool.contract_id().into(),
+            core_protocol_contracts
+                .coll_surplus_pool
+                .contract_id()
+                .into(),
+            core_protocol_contracts.usdf.contract_id().into(),
+            asset_contracts.asset_id,
+            core_protocol_contracts
+                .protocol_manager
+                .contract_id()
+                .into(),
+        )
+        .await;
+        pb.inc();
+
+        let _ = protocol_manager_abi::register_asset(
+            &core_protocol_contracts.protocol_manager,
+            asset_contracts.asset_id,
+            asset_contracts.trove_manager.contract_id().into(),
+            asset_contracts.oracle.contract_id().into(),
+            &core_protocol_contracts.borrow_operations,
+            &core_protocol_contracts.stability_pool,
+            &core_protocol_contracts.usdf,
+            &core_protocol_contracts.fpt_staking,
+            &core_protocol_contracts.coll_surplus_pool,
+            &core_protocol_contracts.default_pool,
+            &core_protocol_contracts.active_pool,
+            &core_protocol_contracts.sorted_troves,
+        )
+        .await;
+        pb.inc();
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {

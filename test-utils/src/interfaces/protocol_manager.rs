@@ -8,6 +8,7 @@ abigen!(Contract(
 
 pub mod protocol_manager_abi {
     use super::*;
+    use crate::data_structures;
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
@@ -16,7 +17,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::stability_pool::StabilityPool;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::setup::common::AssetContracts;
+    use data_structures::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::{Address, AssetId};

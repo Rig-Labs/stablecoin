@@ -1,26 +1,21 @@
 use crate::deploy::deployment::*;
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::{Bits256, Identity, U256};
-use pbr::ProgressBar;
+use fuels::types::{Bits256, U256};
 use serde_json::json;
+use std::str::FromStr;
 use std::{fs::File, io::Write};
-use test_utils::data_structures::PRECISION;
+use test_utils::data_structures::{AssetContracts, ExistingAssetContracts, ProtocolContracts};
 use test_utils::interfaces::oracle::oracle_abi;
-use test_utils::interfaces::protocol_manager::protocol_manager_abi;
-use test_utils::interfaces::pyth_oracle::{
-    pyth_oracle_abi, PythPrice, PythPriceFeed, PYTH_TIMESTAMP,
-};
-use test_utils::interfaces::redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id};
-use test_utils::interfaces::token::token_abi;
-use test_utils::interfaces::trove_manager::trove_manager_abi;
+use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
+use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
+
 use test_utils::interfaces::{
     active_pool::ActivePool, borrow_operations::BorrowOperations,
     coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
-    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
-    protocol_manager::ProtocolManager, pyth_oracle::PythCore, redstone_oracle::RedstoneCore,
-    sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
+    default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
+    protocol_manager::ProtocolManager, sorted_troves::SortedTroves, stability_pool::StabilityPool,
+    vesting::VestingContract,
 };
 use test_utils::setup::common::*;
 
@@ -33,7 +28,30 @@ pub async fn add_asset() {
 
     let core_contracts = load_core_contracts(wallet.clone());
 
-    let asset_contracts = upload_asset(&wallet, &None).await;
+    // you will need to set the existing asset contracts here manually and uncomment the below line
+    let mut existing_asset_to_initialize: Option<ExistingAssetContracts> =
+        Some(ExistingAssetContracts {
+            asset: ContractId::zeroed(),
+            asset_id: AssetId::zeroed(),
+            pyth_oracle: ContractId::zeroed(),
+            pyth_precision: 9,
+            pyth_price_id: Bits256::zeroed(),
+            redstone_oracle: ContractId::zeroed(),
+            redstone_price_id: U256::zero(),
+            redstone_precision: 9,
+        });
+    existing_asset_to_initialize = None;
+
+    match existing_asset_to_initialize {
+        Some(_) => {
+            println!("Existing asset to initialize");
+        }
+        None => {
+            println!("Initializing new asset");
+        }
+    }
+    // Deploy the asset contracts
+    let asset_contracts = deploy_asset_contracts(&wallet, &existing_asset_to_initialize).await;
 
     query_oracles(&asset_contracts).await;
 
@@ -47,186 +65,11 @@ pub async fn add_asset() {
         return;
     }
 
-    initialize_asset(&core_contracts, &asset_contracts, None).await;
+    initialize_asset(&core_contracts, &asset_contracts).await;
 
     write_asset_contracts_to_file(vec![asset_contracts]);
 
     println!("Asset contracts added successfully");
-}
-
-pub async fn upload_asset(
-    wallet: &WalletUnlocked,
-    existing_contracts: &Option<ExistingAssetContracts>,
-) -> AssetContracts<WalletUnlocked> {
-    println!("Deploying asset contracts...");
-    let mut pb = ProgressBar::new(6);
-    let trove_manager = deploy_trove_manager_contract(&wallet).await;
-
-    pb.inc();
-
-    match existing_contracts {
-        Some(contracts) => {
-            pb.finish();
-            let asset = Token::new(contracts.asset, wallet.clone());
-            let asset_id: AssetId = asset
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into();
-
-            let oracle = deploy_oracle(
-                &wallet,
-                contracts.pyth_oracle,
-                contracts.pyth_precision,
-                contracts.pyth_price_id,
-                contracts.redstone_oracle,
-                contracts.redstone_precision,
-                contracts.redstone_price_id,
-            )
-            .await;
-
-            return AssetContracts {
-                oracle,
-                mock_pyth_oracle: PythCore::new(contracts.pyth_oracle, wallet.clone()),
-                mock_redstone_oracle: RedstoneCore::new(contracts.redstone_oracle, wallet.clone()),
-                asset,
-                trove_manager,
-                asset_id,
-                pyth_price_id: contracts.pyth_price_id,
-                pyth_precision: contracts.pyth_precision,
-                redstone_price_id: contracts.redstone_price_id,
-                redstone_precision: contracts.redstone_precision,
-            };
-        }
-        None => {
-            let asset = deploy_token(&wallet).await;
-            pb.inc();
-            let asset_id: AssetId = asset
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into();
-
-            let pyth_price_id = Bits256::from(asset_id);
-            let redstone_price_id = U256::from(pyth_price_id.0);
-
-            let pyth = deploy_mock_pyth_oracle(&wallet).await;
-            let redstone = deploy_mock_redstone_oracle(&wallet).await;
-            let oracle = deploy_oracle(
-                &wallet,
-                pyth.contract_id().into(),
-                9,
-                pyth_price_id,
-                redstone.contract_id().into(),
-                9,
-                redstone_price_id,
-            )
-            .await;
-            pb.inc();
-
-            println!("Deploying asset contracts... Done");
-            println!("Oracle: {}", oracle.contract_id());
-            println!("Mock Pyth Oracle: {}", pyth.contract_id());
-            println!("Mock Redstone Oracle: {}", redstone.contract_id());
-            println!("Trove Manager: {}", trove_manager.contract_id());
-            println!("Asset: {}", asset.contract_id());
-
-            let _ = token_abi::initialize(
-                &asset,
-                1_000_000_000,
-                &Identity::Address(wallet.address().into()),
-                "MOCK".to_string(),
-                "MOCK".to_string(),
-            )
-            .await;
-            pb.inc();
-            let pyth_feed = vec![(
-                pyth_price_id,
-                PythPriceFeed {
-                    price: PythPrice {
-                        price: 1 * PRECISION,
-                        publish_time: PYTH_TIMESTAMP,
-                    },
-                },
-            )];
-            let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
-
-            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
-            pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
-            pb.inc();
-
-            redstone_oracle_abi::write_prices(&redstone, redstone_feed).await;
-            redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
-            pb.inc();
-
-            return AssetContracts {
-                oracle,
-                mock_pyth_oracle: pyth,
-                mock_redstone_oracle: redstone,
-                trove_manager,
-                asset,
-                asset_id,
-                pyth_price_id,
-                pyth_precision: 9,
-                redstone_price_id,
-                redstone_precision: 9,
-            };
-        }
-    }
-}
-
-pub async fn initialize_asset<T: Account>(
-    core_protocol_contracts: &ProtocolContracts<T>,
-    asset_contracts: &AssetContracts<T>,
-    existing_asset_contracts: Option<ExistingAssetContracts>,
-) -> () {
-    println!("Initializing asset contracts...");
-    let mut pb = ProgressBar::new(7);
-
-    match existing_asset_contracts {
-        Some(_) => {}
-        None => {}
-    }
-
-    let _ = trove_manager_abi::initialize(
-        &asset_contracts.trove_manager,
-        core_protocol_contracts
-            .borrow_operations
-            .contract_id()
-            .into(),
-        core_protocol_contracts.sorted_troves.contract_id().into(),
-        asset_contracts.oracle.contract_id().into(),
-        core_protocol_contracts.stability_pool.contract_id().into(),
-        core_protocol_contracts.default_pool.contract_id().into(),
-        core_protocol_contracts.active_pool.contract_id().into(),
-        core_protocol_contracts
-            .coll_surplus_pool
-            .contract_id()
-            .into(),
-        core_protocol_contracts.usdf.contract_id().into(),
-        asset_contracts.asset_id,
-        core_protocol_contracts
-            .protocol_manager
-            .contract_id()
-            .into(),
-    )
-    .await;
-    pb.inc();
-
-    let _ = protocol_manager_abi::register_asset(
-        &core_protocol_contracts.protocol_manager,
-        asset_contracts.asset_id,
-        asset_contracts.trove_manager.contract_id().into(),
-        asset_contracts.oracle.contract_id().into(),
-        &core_protocol_contracts.borrow_operations,
-        &core_protocol_contracts.stability_pool,
-        &core_protocol_contracts.usdf,
-        &core_protocol_contracts.fpt_staking,
-        &core_protocol_contracts.coll_surplus_pool,
-        &core_protocol_contracts.default_pool,
-        &core_protocol_contracts.active_pool,
-        &core_protocol_contracts.sorted_troves,
-    )
-    .await;
-    pb.inc();
 }
 
 pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
@@ -301,6 +144,9 @@ pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUn
         .unwrap();
     let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
 
+    let fpt_asset_id: AssetId =
+        AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();
+
     let asset_contracts = vec![];
 
     let protocol_contracts = ProtocolContracts {
@@ -311,6 +157,7 @@ pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUn
         asset_contracts,
         fpt_staking,
         fpt_token,
+        fpt_asset_id,
         community_issuance,
         vesting_contract,
         coll_surplus_pool,

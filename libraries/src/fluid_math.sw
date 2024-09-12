@@ -224,5 +224,3 @@ fn test_precision_less_than_current_pow() {
     let result = convert_precision(price, precision);
     assert_eq(result, price * 10.pow(3));
 }
-
-// TODO add more tests
