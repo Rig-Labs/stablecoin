@@ -416,7 +416,7 @@ pub mod borrow_operations_utils {
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::usdf_token::USDFToken;
-    use crate::{interfaces::token::token_abi, setup::common::AssetContracts};
+    use crate::{data_structures::AssetContracts, interfaces::token::token_abi};
 
     pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,

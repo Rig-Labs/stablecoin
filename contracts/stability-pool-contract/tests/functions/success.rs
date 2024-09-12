@@ -1029,7 +1029,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (mut contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -1107,19 +1107,10 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     // the asset was already onboarded like the prior tests
 
     let new_asset_contracts = add_asset(
-        &contracts.borrow_operations,
-        &contracts.stability_pool,
-        &contracts.protocol_manager,
-        &contracts.usdf,
-        &contracts.fpt_staking,
-        &contracts.coll_surplus_pool,
-        &contracts.default_pool,
-        &contracts.active_pool,
-        &contracts.sorted_troves,
-        admin.clone(),
+        &mut contracts,
+        &admin,
         "stFuel".to_string(),
         "stFUEL".to_string(),
-        false,
     )
     .await;
 
