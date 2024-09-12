@@ -9,9 +9,7 @@ use super::interfaces::{
     hint_helper::HintHelper,
     oracle::{Oracle, OracleConfigurables},
     protocol_manager::ProtocolManager,
-    pyth_oracle::{
-        pyth_oracle_abi, PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP,
-    },
+    pyth_oracle::{PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::SortedTroves,
     stability_pool::StabilityPool,
