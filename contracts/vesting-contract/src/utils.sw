@@ -10,13 +10,13 @@ pub fn calculate_redeemable_amount(current_time: u64, vesting_schedule: VestingS
     if current_time >= vesting_schedule.end_timestamp {
         return vesting_schedule.total_amount - vesting_schedule.claimed_amount;
     }
-    let mut amount_redeemable = vesting_schedule.cliff_amount;
+
     let total_minus_cliff = vesting_schedule.total_amount - vesting_schedule.cliff_amount;
     let total_vesting_duration = vesting_schedule.end_timestamp - vesting_schedule.cliff_timestamp;
     let time_elapsed = current_time - vesting_schedule.cliff_timestamp;
+    // Linear vesting
     let fraction_amount_claimable = fm_multiply_ratio(total_minus_cliff, time_elapsed, total_vesting_duration);
-    amount_redeemable += fraction_amount_claimable - vesting_schedule.claimed_amount;
-    return amount_redeemable;
+    return vesting_schedule.cliff_amount + fraction_amount_claimable - vesting_schedule.claimed_amount;
 }
 pub fn is_valid_vesting_schedule(vesting_schedule: VestingSchedule) -> bool {
     if vesting_schedule.cliff_timestamp >= vesting_schedule.end_timestamp

@@ -12,16 +12,13 @@ pub const SECONDS_IN_ONE_MINUTE: u64 = 60;
 
 pub const DECIMAL_PRECISION: u64 = 1_000_000_000;
 
-// Max borrowing fee is 5%
-pub const MAX_BORROWING_FEE: u64 = 50_000_000;
-
 // Redemption fee floor is 1%
 pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 
 // Min borrowing fee is 0.5%
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
-pub const MCR: u64 = 1_300_000_000;
+pub const MCR: u64 = 1_350_000_000;
 
 pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 

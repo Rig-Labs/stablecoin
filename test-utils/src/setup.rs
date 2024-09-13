@@ -81,7 +81,7 @@ pub mod common {
         let wallet = wallets.pop().unwrap();
 
         let mut contracts = deploy_core_contracts(&wallet, use_test_fpt).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -155,6 +155,7 @@ pub mod common {
         contracts: &mut ProtocolContracts<WalletUnlocked>,
         wallet: &WalletUnlocked,
         use_test_fpt: bool,
+        debug: bool,
     ) {
         println!("Initializing core contracts...");
         if !use_test_fpt {
@@ -171,7 +172,7 @@ pub mod common {
             contracts.stability_pool.contract_id().into(),
             contracts.fpt_asset_id,
             &Identity::Address(wallet.address().into()),
-            true,
+            debug,
         )
         .await
         .unwrap();
@@ -518,6 +519,7 @@ pub mod common {
         redstone: ContractId,
         redstone_precison: u8,
         redstone_price_id: U256,
+        debug: bool,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -532,7 +534,7 @@ pub mod common {
             .unwrap()
             .with_REDSTONE_PRICE_ID(redstone_price_id)
             .unwrap()
-            .with_DEBUG(true)
+            .with_DEBUG(debug)
             .unwrap()
             .with_PYTH_PRECISION(pyth_precision)
             .unwrap()
@@ -662,6 +664,7 @@ pub mod common {
                     contracts.redstone_oracle,
                     contracts.redstone_precision,
                     contracts.redstone_price_id,
+                    false,
                 )
                 .await;
 
@@ -702,6 +705,7 @@ pub mod common {
                     redstone.contract_id().into(),
                     9,
                     redstone_price_id,
+                    true,
                 )
                 .await;
                 pb.inc();
@@ -773,6 +777,7 @@ pub mod common {
             redstone.contract_id().into(),
             9,
             DEFAULT_REDSTONE_PRICE_ID,
+            true,
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(wallet).await;

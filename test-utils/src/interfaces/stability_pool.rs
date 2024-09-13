@@ -70,7 +70,7 @@ pub mod stability_pool_abi {
         stability_pool: &StabilityPool<T>,
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -91,7 +91,7 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
-            .with_contracts(&[usdf_token, fuel_token, community_issuance])
+            .with_contracts(&[usdf_token, mock_token, community_issuance])
             .call()
             .await
     }
@@ -155,7 +155,7 @@ pub mod stability_pool_abi {
         stability_pool: &StabilityPool<T>,
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         sorted_troves: &SortedTroves<T>,
         oracle: &Oracle<T>,
         pyth_oracle: &PythCore<T>,
@@ -172,7 +172,7 @@ pub mod stability_pool_abi {
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
             .with_contracts(&[
                 usdf_token,
-                fuel_token,
+                mock_token,
                 community_issuance,
                 sorted_troves,
                 oracle,

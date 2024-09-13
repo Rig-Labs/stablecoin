@@ -20,12 +20,12 @@ use test_utils::{
 async fn proper_initialization() {
     let (stability_pool, _, fuel, _, _, _) = setup(Some(4)).await;
 
-    let fuel_asset_id: AssetId = fuel
+    let mock_asset_id: AssetId = fuel
         .contract_id()
         .asset_id(&AssetId::zeroed().into())
         .into();
 
-    stability_pool_utils::assert_pool_asset(&stability_pool, 0, fuel_asset_id).await;
+    stability_pool_utils::assert_pool_asset(&stability_pool, 0, mock_asset_id).await;
 
     stability_pool_utils::assert_total_usdf_deposits(&stability_pool, 0).await;
 }
@@ -380,17 +380,17 @@ async fn proper_one_sp_depositor_position() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
+    let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(admin.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(admin.address(), mock_asset_id)
         .await
         .unwrap();
 
     assert_within_threshold(
-        fuel_balance,
+        mock_balance,
         asset_with_fee_adjustment + gas_coll_fee,
-        "fuel balance is not correct",
+        "Mock balance is not correct",
     )
 }
 
@@ -998,32 +998,32 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
+    let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(admin.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(admin.address(), mock_asset_id)
         .await
         .unwrap();
 
     assert_within_threshold(
-        fuel_balance,
+        mock_balance,
         asset_with_fee_adjustment + coll_gas_compensation,
-        "fuel balance is not correct",
+        "Mock balance is not correct",
     );
 
     let provider = admin.provider().unwrap();
 
-    let st_fuel_asset_id: AssetId = contracts.asset_contracts[1].asset_id;
+    let st_mock_asset_id: AssetId = contracts.asset_contracts[1].asset_id;
 
-    let st_fuel_balance = provider
-        .get_asset_balance(admin.address(), st_fuel_asset_id)
+    let st_mock_balance = provider
+        .get_asset_balance(admin.address(), st_mock_asset_id)
         .await
         .unwrap();
 
     assert_within_threshold(
-        st_fuel_balance,
+        st_mock_balance,
         asset_with_fee_adjustment + coll_gas_compensation,
-        "st_fuel_balance not currect",
+        "st_mock_balance not correct",
     );
 }
 
@@ -1109,8 +1109,8 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     let new_asset_contracts = add_asset(
         &mut contracts,
         &admin,
-        "stFuel".to_string(),
-        "stFUEL".to_string(),
+        "mock2".to_string(),
+        "mock2".to_string(),
     )
     .await;
 
@@ -1256,31 +1256,31 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     let provider = admin.provider().unwrap();
 
-    let fuel_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
+    let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(admin.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(admin.address(), mock_asset_id)
         .await
         .unwrap();
 
     assert_within_threshold(
-        fuel_balance,
+        mock_balance,
         asset_with_fee_adjustment + gas_coll_compensation,
-        "fuel balance is not correct",
+        "Mock balance is not correct",
     );
 
     let provider = admin.provider().unwrap();
 
-    let st_fuel_asset_id: AssetId = new_asset_contracts.asset_id;
+    let st_mock_asset_id: AssetId = new_asset_contracts.asset_id;
 
-    let st_fuel_balance = provider
-        .get_asset_balance(admin.address(), st_fuel_asset_id)
+    let st_mock_balance = provider
+        .get_asset_balance(admin.address(), st_mock_asset_id)
         .await
         .unwrap();
 
     assert_within_threshold(
-        st_fuel_balance,
+        st_mock_balance,
         asset_with_fee_adjustment + gas_coll_compensation,
-        "st_fuel_balance not currect",
+        "st_mock_balance not currect",
     );
 }

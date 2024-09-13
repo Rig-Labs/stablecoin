@@ -108,7 +108,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     // 10k USDF > 5k USDF > 5k USDF + (fees)
 
     // 2nd collateral
-    // 7k stFUEL > 15k stFUEL
+    // 7k mock2 > 15k mock2
     // 5k USDF   > 5k USDF + (fees)
 
     // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
@@ -185,31 +185,31 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
-    let st_fuel_asset_id = contracts.asset_contracts[1].asset_id;
+    let mock_asset_id = contracts.asset_contracts[0].asset_id;
+    let st_mock_asset_id = contracts.asset_contracts[1].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(healthy_wallet1.address(), mock_asset_id)
         .await
         .unwrap();
 
-    let st_fuel_balance = provider
-        .get_asset_balance(healthy_wallet1.address(), st_fuel_asset_id)
+    let st_mock_balance = provider
+        .get_asset_balance(healthy_wallet1.address(), st_mock_asset_id)
         .await
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
     let fees2 = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), st_fuel_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), st_mock_asset_id)
         .await
         .unwrap();
 
     assert_eq!(
-        fuel_balance + st_fuel_balance,
+        mock_balance + st_mock_balance,
         redemption_amount - staking_balance - fees2
     );
 
@@ -217,14 +217,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
-        8_000 * PRECISION + st_fuel_balance + fees2 - redemption_amount,
+        8_000 * PRECISION + st_mock_balance + fees2 - redemption_amount,
     )
     .await;
 
     trove_manager_utils::assert_trove_debt(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet3.address().into()),
-        with_min_borrow_fee(5_000 * PRECISION) + st_fuel_balance + fees2 - redemption_amount,
+        with_min_borrow_fee(5_000 * PRECISION) + st_mock_balance + fees2 - redemption_amount,
     )
     .await;
 }

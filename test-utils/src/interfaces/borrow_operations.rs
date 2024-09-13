@@ -62,7 +62,7 @@ pub mod borrow_operations_abi {
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
-        fuel_amount_deposit: u64,
+        collateral_amount_deposit: u64,
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -78,7 +78,7 @@ pub mod borrow_operations_abi {
             .into();
 
         let call_params: CallParameters = CallParameters::default()
-            .with_amount(fuel_amount_deposit)
+            .with_amount(collateral_amount_deposit)
             .with_asset_id(asset_id);
 
         return borrow_operations
@@ -108,7 +108,7 @@ pub mod borrow_operations_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
@@ -121,14 +121,14 @@ pub mod borrow_operations_abi {
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
-        let fuel_asset_id: AssetId = fuel_token
+        let mock_asset_id: AssetId = mock_token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
-            .with_asset_id(fuel_asset_id);
+            .with_asset_id(mock_asset_id);
 
         borrow_operations
             .methods()
@@ -139,7 +139,7 @@ pub mod borrow_operations_abi {
                 oracle,
                 pyth,
                 redstone,
-                fuel_token,
+                mock_token,
                 sorted_troves,
                 trove_manager,
                 active_pool,
@@ -156,7 +156,7 @@ pub mod borrow_operations_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
@@ -168,19 +168,19 @@ pub mod borrow_operations_abi {
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
-        let fuel_asset_id: AssetId = fuel_token
+        let mock_asset_id: AssetId = mock_token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         borrow_operations
             .methods()
-            .withdraw_coll(amount, lower_hint, upper_hint, fuel_asset_id.into())
+            .withdraw_coll(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
                 oracle,
                 pyth,
                 redstone,
-                fuel_token,
+                mock_token,
                 sorted_troves,
                 trove_manager,
                 active_pool,
@@ -196,7 +196,7 @@ pub mod borrow_operations_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
         sorted_troves: &SortedTroves<T>,
@@ -210,19 +210,19 @@ pub mod borrow_operations_abi {
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
-        let fuel_asset_id: AssetId = fuel_token
+        let mock_asset_id: AssetId = mock_token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         borrow_operations
             .methods()
-            .withdraw_usdf(amount, lower_hint, upper_hint, fuel_asset_id.into())
+            .withdraw_usdf(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
                 oracle,
                 pyth,
                 redstone,
-                fuel_token,
+                mock_token,
                 sorted_troves,
                 trove_manager,
                 active_pool,
@@ -240,7 +240,7 @@ pub mod borrow_operations_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
@@ -261,19 +261,19 @@ pub mod borrow_operations_abi {
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
-        let fuel_asset_id: AssetId = fuel_token
+        let mock_asset_id: AssetId = mock_token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         borrow_operations
             .methods()
-            .repay_usdf(lower_hint, upper_hint, fuel_asset_id.into())
+            .repay_usdf(lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
                 oracle,
                 pyth,
                 redstone,
-                fuel_token,
+                mock_token,
                 sorted_troves,
                 trove_manager,
                 active_pool,
@@ -292,7 +292,7 @@ pub mod borrow_operations_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
         sorted_troves: &SortedTroves<T>,
@@ -314,19 +314,19 @@ pub mod borrow_operations_abi {
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
-        let fuel_asset_id: AssetId = fuel_token
+        let mock_asset_id: AssetId = mock_token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         borrow_operations
             .methods()
-            .close_trove(fuel_asset_id.into())
+            .close_trove(mock_asset_id.into())
             .with_contracts(&[
                 oracle,
                 pyth,
                 redstone,
-                fuel_token,
+                mock_token,
                 sorted_troves,
                 trove_manager,
                 active_pool,

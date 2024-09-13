@@ -385,6 +385,7 @@ fn internal_batch_liquidate_troves(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) {
+    // Prevent reentrancy
     require(
         storage
             .lock_internal_batch_liquidate_troves
@@ -393,17 +394,22 @@ fn internal_batch_liquidate_troves(
     );
     storage.lock_internal_batch_liquidate_troves.write(true);
 
+    // Ensure there are borrowers to liquidate
     require(
         borrowers
             .len() > 0,
         "TroveManager: No borrowers to liquidate",
     );
+
+    // Initialize local variables and contracts
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(Oracle, storage.oracle_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
     vars.price = oracle.get_price();
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().into());
     let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
+
+    // Calculate totals for the batch liquidation
     let totals = internal_get_totals_from_batch_liquidate(
         vars.price,
         total_usdf_in_sp,
@@ -411,11 +417,15 @@ fn internal_batch_liquidate_troves(
         upper_partial_hint,
         lower_partial_hint,
     );
+
+    // Ensure there is debt to liquidate
     require(
         totals
             .total_debt_in_sequence > 0,
         "TroveManager: No debt to liquidate",
     );
+
+    // Offset debt and collateral with the Stability Pool
     stability_pool.offset(
         totals
             .total_debt_to_offset,
@@ -427,6 +437,8 @@ fn internal_batch_liquidate_troves(
     );
 
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
+
+    // Handle collateral surplus if any
     if (totals.total_coll_surplus > 0) {
         active_pool.send_asset(
             Identity::ContractId(storage.coll_surplus_pool_contract.read()),
@@ -436,6 +448,7 @@ fn internal_batch_liquidate_troves(
         );
     }
 
+    // Send gas compensation to the caller (liquidator)
     if (totals.total_coll_gas_compensation > 0) {
         active_pool.send_asset(
             msg_sender()
@@ -446,6 +459,7 @@ fn internal_batch_liquidate_troves(
         );
     }
 
+    // Redistribute remaining debt and collateral
     internal_redistribute_debt_and_coll(
         totals
             .total_debt_to_redistribute,
@@ -453,6 +467,7 @@ fn internal_batch_liquidate_troves(
             .total_coll_to_redistribute,
     );
 
+    // Release the reentrancy lock
     storage.lock_internal_batch_liquidate_troves.write(false);
 }
 #[storage(read)]
@@ -519,18 +534,28 @@ fn internal_get_totals_from_batch_liquidate(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) -> LiquidationTotals {
+    // Initialize variables for the liquidation sequence
     let mut vars = LocalVariablesLiquidationSequence::default();
     vars.remaining_usdf_in_stability_pool = usdf_in_stability_pool;
     let mut single_liquidation = LiquidationValues::default();
     let mut i = 0;
     let mut totals = LiquidationTotals::default();
+
+    // Iterate through the list of borrowers
     while i < borrowers.len() {
         vars.borrower = borrowers.get(i).unwrap();
+        // Calculate the Individual Collateralization Ratio (ICR) for the current borrower
         vars.icr = internal_get_current_icr(vars.borrower, price);
-        // If the trove is undercollateralized, liquidate it
+
+        // If the trove is undercollateralized (ICR < Minimum Collateralization Ratio), liquidate it
         if vars.icr < MCR {
+            // Get the entire debt and collateral for the trove
             let position = internal_get_entire_debt_and_coll(vars.borrower);
+
+            // Move any pending rewards to the active pool before liquidation
             internal_move_pending_trove_rewards_to_active_pool(position.pending_coll_rewards, position.pending_debt_rewards);
+
+            // Calculate the values for offsetting debt and redistributing collateral
             single_liquidation = get_offset_and_redistribution_vals(
                 position
                     .entire_trove_coll,
@@ -539,19 +564,28 @@ fn internal_get_totals_from_batch_liquidate(
                 usdf_in_stability_pool,
                 price,
             );
+
+            // Apply the liquidation to the trove
             internal_apply_liquidation(
                 vars.borrower,
                 single_liquidation,
                 upper_partial_hint,
                 lower_partial_hint,
             );
+
+            // Update the remaining USDF in the stability pool
             vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
+
+            // Add the results of this liquidation to the running totals
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
         } else {
+            // If we've reached a trove that's not undercollateralized, we can stop the liquidation process
             break;
         }
         i += 1;
     }
+
+    // Return the total results of all liquidations performed
     return totals;
 }
 #[storage(read)]
@@ -778,6 +812,7 @@ fn internal_redeem_collateral_from_trove(
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) -> SingleRedemptionValues {
+    // Prevent reentrancy
     require(
         storage
             .lock_internal_redeem_collateral_from_trove
@@ -791,23 +826,36 @@ fn internal_redeem_collateral_from_trove(
     let mut single_redemption_values = SingleRedemptionValues::default();
     let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
-    // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
+
+    // Get the trove details for the borrower
     let trove = storage.troves.get(borrower).read();
+
+    // Calculate the amount of USDF to redeem (capped by max_usdf_amount or trove's debt)
     single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
+
+    // Calculate the corresponding amount of asset to redeem based on the current price
     single_redemption_values.asset_lot = fm_multiply_ratio(single_redemption_values.usdf_lot, DECIMAL_PRECISION, price);
+
+    // Calculate the new debt and collateral amounts after redemption
     let new_debt = trove.debt - single_redemption_values.usdf_lot;
     let new_coll = trove.coll - single_redemption_values.asset_lot;
-    // If the Trove is now empty, close it
+
+    // If the trove's debt is fully redeemed, close the trove
     if (new_debt == 0) {
         internal_remove_stake(borrower);
         internal_close_trove(borrower, Status::ClosedByRedemption);
         internal_redeem_close_trove(borrower, 0, new_coll);
     } else {
+        // Calculate the new nominal collateralization ratio
         let new_nicr = fm_compute_nominal_cr(new_coll, new_debt);
+
+        // If the new debt is below the minimum allowed, cancel the partial redemption
         if (new_debt < MIN_NET_DEBT) {
             single_redemption_values.cancelled_partial = true;
             return single_redemption_values;
         }
+
+        // Re-insert the trove into the sorted list with its new NICR
         sorted_troves.re_insert(
             borrower,
             new_nicr,
@@ -815,11 +863,15 @@ fn internal_redeem_collateral_from_trove(
             lower_partial_hint,
             asset_contract_cache,
         );
+
+        // Update the trove's debt and collateral in storage
         let mut trove = storage.troves.get(borrower).read();
         trove.debt = new_debt;
         trove.coll = new_coll;
         storage.troves.insert(borrower, trove);
-        let _ = internal_update_stake_and_total_stakes(borrower);
+
+        // Update the stake and total stakes
+        internal_update_stake_and_total_stakes(borrower);
     }
 
     storage

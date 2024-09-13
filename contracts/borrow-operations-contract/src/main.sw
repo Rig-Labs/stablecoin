@@ -226,7 +226,6 @@ impl BorrowOperations for Contract {
         let active_pool = abi(ActivePool, active_pool_contract_cache.bits());
         let borrower = msg_sender().unwrap();
 
-        // Checks
         require_trove_is_active(borrower, asset_contracts_cache.trove_manager);
         trove_manager.apply_pending_rewards(borrower);
         let coll = trove_manager.get_trove_coll(borrower);
@@ -240,11 +239,9 @@ impl BorrowOperations for Contract {
             );
         }
 
-        // Effects
         trove_manager.remove_stake(borrower);
         trove_manager.close_trove(borrower);
 
-        // Interactions
         internal_repay_usdf(
             debt,
             active_pool_contract_cache,

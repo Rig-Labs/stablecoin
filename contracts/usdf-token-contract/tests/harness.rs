@@ -39,8 +39,8 @@ async fn get_contract_instance() -> (
         &asset,
         1_000 * PRECISION,
         &Identity::Address(wallet.address().into()),
-        "Fuel".to_string(),
-        "FUEL".to_string(),
+        "Mock".to_string(),
+        "MOCK".to_string(),
     )
     .await
     .unwrap();

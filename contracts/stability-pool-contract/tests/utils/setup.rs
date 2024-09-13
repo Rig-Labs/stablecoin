@@ -79,7 +79,7 @@ pub async fn get_nominal_icr(
 pub async fn offset(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     stability_pool: &StabilityPool<WalletUnlocked>,
-    fuel_token: &Token<WalletUnlocked>,
+    mock_token: &Token<WalletUnlocked>,
     usdf_token: &Token<WalletUnlocked>,
     coll_to_offset: u64,
     debt_to_offset: u64,
@@ -89,7 +89,7 @@ pub async fn offset(
     trove_manager
         .methods()
         .offset(coll_to_offset, debt_to_offset)
-        .with_contracts(&[stability_pool, fuel_token, usdf_token])
+        .with_contracts(&[stability_pool, mock_token, usdf_token])
         .with_tx_policies(tx_params)
         .call()
         .await
@@ -167,17 +167,17 @@ pub async fn setup(
     let sorted_troves = deploy_mock_trove_manager_contract(&wallet).await;
     let trove_instance = deploy_mock_trove_manager_contract(&wallet2).await;
 
-    let fuel_token = deploy_token(&wallet).await;
+    let mock_token = deploy_token(&wallet).await;
     let usdf_token = deploy_token(&wallet).await;
 
     let active_pool = deploy_active_pool(&wallet).await;
 
     token_abi::initialize(
-        &fuel_token,
+        &mock_token,
         0,
         &Identity::Address(wallet.address().into()),
-        "Fuel".to_string(),
-        "FUEL".to_string(),
+        "Mock".to_string(),
+        "MOCK".to_string(),
     )
     .await
     .unwrap();
@@ -196,7 +196,7 @@ pub async fn setup(
         &stability_pool,
         usdf_token.contract_id().into(),
         stability_pool.contract_id().into(),
-        fuel_token.contract_id().into(),
+        mock_token.contract_id().into(),
         active_pool.contract_id().into(),
         sorted_troves.contract_id().into(),
     )
@@ -215,7 +215,7 @@ pub async fn setup(
     (
         stability_pool,
         trove_instance,
-        fuel_token,
+        mock_token,
         wallet3,
         wallet4,
         wallets,

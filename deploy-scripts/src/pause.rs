@@ -1,5 +1,4 @@
-use crate::add_asset::load_core_contracts;
-use crate::deploy::deployment::setup_wallet;
+use crate::utils::utils::{load_core_contracts, setup_wallet};
 use dotenv::dotenv;
 
 use test_utils::interfaces::borrow_operations::borrow_operations_abi;

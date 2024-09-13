@@ -105,11 +105,11 @@ pub mod default_pool_abi {
         token: &Token<T>,
         amount: u64,
     ) -> CallResponse<()> {
-        let fuel_asset_id = AssetId::from(*token.contract_id().hash());
+        let mock_asset_id = AssetId::from(*token.contract_id().hash());
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
-            .with_asset_id(fuel_asset_id);
+            .with_asset_id(mock_asset_id);
 
         let tx_params = TxPolicies::default().with_tip(1);
 
