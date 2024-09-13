@@ -33,6 +33,8 @@ storage {
     fpt_asset_id: AssetId = AssetId::zero(),
     usdf_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
+    lock_stake: bool = false,
+    lock_unstake: bool = false,
 }
 /// @title FPT Staking Contract
 /// @author Fluid Protocol
@@ -74,6 +76,14 @@ impl FPTStaking for Contract {
     /// @custom:payable This function is payable and expects FPT tokens to be sent with the transaction
     #[storage(read, write), payable]
     fn stake() {
+        require(
+            storage
+                .lock_stake
+                .read() == false,
+            "FPTStaking: Stake is locked",
+        );
+        storage.lock_stake.write(true);
+
         let id = msg_sender().unwrap();
 
         require_fpt_is_valid_and_non_zero();
@@ -96,6 +106,8 @@ impl FPTStaking for Contract {
         storage
             .total_fpt_staked
             .write(storage.total_fpt_staked.read() + amount);
+
+        storage.lock_stake.write(false);
     }
 
     /// @notice Allows users to unstake their FPT tokens
@@ -103,6 +115,14 @@ impl FPTStaking for Contract {
     /// @param amount The amount of FPT tokens to unstake
     #[storage(read, write)]
     fn unstake(amount: u64) {
+        require(
+            storage
+                .lock_unstake
+                .read() == false,
+            "FPTStaking: Unstake is locked",
+        );
+        storage.lock_unstake.write(true);
+
         let id = msg_sender().unwrap();
 
         let current_stake = storage.stakes.get(id).try_read().unwrap_or(0);
@@ -134,6 +154,8 @@ impl FPTStaking for Contract {
                 );
             }
         }
+
+        storage.lock_unstake.write(false);
     }
 
     /// @notice Adds a new asset to the staking contract
