@@ -118,14 +118,14 @@ pub mod active_pool_abi {
         token: &Token<T>,
         amount: u64,
     ) -> CallResponse<()> {
-        let fuel_asset_id = token
+        let mock_asset_id = token
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
-            .with_asset_id(fuel_asset_id);
+            .with_asset_id(mock_asset_id);
 
         active_pool
             .methods()

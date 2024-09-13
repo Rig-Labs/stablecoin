@@ -198,15 +198,15 @@ async fn proper_redemption_from_partially_closed() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
+    let mock_asset_id = contracts.asset_contracts[0].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(healthy_wallet1.address(), mock_asset_id)
         .await
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), fuel_asset_id)
+        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
@@ -214,7 +214,7 @@ async fn proper_redemption_from_partially_closed() {
     let redemption_asset_fee = trove_manager_abi::get_redemption_fee(redemption_amount);
 
     assert_eq!(staking_balance, redemption_asset_fee);
-    assert_eq!(fuel_balance, redemption_amount - redemption_asset_fee);
+    assert_eq!(mock_balance, redemption_amount - redemption_asset_fee);
 
     trove_manager_utils::assert_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
@@ -409,19 +409,19 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let provider = healthy_wallet1.provider().unwrap();
 
-    let fuel_asset_id = contracts.asset_contracts[0].asset_id;
+    let mock_asset_id = contracts.asset_contracts[0].asset_id;
 
-    let fuel_balance = provider
-        .get_asset_balance(healthy_wallet1.address(), fuel_asset_id)
+    let mock_balance = provider
+        .get_asset_balance(healthy_wallet1.address(), mock_asset_id)
         .await
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), fuel_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(fuel_balance, 6_000 * PRECISION - staking_balance);
+    assert_eq!(mock_balance, 6_000 * PRECISION - staking_balance);
 
     trove_manager_utils::assert_trove_status(
         &contracts.asset_contracts[0].trove_manager,

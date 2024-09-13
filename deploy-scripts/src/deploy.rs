@@ -9,6 +9,8 @@ pub mod deployment {
     use test_utils::data_structures::ProtocolContracts;
     use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_json_file};
 
+    use crate::utils::utils::setup_wallet;
+
     use super::*;
 
     use test_utils::setup::common::{deploy_core_contracts, initialize_core_contracts};
@@ -23,7 +25,7 @@ pub mod deployment {
         println!("🔑 Wallet address: {}", address);
 
         //--------------- Deploy ---------------
-        let core_contracts = deployment::deploy_and_initialize_all_core_contracts(wallet).await;
+        let core_contracts = deploy_and_initialize_all_core_contracts(wallet).await;
 
         //--------------- Write to file ---------------
         write_contracts_to_file(core_contracts)
@@ -44,31 +46,6 @@ pub mod deployment {
         .await;
 
         return core_contracts;
-    }
-
-    pub async fn setup_wallet() -> WalletUnlocked {
-        let rpc = match std::env::var("RPC") {
-            Ok(s) => s,
-            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
-        };
-        println!("RPC: {}", rpc);
-
-        let provider = match Provider::connect(rpc).await {
-            Ok(p) => p,
-            Err(error) => panic!("❌ Problem creating provider: {:#?}", error),
-        };
-
-        let secret = match std::env::var("SECRET") {
-            Ok(s) => s,
-            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
-        };
-
-        WalletUnlocked::new_from_mnemonic_phrase_with_path(
-            &secret,
-            Some(provider),
-            "m/44'/1179993420'/0'/0/0",
-        )
-        .unwrap()
     }
 
     fn write_contracts_to_file(contracts: ProtocolContracts<WalletUnlocked>) {

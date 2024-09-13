@@ -53,7 +53,7 @@ sh build-and-test.sh
 - ✅ Close Trove
 - ✅ Liquidate Troves
 - ✅ Stability Pool
-- ✅ Multiple assets (Fuel, stFuel)
+- ✅ Multiple assets
 - ✅ Fees
 - ✅ Redeem Collateral w/ USDF
 - ✅ Stake FPT

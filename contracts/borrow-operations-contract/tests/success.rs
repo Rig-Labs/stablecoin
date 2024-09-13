@@ -1332,7 +1332,6 @@ async fn proper_creating_trove_with_2nd_asset() {
     );
 
     // ------- 2nd asset -------- //
-    // Minting with stFUEL //
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[1].asset,

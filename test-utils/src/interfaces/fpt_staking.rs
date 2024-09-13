@@ -84,7 +84,7 @@ pub mod fpt_staking_abi {
     pub async fn unstake<T: Account>(
         fpt_staking: &FPTStaking<T>,
         usdf_token: &USDFToken<T>,
-        fuel_token: &Token<T>,
+        mock_token: &Token<T>,
         fpt_token: &Token<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
@@ -97,7 +97,7 @@ pub mod fpt_staking_abi {
             .methods()
             .unstake(amount)
             .with_tx_policies(tx_params)
-            .with_contracts(&[usdf_token, fuel_token, fpt_token])
+            .with_contracts(&[usdf_token, mock_token, fpt_token])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
             .call()
             .await
