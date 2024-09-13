@@ -100,7 +100,7 @@ pub async fn testing_query() {
 
     let active_pool = ActivePool::new(active_pool_id, wallet.clone());
 
-    let fuel_amount_deposit = 2 * PRECISION;
+    let mock_amount_deposit = 2 * PRECISION;
     let usdf_amount_withdrawn = 600 * PRECISION;
 
     let _res = borrow_operations_abi::open_trove(
@@ -114,7 +114,7 @@ pub async fn testing_query() {
         &sorted_troves,
         &trove_manager,
         &active_pool,
-        fuel_amount_deposit,
+        mock_amount_deposit,
         usdf_amount_withdrawn,
         null_hint.clone(),
         null_hint.clone(),

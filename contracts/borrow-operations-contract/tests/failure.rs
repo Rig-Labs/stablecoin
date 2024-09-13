@@ -186,6 +186,12 @@ async fn fails_open_two_troves_of_same_coll_type() {
 #[tokio::test]
 async fn fails_open_trove_under_minimum_collateral_ratio() {
     let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(1),
+    )
+    .await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -194,8 +200,8 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
     )
     .await;
 
-    // 120% Collateral Ratio < 130% Minimum Collateral Ratio
-    let coll_amount = 1200 * PRECISION;
+    // 134.9% Collateral Ratio < 135% Minimum Collateral Ratio
+    let coll_amount = 1349 * PRECISION;
     let debt_amount = 1000 * PRECISION;
 
     let res = borrow_operations_abi::open_trove(
@@ -214,12 +220,11 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
     )
-    .await
-    .is_err();
+    .await;
 
     assert!(
-        res,
-        "Borrow operation: Should not be able to open trove with MCR < 130%"
+        res.is_err(),
+        "Borrow operation: Should not be able to open trove with MCR < 135%"
     );
 }
 
@@ -237,7 +242,7 @@ async fn fails_open_trove_under_min_usdf_required() {
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 400 * PRECISION;
     // 100 USDF < 500 USDF
-
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
@@ -260,11 +265,10 @@ async fn fails_open_trove_under_min_usdf_required() {
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
     )
-    .await
-    .is_err();
+    .await;
 
     assert!(
-        res,
+        res.is_err(),
         "Borrow operation: Should not be able to open trove with debt < 500 USDF"
     );
 }
