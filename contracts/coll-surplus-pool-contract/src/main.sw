@@ -18,7 +18,6 @@ use std::{
         msg_amount,
     },
     hash::Hash,
-    logging::log,
 };
 storage {
     protocol_manager: Identity = Identity::Address(Address::zero()),

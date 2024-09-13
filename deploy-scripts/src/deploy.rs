@@ -35,7 +35,7 @@ pub mod deployment {
         wallet: WalletUnlocked,
     ) -> ProtocolContracts<WalletUnlocked> {
         let mut core_contracts = deploy_core_contracts(&wallet, false).await;
-        initialize_core_contracts(&mut core_contracts, &wallet, false).await;
+        initialize_core_contracts(&mut core_contracts, &wallet, false, false).await;
 
         let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
         let _ = vesting::instantiate_vesting_contract(

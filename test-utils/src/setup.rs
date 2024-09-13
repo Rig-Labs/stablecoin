@@ -81,7 +81,7 @@ pub mod common {
         let wallet = wallets.pop().unwrap();
 
         let mut contracts = deploy_core_contracts(&wallet, use_test_fpt).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -155,6 +155,7 @@ pub mod common {
         contracts: &mut ProtocolContracts<WalletUnlocked>,
         wallet: &WalletUnlocked,
         use_test_fpt: bool,
+        debug: bool,
     ) {
         println!("Initializing core contracts...");
         if !use_test_fpt {
@@ -171,7 +172,7 @@ pub mod common {
             contracts.stability_pool.contract_id().into(),
             contracts.fpt_asset_id,
             &Identity::Address(wallet.address().into()),
-            true,
+            debug,
         )
         .await
         .unwrap();

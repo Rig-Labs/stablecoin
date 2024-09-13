@@ -22,9 +22,21 @@ pub fn calculate_liqudated_trove_values(
     let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO - ONE - STABILITY_POOL_FEE);
     let trove_debt_to_repay = (trove_debt_numerator / trove_debt_denominator).as_u64().unwrap();
     let trove_debt_to_repay = fm_min(trove_debt_to_repay, debt);
+    // This calculation is derived from the desired post-liquidation collateral ratio
+    // POST_COLLATERAL_RATIO: The target collateral ratio after liquidation
+    // STABILITY_POOL_FEE: The fee paid to the stability pool for liquidation
+
+    // Numerator: (debt * POST_COLLATERAL_RATIO) - (coll * price)
+    // This represents the difference between the desired collateral value and the actual collateral value
     let mut trove_coll_liquidated = fm_multiply_ratio(trove_debt_to_repay, ONE + STABILITY_POOL_FEE, price);
+
+    // Denominator: POST_COLLATERAL_RATIO - 100% - STABILITY_POOL_FEE
+    // This factor adjusts for the desired collateral ratio and the stability pool fee
     if debt - trove_debt_to_repay < MIN_NET_DEBT {
+        // Calculate the debt to repay
         trove_coll_liquidated = fm_multiply_ratio(debt, ONE + STABILITY_POOL_FEE, price);
+
+        // Ensure we don't repay more than the total debt
         return LiquidatedTroveValsInner {
             trove_coll_liquidated: fm_min(trove_coll_liquidated, coll),
             trove_debt_to_repay: debt,
@@ -37,6 +49,7 @@ pub fn calculate_liqudated_trove_values(
         is_partial_liquidation: true,
     }
 }
+
 pub fn get_offset_and_redistribution_vals(
     coll: u64,
     debt: u64,
@@ -311,5 +324,6 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
             .coll_to_send_to_sp - liquidation_vals
             .coll_gas_compensation,
     );
+
     assert_within_percent_tolerance(icr, POST_COLLATERAL_RATIO, DECIMAL_PRECISION / 100);
 }

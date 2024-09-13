@@ -226,6 +226,33 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         res.is_err(),
         "Borrow operation: Should not be able to open trove with MCR < 135%"
     );
+
+    // open trove with 136% collateral ratio
+    let coll_amount = 1360 * PRECISION;
+    let debt_amount = 1000 * PRECISION;
+
+    let res = borrow_operations_abi::open_trove(
+        &contracts.borrow_operations,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.active_pool,
+        coll_amount,
+        debt_amount,
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await;
+
+    assert!(
+        res.is_ok(),
+        "Borrow operation: Should be be able to open trove with MCR > 135%"
+    );
 }
 
 #[tokio::test]
