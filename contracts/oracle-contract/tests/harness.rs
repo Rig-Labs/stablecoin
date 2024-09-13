@@ -48,6 +48,7 @@ async fn setup() -> (
         redstone.contract_id().into(),
         REDSTONE_PRECISION,
         DEFAULT_REDSTONE_PRICE_ID,
+        true,
     )
     .await;
 
