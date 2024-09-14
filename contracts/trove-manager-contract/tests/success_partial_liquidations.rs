@@ -218,6 +218,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(
@@ -579,6 +580,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(
@@ -907,6 +909,7 @@ async fn proper_partial_liquidation_empty_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(

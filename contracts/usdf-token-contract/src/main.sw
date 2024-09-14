@@ -61,19 +61,19 @@ impl USDFToken for Contract {
     #[storage(read, write)]
     fn mint(amount: u64, address: Identity) {
         require_caller_is_borrower_operations();
-        mint_to(address, ZERO_B256, amount);
         storage
             .total_supply
             .write(storage.total_supply.try_read().unwrap_or(0) + amount);
+        mint_to(address, ZERO_B256, amount);
     }
     #[storage(read, write), payable]
     fn burn() {
         require_caller_is_bo_or_tm_or_sp_or_pm();
         let burn_amount = msg_amount();
-        burn(ZERO_B256, burn_amount);
         storage
             .total_supply
             .write(storage.total_supply.read() - burn_amount);
+        burn(ZERO_B256, burn_amount);
     }
     #[storage(read, write)]
     fn add_trove_manager(trove_manager: ContractId) {

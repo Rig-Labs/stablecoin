@@ -246,6 +246,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     // all collateral is liquidated with no surplus

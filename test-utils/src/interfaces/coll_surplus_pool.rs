@@ -37,21 +37,16 @@ pub mod coll_surplus_pool_abi {
     pub async fn get_asset<T: Account>(
         default_pool: &CollSurplusPool<T>,
         asset: AssetId,
-    ) -> CallResponse<u64> {
-        default_pool
-            .methods()
-            .get_asset(asset.into())
-            .call()
-            .await
-            .unwrap()
+    ) -> Result<CallResponse<u64>, Error> {
+        default_pool.methods().get_asset(asset.into()).call().await
     }
 
     pub async fn claim_coll<T: Account>(
-        default_pool: CollSurplusPool<T>,
+        default_pool: &CollSurplusPool<T>,
         acount: Identity,
         active_pool: &ActivePool<T>,
         asset: AssetId,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         default_pool
             .methods()
             .claim_coll(acount, asset.into())
@@ -59,19 +54,42 @@ pub mod coll_surplus_pool_abi {
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn get_collateral(
         default_pool: &CollSurplusPool<WalletUnlocked>,
         acount: Identity,
         asset: AssetId,
-    ) -> CallResponse<u64> {
+    ) -> Result<CallResponse<u64>, Error> {
         default_pool
             .methods()
             .get_collateral(acount, asset.into())
             .call()
             .await
-            .unwrap()
+    }
+
+    pub async fn add_asset<T: Account>(
+        default_pool: &CollSurplusPool<T>,
+        asset: AssetId,
+        trove_manager: Identity,
+    ) -> Result<CallResponse<()>, Error> {
+        default_pool
+            .methods()
+            .add_asset(asset.into(), trove_manager)
+            .call()
+            .await
+    }
+
+    pub async fn account_surplus<T: Account>(
+        default_pool: &CollSurplusPool<T>,
+        account: Identity,
+        amount: u64,
+        asset: AssetId,
+    ) -> Result<CallResponse<()>, Error> {
+        default_pool
+            .methods()
+            .account_surplus(account, amount, asset.into())
+            .call()
+            .await
     }
 }

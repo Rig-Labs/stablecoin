@@ -9,6 +9,7 @@ abigen!(Contract(
 pub mod borrow_operations_abi {
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
+    use crate::interfaces::coll_surplus_pool::CollSurplusPool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::pyth_oracle::PythCore;
@@ -404,6 +405,22 @@ pub mod borrow_operations_abi {
             .with_tx_policies(tx_params)
             .call()
             .await
+    }
+
+    pub async fn claim_coll<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        active_pool: &ActivePool<T>,
+        coll_surplus_pool: &CollSurplusPool<T>,
+        asset: AssetId,
+    ) -> CallResponse<()> {
+        borrow_operations
+            .methods()
+            .claim_collateral(asset.into())
+            .with_contracts(&[active_pool, coll_surplus_pool])
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
+            .call()
+            .await
+            .unwrap()
     }
 }
 
