@@ -475,6 +475,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(coll_surplus, coll3 - with_min_borrow_fee(debt3));

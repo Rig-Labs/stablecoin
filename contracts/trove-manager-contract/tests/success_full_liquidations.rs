@@ -264,6 +264,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     // Prices are the same
@@ -580,6 +581,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(
@@ -871,6 +873,7 @@ async fn proper_full_liquidation_empty_sp() {
             .into(),
     )
     .await
+    .unwrap()
     .value;
 
     assert_eq!(
