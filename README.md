@@ -3,7 +3,7 @@
 Fluid is a decentralized protocol that allows holders of certain Assets to obtain maximum liquidity against
 their collateral without paying interest. After locking up their assets as collateral in a smart contract and
 creating an individual position called a "trove", the user can get instant liquidity by minting USDF,
-a USD-pegged stablecoin. Each trove is required to be collateralized at a minimum of 130%. Any
+a USD-pegged stablecoin. Each trove is required to be collateralized at a minimum of 135%. Any
 owner of USDF can redeem their stablecoins for the underlying collateral at any time.
 
 An unprecedented liquidation mechanism based on incentivized stability deposits and a redistribution
