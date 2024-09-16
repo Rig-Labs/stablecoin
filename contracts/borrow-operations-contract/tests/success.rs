@@ -1,7 +1,4 @@
-use fuels::{
-    prelude::*,
-    types::{Bits256, Identity},
-};
+use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::PRECISION,
@@ -20,7 +17,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_creating_trove() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -75,33 +72,21 @@ async fn proper_creating_trove() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -142,11 +127,7 @@ async fn proper_creating_trove() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -157,11 +138,7 @@ async fn proper_creating_trove() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -173,7 +150,7 @@ async fn proper_creating_trove() {
 
 #[tokio::test]
 async fn proper_increase_collateral() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     let _ = token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -249,31 +226,19 @@ async fn proper_increase_collateral() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -294,11 +259,7 @@ async fn proper_increase_collateral() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -306,11 +267,7 @@ async fn proper_increase_collateral() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -323,7 +280,7 @@ async fn proper_increase_collateral() {
 
 #[tokio::test]
 async fn proper_decrease_collateral() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -406,31 +363,19 @@ async fn proper_decrease_collateral() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -461,11 +406,7 @@ async fn proper_decrease_collateral() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -473,11 +414,7 @@ async fn proper_decrease_collateral() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -490,7 +427,7 @@ async fn proper_decrease_collateral() {
 
 #[tokio::test]
 async fn proper_increase_debt() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -552,7 +489,8 @@ async fn proper_increase_debt() {
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
     )
-    .await;
+    .await
+    .unwrap();
 
     let trove_col = trove_manager_abi::get_trove_coll(
         &contracts.asset_contracts[0].trove_manager,
@@ -575,31 +513,19 @@ async fn proper_increase_debt() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -658,7 +584,7 @@ async fn proper_increase_debt() {
 
 #[tokio::test]
 async fn proper_decrease_debt() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     let balance = 5000 * PRECISION;
     token_abi::mint_to_id(
@@ -746,31 +672,19 @@ async fn proper_decrease_debt() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -808,11 +722,7 @@ async fn proper_decrease_debt() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -820,11 +730,7 @@ async fn proper_decrease_debt() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -837,7 +743,7 @@ async fn proper_decrease_debt() {
 
 #[tokio::test]
 async fn proper_open_multiple_troves() {
-    let (contracts, _admin, mut wallets) = setup_protocol(100, 4, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(4, false, false).await;
 
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
@@ -919,31 +825,19 @@ async fn proper_open_multiple_troves() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -954,11 +848,7 @@ async fn proper_open_multiple_troves() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -968,11 +858,7 @@ async fn proper_open_multiple_troves() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -986,7 +872,7 @@ async fn proper_open_multiple_troves() {
 
 #[tokio::test]
 async fn proper_close_trove() {
-    let (contracts, admin, mut wallets) = setup_protocol(100, 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     let wallet1 = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
@@ -1181,7 +1067,7 @@ async fn proper_close_trove() {
 
 #[tokio::test]
 async fn proper_creating_trove_with_2nd_asset() {
-    let (contracts, admin, mut wallets) = setup_protocol(100, 2, true, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(2, true, false).await;
 
     let wallet2 = wallets.pop().unwrap();
 
@@ -1237,32 +1123,20 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -1303,11 +1177,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -1318,11 +1188,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -1414,11 +1280,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[1]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[1].asset_id.into(),
     )
     .await
     .value;
@@ -1470,11 +1332,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[1]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[1].asset_id.into(),
     )
     .await
     .value;
@@ -1516,14 +1374,4 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
     // print_response(&res);
-}
-
-trait Bits256Ext {
-    fn to_hex(&self) -> String;
-}
-
-impl Bits256Ext for Bits256 {
-    fn to_hex(&self) -> String {
-        self.0.iter().map(|byte| format!("{:02x}", byte)).collect()
-    }
 }

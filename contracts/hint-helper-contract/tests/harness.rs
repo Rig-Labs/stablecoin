@@ -12,7 +12,7 @@ use test_utils::{
 #[tokio::test]
 async fn proper_hint_generations() {
     // let (active_pool, _admin) = get_contract_instance().await;
-    let (contracts, _admin, mut wallets) = setup_protocol(100, 20, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(20, false, false).await;
     let wallet = wallets.pop().unwrap();
 
     let hint_helper = deploy_hint_helper(&wallet).await;

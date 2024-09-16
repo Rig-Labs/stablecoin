@@ -16,7 +16,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_collateral_surplus_workflow_after_liquidation() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
@@ -123,11 +123,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
     let surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()
@@ -140,11 +136,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
         &borrow_operations,
         &contracts.active_pool,
         &contracts.coll_surplus_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await;
 
@@ -166,11 +158,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
     let final_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()
@@ -181,7 +169,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
 
 #[tokio::test]
 async fn test_coll_surplus_pool_access_control() {
-    let (contracts, admin, mut wallets) = setup_protocol(3, 3, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(3, false, false).await;
     let coll_surplus_pool = CollSurplusPool::new(
         contracts.coll_surplus_pool.contract_id().clone(),
         admin.clone(),

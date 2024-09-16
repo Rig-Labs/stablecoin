@@ -14,7 +14,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, true).await;
+    let (contracts, admin, _wallets) = setup_protocol( 4, false, true).await;
     println!("admin address {:?}", admin.address());
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -43,7 +43,7 @@ async fn proper_intialize() {
 
 #[tokio::test]
 async fn proper_staking_deposit() {
-    let (contracts, admin, mut _wallets) = setup_protocol(10, 4, false, true).await;
+    let (contracts, admin, mut _wallets) = setup_protocol( 4, false, true).await;
 
     let provider = admin.provider().unwrap();
 
@@ -76,7 +76,7 @@ async fn proper_staking_deposit() {
 
 #[tokio::test]
 async fn proper_staking_multiple_positions() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, true).await;
+    let (contracts, admin, mut wallets) = setup_protocol( 4, false, true).await;
 
     let provider = admin.provider().unwrap();
 

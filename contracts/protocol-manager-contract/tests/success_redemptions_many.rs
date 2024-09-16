@@ -17,7 +17,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_multi_collateral_redemption_from_partially_closed() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, true, false).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -122,10 +122,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
+        contracts.asset_contracts[0].asset_id
             .into(),
     )
     .await
@@ -150,10 +147,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
+        contracts.asset_contracts[0].asset_id
             .into(),
     )
     .await
@@ -161,10 +155,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
+        contracts.asset_contracts[0].asset_id
             .into(),
     )
     .await

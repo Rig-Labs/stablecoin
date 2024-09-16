@@ -15,7 +15,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_fake_usdf_deposit() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, _wallets) = setup_protocol( 4, false, false).await;
 
     let fake_usdf = deploy_usdf_token(&admin).await;
 
@@ -49,7 +49,7 @@ async fn fails_fake_usdf_deposit() {
 
 #[tokio::test]
 async fn fails_unauthorized() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol( 4, false, false).await;
 
     let attacker = wallets.pop().unwrap();
 
@@ -81,7 +81,7 @@ async fn fails_unauthorized() {
 
 #[tokio::test]
 async fn fails_withdraw_with_undercollateralized_trove() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol( 4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(

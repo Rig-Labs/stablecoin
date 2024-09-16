@@ -13,7 +13,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_permissions() {
-    let (contracts, admin, mut wallets) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol( 2, false, false).await;
 
     let pauser = borrow_operations_abi::get_pauser(&contracts.borrow_operations)
         .await
@@ -59,7 +59,7 @@ async fn test_permissions() {
 
 #[tokio::test]
 async fn test_paused_operations() {
-    let (contracts, admin, _) = setup_protocol(100, 2, true, false).await;
+    let (contracts, admin, _) = setup_protocol( 2, true, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,

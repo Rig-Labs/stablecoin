@@ -34,10 +34,11 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all_core_contracts(
         wallet: WalletUnlocked,
     ) -> ProtocolContracts<WalletUnlocked> {
+        let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
+
         let mut core_contracts = deploy_core_contracts(&wallet, false).await;
         initialize_core_contracts(&mut core_contracts, &wallet, false, false).await;
 
-        let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
         let _ = vesting::instantiate_vesting_contract(
             &core_contracts.vesting_contract,
             &core_contracts.fpt_asset_id,

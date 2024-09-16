@@ -57,7 +57,6 @@ pub mod common {
     use std::env;
 
     pub async fn setup_protocol(
-        max_size: u64,
         num_wallets: u64,
         deploy_2nd_asset: bool,
         use_test_fpt: bool,
