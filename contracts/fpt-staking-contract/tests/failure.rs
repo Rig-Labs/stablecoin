@@ -1,4 +1,4 @@
-use fuels::{prelude::*, types::Identity};
+use fuels::types::{AssetId, Identity};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
@@ -22,8 +22,9 @@ async fn fails_unstake_wrong_amount() {
         Identity::Address(admin.address().into()),
     )
     .await;
+    let mock_token_asset_id = mock_token.contract_id().asset_id(&AssetId::zeroed().into());
 
-    fpt_staking_abi::stake(&contracts.fpt_staking, &mock_token, 1 * PRECISION).await;
+    fpt_staking_abi::stake(&contracts.fpt_staking, mock_token_asset_id, 1 * PRECISION).await;
 
     fpt_staking_abi::unstake(
         &contracts.fpt_staking,

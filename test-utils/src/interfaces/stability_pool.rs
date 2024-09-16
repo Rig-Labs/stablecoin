@@ -73,10 +73,7 @@ pub mod stability_pool_abi {
         mock_token: &Token<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
-        let tx_params = TxPolicies::default()
-            .with_tip(1)
-            .with_witness_limit(2_000_000)
-            .with_script_gas_limit(2000000);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let usdf_asset_id = usdf_token.contract_id().asset_id(&AssetId::zeroed().into());
 
