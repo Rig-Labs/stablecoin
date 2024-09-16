@@ -24,7 +24,7 @@ fn abs_dif(a: u64, b: u64) -> u64 {
 
 #[tokio::test]
 async fn test_emissions() {
-    let (contracts, admin, _wallets) = setup_protocol( 4, false, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
     let fpt_asset_id = contracts
         .fpt_token
@@ -159,7 +159,7 @@ async fn test_emissions() {
 
 #[tokio::test]
 async fn test_admin_start_rewards_increase_transition() {
-    let (contracts, admin, mut _wallets) = setup_protocol( 4, false, false).await;
+    let (contracts, admin, mut _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
     let fpt_asset_id = contracts
         .fpt_token
@@ -277,7 +277,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
 #[tokio::test]
 async fn test_public_start_rewards_increase_transition_after_deadline() {
-    let (contracts, admin, mut wallets) = setup_protocol( 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
     let fpt_asset_id = contracts
         .fpt_token

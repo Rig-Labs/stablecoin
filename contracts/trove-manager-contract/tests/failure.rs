@@ -13,7 +13,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_to_liquidate_trove_not_under_mcr() {
-    let (contracts, _admin, mut wallets) = setup_protocol( 5, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(

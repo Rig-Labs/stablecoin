@@ -21,7 +21,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_partial_liquidation_enough_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol( 5, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -167,16 +167,14 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
     let default_pool_asset = default_pool_abi::get_asset(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -205,8 +203,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(wallet1.address().into()),
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()
@@ -220,7 +217,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_partial_liquidation_partial_usdf_in_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol( 5, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -429,16 +426,14 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -451,16 +446,14 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
     let default_pool_asset = default_pool_abi::get_asset(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -552,8 +545,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()
@@ -567,7 +559,7 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
 
 #[tokio::test]
 async fn proper_partial_liquidation_empty_sp() {
-    let (contracts, _admin, mut wallets) = setup_protocol( 5, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -750,16 +742,14 @@ async fn proper_partial_liquidation_empty_sp() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -772,16 +762,14 @@ async fn proper_partial_liquidation_empty_sp() {
 
     let default_pool_asset = default_pool_abi::get_asset(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let default_pool_debt = default_pool_abi::get_usdf_debt(
         &contracts.default_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -866,8 +854,7 @@ async fn proper_partial_liquidation_empty_sp() {
     let liq_coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(liquidated_wallet.address().into()),
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()

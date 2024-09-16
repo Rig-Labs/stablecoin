@@ -122,8 +122,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -147,16 +146,14 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let active_pool_asset = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0].asset_id
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
