@@ -20,7 +20,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_redemption_from_partially_closed() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, true, false).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -233,7 +233,7 @@ async fn proper_redemption_from_partially_closed() {
 
 #[tokio::test]
 async fn proper_redemption_with_a_trove_closed_fully() {
-    let (contracts, _admin, mut wallets) = setup_protocol(10, 5, true, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(5, true, false).await;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -468,11 +468,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     let coll_surplus = coll_surplus_pool_abi::get_collateral(
         &contracts.coll_surplus_pool,
         Identity::Address(healthy_wallet3.address().into()),
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .unwrap()

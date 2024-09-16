@@ -10,7 +10,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_unstake_wrong_amount() {
-    let (contracts, admin, mut _wallets) = setup_protocol(10, 4, false, true).await;
+    let (contracts, admin, mut _wallets) = setup_protocol(4, false, true).await;
 
     let mock_token = Token::new(
         contracts.fpt_token.contract_id().clone(),

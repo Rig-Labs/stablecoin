@@ -7,7 +7,6 @@ use std::{
     asset::transfer,
     block::{
         height,
-        timestamp,
     },
     call_frames::{
         msg_asset_id,

@@ -6,7 +6,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
     let fpt_asset_id = contracts
         .fpt_token

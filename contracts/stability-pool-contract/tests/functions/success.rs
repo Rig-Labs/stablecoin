@@ -32,7 +32,7 @@ async fn proper_initialization() {
 
 #[tokio::test]
 async fn proper_stability_deposit() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -82,11 +82,7 @@ async fn proper_stability_deposit() {
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
         0,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await;
 
@@ -111,7 +107,7 @@ async fn proper_stability_deposit() {
 
 #[tokio::test]
 async fn proper_stability_widthdrawl() {
-    let (contracts, admin, _wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -175,11 +171,7 @@ async fn proper_stability_widthdrawl() {
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
         0,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await;
 
@@ -197,18 +189,14 @@ async fn proper_stability_widthdrawl() {
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         0,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await;
 }
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -396,7 +384,7 @@ async fn proper_one_sp_depositor_position() {
 
 #[tokio::test]
 async fn proper_many_depositors_distribution() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -620,7 +608,7 @@ async fn proper_many_depositors_distribution() {
 
 #[tokio::test]
 async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -781,7 +769,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position_multiple_assets() {
-    let (contracts, admin, mut wallets) = setup_protocol(10, 4, true, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(4, true, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -1029,7 +1017,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
-    let (mut contracts, admin, mut wallets) = setup_protocol(10, 4, false, false).await;
+    let (mut contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(

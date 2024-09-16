@@ -18,7 +18,7 @@ use test_utils::{
 
 #[tokio::test]
 async fn fails_open_two_troves_of_same_coll_type() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -93,31 +93,19 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     let first = sorted_troves_abi::get_first(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let last = sorted_troves_abi::get_last(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
     let size = sorted_troves_abi::get_size(
         &contracts.sorted_troves,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -157,11 +145,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     let active_pool_debt = active_pool_abi::get_usdf_debt(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -169,11 +153,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     let active_pool_col = active_pool_abi::get_asset(
         &contracts.active_pool,
-        contracts.asset_contracts[0]
-            .asset
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into(),
+        contracts.asset_contracts[0].asset_id.into(),
     )
     .await
     .value;
@@ -185,7 +165,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
 #[tokio::test]
 async fn fails_open_trove_under_minimum_collateral_ratio() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
@@ -257,7 +237,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 
 #[tokio::test]
 async fn fails_open_trove_under_min_usdf_required() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -302,7 +282,7 @@ async fn fails_open_trove_under_min_usdf_required() {
 
 #[tokio::test]
 async fn fails_reduce_debt_under_min_usdf_required() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -369,7 +349,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 
 #[tokio::test]
 async fn fails_decrease_collateral_under_mcr() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -431,7 +411,7 @@ async fn fails_decrease_collateral_under_mcr() {
 
 #[tokio::test]
 async fn fails_incorrect_token_as_collateral_or_repayment() {
-    let (contracts, admin, _) = setup_protocol(100, 2, false, false).await;
+    let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     let mock_fake_token = deploy_token(&admin).await;
 
