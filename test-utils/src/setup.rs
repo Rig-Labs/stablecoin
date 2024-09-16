@@ -131,6 +131,7 @@ pub mod common {
         let vesting_contract = deploy_vesting_contract(wallet).await;
 
         let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
+        let usdf_asset_id = usdf.contract_id().asset_id(&AssetId::zeroed().into());
 
         ProtocolContracts {
             borrow_operations,
@@ -141,6 +142,7 @@ pub mod common {
             fpt_staking,
             fpt_token,
             fpt_asset_id,
+            usdf_asset_id,
             coll_surplus_pool,
             default_pool,
             active_pool,

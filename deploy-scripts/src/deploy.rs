@@ -6,6 +6,7 @@ use serde_json::json;
 
 pub mod deployment {
     const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/test_vesting.json";
+    use fuels::types::Bits256;
     use test_utils::data_structures::ProtocolContracts;
     use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_json_file};
 
@@ -55,7 +56,7 @@ pub mod deployment {
         let json = json!({
             "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
-            "usdf_asset_id": contracts.usdf.contract_id().asset_id(&AssetId::zeroed().into()).to_string(),
+            "usdf_asset_id": contracts.usdf_asset_id.to_string(),
             "stability_pool": contracts.stability_pool.contract_id().to_string(),
             "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
             "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
@@ -84,5 +85,9 @@ pub mod deployment {
     pub fn wait() {
         // Necessary for random instances where the 'UTXO' cannot be found
         std::thread::sleep(std::time::Duration::from_secs(15));
+    }
+
+    pub fn to_hex_str(bits: &Bits256) -> String {
+        format!("0x{}", hex::encode(bits.0))
     }
 }

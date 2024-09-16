@@ -28,6 +28,7 @@ pub struct ProtocolContracts<T: Account> {
     pub community_issuance: CommunityIssuance<T>,
     pub vesting_contract: VestingContract<T>,
     pub fpt_asset_id: AssetId,
+    pub usdf_asset_id: AssetId,
 }
 
 pub struct AssetContracts<T: Account> {

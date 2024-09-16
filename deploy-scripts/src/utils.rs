@@ -2,7 +2,9 @@ pub mod utils {
     use fuels::accounts::{provider::Provider, wallet::WalletUnlocked};
     use fuels::prelude::*;
     use fuels::types::bech32::Bech32ContractId;
+    use fuels::types::{Bits256, U256};
     use std::str::FromStr;
+    use test_utils::data_structures::AssetContracts;
 
     use test_utils::{
         data_structures::ProtocolContracts,
@@ -10,8 +12,10 @@ pub mod utils {
             active_pool::ActivePool, borrow_operations::BorrowOperations,
             coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
             default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
-            protocol_manager::ProtocolManager, sorted_troves::SortedTroves,
-            stability_pool::StabilityPool, vesting::VestingContract,
+            protocol_manager::ProtocolManager, pyth_oracle::PythCore,
+            redstone_oracle::RedstoneCore, sorted_troves::SortedTroves,
+            stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
+            vesting::VestingContract,
         },
     };
     pub async fn setup_wallet() -> WalletUnlocked {
@@ -118,7 +122,66 @@ pub mod utils {
         let fpt_asset_id: AssetId =
             AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();
 
-        let asset_contracts = vec![];
+        let usdf_asset_id: AssetId =
+            AssetId::from_str(contracts["usdf_asset_id"].as_str().unwrap()).unwrap();
+
+        let asset_contracts = contracts["asset_contracts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|asset_contract| {
+                let asset_contract_id: Bech32ContractId = asset_contract["asset_contract"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                let asset_id =
+                    AssetId::from_str(asset_contract["asset_id"].as_str().unwrap()).unwrap();
+                let oracle_contract_id: Bech32ContractId =
+                    asset_contract["oracle"].as_str().unwrap().parse().unwrap();
+                let trove_manager_contract_id: Bech32ContractId = asset_contract["trove_manager"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                let pyth_contract_id: Bech32ContractId = asset_contract["pyth_contract"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                let redstone_contract_id: Bech32ContractId = asset_contract["redstone_contract"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+
+                AssetContracts {
+                    asset: Token::new(asset_contract_id, wallet.clone()),
+                    asset_id,
+                    oracle: test_utils::interfaces::oracle::Oracle::new(
+                        oracle_contract_id,
+                        wallet.clone(),
+                    ),
+                    trove_manager: TroveManagerContract::new(
+                        trove_manager_contract_id,
+                        wallet.clone(),
+                    ),
+                    mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
+                    mock_redstone_oracle: RedstoneCore::new(redstone_contract_id, wallet.clone()),
+                    pyth_price_id: Bits256::from_hex_str(
+                        asset_contract["pyth_price_id"].as_str().unwrap(),
+                    )
+                    .unwrap(),
+                    pyth_precision: asset_contract["pyth_precision"].as_u64().unwrap() as u8,
+                    redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap()
+                        as u8,
+                    redstone_price_id: U256::from_str(
+                        asset_contract["redstone_price_id"].as_str().unwrap(),
+                    )
+                    .unwrap(),
+                }
+            })
+            .collect();
 
         let protocol_contracts = ProtocolContracts {
             borrow_operations,
@@ -129,6 +192,7 @@ pub mod utils {
             fpt_staking,
             fpt_token,
             fpt_asset_id,
+            usdf_asset_id,
             community_issuance,
             vesting_contract,
             coll_surplus_pool,

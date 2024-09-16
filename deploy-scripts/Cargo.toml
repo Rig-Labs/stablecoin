@@ -9,11 +9,13 @@ license = "Apache-2.0"
 dotenv = { workspace = true }
 fuels = { workspace = true }
 futures = { workspace = true }
+hex = { workspace = true }
 pbr = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 test-utils = { workspace = true }
 tokio = { workspace = true }
+
 
 [lib]
 doctest = false

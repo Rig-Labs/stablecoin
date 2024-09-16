@@ -1339,6 +1339,7 @@ dependencies = [
  "dotenv",
  "fuels",
  "futures",
+ "hex",
  "pbr",
  "serde",
  "serde_json",
