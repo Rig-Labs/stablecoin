@@ -1,7 +1,11 @@
+use std::thread::sleep;
+use std::time::Duration;
+
 use crate::utils::utils::*;
 use dotenv::dotenv;
 use fuels::prelude::*;
 use test_utils::interfaces::borrow_operations::borrow_operations_abi;
+use test_utils::interfaces::fpt_staking::fpt_staking_abi;
 use test_utils::interfaces::stability_pool::stability_pool_abi;
 
 use test_utils::data_structures::PRECISION;
@@ -49,21 +53,23 @@ pub async fn sanity_check() {
         println!("Operation cancelled.");
         return;
     }
-
+    let asset_id: AssetId = core_contracts.asset_contracts[0]
+        .asset
+        .contract_id()
+        .asset_id(&AssetId::zeroed().into())
+        .into();
     let collateral_amount = 4000 * PRECISION;
     let debt = 1000 * PRECISION;
 
     let balance = provider
-        .get_asset_balance(
-            wallet.address().into(),
-            core_contracts.asset_contracts[0].asset_id.into(),
-        )
+        .get_asset_balance(wallet.address().into(), asset_id)
         .await
         .unwrap();
     assert!(balance >= collateral_amount);
     println!("Balance: {}", balance);
 
-    let res = borrow_operations_abi::open_trove(
+    println!("Opening trove...");
+    let _ = borrow_operations_abi::open_trove(
         &core_contracts.borrow_operations,
         &core_contracts.asset_contracts[0].oracle,
         &core_contracts.asset_contracts[0].mock_pyth_oracle,
@@ -82,7 +88,7 @@ pub async fn sanity_check() {
     .await
     .unwrap();
 
-    println!("Open trove res: {:?}", res.decode_logs());
+    // println!("Open trove res: {:?}", res.decode_logs());
 
     let usdf_balance = provider
         .get_asset_balance(wallet.address().into(), core_contracts.usdf_asset_id.into())
@@ -110,4 +116,56 @@ pub async fn sanity_check() {
         .unwrap();
 
     println!("Stability pool balance: {}", stability_pool_balance);
+
+    // wait 30 seconds
+    println!("Waiting 30 seconds to accumulate rewards");
+    sleep(Duration::from_secs(30));
+
+    stability_pool_abi::withdraw_from_stability_pool(
+        &core_contracts.stability_pool,
+        &core_contracts.community_issuance,
+        &core_contracts.usdf,
+        &core_contracts.asset_contracts[0].asset,
+        &core_contracts.sorted_troves,
+        &core_contracts.asset_contracts[0].oracle,
+        &core_contracts.asset_contracts[0].mock_pyth_oracle,
+        &core_contracts.asset_contracts[0].mock_redstone_oracle,
+        &core_contracts.asset_contracts[0].trove_manager,
+        stability_pool_balance / 2,
+    )
+    .await
+    .unwrap();
+
+    println!("Waiting 30 seconds to accumulate rewards");
+    sleep(Duration::from_secs(30));
+    stability_pool_abi::withdraw_from_stability_pool(
+        &core_contracts.stability_pool,
+        &core_contracts.community_issuance,
+        &core_contracts.usdf,
+        &core_contracts.asset_contracts[0].asset,
+        &core_contracts.sorted_troves,
+        &core_contracts.asset_contracts[0].oracle,
+        &core_contracts.asset_contracts[0].mock_pyth_oracle,
+        &core_contracts.asset_contracts[0].mock_redstone_oracle,
+        &core_contracts.asset_contracts[0].trove_manager,
+        stability_pool_balance / 3,
+    )
+    .await
+    .unwrap();
+
+    let fpt_balance = provider
+        .get_asset_balance(wallet.address().into(), core_contracts.fpt_asset_id.into())
+        .await
+        .unwrap();
+
+    println!("FPT balance: {}", fpt_balance);
+
+    println!("Staking FPT...");
+    fpt_staking_abi::stake(
+        &core_contracts.fpt_staking,
+        core_contracts.fpt_asset_id,
+        fpt_balance,
+    )
+    .await;
+    println!("Staked FPT");
 }

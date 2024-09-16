@@ -54,17 +54,12 @@ pub mod fpt_staking_abi {
 
     pub async fn stake<T: Account>(
         fpt_staking: &FPTStaking<T>,
-        fpt_token: &Token<T>,
+        fpt_asset_id: AssetId,
         fpt_deposit_amount: u64,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
-
-        let fpt_asset_id = fpt_token
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-            .into();
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(fpt_deposit_amount)

@@ -65,27 +65,34 @@ pub async fn add_asset() {
 }
 
 fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnlocked>>) {
-    let mut file = File::create("asset_contracts.json").unwrap();
-    // TODO try and add the pyth price id
-    let json = json!({
-        "asset_contracts": asset_contracts.iter().map(|asset_contract| {
-            json!({
-                "oracle": asset_contract.oracle.contract_id().to_string(),
-                "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
-                "asset_contract": asset_contract.asset.contract_id().to_string(),
-                "asset_id": asset_contract.asset_id.to_string(),
-                "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
-                "pyth_precision": asset_contract.pyth_precision,
-                "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
-                "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
-                "redstone_price_id": asset_contract.redstone_price_id.to_string(),
-                "redstone_precision": asset_contract.redstone_precision,
-            })
-        }).collect::<Vec<serde_json::Value>>()
-    });
+    // Read existing contracts.json
+    let mut contracts: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string("contracts.json").expect("Failed to read contracts.json"),
+    )
+    .expect("Failed to parse contracts.json");
 
-    file.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes())
-        .unwrap();
+    // Update asset_contracts field
+    contracts["asset_contracts"] =
+        json!(asset_contracts.iter().map(|asset_contract| {
+        json!({
+            "oracle": asset_contract.oracle.contract_id().to_string(),
+            "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
+            "asset_contract": asset_contract.asset.contract_id().to_string(),
+            "asset_id": asset_contract.asset_id.to_string(),
+            "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
+            "pyth_precision": asset_contract.pyth_precision,
+            "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
+            "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
+            "redstone_price_id": asset_contract.redstone_price_id.to_string(),
+            "redstone_precision": asset_contract.redstone_precision,
+        })
+    }).collect::<Vec<serde_json::Value>>());
+
+    // Write updated contracts back to file
+    let mut file =
+        File::create("contracts.json").expect("Failed to open contracts.json for writing");
+    file.write_all(serde_json::to_string_pretty(&contracts).unwrap().as_bytes())
+        .expect("Failed to write to contracts.json");
 }
 
 async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {

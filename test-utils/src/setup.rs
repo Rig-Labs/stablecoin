@@ -693,8 +693,15 @@ pub mod common {
                     .asset_id(&AssetId::zeroed().into())
                     .into();
 
+                token_abi::mint_to_id(
+                    &asset,
+                    5000 * PRECISION,
+                    Identity::Address(wallet.address().into()),
+                )
+                .await;
+
                 let pyth_price_id = Bits256::from(asset_id);
-                let redstone_price_id = U256::from(pyth_price_id.0);
+                let redstone_price_id = U256::from(rand::thread_rng().gen_range(1..1_000_000));
 
                 let pyth = deploy_mock_pyth_oracle(&wallet).await;
                 let redstone = deploy_mock_redstone_oracle(&wallet).await;

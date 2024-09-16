@@ -68,10 +68,7 @@ pub mod borrow_operations_abi {
         upper_hint: Identity,
         lower_hint: Identity,
     ) -> Result<CallResponse<()>, Error> {
-        let tx_params = TxPolicies::default()
-            .with_tip(1)
-            .with_witness_limit(2000000)
-            .with_script_gas_limit(2000000);
+        let tx_params = TxPolicies::default().with_tip(1);
 
         let asset_id = asset_token
             .contract_id()
@@ -92,7 +89,6 @@ pub mod borrow_operations_abi {
                 mock_pyth,
                 mock_redstone,
                 active_pool,
-                asset_token,
                 usdf_token,
                 sorted_troves,
                 trove_manager,
