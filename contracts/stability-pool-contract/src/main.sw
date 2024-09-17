@@ -1,5 +1,19 @@
 contract;
 
+// This contract, StabilityPool, manages the Stability Pool in the Fluid Protocol.
+// The Stability Pool holds USDF deposits from users and plays a crucial role in the liquidation process.
+//
+// Key functionalities include:
+// - Managing user deposits and withdrawals of USDF
+// - Handling the offset of debt during trove liquidations
+// - Distributing gains (collateral assets and FPT tokens) to depositors
+// - Maintaining internal accounting of deposits, gains, and scale factors
+// - Interfacing with other core contracts like TroveManager, ActivePool, and CommunityIssuance
+//
+// The contract uses a system of epochs, scales, and snapshots to accurately
+// track and distribute gains to depositors over time, even as the total deposits fluctuate.
+// Solidity reference: https://github.com/liquity/dev/blob/main/packages/contracts/contracts/StabilityPool.sol
+
 mod data_structures;
 use ::data_structures::{AssetContracts, Snapshots};
 
@@ -75,6 +89,13 @@ storage {
     *  In each case, the FPT reward is issued (i.e. G is updated), before other state changes are made.
     */
     epoch_to_scale_to_gain: StorageMap<(u64, u64), U128> = StorageMap::<(u64, u64), U128> {},
+    /*   * --- EPOCHS ---
+    *
+    * Whenever a liquidation fully empties the Stability Pool, all deposits should become 0. However, setting P to 0 would make P be 0
+    * forever, and break all future reward calculations.
+    *
+    * So, every time the Stability Pool is emptied by a liquidation, we reset P = 1 and currentScale = 0, and increment the currentEpoch by 1.
+    */
     p: U128 = U128::from_u64(DECIMAL_PRECISION),
     last_fpt_error: U128 = U128::from_u64(0),
     last_asset_error_offset: StorageMap<AssetId, U128> = StorageMap::<AssetId, U128> {},
@@ -221,19 +242,13 @@ impl StabilityPool for Contract {
             return;
         }
         internal_trigger_fpt_issuance();
-        let asset_contractes_cache = storage.asset_contracts.get(asset_contract).read();
         let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_contract);
         update_reward_sum_and_product(
             per_unit_staked_changes.0,
             per_unit_staked_changes.1,
             asset_contract,
         );
-        internal_move_offset_coll_and_debt(
-            coll_to_offset,
-            debt_to_offset,
-            asset_contract,
-            asset_contractes_cache,
-        );
+        internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_contract);
 
         storage.lock_offset.write(false);
     }
@@ -480,11 +495,6 @@ fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
     transfer(depositor, usdf_asset_id, amount);
 }
 #[storage(read)]
-fn require_user_has_asset_gain(depositor: Identity, asset_contract: AssetId) {
-    let gain = internal_get_depositor_asset_gain(depositor, asset_contract);
-    require(gain > 0, "StabilityPool: User has no asset gain");
-}
-#[storage(read)]
 fn require_caller_is_trove_manager() {
     let mut i = 0;
     while i < storage.valid_assets.len() {
@@ -597,7 +607,6 @@ fn internal_move_offset_coll_and_debt(
     coll_to_add: u64,
     debt_to_offset: u64,
     asset_contract: AssetId,
-    asset_contractes_cache: AssetContracts,
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
     let usdf_contract = abi(USDFToken, storage.usdf_contract.read().bits());
