@@ -14,6 +14,7 @@ pub async fn sanity_check() {
     dotenv().ok();
     let collateral_amount = 4000 * PRECISION;
     let debt = 1000 * PRECISION;
+
     let wallet = setup_wallet().await;
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);

@@ -46,7 +46,7 @@ storage {
     sorted_troves_contract: ContractId = ContractId::zero(),
     usdf_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
-    is_paused: bool = false,
+    is_paused: bool = false, // paused protocol still allows trove operations which do not increase trove debt
     pauser: Identity = Identity::Address(Address::zero()),
     lock_close_trove: bool = false,
     lock_internal_adjust_trove: bool = false,

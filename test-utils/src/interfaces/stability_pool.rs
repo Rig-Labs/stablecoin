@@ -16,8 +16,6 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
 
-    use crate::interfaces::{pyth_oracle, redstone_oracle};
-
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},

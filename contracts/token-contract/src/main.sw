@@ -1,4 +1,6 @@
 contract;
+// To the auditor:
+// This is only a mockup of the token contract. It is not used in the system and does not need to be audited.
 use libraries::token_interface::{Token, TokenInitializeConfig};
 use std::{
     address::*,
