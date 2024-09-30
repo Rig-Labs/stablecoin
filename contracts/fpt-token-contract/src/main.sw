@@ -14,6 +14,7 @@ contract;
 
 use libraries::fpt_token_interface::FPTToken;
 use libraries::fluid_math::{DECIMAL_PRECISION, get_default_asset_id, ZERO_B256,};
+use standards::src20::SRC20;
 use std::{
     address::*,
     asset::*,
@@ -84,6 +85,11 @@ impl FPTToken for Contract {
     //////////////////////////////////////
     // SRC-20 Read-Only methods
     //////////////////////////////////////
+    
+}
+
+impl SRC20 for Contract {
+    #[storage(read)]
     fn total_assets() -> u64 {
         return 1;
     }
