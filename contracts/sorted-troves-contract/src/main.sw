@@ -290,7 +290,7 @@ fn internal_find_insert_position(
     }
     if (next_id != null_identity_address()) {
         if (!internal_contains(next_id, asset)
-            || nicr < trove_manager.get_nominal_icr(prev_id))
+            || nicr < trove_manager.get_nominal_icr(next_id))
         {
             next_id = null_identity_address()
         }
