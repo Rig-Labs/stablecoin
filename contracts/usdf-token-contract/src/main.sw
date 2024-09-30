@@ -3,6 +3,7 @@ contract;
 // It is used by the Stability Pool, Borrower Operations, and Trove Managers.
 use libraries::usdf_token_interface::USDFToken;
 use libraries::fluid_math::{get_default_asset_id, ZERO_B256};
+use standards::{src20::SRC20, src3::SRC3,};
 use std::{
     address::*,
     asset::{
@@ -53,28 +54,10 @@ impl USDFToken for Contract {
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
         storage.borrower_operations.write(borrower_operations);
-        storage
-            .default_asset
-            .write(get_default_asset_id(ContractId::this()));
+        storage.default_asset.write(AssetId::default());
         storage.is_initialized.write(true);
     }
-    #[storage(read, write)]
-    fn mint(amount: u64, address: Identity) {
-        require_caller_is_borrower_operations();
-        storage
-            .total_supply
-            .write(storage.total_supply.try_read().unwrap_or(0) + amount);
-        mint_to(address, ZERO_B256, amount);
-    }
-    #[storage(read, write), payable]
-    fn burn() {
-        require_caller_is_bo_or_tm_or_sp_or_pm();
-        let burn_amount = msg_amount();
-        storage
-            .total_supply
-            .write(storage.total_supply.read() - burn_amount);
-        burn(ZERO_B256, burn_amount);
-    }
+
     #[storage(read, write)]
     fn add_trove_manager(trove_manager: ContractId) {
         require_caller_is_protocol_manager();
@@ -82,9 +65,28 @@ impl USDFToken for Contract {
             .valid_trove_managers
             .insert(Identity::ContractId(trove_manager), true);
     }
-    //////////////////////////////////////
-    // SRC-20 Read-Only methods
-    //////////////////////////////////////
+}
+impl SRC3 for Contract {
+    #[storage(read, write)]
+    fn mint(address: Identity, sub_id: Option<SubId>, amount: u64) {
+        require_caller_is_borrower_operations();
+        storage
+            .total_supply
+            .write(storage.total_supply.try_read().unwrap_or(0) + amount);
+        mint_to(address, SubId::zero(), amount);
+    }
+    #[storage(read, write), payable]
+    fn burn(sub_id: SubId, amount: u64) {
+        require_caller_is_bo_or_tm_or_sp_or_pm();
+        let burn_amount = msg_amount();
+        storage
+            .total_supply
+            .write(storage.total_supply.read() - burn_amount);
+        burn(SubId::zero(), burn_amount);
+    }
+}
+impl SRC20 for Contract {
+    #[storage(read)]
     fn total_assets() -> u64 {
         return 1;
     }
@@ -112,6 +114,7 @@ impl USDFToken for Contract {
         }
         return None;
     }
+
     #[storage(read)]
     fn decimals(asset: AssetId) -> Option<u8> {
         if asset == storage.default_asset.read() {

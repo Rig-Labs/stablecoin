@@ -16,7 +16,7 @@ contract;
 
 mod data_structures;
 use ::data_structures::{AssetContracts, Snapshots};
-
+use standards::src3::SRC3;
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::usdf_token_interface::USDFToken;
@@ -200,20 +200,19 @@ impl StabilityPool for Contract {
             "StabilityPool: Withdraw is locked",
         );
         storage.lock_withdraw_from_stability_pool.write(true);
-
-        require_no_undercollateralized_troves();
+        require_no_undercollateralized_troves(
+);
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         require_user_has_initial_deposit(initial_deposit);
         internal_trigger_fpt_issuance();
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-
-        let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
+        let usdf_to_withdraw
+ = fm_min(amount, compounded_usdf_deposit);
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
-
         storage.lock_withdraw_from_stability_pool.write(false);
     }
     /*
@@ -234,8 +233,8 @@ impl StabilityPool for Contract {
             "StabilityPool: Offset is locked",
         );
         storage.lock_offset.write(true);
-
-        require_caller_is_trove_manager();
+        require_caller_is_trove_manager(
+);
         let total_usdf = storage.total_usdf_deposits.read();
         if total_usdf == 0 || debt_to_offset == 0 {
             storage.lock_offset.write(false);
@@ -249,7 +248,6 @@ impl StabilityPool for Contract {
             asset_contract,
         );
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_contract);
-
         storage.lock_offset.write(false);
     }
     #[storage(read)]
@@ -339,8 +337,8 @@ fn internal_get_fpt_gain_from_snapshots(initial_stake: u64, snapshots: Snapshots
     let scale_snapshot = snapshots.scale;
     let g_snapshot = snapshots.G;
     let p_snapshot = snapshots.P;
-
-    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).try_read().unwrap_or(U128::from_u64(0)) - g_snapshot;
+    let first_portion
+ = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).try_read().unwrap_or(U128::from_u64(0)) - g_snapshot;
     let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)).try_read().unwrap_or(U128::from_u64(0)) / U128::from_u64(SCALE_FACTOR);
     let gain = (U128::from_u64(initial_stake) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
     return gain.as_u64().unwrap();
@@ -510,24 +508,24 @@ fn require_caller_is_trove_manager() {
 #[storage(read)]
 fn require_no_undercollateralized_troves() {
     let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().into());
-
-    let mut i = 0;
+    let mut
+ i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap().read();
         let asset_contracts = storage.asset_contracts.get(asset).read();
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.into());
         let oracle = abi(Oracle, asset_contracts.oracle.into());
-
-        let price = oracle.get_price();
+        let price
+ = oracle.get_price();
         let first = sorted_troves.get_first(asset);
-
         require(
+
             first == Identity::Address(Address::zero()) || trove_manager
                 .get_current_icr(first, price) > MCR,
             "StabilityPool: There are undercollateralized troves",
         );
-
-        i += 1;
+        i +=
+ 1;
     }
 }
 fn require_user_has_initial_deposit(deposit: u64) {
@@ -609,7 +607,7 @@ fn internal_move_offset_coll_and_debt(
     asset_contract: AssetId,
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
-    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().bits());
+    let usdf_contract = abi(SRC3, storage.usdf_contract.read().bits());
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_contract);
     active_pool.decrease_usdf_debt(debt_to_offset, asset_contract);
@@ -617,7 +615,7 @@ fn internal_move_offset_coll_and_debt(
         .burn {
             coins: debt_to_offset,
             asset_id: storage.usdf_asset_id.read().bits(),
-        }();
+        }(SubId::zero(), debt_to_offset);
     active_pool.send_asset(
         Identity::ContractId(ContractId::this()),
         coll_to_add,

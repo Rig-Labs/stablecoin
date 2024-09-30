@@ -14,7 +14,7 @@ contract;
 
 use libraries::fpt_token_interface::FPTToken;
 use libraries::fluid_math::{DECIMAL_PRECISION, get_default_asset_id, ZERO_B256,};
-use standards::src20::SRC20;
+use standards::src20::{SetDecimalsEvent, SetNameEvent, SetSymbolEvent, SRC20, TotalSupplyEvent};
 use std::{
     address::*,
     asset::*,
@@ -27,6 +27,9 @@ use std::{
     context::{
         balance_of,
         msg_amount,
+    },
+    logging::{
+        log,
     },
     storage::*,
     string::String,
@@ -70,9 +73,7 @@ impl FPTToken for Contract {
             ZERO_B256,
             TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION,
         );
-        storage
-            .default_asset
-            .write(get_default_asset_id(ContractId::this()));
+        storage.default_asset.write(AssetId::default());
         storage.is_initialized.write(true);
     }
     //////////////////////////////////////
@@ -82,10 +83,6 @@ impl FPTToken for Contract {
     fn get_vesting_contract() -> ContractId {
         storage.vesting_contract.read()
     }
-    //////////////////////////////////////
-    // SRC-20 Read-Only methods
-    //////////////////////////////////////
-    
 }
 
 impl SRC20 for Contract {

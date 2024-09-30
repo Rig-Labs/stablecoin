@@ -13,7 +13,7 @@ pub mod usdf_token_abi {
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies},
-        types::{transaction_builders::VariableOutputPolicy, ContractId},
+        types::{transaction_builders::VariableOutputPolicy, Bits256, ContractId},
     };
 
     pub async fn initialize<T: Account>(
@@ -43,7 +43,7 @@ pub mod usdf_token_abi {
     ) -> Result<CallResponse<()>, Error> {
         instance
             .methods()
-            .mint(amount, address)
+            .mint(address, None, amount)
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
@@ -67,7 +67,7 @@ pub mod usdf_token_abi {
 
         let call_handler = usdf_token
             .methods()
-            .burn()
+            .burn(Bits256::zeroed(), amount)
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1));
 
         call_handler

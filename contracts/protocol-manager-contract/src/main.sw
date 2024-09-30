@@ -23,7 +23,7 @@ use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::fluid_math::*;
 use sway_libs::ownership::*;
-use standards::src5::*;
+use standards::{src3::SRC3, src5::*,};
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -147,7 +147,7 @@ impl ProtocolManager for Contract {
         );
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
-        let usdf = abi(USDFToken, usdf_contract_cache.bits());
+        let usdf = abi(SRC3, usdf_contract_cache.bits());
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
         let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
         let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.bits());
@@ -250,7 +250,7 @@ impl ProtocolManager for Contract {
             .burn {
                 coins: total_usdf_redeemed,
                 asset_id: get_default_asset_id(usdf_contract_cache).bits(),
-            }();
+            }(SubId::zero(), total_usdf_redeemed);
 
         // Return any remaining USDF to the redeemer
         if (remaining_usdf > 0) {

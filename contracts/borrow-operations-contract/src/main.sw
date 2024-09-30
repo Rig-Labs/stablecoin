@@ -12,11 +12,11 @@ contract;
 
 mod data_structures;
 
+use standards::{src3::SRC3,};
 use ::data_structures::{AssetContracts, LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::active_pool_interface::ActivePool;
 use libraries::token_interface::Token;
-use libraries::usdf_token_interface::USDFToken;
 use libraries::trove_manager_interface::TroveManager;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fpt_staking_interface::FPTStaking;
@@ -306,14 +306,14 @@ fn internal_trigger_borrowing_fee(
     usdf_contract: ContractId,
     fpt_staking_contract: ContractId,
 ) -> u64 {
-    let usdf = abi(USDFToken, usdf_contract.bits());
+    let usdf = abi(SRC3, usdf_contract.bits());
     let fpt_staking = abi(FPTStaking, fpt_staking_contract.bits());
     let usdf_fee = fm_compute_borrow_fee(usdf_amount);
 
     //increase fpt staking rewards
     fpt_staking.increase_f_usdf(usdf_fee);
     // Mint usdf to fpt staking contract
-    usdf.mint(usdf_fee, Identity::ContractId(fpt_staking_contract));
+    usdf.mint(Identity::ContractId(fpt_staking_contract), None, usdf_fee);
 
     return usdf_fee
 }
@@ -529,9 +529,9 @@ fn internal_withdraw_usdf(
     asset_contract: AssetId,
 ) {
     let active_pool = abi(ActivePool, active_pool_contract.bits());
-    let usdf = abi(USDFToken, usdf_contract.bits());
+    let usdf = abi(SRC3, usdf_contract.bits());
     active_pool.increase_usdf_debt(net_debt_increase, asset_contract);
-    usdf.mint(amount, recipient);
+    usdf.mint(recipient, None, amount);
 }
 fn internal_get_coll_change(coll_recieved: u64, requested_coll_withdrawn: u64) -> (u64, bool) {
     if (coll_recieved != 0) {
@@ -638,12 +638,13 @@ fn internal_repay_usdf(
     asset_contract: AssetId,
 ) {
     let active_pool = abi(ActivePool, active_pool_contract.bits());
-    let usdf = abi(USDFToken, usdf_contract.bits());
+    let usdf = abi(SRC3, usdf_contract.bits());
     usdf
         .burn {
             coins: usdf_amount,
             asset_id: storage.usdf_asset_id.read().bits(),
-        }();
+        }(SubId::zero(), usdf_amount);
+
     active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
 }
 #[storage(read)]
