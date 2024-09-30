@@ -121,10 +121,6 @@ impl ProtocolManager for Contract {
         only_owner();
         storage.owner.write(State::Revoked);
     }
-    #[storage(read)]
-    fn owner() -> State {
-        storage.owner.read()
-    }
     #[storage(read, write), payable]
     fn redeem_collateral(
         max_itterations: u64,
@@ -263,6 +259,13 @@ impl ProtocolManager for Contract {
         }
 
         storage.lock_redeem_collateral.write(false);
+    }
+}
+
+impl SRC5 for Contract {
+    #[storage(read)]
+    fn owner() -> State {
+        storage.owner.read()
     }
 }
 // --- Helper functions ---

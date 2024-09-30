@@ -29,6 +29,4 @@ abi ProtocolManager {
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     );
-    #[storage(read)]
-    fn owner() -> State;
 }
