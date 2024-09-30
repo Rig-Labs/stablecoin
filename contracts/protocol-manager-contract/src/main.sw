@@ -119,9 +119,7 @@ impl ProtocolManager for Contract {
     #[storage(read, write)]
     fn renounce_admin() {
         only_owner();
-        storage
-            .owner
-            .write(State::Initialized(Identity::Address(Address::zero())));
+        storage.owner.write(State::Revoked);
     }
     #[storage(read)]
     fn owner() -> State {

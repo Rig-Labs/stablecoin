@@ -105,7 +105,7 @@ impl ActivePool for Contract {
     fn recieve() {
         require_caller_is_borrow_operations_or_default_pool();
         let asset_id = msg_asset_id();
-        require_is_asset_id(asset_id);
+        require_is_valid_asset_id(asset_id);
         let new_amount = storage.asset_amount.get(asset_id).try_read().unwrap_or(0) + msg_amount();
         storage.asset_amount.insert(asset_id, new_amount);
     }
@@ -121,7 +121,7 @@ impl ActivePool for Contract {
 }
 // --- Helper functions ---
 #[storage(read)]
-fn require_is_asset_id(asset_id: AssetId) {
+fn require_is_valid_asset_id(asset_id: AssetId) {
     let valid_asset_id = storage.valid_asset_ids.get(asset_id).try_read().unwrap_or(false);
     require(valid_asset_id, "Active Pool: Asset ID is not correct");
 }

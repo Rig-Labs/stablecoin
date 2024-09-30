@@ -324,7 +324,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     storage.lock_internal_close_trove.write(true);
 
     require(
-        close_status != Status::NonExistent || close_status != Status::Active,
+        close_status != Status::NonExistent && close_status != Status::Active,
         "TroveManager: Invalid status",
     );
     let asset_contract_cache = storage.asset_contract.read();

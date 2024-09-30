@@ -40,18 +40,9 @@ impl From<PythPrice> for Price {
     }
 }
 
-// Hack: Sway does not provide a downcast to u64
-// If redstone provides a strangely high u256 which shouldn't be cast down
-// then other parts of the code must be adjusted to use u256
-impl u256 {
-    fn to_u64(self) -> u64 {
-        let (_a, _b, _c, d): (u64, u64, u64, u64) = asm(r1: self) {
-            r1: (u64, u64, u64, u64)
-        };
-
-        d
-    }
-}
+// // Hack: Sway does not provide a downcast to u64
+// // If redstone provides a strangely high u256 which shouldn't be cast down
+// // then other parts of the code must be adjusted to use u256
 
 configurable {
     /// Contract Address
@@ -107,7 +98,9 @@ impl Oracle for Contract {
             let redstone = abi(RedstoneCore, id);
             let redstone_prices = redstone.read_prices(feed);
             let redstone_timestamp = redstone.read_timestamp();
-            let redstone_price = convert_precision(redstone_prices.get(0).unwrap().to_u64(), REDSTONE_PRECISION);
+            let redstone_price_u64 = u64::try_from(redstone_prices.get(0).unwrap()).unwrap();
+            // By default redstone uses 8 decimal precision so it is safe to cast down
+            let redstone_price = convert_precision(redstone_price_u64, REDSTONE_PRECISION);
 
             // Check if Redstone data is also stale
             if current_time - redstone_timestamp > TIMEOUT {
