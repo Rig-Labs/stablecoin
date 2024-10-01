@@ -17,8 +17,6 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
 pub const MCR: u64 = 1_350_000_000;
-
-pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
@@ -73,36 +71,36 @@ pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u8) -
 
 // 0.5% one-time borrow fee
 pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
-    let fee = U128::from_u64(debt) * U128::from_u64(BORROWING_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    let fee = U128::from(debt) * U128::from(BORROWING_FEE_FLOOR) / U128::from(DECIMAL_PRECISION);
     return fee.as_u64().unwrap();
 }
 
 // 1% redemption fee
 pub fn fm_compute_redemption_fee(debt: u64) -> u64 {
-    let fee = U128::from_u64(debt) * U128::from_u64(REDEMPTION_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    let fee = U128::from(debt) * U128::from(REDEMPTION_FEE_FLOOR) / U128::from(DECIMAL_PRECISION);
     return fee.as_u64().unwrap();
 }
 
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {
-        let ncr: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(debt);
+        let ncr: U128 = U128::from(coll) * U128::from(DECIMAL_PRECISION) / U128::from(debt);
         return ncr.as_u64().unwrap();
     } else {
-        return MAX_U64;
+        return u64::max();
     }
 }
 
 pub fn fm_multiply_ratio(value: u64, numerator: u64, denominator: u64) -> u64 {
-    let ratio: U128 = U128::from_u64(value) * U128::from_u64(numerator) / U128::from_u64(denominator);
+    let ratio: U128 = U128::from(value) * U128::from(numerator) / U128::from(denominator);
     return ratio.as_u64().unwrap();
 }
 
 pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     if (debt > 0) {
-        let cr: U128 = U128::from_u64(coll) * U128::from_u64(price) / U128::from_u64(debt);
+        let cr: U128 = U128::from(coll) * U128::from(price) / U128::from(debt);
         return cr.as_u64().unwrap();
     } else {
-        return MAX_U64;
+        return u64::max();
     }
 }
 
@@ -130,7 +128,7 @@ pub fn fm_max(a: u64, b: u64) -> u64 {
 
 pub fn dec_mul(a: U128, b: U128) -> U128 {
     let prod = a * b;
-    let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
+    let dec_prod = (prod + U128::from(DECIMAL_PRECISION / 2)) / U128::from(DECIMAL_PRECISION);
     return dec_prod;
 }
 
@@ -140,18 +138,18 @@ pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
         minutes = 525600000;
     }
 
-    let mut y = U128::from_u64(DECIMAL_PRECISION);
-    let mut x = U128::from_u64(base);
-    let mut n = U128::from_u64(minutes);
+    let mut y = U128::from(DECIMAL_PRECISION);
+    let mut x = U128::from(base);
+    let mut n = U128::from(minutes);
 
-    while n > U128::from_u64(1) {
-        if n % U128::from_u64(2) == U128::from_u64(0) {
+    while n > U128::from(1u64) {
+        if n % U128::from(2u64) == U128::from(0u64) {
             x = dec_mul(x, x);
-            n = n / U128::from_u64(2);
+            n = n / U128::from(2u64);
         } else {
             y = dec_mul(x, y);
             x = dec_mul(x, x);
-            n = (n - U128::from_u64(1)) / U128::from_u64(2);
+            n = (n - U128::from(1u64)) / U128::from(2u64);
         }
     }
 
@@ -171,7 +169,7 @@ fn test_dec_pow_zero() {
     let base = 1_000_000_000;
     let exponent = 0;
     let result = dec_pow(base, exponent);
-    assert(result == U128::from_u64(DECIMAL_PRECISION));
+    assert(result == U128::from(DECIMAL_PRECISION));
 }
 
 #[test]

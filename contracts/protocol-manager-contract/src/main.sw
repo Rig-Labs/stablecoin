@@ -193,7 +193,7 @@ impl ProtocolManager for Contract {
             totals.total_asset_drawn += single_redemption.asset_lot;
             remaining_usdf -= single_redemption.usdf_lot;
 
-            let mut next_cr = MAX_U64;
+            let mut next_cr = u64::max();
             if (next_user_to_check != null_identity_address()) {
                 next_cr = trove_manager_contract.get_current_icr(next_user_to_check, price);
             }
@@ -311,7 +311,7 @@ fn get_all_assets_info() -> AssetInfo {
         let asset = assets.get(i).unwrap();
         let price = oracle.get_price();
         let mut current_borrower = sorted_troves.get_last(asset);
-        let mut current_cr = MAX_U64;
+        let mut current_cr = u64::max();
         if (current_borrower != null_identity_address()) {
             current_cr = trove_manager.get_current_icr(current_borrower, price);
         }

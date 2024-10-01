@@ -661,21 +661,21 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
     if (debt == 0) {
         return;
     }
-    let asset_numerator: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_asset_error_redistribution.read());
-    let usdf_numerator: U128 = U128::from_u64(debt) * U128::from_u64(DECIMAL_PRECISION) + U128::from_u64(storage.last_usdf_error_redistribution.read());
-    let asset_reward_per_unit_staked = asset_numerator / U128::from_u64(storage.total_stakes.read());
-    let usdf_reward_per_unit_staked = usdf_numerator / U128::from_u64(storage.total_stakes.read());
+    let asset_numerator: U128 = U128::from(coll) * U128::from(DECIMAL_PRECISION) + U128::from(storage.last_asset_error_redistribution.read());
+    let usdf_numerator: U128 = U128::from(debt) * U128::from(DECIMAL_PRECISION) + U128::from(storage.last_usdf_error_redistribution.read());
+    let asset_reward_per_unit_staked = asset_numerator / U128::from(storage.total_stakes.read());
+    let usdf_reward_per_unit_staked = usdf_numerator / U128::from(storage.total_stakes.read());
     storage
         .last_asset_error_redistribution
         .write(
-            (asset_numerator - (asset_reward_per_unit_staked * U128::from_u64(storage.total_stakes.read())))
+            (asset_numerator - (asset_reward_per_unit_staked * U128::from(storage.total_stakes.read())))
                 .as_u64()
                 .unwrap(),
         );
     storage
         .last_usdf_error_redistribution
         .write(
-            (usdf_numerator - (usdf_reward_per_unit_staked * U128::from_u64(storage.total_stakes.read())))
+            (usdf_numerator - (usdf_reward_per_unit_staked * U128::from(storage.total_stakes.read())))
                 .as_u64()
                 .unwrap(),
         );
@@ -715,7 +715,7 @@ fn internal_compute_new_stake(coll: u64) -> u64 {
                 .read() > 0,
             "TroveManager: Total stakes snapshot is zero",
         );
-        let stake = (U128::from_u64(coll) * U128::from_u64(storage.total_stakes_snapshot.read())) / U128::from_u64(storage.total_collateral_snapshot.read());
+        let stake = (U128::from(coll) * U128::from(storage.total_stakes_snapshot.read())) / U128::from(storage.total_collateral_snapshot.read());
         return stake.as_u64().unwrap();
     }
 }

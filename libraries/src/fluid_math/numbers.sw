@@ -1,10 +1,6 @@
 library;
 use std::u128::U128;
-impl U128 {
-    pub fn from_u64(value: u64) -> U128 {
-        U128::from((0, value))
-    }
-}
+
 impl U128 {
     pub fn is_power_of_two(self) -> bool {
         self.lower() != 0 && (self & (self - U128::from(1u64))) == U128::zero()
@@ -75,22 +71,22 @@ fn test_trailing_zeros() {
 }
 #[test]
 fn test_u128_modulo() {
-    assert(U128::from_u64(100) % U128::from_u64(3) == U128::from_u64(1));
-    assert(U128::from_u64(101) % U128::from_u64(3) == U128::from_u64(2));
-    assert(U128::from_u64(102) % U128::from_u64(3) == U128::from_u64(0));
-    assert(U128::from_u64(103) % U128::from_u64(5) == U128::from_u64(3));
-    assert(U128::from_u64(104) % U128::from_u64(5) == U128::from_u64(4));
-    assert(U128::from_u64(8) % U128::from_u64(10) == U128::from_u64(8));
+    assert(U128::from(100u64) % U128::from(3u64) == U128::from(1u64));
+    assert(U128::from(101u64) % U128::from(3u64) == U128::from(2u64));
+    assert(U128::from(102u64) % U128::from(3u64) == U128::from(0u64));
+    assert(U128::from(103u64) % U128::from(5u64) == U128::from(3u64));
+    assert(U128::from(104u64) % U128::from(5u64) == U128::from(4u64));
+    assert(U128::from(8u64) % U128::from(10u64) == U128::from(8u64));
 }
 #[test]
 fn test_u128_modulo_pow_2_divisor() {
-    assert(U128::from_u64(1) % U128::from_u64(1) == U128::from_u64(0));
-    assert(U128::from_u64(2) % U128::from_u64(1) == U128::from_u64(0));
-    assert(U128::from_u64(3) % U128::from_u64(1) == U128::from_u64(0));
-    assert(U128::from_u64(0) % U128::from_u64(2) == U128::from_u64(0));
-    assert(U128::from_u64(1) % U128::from_u64(2) == U128::from_u64(1));
-    assert(U128::from_u64(2) % U128::from_u64(2) == U128::from_u64(0));
-    assert(U128::from_u64(3) % U128::from_u64(2) == U128::from_u64(1));
-    assert(U128::from_u64(100) % U128::from_u64(2) == U128::from_u64(0));
-    assert(U128::from_u64(101) % U128::from_u64(2) == U128::from_u64(1));
+    assert(U128::from(1u64) % U128::from(1u64) == U128::from(0u64));
+    assert(U128::from(2u64) % U128::from(1u64) == U128::from(0u64));
+    assert(U128::from(3u64) % U128::from(1u64) == U128::from(0u64));
+    assert(U128::from(0u64) % U128::from(2u64) == U128::from(0u64));
+    assert(U128::from(1u64) % U128::from(2u64) == U128::from(1u64));
+    assert(U128::from(2u64) % U128::from(2u64) == U128::from(0u64));
+    assert(U128::from(3u64) % U128::from(2u64) == U128::from(1u64));
+    assert(U128::from(100u64) % U128::from(2u64) == U128::from(0u64));
+    assert(U128::from(101u64) % U128::from(2u64) == U128::from(1u64));
 }

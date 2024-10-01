@@ -18,8 +18,8 @@ pub fn calculate_liqudated_trove_values(
             is_partial_liquidation: false,
         }
     }
-    let trove_debt_numerator: U128 = U128::from_u64(debt) * U128::from_u64(POST_COLLATERAL_RATIO) - U128::from_u64(coll) * U128::from_u64(price);
-    let trove_debt_denominator: U128 = U128::from_u64(POST_COLLATERAL_RATIO - ONE - STABILITY_POOL_FEE);
+    let trove_debt_numerator: U128 = U128::from(debt) * U128::from(POST_COLLATERAL_RATIO) - U128::from(coll) * U128::from(price);
+    let trove_debt_denominator: U128 = U128::from(POST_COLLATERAL_RATIO - ONE - STABILITY_POOL_FEE);
     let trove_debt_to_repay = (trove_debt_numerator / trove_debt_denominator).as_u64().unwrap();
     let trove_debt_to_repay = fm_min(trove_debt_to_repay, debt);
     // This calculation is derived from the desired post-liquidation collateral ratio
@@ -117,7 +117,7 @@ fn test_calculate_liqudated_trove_values() {
     let price = DECIMAL_PRECISION;
     let liquidation_vals = calculate_liqudated_trove_values(starting_coll, starting_debt, price);
     // Value of debt + 5% stability fee
-    let coll_liquidated = U128::from_u64(starting_debt) * U128::from_u64(ONE + STABILITY_POOL_FEE) / U128::from_u64(price);
+    let coll_liquidated = U128::from(starting_debt) * U128::from(ONE + STABILITY_POOL_FEE) / U128::from(price);
     assert(liquidation_vals.trove_coll_liquidated == coll_liquidated.as_u64().unwrap());
     assert(liquidation_vals.trove_debt_to_repay == starting_debt);
     assert(liquidation_vals.is_partial_liquidation == false);
@@ -300,7 +300,7 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
         price,
     );
     let coll_removed = starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_gas_compensation;
-    let expected_coll_to_send_to_sp = U128::from_u64(total_usdf) * U128::from_u64(coll_removed) / U128::from_u64(starting_debt - liquidation_vals.remaining_trove_debt);
+    let expected_coll_to_send_to_sp = U128::from(total_usdf) * U128::from(coll_removed) / U128::from(starting_debt - liquidation_vals.remaining_trove_debt);
     assert(liquidation_vals.entire_trove_coll == starting_coll);
     assert(liquidation_vals.entire_trove_debt == starting_debt);
     assert(liquidation_vals.is_partial_liquidation == true);

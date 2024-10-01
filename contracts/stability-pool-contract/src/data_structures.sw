@@ -15,8 +15,8 @@ pub struct Snapshots {
 impl Snapshots {
     pub fn default() -> Self {
         Snapshots {
-            P: U128::from_u64(0),
-            G: U128::from_u64(0),
+            P: U128::zero(),
+            G: U128::zero(),
             scale: 0,
             epoch: 0,
         }

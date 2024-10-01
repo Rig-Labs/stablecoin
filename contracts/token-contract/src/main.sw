@@ -18,7 +18,7 @@ use std::{
     hash::Hash,
     storage::*,
 };
-const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
 storage {
     owner: Identity = Identity::Address(Address::zero()),
     mint_amount: u64 = 0,
@@ -57,7 +57,7 @@ impl Token for Contract {
     }
     #[storage(read)]
     fn mint_to_id(amount: u64, address: Identity) {
-        mint_to(address, ZERO_B256, amount);
+        mint_to(address, SubId::zero(), amount);
     }
     #[storage(read, write)]
     fn set_mint_amount(mint_amount: u64) {
@@ -67,12 +67,12 @@ impl Token for Contract {
     #[storage(read)]
     fn mint_coins(mint_amount: u64) {
         validate_owner();
-        mint(ZERO_B256, mint_amount);
+        mint(SubId::zero(), mint_amount);
     }
     #[storage(read)]
     fn burn_coins(burn_amount: u64) {
         validate_owner();
-        burn(ZERO_B256, burn_amount);
+        burn(SubId::zero(), burn_amount);
     }
     #[storage(read)]
     fn transfer_coins(coins: u64, address: Identity) {
@@ -100,7 +100,7 @@ impl Token for Contract {
             Error::AddressAlreadyMint,
         );
         storage.mint_list.insert(sender, true);
-        mint_to(sender, ZERO_B256, storage.mint_amount.read());
+        mint_to(sender, SubId::zero(), storage.mint_amount.read());
     }
     //////////////////////////////////////
     // Read-Only methods
