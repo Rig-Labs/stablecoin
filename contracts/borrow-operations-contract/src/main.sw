@@ -88,7 +88,7 @@ impl BorrowOperations for Contract {
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage
             .usdf_asset_id
-            .write(get_default_asset_id(usdf_contract));
+            .write(AssetId::new(usdf_contract, SubId::zero()));
         storage.pauser.write(msg_sender().unwrap());
         storage.is_initialized.write(true);
     }

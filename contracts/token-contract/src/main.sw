@@ -20,11 +20,6 @@ use std::{
 };
 const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 storage {
-    // config: TokenInitializeConfig = TokenInitializeConfig {
-    //     name: "                                ",
-    //     symbol: "        ",
-    //     decimals: 1u8,
-    // },
     owner: Identity = Identity::Address(Address::zero()),
     mint_amount: u64 = 0,
     mint_list: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
@@ -123,10 +118,6 @@ impl Token for Contract {
         return 0
     }
 
-    // #[storage(read)]
-    // fn config() -> TokenInitializeConfig {
-    //     storage.config.read()
-    // }
     #[storage(read)]
     fn already_minted(address: Identity) -> bool {
         storage.mint_list.get(address).read()

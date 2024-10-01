@@ -27,14 +27,7 @@ use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::community_issuance_interface::CommunityIssuance;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::numbers::*;
-use libraries::fluid_math::{
-    DECIMAL_PRECISION,
-    fm_min,
-    get_default_asset_id,
-    MCR,
-    null_contract,
-    null_identity_address,
-};
+use libraries::fluid_math::{DECIMAL_PRECISION, fm_min, MCR, null_contract, null_identity_address,};
 use std::{
     asset::transfer,
     call_frames::{
@@ -141,7 +134,7 @@ impl StabilityPool for Contract {
         storage.is_initialized.write(true);
         storage
             .usdf_asset_id
-            .write(get_default_asset_id(usdf_contract));
+            .write(AssetId::new(usdf_contract, SubId::zero()));
     }
     #[storage(read, write)]
     fn add_asset(

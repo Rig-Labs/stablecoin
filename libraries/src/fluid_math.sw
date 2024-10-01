@@ -71,10 +71,6 @@ pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u8) -
     u64::try_from(adjusted_price).unwrap()
 }
 
-pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
-    AssetId::from(sha256((temp_contract, ZERO_B256)))
-}
-
 // 0.5% one-time borrow fee
 pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
     let fee = U128::from_u64(debt) * U128::from_u64(BORROWING_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
