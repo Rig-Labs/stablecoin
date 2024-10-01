@@ -16,7 +16,10 @@ contract;
 
 
 use libraries::{
-    fluid_math::convert_precision,
+    fluid_math::{
+        convert_precision,
+        convert_precision_u256_and_downcast,
+    },
     oracle_interface::RedstoneCore,
     oracle_interface::{
         Oracle,
@@ -98,9 +101,9 @@ impl Oracle for Contract {
             let redstone = abi(RedstoneCore, id);
             let redstone_prices = redstone.read_prices(feed);
             let redstone_timestamp = redstone.read_timestamp();
-            let redstone_price_u64 = u64::try_from(redstone_prices.get(0).unwrap()).unwrap();
-            // By default redstone uses 8 decimal precision so it is safe to cast down
-            let redstone_price = convert_precision(redstone_price_u64, REDSTONE_PRECISION);
+            let redstone_price_u64 = redstone_prices.get(0).unwrap();
+            // By default redstone uses 8 decimal precision so it is generally safe to cast down
+            let redstone_price = convert_precision_u256_and_downcast(redstone_price_u64, REDSTONE_PRECISION);
 
             // Check if Redstone data is also stale
             if current_time - redstone_timestamp > TIMEOUT {

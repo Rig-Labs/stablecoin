@@ -5,8 +5,6 @@ use numbers::*;
 use std::{hash::*, u128::U128};
 
 pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-// Using Precision 6 until u128 is available
-pub const PCT_100: u64 = 1_000_000_000;
 
 pub const SECONDS_IN_ONE_MINUTE: u64 = 60;
 
@@ -54,6 +52,23 @@ pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
     }
 
     adjusted_price
+}
+
+// Convert precision first to ensure accuracy, then downcast to u64 to fit Fluid's standard format
+pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u8) -> u64 {
+    let mut adjusted_price = 0;
+    if current_precision > 9 {
+        let precision = current_precision - 9;
+        let magnitude = 10.pow(precision.as_u32()).into();
+        adjusted_price = price / magnitude;
+    } else if current_precision < 9 {
+        let precision = 9_u8 - current_precision;
+        let magnitude = 10.pow(precision.as_u32()).into();
+        adjusted_price = price * magnitude;
+    } else {
+        adjusted_price = price;
+    }
+    u64::try_from(adjusted_price).unwrap()
 }
 
 pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
@@ -220,4 +235,36 @@ fn test_precision_less_than_current_pow() {
 
     let result = convert_precision(price, precision);
     assert_eq(result, price * 10.pow(3));
+}
+
+#[test]
+fn test_precision_u256_less_than_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 8;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 10_000_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_more_than_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 10;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 100_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_is_equal_to_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 9;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 1_000_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_less_than_current_pow() {
+    let price: u256 = 1_000_000;
+    let precision = 6;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 1_000_000_000);
 }

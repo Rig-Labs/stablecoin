@@ -76,13 +76,12 @@ impl SRC3 for Contract {
         mint_to(address, SubId::zero(), amount);
     }
     #[storage(read, write), payable]
-    fn burn(sub_id: SubId, amount: u64) {
+    fn burn(sub_id: SubId, burn_amount: u64) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        let burn_amount = msg_amount();
         storage
             .total_supply
             .write(storage.total_supply.read() - burn_amount);
-        burn(SubId::zero(), burn_amount);
+        burn(sub_id, burn_amount);
     }
 }
 impl SRC20 for Contract {

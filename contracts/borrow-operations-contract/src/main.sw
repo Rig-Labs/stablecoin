@@ -313,7 +313,11 @@ fn internal_trigger_borrowing_fee(
     //increase fpt staking rewards
     fpt_staking.increase_f_usdf(usdf_fee);
     // Mint usdf to fpt staking contract
-    usdf.mint(Identity::ContractId(fpt_staking_contract), None, usdf_fee);
+    usdf.mint(
+        Identity::ContractId(fpt_staking_contract),
+        Some(SubId::zero()),
+        usdf_fee,
+    );
 
     return usdf_fee
 }
@@ -531,7 +535,7 @@ fn internal_withdraw_usdf(
     let active_pool = abi(ActivePool, active_pool_contract.bits());
     let usdf = abi(SRC3, usdf_contract.bits());
     active_pool.increase_usdf_debt(net_debt_increase, asset_contract);
-    usdf.mint(recipient, None, amount);
+    usdf.mint(recipient, Some(SubId::zero()), amount);
 }
 fn internal_get_coll_change(coll_recieved: u64, requested_coll_withdrawn: u64) -> (u64, bool) {
     if (coll_recieved != 0) {
