@@ -22,7 +22,10 @@ use std::{
     hash::Hash,
     storage::storage_vec::*,
 };
-
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 storage {
     vesting_schedules: StorageMap<Identity, VestingSchedule> = StorageMap::<Identity, VestingSchedule> {},
     vesting_addresses: StorageVec<Identity> = StorageVec {},
@@ -40,6 +43,11 @@ impl VestingContract for Contract {
         schedules: Vec<VestingSchedule>,
         debugging: bool,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "VestingContract: Caller is not initializer",
+        );
         require(
             !storage
                 .is_initialized

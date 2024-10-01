@@ -48,6 +48,11 @@ use std::{
     u128::U128,
 };
 const SCALE_FACTOR = 1_000_000_000;
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     active_pool_contract: ContractId = ContractId::zero(),
@@ -115,6 +120,11 @@ impl StabilityPool for Contract {
         active_pool_contract: ContractId,
         sorted_troves_contract: ContractId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "StabilityPool: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

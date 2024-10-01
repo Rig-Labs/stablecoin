@@ -36,6 +36,10 @@ use std::{
     hash::*,
     storage::storage_vec::*,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 storage {
     owner: State = State::Uninitialized,
     borrow_operations_contract: ContractId = ContractId::zero(),
@@ -64,6 +68,11 @@ impl ProtocolManager for Contract {
         sorted_troves: ContractId,
         initial_owner: Identity,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "ProtocolManager: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

@@ -16,6 +16,10 @@ use std::{
     },
     hash::Hash,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     max_size: u64 = 0,
@@ -37,6 +41,11 @@ impl SortedTroves for Contract {
         protocol_manager: ContractId,
         borrower_operations_contract: ContractId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "SortedTroves: Caller is not initializer",
+        );
         require(size > 0, "SortedTroves: size must be greater than 0");
         require(
             storage

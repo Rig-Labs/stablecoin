@@ -33,6 +33,10 @@ use std::{
     storage::*,
     string::String,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     vesting_contract: ContractId = ContractId::zero(),
@@ -54,6 +58,11 @@ impl FPTToken for Contract {
         vesting_contract: ContractId,
         community_issuance_contract: ContractId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "FPTToken: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

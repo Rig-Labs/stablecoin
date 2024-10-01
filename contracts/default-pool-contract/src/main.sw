@@ -19,6 +19,10 @@ use std::{
     },
     hash::Hash,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     protocol_manager: Identity = Identity::Address(Address::zero()),
@@ -33,6 +37,11 @@ storage {
 impl DefaultPool for Contract {
     #[storage(read, write)]
     fn initialize(protocol_manager: Identity, active_pool_contract: ContractId) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "DefaultPool: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

@@ -42,6 +42,10 @@ use standards::{src5::*,};
 const ONE_WEEK_IN_SECONDS: u64 = 604_800;
 const SIX_MONTHS_IN_SECONDS: u64 = 15_780_000;
 const ONE_YEAR_IN_SECONDS: u64 = 31_104_000;
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     stability_pool_contract: ContractId = ContractId::zero(),
@@ -89,6 +93,11 @@ impl CommunityIssuance for Contract {
         admin: Identity,
         debugging: bool,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "CommunityIssuance: Caller is not initializer",
+        );
         require(
             !storage
                 .is_initialized

@@ -37,6 +37,11 @@ use std::{
     storage::storage_vec::*,
     string::String,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
     protocol_manager: ContractId = ContractId::zero(),
@@ -56,6 +61,11 @@ impl USDFToken for Contract {
         stability_pool: Identity,
         borrower_operations: Identity,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "USDFToken: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

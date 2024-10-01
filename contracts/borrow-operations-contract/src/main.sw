@@ -35,6 +35,12 @@ use std::{
     },
     hash::*,
 };
+
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
@@ -61,6 +67,11 @@ impl BorrowOperations for Contract {
         active_pool_contract: ContractId,
         sorted_troves_contract: ContractId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "Borrow Operations: Caller is not initializer",
+        );
         require(
             !storage
                 .is_initialized

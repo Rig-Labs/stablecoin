@@ -20,6 +20,11 @@ use std::{
     hash::Hash,
     storage::storage_vec::*,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     valid_assets: StorageVec<AssetId> = StorageVec {},
     stakes: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
@@ -54,6 +59,11 @@ impl FPTStaking for Contract {
         fpt_asset_id: AssetId,
         usdf_asset_id: AssetId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "FPTStaking: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

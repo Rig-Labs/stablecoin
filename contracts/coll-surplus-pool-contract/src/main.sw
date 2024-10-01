@@ -19,6 +19,11 @@ use std::{
     },
     hash::Hash,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     protocol_manager: Identity = Identity::Address(Address::zero()),
     borrow_operations_contract: ContractId = ContractId::zero(),
@@ -34,6 +39,11 @@ impl CollSurplusPool for Contract {
         borrow_operations_contract: ContractId,
         protocol_manager: Identity,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "CollSurplusPool: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized

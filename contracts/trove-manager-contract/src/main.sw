@@ -46,6 +46,10 @@ use std::{
     storage::storage_vec::*,
     u128::U128,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 storage {
     protocol_manager_contract: ContractId = ContractId::zero(),
     sorted_troves_contract: ContractId = ContractId::zero(),
@@ -86,6 +90,11 @@ impl TroveManager for Contract {
         asset_contract: AssetId,
         protocol_manager: ContractId,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "TroveManager: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized
