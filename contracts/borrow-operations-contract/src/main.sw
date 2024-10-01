@@ -13,7 +13,7 @@ contract;
 mod data_structures;
 
 use standards::{src3::SRC3,};
-use ::data_structures::{AssetContracts, LocalVariables_AdjustTrove, LocalVariables_OpenTrove};
+use ::data_structures::{AssetContracts, LocalVariablesAdjustTrove, LocalVariablesOpenTrove};
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::active_pool_interface::ActivePool;
 use libraries::token_interface::Token;
@@ -109,7 +109,7 @@ impl BorrowOperations for Contract {
         let oracle = abi(Oracle, asset_contracts.oracle.bits());
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.bits());
         let sorted_troves = abi(SortedTroves, sorted_troves_contract.bits());
-        let mut vars = LocalVariables_OpenTrove::new();
+        let mut vars = LocalVariablesOpenTrove::new();
         let sender = msg_sender().unwrap();
         vars.net_debt = usdf_amount;
         vars.price = oracle.get_price();
@@ -361,7 +361,7 @@ fn internal_adjust_trove(
     let trove_manager = abi(TroveManager, asset_contracts_cache.trove_manager.bits());
     let sorted_troves = abi(SortedTroves, sorted_troves_contract_cache.bits());
     let price = oracle.get_price();
-    let mut vars = LocalVariables_AdjustTrove::new();
+    let mut vars = LocalVariablesAdjustTrove::new();
     if is_debt_increase {
         require_is_not_paused();
         require_non_zero_debt_change(usdf_change);

@@ -122,7 +122,6 @@ pub struct RedemptionTotals {
     pub total_asset_drawn: u64,
     pub asset_fee: u64,
     pub asset_to_send_to_redeemer: u64,
-    pub decayed_base_rate: u64,
     pub price: u64,
     pub total_usdf_supply_at_start: u64,
 }
@@ -134,7 +133,6 @@ impl RedemptionTotals {
             total_asset_drawn: 0,
             asset_fee: 0,
             asset_to_send_to_redeemer: 0,
-            decayed_base_rate: 0,
             price: 0,
             total_usdf_supply_at_start: 0,
         }

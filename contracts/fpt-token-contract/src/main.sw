@@ -27,9 +27,6 @@ use std::{
         balance_of,
         msg_amount,
     },
-    logging::{
-        log,
-    },
     storage::*,
     string::String,
 };

@@ -40,8 +40,8 @@ use sway_libs::ownership::*;
 use standards::{src5::*,};
 
 const ONE_WEEK_IN_SECONDS: u64 = 604_800;
-const SIX_MONTHS_IN_SECONDS: u64 = 15_780_000;
-const ONE_YEAR_IN_SECONDS: u64 = 31_104_000;
+const SIX_MONTHS_IN_SECONDS: u64 = 15_552_000; // 180 days
+const ONE_YEAR_IN_SECONDS: u64 = 31_104_000; // 360 days
 configurable {
     /// Initializer identity
     INITIALIZER: Identity = Identity::Address(Address::zero()),

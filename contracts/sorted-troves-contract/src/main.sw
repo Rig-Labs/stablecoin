@@ -290,6 +290,8 @@ fn internal_find_insert_position(
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
     let mut next_id: Identity = next_id;
     let mut prev_id: Identity = prev_id;
+
+    // Check if prev_id is valid and has a lower NICR
     if (prev_id != null_identity_address()) {
         if (!internal_contains(prev_id, asset)
             || nicr > trove_manager.get_nominal_icr(prev_id))
@@ -297,6 +299,8 @@ fn internal_find_insert_position(
             prev_id = null_identity_address()
         }
     }
+
+    // Check if next_id is valid and has a higher NICR
     if (next_id != null_identity_address()) {
         if (!internal_contains(next_id, asset)
             || nicr < trove_manager.get_nominal_icr(next_id))
@@ -304,9 +308,10 @@ fn internal_find_insert_position(
             next_id = null_identity_address()
         }
     }
-    if (prev_id == null_identity_address()
-        && next_id == null_identity_address())
-    {
+
+    // Determine the appropriate search method based on prev_id and next_id
+    if (prev_id == null_identity_address() && next_id == null_identity_address()) {
+        // If both hints are null, start from the head of the list
         return internal_descend_list(
             nicr,
             internal_get_head(asset),
@@ -314,10 +319,13 @@ fn internal_find_insert_position(
             trove_manager_contract,
         );
     } else if (prev_id == null_identity_address()) {
+        // If only prev_id is null, ascend from next_id
         return internal_ascend_list(nicr, next_id, asset, trove_manager_contract);
     } else if (next_id == null_identity_address()) {
+        // If only next_id is null, descend from prev_id
         return internal_descend_list(nicr, prev_id, asset, trove_manager_contract);
     } else {
+        // If both hints are provided, descend from prev_id
         return internal_descend_list(nicr, prev_id, asset, trove_manager_contract);
     }
 }
@@ -329,17 +337,24 @@ fn internal_descend_list(
     trove_manager_contract: ContractId,
 ) -> (Identity, Identity) {
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
-    if (internal_get_head(asset) == start_id
-        && nicr >= trove_manager.get_nominal_icr(start_id))
-    {
+
+    // Check if the start_id is the head of the list and has a lower or equal NICR
+    if (internal_get_head(asset) == start_id && nicr >= trove_manager.get_nominal_icr(start_id)) {
+        // If so, insert at the beginning of the list
         return (Identity::Address(Address::zero()), start_id);
     }
+
     let mut prev_id = start_id;
     let mut next_id = internal_get_next(prev_id, asset);
+
+    // Traverse the list until we find a valid insert position
     while (prev_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+        // Move to the next pair of nodes
         prev_id = internal_get_next(prev_id, asset);
         next_id = internal_get_next(prev_id, asset);
     }
+
+    // Return the found insert position
     return (prev_id, next_id);
 }
 #[storage(read)]
@@ -350,17 +365,24 @@ fn internal_ascend_list(
     trove_manager_contract: ContractId,
 ) -> (Identity, Identity) {
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
-    if (internal_get_tail(asset) == start_id
-        && nicr <= trove_manager.get_nominal_icr(start_id))
-    {
+
+    // Check if we're at the tail of the list and the new NICR is less than or equal to the tail's NICR
+    if (internal_get_tail(asset) == start_id && nicr <= trove_manager.get_nominal_icr(start_id)) {
+        // If so, insert at the end of the list
         return (start_id, null_identity_address());
     }
+
     let mut next_id = start_id;
     let mut prev_id = internal_get_prev(next_id, asset);
+
+    // Traverse the list backwards until we find a valid insert position
     while (next_id != null_identity_address() && !internal_valid_insert_position(nicr, prev_id, next_id, asset)) {
+        // Move to the previous pair of nodes
         next_id = internal_get_prev(next_id, asset);
         prev_id = internal_get_prev(next_id, asset);
     }
+
+    // Return the found insert position
     return (prev_id, next_id);
 }
 #[storage(read, write)]
