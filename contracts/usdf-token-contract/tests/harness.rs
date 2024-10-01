@@ -2,12 +2,13 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::PRECISION,
-    interfaces::default_pool::{default_pool_abi, DefaultPool},
     interfaces::{
         active_pool::{active_pool_abi, ActivePool},
+        default_pool::{default_pool_abi, DefaultPool},
         token::{token_abi, Token},
+        usdf_token::{usdf_token_abi, USDFToken},
     },
-    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
+    setup::common::{deploy_active_pool, deploy_default_pool, deploy_token, setup_protocol},
 };
 
 async fn get_contract_instance() -> (
@@ -214,4 +215,74 @@ async fn proper_adjust_asset_col() {
     .await
     .value;
     assert_eq!(asset_amount, PRECISION / 2);
+}
+
+#[tokio::test]
+async fn fails_unauthorized_usdf_operations() {
+    let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
+
+    let attacker = wallets.pop().unwrap();
+
+    // Create a new instance of the USDF token contract with the attacker's wallet
+    let usdf_token_attacker =
+        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+
+    // Try to add a trove manager using the attacker's wallet
+    let result =
+        usdf_token_abi::add_trove_manager(&usdf_token_attacker, ContractId::from([1u8; 32])).await;
+
+    // Assert that the operation fails
+    assert!(
+        result.is_err(),
+        "Unauthorized user should not be able to add a trove manager"
+    );
+
+    // Optionally, you can check for a specific error message
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("USDFToken: NotAuthorized"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
+
+    // Create a new instance of the USDF token contract with the attacker's wallet
+    let usdf_token_attacker =
+        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+
+    // Test 1: Unauthorized add_trove_manager
+    let result =
+        usdf_token_abi::add_trove_manager(&usdf_token_attacker, ContractId::from([1u8; 32])).await;
+
+    assert!(
+        result.is_err(),
+        "Unauthorized user should not be able to add a trove manager"
+    );
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("USDFToken: NotAuthorized"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
+
+    // Test 2: Unauthorized mint
+    let result = usdf_token_abi::mint(
+        &usdf_token_attacker,
+        1_000 * PRECISION,
+        Identity::Address(attacker.address().into()),
+    )
+    .await;
+
+    assert!(
+        result.is_err(),
+        "Unauthorized user should not be able to mint USDF tokens"
+    );
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("USDFToken: NotAuthorized"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
 }

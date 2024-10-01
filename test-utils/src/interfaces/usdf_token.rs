@@ -91,4 +91,18 @@ pub mod usdf_token_abi {
             .await
             .unwrap()
     }
+
+    pub async fn add_trove_manager<T: Account>(
+        instance: &USDFToken<T>,
+        trove_manager: ContractId,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        instance
+            .methods()
+            .add_trove_manager(trove_manager)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
 }
