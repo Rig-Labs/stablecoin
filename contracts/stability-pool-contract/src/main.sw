@@ -518,10 +518,10 @@ fn require_no_undercollateralized_troves() {
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.into());
         let oracle = abi(Oracle, asset_contracts.oracle.into());
         let price = oracle.get_price();
-        let first = sorted_troves.get_first(asset);
+        let last = sorted_troves.get_last(asset);
         require(
-            first == Identity::Address(Address::zero()) || trove_manager
-                .get_current_icr(first, price) > MCR,
+            last == Identity::Address(Address::zero()) || trove_manager
+                .get_current_icr(last, price) > MCR,
             "StabilityPool: There are undercollateralized troves",
         );
         i += 1;
