@@ -41,7 +41,6 @@ configurable {
     INITIALIZER: Identity = Identity::Address(Address::zero()),
 }
 storage {
-    owner: State = State::Uninitialized,
     borrow_operations_contract: ContractId = ContractId::zero(),
     fpt_staking_contract: ContractId = ContractId::zero(),
     usdf_token_contract: ContractId = ContractId::zero(),
@@ -128,7 +127,7 @@ impl ProtocolManager for Contract {
     #[storage(read, write)]
     fn renounce_admin() {
         only_owner();
-        storage.owner.write(State::Revoked);
+        renounce_ownership();
     }
     #[storage(read, write), payable]
     fn redeem_collateral(
@@ -274,7 +273,7 @@ impl ProtocolManager for Contract {
 impl SRC5 for Contract {
     #[storage(read)]
     fn owner() -> State {
-        storage.owner.read()
+        _owner()
     }
 }
 // --- Helper functions ---

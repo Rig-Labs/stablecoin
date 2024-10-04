@@ -18,8 +18,8 @@ use super::interfaces::{
     usdf_token::{USDFToken, USDFTokenConfigurables},
     vesting::{VestingContract, VestingContractConfigurables},
 };
-
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
+use fuels::types::errors::Error;
 
 pub mod common {
     use super::*;
@@ -915,7 +915,7 @@ pub mod common {
     pub async fn initialize_asset<T: Account>(
         core_protocol_contracts: &ProtocolContracts<T>,
         asset_contracts: &AssetContracts<T>,
-    ) -> () {
+    ) -> Result<CallResponse<()>> {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(2);
 
@@ -941,10 +941,11 @@ pub mod common {
                 .contract_id()
                 .into(),
         )
-        .await;
+        .await
+        .unwrap();
         pb.inc();
 
-        let _ = protocol_manager_abi::register_asset(
+        protocol_manager_abi::register_asset(
             &core_protocol_contracts.protocol_manager,
             asset_contracts.asset_id,
             asset_contracts.trove_manager.contract_id().into(),
@@ -958,8 +959,7 @@ pub mod common {
             &core_protocol_contracts.active_pool,
             &core_protocol_contracts.sorted_troves,
         )
-        .await;
-        pb.inc();
+        .await
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {
