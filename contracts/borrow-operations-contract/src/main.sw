@@ -261,6 +261,7 @@ impl BorrowOperations for Contract {
         );
         active_pool.send_asset(borrower, coll, asset_contract);
         if (debt < msg_amount()) {
+            require_valid_usdf_id(msg_asset_id());
             let excess_usdf_returned = msg_amount() - debt;
             transfer(borrower, usdf_asset_id, excess_usdf_returned);
         }
