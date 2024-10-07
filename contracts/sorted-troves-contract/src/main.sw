@@ -202,7 +202,7 @@ fn internal_is_full(asset: AssetId) -> bool {
 fn internal_is_empty(asset: AssetId) -> bool {
     match storage.size.get(asset).try_read() {
         Some(size) => return size == 0,
-        None => return false,
+        None => return true,
     }
 }
 #[storage(read)]
