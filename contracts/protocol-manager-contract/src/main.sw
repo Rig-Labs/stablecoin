@@ -96,6 +96,7 @@ impl ProtocolManager for Contract {
         oracle: ContractId,
     ) {
         only_owner();
+        require_asset_not_registered(asset_address);
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().bits());
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().bits());
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().bits());
@@ -350,4 +351,16 @@ fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) ->
         i += 1;
     }
     (min_borrower, min_index)
+}
+
+#[storage(read)]
+fn require_asset_not_registered(asset_id: AssetId) {
+    let length = storage.assets.len();
+    let mut i = 0;
+    while (i < length) {
+        if (storage.assets.get(i).unwrap().read() == asset_id) {
+            revert(0);
+        }
+        i += 1;
+    }
 }

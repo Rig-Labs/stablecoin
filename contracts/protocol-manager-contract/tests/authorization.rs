@@ -61,7 +61,26 @@ async fn test_authorizations() {
         "Authorized user should be able to initialize an asset"
     );
 
-    // Test 4: Authorized renounce_admin
+    // Test 4: Duplicate asset registration
+    let result = protocol_manager_abi::register_asset(
+        &protocol_manager_owner_contract,
+        asset_contracts_owner.asset_id,
+        asset_contracts_owner.trove_manager.contract_id().into(),
+        asset_contracts_owner.oracle.contract_id().into(),
+        &contracts.borrow_operations,
+        &contracts.stability_pool,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.coll_surplus_pool,
+        &contracts.default_pool,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
+    )
+    .await;
+
+    assert!(result.is_err(), "Duplicate asset registration should fail");
+
+    // Test 5: Authorized renounce_admin
     let result = protocol_manager_abi::renounce_admin(&protocol_manager_owner_contract).await;
 
     assert!(
@@ -69,7 +88,7 @@ async fn test_authorizations() {
         "Authorized user should be able to renounce admin"
     );
 
-    // Test 5: Unauthorized register_asset after renouncement
+    // Test 6: Unauthorized register_asset after renouncement
     let unauthorized_asset_contracts = deploy_asset_contracts(&protocol_manager_owner, &None).await;
     let result = initialize_asset(&contracts, &unauthorized_asset_contracts).await;
 
