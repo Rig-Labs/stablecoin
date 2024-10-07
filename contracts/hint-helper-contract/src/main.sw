@@ -31,7 +31,7 @@ storage {
 abi HintHelper {
     #[storage(read, write)]
     fn initialize(sorted_troves_contract: ContractId);
-    #[storage(read, write)]
+    #[storage(read)]
     fn get_approx_hint(
         asset: AssetId,
         trove_manager_contract: ContractId,
@@ -52,7 +52,7 @@ impl HintHelper for Contract {
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
     }
-    #[storage(read, write)]
+    #[storage(read)]
     fn get_approx_hint(
         asset: AssetId,
         trove_manager_contract: ContractId,

@@ -213,20 +213,6 @@ fn internal_contains(id: Identity, asset: AssetId) -> bool {
     }
 }
 #[storage(read)]
-fn internal_get_head(asset: AssetId) -> Identity {
-    match storage.head.get(asset).try_read() {
-        Some(head) => return head,
-        None => return Identity::Address(Address::zero()),
-    }
-}
-#[storage(read)]
-fn internal_get_tail(asset: AssetId) -> Identity {
-    match storage.tail.get(asset).try_read() {
-        Some(tail) => return tail,
-        None => return Identity::Address(Address::zero()),
-    }
-}
-#[storage(read)]
 fn internal_valid_insert_position(
     nicr: u64,
     prev_id: Identity,
@@ -240,10 +226,10 @@ fn internal_valid_insert_position(
         return internal_is_empty(asset);
     } else if (prev_id == null_identity_address()) {
         // `(null, next_id)` is a valid insert position if `prev_id` is the head
-        return internal_get_head(asset) == next_id && nicr >= trove_manager.get_nominal_icr(next_id);
+        return internal_get_first(asset) == next_id && nicr >= trove_manager.get_nominal_icr(next_id);
     } else if (next_id == null_identity_address()) {
         // `(prev_id, null)` is a valid insert position if `next_id` is the tail
-        return internal_get_tail(asset) == prev_id && nicr <= trove_manager.get_nominal_icr(prev_id);
+        return internal_get_last(asset) == prev_id && nicr <= trove_manager.get_nominal_icr(prev_id);
     } else {
         // `(_prevId, _nextId)` is a valid insert position if they are adjacent nodes and `_NICR` falls between the two nodes' NICRs
         return storage.nodes.get((prev_id, asset)).read().next_id == next_id && trove_manager.get_nominal_icr(prev_id) >= nicr && nicr >= trove_manager.get_nominal_icr(next_id);
@@ -314,7 +300,7 @@ fn internal_find_insert_position(
         // If both hints are null, start from the head of the list
         return internal_descend_list(
             nicr,
-            internal_get_head(asset),
+            internal_get_first(asset),
             asset,
             trove_manager_contract,
         );
@@ -339,7 +325,7 @@ fn internal_descend_list(
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
 
     // Check if the start_id is the head of the list and has a lower or equal NICR
-    if (internal_get_head(asset) == start_id && nicr >= trove_manager.get_nominal_icr(start_id)) {
+    if (internal_get_first(asset) == start_id && nicr >= trove_manager.get_nominal_icr(start_id)) {
         // If so, insert at the beginning of the list
         return (Identity::Address(Address::zero()), start_id);
     }
@@ -367,7 +353,7 @@ fn internal_ascend_list(
     let trove_manager = abi(TroveManager, trove_manager_contract.bits());
 
     // Check if we're at the tail of the list and the new NICR is less than or equal to the tail's NICR
-    if (internal_get_tail(asset) == start_id && nicr <= trove_manager.get_nominal_icr(start_id)) {
+    if (internal_get_last(asset) == start_id && nicr <= trove_manager.get_nominal_icr(start_id)) {
         // If so, insert at the end of the list
         return (start_id, null_identity_address());
     }
@@ -424,9 +410,9 @@ fn internal_insert(
         storage.tail.insert(asset, id);
     } else if (prev_id == null_identity_address()) {
         // Insert before `prev_id` as the head
-        new_node.next_id = internal_get_head(asset);
+        new_node.next_id = internal_get_first(asset);
         edit_node_neighbors(
-            internal_get_head(asset),
+            internal_get_first(asset),
             Option::Some(id),
             Option::None,
             asset,
@@ -434,9 +420,9 @@ fn internal_insert(
         storage.head.insert(asset, id);
     } else if (next_id == null_identity_address()) {
         // Insert after `next_id` as the tail
-        new_node.prev_id = internal_get_tail(asset);
+        new_node.prev_id = internal_get_last(asset);
         edit_node_neighbors(
-            internal_get_tail(asset),
+            internal_get_last(asset),
             Option::None,
             Option::Some(id),
             asset,
@@ -477,7 +463,7 @@ fn internal_remove(id: Identity, asset: AssetId) {
     );
     let mut node = storage.nodes.get((id, asset)).read();
     if (storage.size.get(asset).read() > 1) {
-        if (id == internal_get_head(asset)) {
+        if (id == internal_get_first(asset)) {
             // The removed node is the head
             // Set head to next node
             storage.head.insert(asset, node.next_id);
@@ -488,7 +474,7 @@ fn internal_remove(id: Identity, asset: AssetId) {
                 Option::None,
                 asset,
             );
-        } else if (id == internal_get_tail(asset)) {
+        } else if (id == internal_get_last(asset)) {
             // The removed node is the tail
             // Set tail to previous node
             storage.tail.insert(asset, node.prev_id);

@@ -495,7 +495,7 @@ fn require_non_zero_adjustment(asset_amount: u64, coll_withdrawl: u64, usdf_chan
 }
 fn require_at_least_min_net_debt(_net_debt: u64) {
     require(
-        _net_debt > MIN_NET_DEBT,
+        _net_debt >= MIN_NET_DEBT,
         "Borrow Operations: net debt must be greater than 0",
     );
 }
@@ -507,7 +507,7 @@ fn require_non_zero_debt_change(debt_change: u64) {
 }
 fn require_at_least_mcr(icr: u64) {
     require(
-        icr > MCR,
+        icr >= MCR,
         "Borrow Operations: Minimum collateral ratio not met",
     );
 }
