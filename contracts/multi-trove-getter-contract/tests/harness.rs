@@ -1,48 +1,32 @@
-use fuels::{prelude::*, types::Identity};
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP};
 use test_utils::{
     data_structures::PRECISION,
-    interfaces::hint_helper::hint_helper_abi,
-    setup::common::{deploy_hint_helper, setup_protocol},
+    interfaces::multi_trove_getter::multi_trove_getter_abi,
+    setup::common::{deploy_multi_trove_getter, setup_protocol},
 };
 
-#[ignore = "MemoryWriteOverlap Fuel Error in current version"]
 #[tokio::test]
-async fn proper_hint_generations() {
+async fn test_get_multiple_sorted_troves() {
     let (contracts, _admin, mut wallets) = setup_protocol(20, false, false).await;
     let wallet = wallets.pop().unwrap();
 
-    let hint_helper = deploy_hint_helper(&wallet).await;
+    let multi_trove_getter =
+        deploy_multi_trove_getter(&wallet, contracts.sorted_troves.contract_id().into()).await;
 
-    hint_helper_abi::initialize(&hint_helper, contracts.sorted_troves.contract_id().into())
-        .await
-        .unwrap();
-
-    // create 15 troves each with 600 USDF debt and n * 1000 collateral
-    let mut target_address = Identity::Address(wallet.address().into());
-    let mut target_address2 = Identity::Address(wallet.address().into());
-
-    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
+    // create 10 troves each with 600 USDF debt and n * 1000 collateral
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
         pyth_price_feed(1),
     )
     .await;
 
-    for i in 1..=15 {
+    for i in 1..=10 {
         let wallet = wallets.pop().unwrap();
         let amount = i * 1000 * PRECISION;
         let usdf_amount = 600 * PRECISION;
-
-        if i == 5 {
-            target_address = Identity::Address(wallet.address().into());
-        }
-
-        if i == 10 {
-            target_address2 = Identity::Address(wallet.address().into());
-        }
 
         borrow_operations_utils::mint_token_and_open_trove(
             wallet.clone(),
@@ -58,34 +42,27 @@ async fn proper_hint_generations() {
         .await;
     }
 
-    let num_itterations = 25;
-    let random_seed = 0;
+    // Test getting multiple sorted troves
+    let start_index = 0;
+    let count = 10;
 
-    let res = hint_helper_abi::get_approx_hint(
-        &hint_helper,
+    let res = multi_trove_getter_abi::get_multiple_sorted_troves(
+        &multi_trove_getter,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].asset_id,
-        5000 * PRECISION / 600,
-        num_itterations,
-        random_seed,
+        start_index,
+        count,
     )
     .await;
 
-    let id = res.value.0;
-    assert_eq!(id, target_address);
+    let troves = res.value;
+    assert_eq!(troves.len(), count as usize);
 
-    let res = hint_helper_abi::get_approx_hint(
-        &hint_helper,
-        &contracts.asset_contracts[0].trove_manager,
-        &contracts.sorted_troves,
-        &contracts.asset_contracts[0].asset_id,
-        10000 * PRECISION / 600,
-        num_itterations,
-        random_seed + 1,
-    )
-    .await;
-
-    let id = res.value.0;
-    assert_eq!(id, target_address2);
+    // Verify that the troves are sorted in descending order of ICR
+    for i in 1..troves.len() {
+        assert!(
+            troves[i - 1].collateral / troves[i - 1].debt <= troves[i].collateral / troves[i].debt
+        );
+    }
 }

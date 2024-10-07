@@ -7,6 +7,7 @@ use super::interfaces::{
     fpt_staking::{FPTStaking, FPTStakingConfigurables},
     fpt_token::{FPTToken, FPTTokenConfigurables},
     hint_helper::HintHelper,
+    multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
     oracle::{Oracle, OracleConfigurables},
     protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
     pyth_oracle::{PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
@@ -1274,6 +1275,31 @@ pub mod common {
         .unwrap();
 
         HintHelper::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_multi_trove_getter(
+        wallet: &WalletUnlocked,
+        sorted_troves_contract_id: ContractId,
+    ) -> MultiTroveGetter<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        let configurables = MultiTroveGetterConfigurables::default()
+            .with_SORTED_TROVES_CONTRACT(sorted_troves_contract_id.into())
+            .unwrap();
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(MULTI_TROVE_GETTER_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), TxPolicies::default().with_tip(1))
+        .await
+        .unwrap();
+
+        MultiTroveGetter::new(id, wallet.clone())
     }
 
     pub fn print_response<T>(response: &CallResponse<T>)
