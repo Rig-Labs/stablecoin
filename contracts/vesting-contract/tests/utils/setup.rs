@@ -3,7 +3,9 @@ use test_utils::interfaces::vesting::VestingContract;
 use test_utils::setup::common::deploy_vesting_contract;
 use test_utils::{interfaces::token::Token, setup::common::deploy_token};
 
-pub async fn setup() -> (
+pub async fn setup(
+    total_amount: u64,
+) -> (
     VestingContract<WalletUnlocked>,
     WalletUnlocked,
     WalletUnlocked,
@@ -29,7 +31,7 @@ pub async fn setup() -> (
     let wallet = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
 
-    let instance = deploy_vesting_contract(&wallet.clone()).await;
+    let instance = deploy_vesting_contract(&wallet.clone(), total_amount).await;
 
     let asset = deploy_token(&wallet).await;
 

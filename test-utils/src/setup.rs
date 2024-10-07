@@ -129,7 +129,7 @@ pub mod common {
         let default_pool = deploy_default_pool(wallet).await;
         let active_pool = deploy_active_pool(wallet).await;
         let sorted_troves = deploy_sorted_troves(wallet).await;
-        let vesting_contract = deploy_vesting_contract(wallet).await;
+        let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
         let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
         let usdf_asset_id = usdf.contract_id().asset_id(&AssetId::zeroed().into());
@@ -444,6 +444,7 @@ pub mod common {
 
     pub async fn deploy_vesting_contract(
         wallet: &WalletUnlocked,
+        total_amount: u64,
     ) -> VestingContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -452,6 +453,8 @@ pub mod common {
         let initializer = Identity::Address(wallet.address().into());
         let configurables = VestingContractConfigurables::default()
             .with_INITIALIZER(initializer)
+            .unwrap()
+            .with_TOTAL_AMOUNT(total_amount)
             .unwrap();
 
         let id = Contract::load_from(

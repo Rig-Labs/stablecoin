@@ -1,6 +1,7 @@
 use std::{fs::File, io::BufReader, str::FromStr};
 
 use fuels::prelude::{Address, Bech32Address};
+use fuels::types::errors::Error;
 use fuels::types::AssetId;
 use fuels::{
     prelude::{abigen, Account},
@@ -20,13 +21,12 @@ pub async fn instantiate_vesting_contract<T: Account>(
     contract: &VestingContract<T>,
     asset_contract: &AssetId,
     schedules: Vec<VestingSchedule>,
-) -> CallResponse<()> {
+) -> Result<CallResponse<()>, Error> {
     contract
         .methods()
         .constructor(asset_contract.clone().into(), schedules, true)
         .call()
         .await
-        .unwrap()
 }
 
 pub async fn set_timestamp<T: Account>(

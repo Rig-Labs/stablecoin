@@ -25,6 +25,7 @@ use std::{
 configurable {
     /// Initializer identity
     INITIALIZER: Identity = Identity::Address(Address::zero()),
+    TOTAL_AMOUNT: u64 = 0,
 }
 storage {
     vesting_schedules: StorageMap<Identity, VestingSchedule> = StorageMap::<Identity, VestingSchedule> {},
@@ -56,6 +57,7 @@ impl VestingContract for Contract {
         );
         storage.asset.write(asset);
         storage.debug.write(debugging);
+        let mut total_vested_amount = 0;
         let mut i = 0;
         while i < schedules.len() {
             let schedule = schedules.get(i).unwrap();
@@ -71,8 +73,13 @@ impl VestingContract for Contract {
                 .vesting_schedules
                 .insert(schedule.recipient, schedule);
             storage.vesting_addresses.push(schedule.recipient);
+            total_vested_amount += schedule.total_amount;
             i += 1;
         }
+        require(
+            total_vested_amount == TOTAL_AMOUNT,
+            "VestingContract: Total amount does not match",
+        );
         storage.is_initialized.write(true);
     }
 

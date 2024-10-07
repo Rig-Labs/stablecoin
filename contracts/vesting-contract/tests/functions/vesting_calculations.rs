@@ -16,7 +16,7 @@ mod success {
 
     #[tokio::test]
     async fn create_vesting_contract() {
-        let (vest, admin, recipient, asset) = setup().await;
+        let (vest, admin, recipient, asset) = setup(10000).await;
 
         let vesting_schedule = [get_vesting_schedule(
             3000,
@@ -51,11 +51,24 @@ mod success {
             .call()
             .await
             .unwrap_err();
+
+        // fails to initialize twice
+        let res = instantiate_vesting_contract(
+            &vest,
+            &asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
+            vesting_schedule.to_vec(),
+        )
+        .await;
+
+        assert!(res.is_err());
     }
 
     #[tokio::test]
     async fn proper_vesting_calculations() {
-        let (vest, admin, recipient, asset) = setup().await;
+        let (vest, admin, recipient, asset) = setup(10000).await;
         let cliff_timestamp = 5000;
         let end_timestamp = 10000;
         let total_amount = 10000;
@@ -138,7 +151,7 @@ mod success {
     async fn proper_claiming_vested_tokens() {
         let start_timestamp: u64 = 0;
         // convert seconds to nano seconds;
-        let (vest, admin, recipient, asset) = setup().await;
+        let (vest, admin, recipient, asset) = setup(10000).await;
         let cliff_timestamp = (start_timestamp + 100) * 1;
         let end_timestamp = (cliff_timestamp + 100) * 1;
         let total_amount = 10000;
@@ -294,5 +307,40 @@ mod success {
         assert_eq!(vesting_schedules[1].end_timestamp, 8);
         assert_eq!(vesting_schedules[1].claimed_amount, 9);
         assert_eq!(vesting_schedules[1].total_amount, 10);
+    }
+}
+
+mod failure {
+    use test_utils::interfaces::vesting::{
+        get_vesting_schedule, instantiate_vesting_contract, VestingContract,
+    };
+
+    use super::*;
+
+    #[tokio::test]
+    async fn fails_to_initialize_vesting_with_incorrect_total_amount() {
+        let total_amount = 10000;
+        let (vest, _, recipient, asset) = setup(total_amount).await;
+
+        let vesting_schedule = [get_vesting_schedule(
+            3000,
+            1000,
+            2000,
+            0,
+            total_amount + 1,
+            Identity::Address(recipient.address().into()),
+        )];
+
+        let res = instantiate_vesting_contract(
+            &vest,
+            &asset
+                .contract_id()
+                .asset_id(&AssetId::zeroed().into())
+                .into(),
+            vesting_schedule.to_vec(),
+        )
+        .await;
+
+        assert!(res.is_err());
     }
 }
