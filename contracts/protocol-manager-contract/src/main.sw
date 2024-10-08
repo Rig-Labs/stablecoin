@@ -318,6 +318,10 @@ fn get_all_assets_info() -> AssetInfo {
         prices.push(price);
         system_debt.push(trove_manager.get_entire_system_debt());
         redemption_totals.push(RedemptionTotals::default());
+        while (current_borrower != null_identity_address() && current_cr < MCR) {
+            current_borrower = sorted_troves.get_prev(current_borrower, asset);
+            current_cr = trove_manager.get_current_icr(current_borrower, price);
+        }
         current_borrowers.push(current_borrower);
         current_crs.push(current_cr);
         i += 1;

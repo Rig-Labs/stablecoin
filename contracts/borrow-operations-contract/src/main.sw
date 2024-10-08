@@ -183,7 +183,6 @@ impl BorrowOperations for Contract {
         lower_hint: Identity,
         asset_contract: AssetId,
     ) {
-        require_is_not_paused();
         internal_adjust_trove(
             msg_sender()
                 .unwrap(),
@@ -403,10 +402,6 @@ fn internal_adjust_trove(
 
     if !is_debt_increase && usdf_change > 0 {
         require_at_least_min_net_debt(vars.debt - vars.net_debt_change);
-        require(
-            msg_amount() >= vars.net_debt_change,
-            "Borrow Operations: caller does not have enough balance to repay debt",
-        );
     }
 
     let new_position_res = internal_update_trove_from_adjustment(
