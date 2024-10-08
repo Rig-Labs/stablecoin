@@ -62,8 +62,6 @@ storage {
     usdf_contract: ContractId = ContractId::zero(),
     asset_contract: AssetId = AssetId::zero(),
     total_stakes: u64 = 0,
-    total_stakes_snapshot: u64 = 0,
-    total_collateral_snapshot: u64 = 0,
     l_asset: u64 = 0,
     l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
@@ -115,10 +113,7 @@ impl TroveManager for Contract {
     }
     #[storage(read)]
     fn get_nominal_icr(id: Identity) -> u64 {
-        match storage.troves.get(id).try_read() {
-            Some(trove) => return fm_compute_nominal_cr(trove.coll, trove.debt),
-            None => return fm_compute_nominal_cr(0, 0),
-        }
+        internal_get_nominal_icr(id)
     }
     #[storage(read, write)]
     fn apply_pending_rewards(id: Identity) {
@@ -395,6 +390,10 @@ fn internal_batch_liquidate_troves(
             .len() > 0,
         "TroveManager: No borrowers to liquidate",
     );
+    require_all_troves_unique(borrowers);
+    require_all_troves_are_active(borrowers);
+    require_all_troves_sorted_by_nicr(borrowers);
+
     // Initialize local variables and contracts
     let mut vars = LocalVariablesOuterLiquidationFunction::default();
     let oracle = abi(Oracle, storage.oracle_contract.read().into());
@@ -694,7 +693,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 #[storage(read, write)]
 fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address).read();
-    let new_stake = internal_compute_new_stake(trove.coll);
+    let new_stake = trove.coll;
     let old_stake = trove.stake;
     trove.stake = new_stake;
     storage.troves.insert(address, trove);
@@ -703,21 +702,6 @@ fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
         .total_stakes
         .write(old_total_stakes + new_stake - old_stake);
     return new_stake;
-}
-#[storage(read)]
-fn internal_compute_new_stake(coll: u64) -> u64 {
-    if (storage.total_collateral_snapshot.read() == 0) {
-        return coll;
-    } else {
-        require(
-            storage
-                .total_stakes_snapshot
-                .read() > 0,
-            "TroveManager: Total stakes snapshot is zero",
-        );
-        let stake = (U128::from(coll) * U128::from(storage.total_stakes_snapshot.read())) / U128::from(storage.total_collateral_snapshot.read());
-        return stake.as_u64().unwrap();
-    }
 }
 #[storage(read)]
 fn internal_get_pending_asset_reward(address: Identity) -> u64 {
@@ -856,4 +840,57 @@ fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amoun
         asset_amount,
         asset_contract,
     );
+}
+fn require_all_troves_unique(borrowers: Vec<Identity>) {
+    let mut outer_index = 0;
+    while outer_index < borrowers.len() {
+        let mut inner_index = outer_index + 1;
+        while inner_index < borrowers.len() {
+            require(
+                borrowers
+                    .get(outer_index)
+                    .unwrap() != borrowers
+                    .get(inner_index)
+                    .unwrap(),
+                "TroveManager: Duplicate borrower found",
+            );
+            inner_index += 1;
+        }
+        outer_index += 1;
+    }
+}
+#[storage(read)]
+fn require_all_troves_sorted_by_nicr(borrowers: Vec<Identity>) {
+    let mut i = 0;
+    while i < borrowers.len() {
+        if i > 0 {
+            require(
+                internal_get_nominal_icr(borrowers.get(i).unwrap()) >= internal_get_nominal_icr(borrowers.get(i - 1).unwrap()),
+                "TroveManager: Borrowers not sorted by nominal ICR",
+            );
+        }
+        i += 1;
+    }
+}
+#[storage(read)]
+fn require_all_troves_are_active(borrowers: Vec<Identity>) {
+    let mut i = 0;
+    while i < borrowers.len() {
+        require(
+            storage
+                .troves
+                .get(borrowers.get(i).unwrap())
+                .read()
+                .status == Status::Active,
+            "TroveManager: Trove is not active",
+        );
+        i += 1;
+    }
+}
+#[storage(read)]
+fn internal_get_nominal_icr(borrower: Identity) -> u64 {
+    match storage.troves.get(borrower).try_read() {
+        Some(trove) => return fm_compute_nominal_cr(trove.coll, trove.debt),
+        None => return fm_compute_nominal_cr(0, 0),
+    }
 }
