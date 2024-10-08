@@ -542,7 +542,7 @@ fn internal_get_totals_from_batch_liquidate(
                     .entire_trove_coll,
                 position
                     .entire_trove_debt,
-                usdf_in_stability_pool,
+                vars.remaining_usdf_in_stability_pool,
                 price,
             );
             // Apply the liquidation to the trove
@@ -632,6 +632,7 @@ fn internal_apply_liquidation(
         trove.debt = liquidation_values.remaining_trove_debt;
         storage.troves.insert(borrower, trove);
         let _ = internal_update_stake_and_total_stakes(borrower);
+        let _ = internal_update_trove_reward_snapshots(borrower);
         let new_ncr = fm_compute_nominal_cr(trove.coll, trove.debt);
         let sorted_troves_contract = abi(SortedTroves, storage.sorted_troves_contract.read().into());
         sorted_troves_contract.re_insert(
