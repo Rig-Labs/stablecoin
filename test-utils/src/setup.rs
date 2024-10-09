@@ -1281,13 +1281,13 @@ pub mod common {
 
     pub async fn deploy_multi_trove_getter(
         wallet: &WalletUnlocked,
-        sorted_troves_contract_id: ContractId,
+        sorted_troves_contract_id: &ContractId,
     ) -> MultiTroveGetter<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
 
         let configurables = MultiTroveGetterConfigurables::default()
-            .with_SORTED_TROVES_CONTRACT(sorted_troves_contract_id.into())
+            .with_SORTED_TROVES_CONTRACT(sorted_troves_contract_id.clone().into())
             .unwrap();
 
         let id = Contract::load_from(

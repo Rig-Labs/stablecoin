@@ -8,13 +8,18 @@ pub mod deployment {
     const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/test_vesting.json";
     use fuels::types::Bits256;
     use test_utils::data_structures::ProtocolContracts;
+    use test_utils::interfaces::hint_helper::HintHelper;
+    use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
     use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_json_file};
 
     use crate::utils::utils::setup_wallet;
 
     use super::*;
 
-    use test_utils::setup::common::{deploy_core_contracts, initialize_core_contracts};
+    use test_utils::setup::common::{
+        deploy_core_contracts, deploy_hint_helper, deploy_multi_trove_getter,
+        initialize_core_contracts,
+    };
 
     pub async fn deploy() {
         //--------------- Deploy ---------------
@@ -26,10 +31,12 @@ pub mod deployment {
         println!("🔑 Wallet address: {}", address);
 
         //--------------- Deploy ---------------
-        let core_contracts = deploy_and_initialize_all_core_contracts(wallet).await;
+        let core_contracts = deploy_and_initialize_all_core_contracts(wallet.clone()).await;
+        let (hint_helper, multi_trove_getter) =
+            deploy_frontend_helper_contracts(wallet.clone(), &core_contracts).await;
 
         //--------------- Write to file ---------------
-        write_contracts_to_file(core_contracts)
+        write_contracts_to_file(core_contracts, hint_helper, multi_trove_getter);
     }
 
     pub async fn deploy_and_initialize_all_core_contracts(
@@ -50,7 +57,23 @@ pub mod deployment {
         return core_contracts;
     }
 
-    fn write_contracts_to_file(contracts: ProtocolContracts<WalletUnlocked>) {
+    pub async fn deploy_frontend_helper_contracts(
+        wallet: WalletUnlocked,
+        core_contracts: &ProtocolContracts<WalletUnlocked>,
+    ) -> (HintHelper<WalletUnlocked>, MultiTroveGetter<WalletUnlocked>) {
+        let hint_helper = deploy_hint_helper(&wallet).await;
+        let multi_trove_getter =
+            deploy_multi_trove_getter(&wallet, &core_contracts.sorted_troves.contract_id().into())
+                .await;
+
+        return (hint_helper, multi_trove_getter);
+    }
+
+    fn write_contracts_to_file(
+        contracts: ProtocolContracts<WalletUnlocked>,
+        hint_helper: HintHelper<WalletUnlocked>,
+        multi_trove_getter: MultiTroveGetter<WalletUnlocked>,
+    ) {
         let mut file = File::create("contracts.json").unwrap();
 
         let json = json!({
@@ -68,7 +91,9 @@ pub mod deployment {
             "active_pool": contracts.active_pool.contract_id().to_string(),
             "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
             "vesting_contract": contracts.vesting_contract.contract_id().to_string(),
-            "asset_contracts" : contracts.asset_contracts.iter().map(|asset_contracts| {
+            "hint_helper": hint_helper.contract_id().to_string(),
+            "multi_trove_getter": multi_trove_getter.contract_id().to_string(),
+            "asset_contracts": contracts.asset_contracts.iter().map(|asset_contracts| {
                 json!({
                     "oracle": asset_contracts.oracle.contract_id().to_string(),
                     "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
