@@ -308,4 +308,52 @@ mod tests {
             }
         }
     }
+
+    mod confidence_check {
+        use test_utils::interfaces::pyth_oracle::pyth_price_feed_with_confidence;
+
+        use super::*;
+
+        #[tokio::test]
+        async fn price_within_confidence() {
+            let (oracle, pyth, redstone) = setup().await;
+            let price = 1000 * PRECISION;
+            let confidence = price / 100; // 1% confidence, which is within the 4% threshold
+
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_confidence(price, PYTH_TIMESTAMP, confidence),
+            )
+            .await;
+            let result = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(convert_precision(price, PYTH_PRECISION.into()), result);
+        }
+
+        #[tokio::test]
+        async fn price_outside_confidence_good_redstone() {
+            let (oracle, pyth, redstone) = setup().await;
+            let pyth_price = 100 * PRECISION;
+            let pyth_confidence = pyth_price / 20; // 5% confidence, which is outside the 4% threshold
+            let redstone_price = 105 * PRECISION;
+
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_confidence(pyth_price, PYTH_TIMESTAMP, pyth_confidence),
+            )
+            .await;
+            redstone_oracle_abi::write_prices(&redstone, redstone_feed(redstone_price / PRECISION))
+                .await;
+            redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+
+            let result = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            assert_eq!(
+                convert_precision(redstone_price, REDSTONE_PRECISION.into()),
+                result
+            );
+        }
+    }
 }

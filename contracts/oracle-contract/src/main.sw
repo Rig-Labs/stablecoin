@@ -23,25 +23,10 @@ use libraries::{
     oracle_interface::RedstoneCore,
     oracle_interface::{
         Oracle,
-        Price,
-    },
-    oracle_interface::{
-        PythCore,
-        PythPrice,
-        PythPriceFeedId,
     },
 };
 use std::{block::timestamp, constants::ZERO_B256,};
-
-// Hack because of Sway Compiler consuming < 64GB RAM in library import location
-impl From<PythPrice> for Price {
-    fn from(p: PythPrice) -> Self {
-        Self {
-            value: convert_precision(p.price, PYTH_PRECISION),
-            time: p.publish_time,
-        }
-    }
-}
+use pyth_interface::{data_structures::price::{Price, PriceFeedId}, PythCore};
 
 // // Hack: Sway does not provide a downcast to u64
 // // If redstone provides a strangely high u256 which shouldn't be cast down
@@ -51,7 +36,7 @@ configurable {
     /// Contract Address
     PYTH: ContractId = ContractId::zero(),
     /// Price feed to query
-    PYTH_PRICE_ID: PythPriceFeedId = ZERO_B256,
+    PYTH_PRICE_ID: PriceFeedId = ZERO_B256,
     /// Precision of value returned by Pyth
     PYTH_PRECISION: u8 = 9,
     /// Contract Address
@@ -68,9 +53,11 @@ const TIMEOUT: u64 = 14400;
 
 storage {
     /// The last valid price from either Pyth or Redstone
-    price: Price = Price {
-        value: 0,
-        time: 0,
+    last_good_price: Price = Price {
+        confidence: 0,
+        exponent: 0,
+        price: 0,
+        publish_time: 0,
     },
     // Used for simulating different timestamps during testing
     debug_timestamp: u64 = 0,
@@ -85,14 +72,14 @@ impl Oracle for Contract {
             false => timestamp(),
         };
         // Read the last stored valid price
-        let last_price = storage.price.read();
-
+        let last_price = storage.last_good_price.read();
         // Step 1: Query the Pyth oracle (primary source)
-        let pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
-
-        // Check if Pyth data is stale
-        if current_time - pyth_price.publish_time > TIMEOUT {
-            // Step 2: Pyth is stale, query Redstone oracle (fallback source)
+        let mut pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
+        pyth_price.price = convert_precision(pyth_price.price, PYTH_PRECISION);
+        pyth_price.confidence = convert_precision(pyth_price.confidence, PYTH_PRECISION); // Convert confidence to match precision
+        // Check if Pyth data is stale or outside confidence
+        if is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
+            // Step 2: Pyth is stale or outside confidence, query Redstone oracle (fallback source)
             let mut feed = Vec::with_capacity(1);
             feed.push(REDSTONE_PRICE_ID);
 
@@ -104,49 +91,47 @@ impl Oracle for Contract {
             let redstone_price_u64 = redstone_prices.get(0).unwrap();
             // By default redstone uses 8 decimal precision so it is generally safe to cast down
             let redstone_price = convert_precision_u256_and_downcast(redstone_price_u64, REDSTONE_PRECISION);
-
             // Check if Redstone data is also stale
             if current_time - redstone_timestamp > TIMEOUT {
                 // Both oracles are stale, use the most recent data available
                 if redstone_timestamp <= pyth_price.publish_time {
                     // Pyth data is more recent
-                    if last_price.time < pyth_price.publish_time {
-                        let price: Price = pyth_price.into();
-                        storage.price.write(price);
-                        return price.value;
+                    if last_price.publish_time < pyth_price.publish_time {
+                        let price: Price = pyth_price;
+                        storage.last_good_price.write(price);
+                        return price.price;
                     }
                 } else {
                     // Redstone data is more recent
-                    if last_price.time < redstone_timestamp {
-                        let price = Price::new(redstone_price, redstone_timestamp);
-                        storage.price.write(price);
-                        return price.value;
+                    if last_price.publish_time < redstone_timestamp {
+                        let price = Price::new(0, 0, redstone_price, redstone_timestamp);
+                        storage.last_good_price.write(price);
+                        return price.price;
                     }
                 }
                 // If both new prices are older than the last stored price, return the last price
-                return last_price.value;
+                return last_price.price;
             }
 
             // Redstone data is fresh, update if it's newer than the last stored price
-            if last_price.time < redstone_timestamp {
-                let price = Price::new(redstone_price, redstone_timestamp);
-                storage.price.write(price);
-                return price.value;
+            if last_price.publish_time < redstone_timestamp {
+                let price = Price::new(0, 0, redstone_price, redstone_timestamp);
+                storage.last_good_price.write(price);
+                return price.price;
             }
 
             // Otherwise, return the last stored price
-            return last_price.value;
+            return last_price.price;
         }
-
         // Pyth data is fresh, update if it's newer than the last stored price
-        if last_price.time < pyth_price.publish_time {
-            let price: Price = pyth_price.into();
-            storage.price.write(price);
-            return price.value;
+        if last_price.publish_time < pyth_price.publish_time {
+            let price: Price = pyth_price;
+            storage.last_good_price.write(price);
+            return price.price;
         }
 
         // If the new Pyth price is older than the last stored price, return the last price
-        return last_price.value;
+        return last_price.price;
     }
 
     #[storage(write)]
@@ -155,4 +140,49 @@ impl Oracle for Contract {
         require(DEBUG, "ORACLE: Debug is not enabled");
         storage.debug_timestamp.write(timestamp);
     }
+}
+
+fn is_pyth_price_stale_or_outside_confidence(pyth_price: Price, current_time: u64) -> bool {
+    // confidence within 4% is considered safe 
+    let confidence_threshold = pyth_price.price / 25;
+    return current_time - pyth_price.publish_time > TIMEOUT || pyth_price.confidence > confidence_threshold;
+}
+
+#[test]
+fn test_is_pyth_price_not_stale_or_outside_confidence() {
+    let pyth_price = Price {
+        confidence: 2,
+        publish_time: 100,
+        price: 100,
+        exponent: 0,
+    };
+    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, 100);
+    assert(is_stale_or_outside_confidence == false);
+}
+
+#[test]
+fn test_is_price_outside_confidence() {
+    // confidence is 5, which is outside 5% threshold 
+    let pyth_price = Price {
+        confidence: 5,
+        publish_time: 100,
+        price: 100,
+        exponent: 0,
+    };
+    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, 100);
+    assert(is_stale_or_outside_confidence == true);
+}
+
+#[test]
+fn test_is_price_stale() {
+    // price is stale because it's published more than 4 hours ago
+    let publish_time = 10000;
+    let pyth_price = Price {
+        confidence: 2,
+        publish_time: publish_time,
+        price: 100,
+        exponent: 0,
+    };
+    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, publish_time + TIMEOUT + 1);
+    assert(is_stale_or_outside_confidence == true);
 }

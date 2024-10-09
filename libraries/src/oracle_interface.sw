@@ -25,31 +25,6 @@ impl Price {
     }
 }
 
-// Mocked Pyth related structures to simulate Pyth integration
-pub type PythPriceFeedId = b256;
-
-abi PythCore {
-    #[storage(read)]
-    fn price(price_feed_id: PythPriceFeedId) -> PythPrice;
-
-    // Directly exposed but logic is simplified
-    #[storage(write)]
-    fn update_price_feeds(feeds: Vec<(PythPriceFeedId, PythPriceFeed)>);
-}
-
-pub struct PythPrice {
-    pub price: u64,
-    pub publish_time: u64,
-}
-
-pub struct PythPriceFeed {
-    pub price: PythPrice,
-}
-
-pub enum PythError {
-    PriceFeedNotFound: (),
-}
-
 // Mocked Redstone structures
 abi RedstoneCore {
     #[storage(read)]

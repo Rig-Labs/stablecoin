@@ -10,7 +10,7 @@ use super::interfaces::{
     multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
     oracle::{Oracle, OracleConfigurables},
     protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
-    pyth_oracle::{PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
+    pyth_oracle::{Price, PythCore, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::{SortedTroves, SortedTrovesConfigurables},
     stability_pool::{StabilityPool, StabilityPoolConfigurables},
@@ -20,7 +20,6 @@ use super::interfaces::{
     vesting::{VestingContract, VestingContractConfigurables},
 };
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
-use fuels::types::errors::Error;
 
 pub mod common {
     use super::*;
@@ -792,11 +791,11 @@ pub mod common {
                 pb.inc();
                 let pyth_feed = vec![(
                     pyth_price_id,
-                    PythPriceFeed {
-                        price: PythPrice {
-                            price: 1 * PRECISION,
-                            publish_time: PYTH_TIMESTAMP,
-                        },
+                    Price {
+                        confidence: 0,
+                        exponent: 0,
+                        price: 1 * PRECISION,
+                        publish_time: PYTH_TIMESTAMP,
                     },
                 )];
                 let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
