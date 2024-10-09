@@ -58,7 +58,6 @@ storage {
     has_transitioned_rewards: bool = false,
     time_transition_started: u64 = 0,
     total_transition_time_seconds: u64 = 0,
-    owner: State = State::Uninitialized,
 }
 
 /// @title Community Issuance Contract
@@ -241,7 +240,7 @@ impl CommunityIssuance for Contract {
 impl SRC5 for Contract {
     #[storage(read)]
     fn owner() -> State {
-        storage.owner.read()
+        _owner()
     }
 }
 

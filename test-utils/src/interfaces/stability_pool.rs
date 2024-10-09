@@ -158,7 +158,9 @@ pub mod stability_pool_abi {
         trove_manager: &TroveManagerContract<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
-        let tx_params = TxPolicies::default().with_tip(1);
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
 
         stability_pool
             .methods()
