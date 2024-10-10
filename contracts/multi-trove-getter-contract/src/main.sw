@@ -36,7 +36,9 @@ abi MultiTroveGetter {
 struct CombinedTroveData {
     address: Identity,
     collateral: u64,
+    collateral_rewards: u64,
     debt: u64,
+    debt_rewards: u64,
 }
 
 impl MultiTroveGetter for Contract {
@@ -72,7 +74,7 @@ fn internal_get_multiple_sorted_troves(
         curr_index += 1;
     }
 
-    while current_count < count {
+    while current_count < count && current_trove_owner != Identity::Address(Address::zero()) {
         let trove = get_trove_data(trove_manager_contract, current_trove_owner);
         troves.push(trove);
         current_trove_owner = sorted_troves.get_prev(current_trove_owner, asset_id);
@@ -88,7 +90,9 @@ fn get_trove_data(trove_manager_contract: ContractId, trove_owner: Identity) -> 
     let (debt, coll, debt_rewards, collateral_rewards) = trove_manager.get_entire_debt_and_coll(trove_owner);
     return CombinedTroveData {
         address: trove_owner,
-        collateral: coll + collateral_rewards,
-        debt: debt + debt_rewards,
+        collateral: coll,
+        collateral_rewards: collateral_rewards,
+        debt: debt,
+        debt_rewards: debt_rewards,
     };
 }

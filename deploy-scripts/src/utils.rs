@@ -172,7 +172,6 @@ pub mod utils {
                         asset_contract["pyth_price_id"].as_str().unwrap(),
                     )
                     .unwrap(),
-
                     redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap()
                         as u32,
                     redstone_price_id: U256::from_str(

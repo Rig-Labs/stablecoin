@@ -10,6 +10,7 @@ pub mod borrow_operations_abi {
     use super::*;
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
+    use crate::interfaces::default_pool::DefaultPool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::oracle::Oracle;
     use crate::interfaces::pyth_oracle::PythCore;
@@ -242,6 +243,7 @@ pub mod borrow_operations_abi {
         sorted_troves: &SortedTroves<T>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
+        default_pool: &DefaultPool<T>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -275,6 +277,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 active_pool,
                 usdf_token,
+                default_pool,
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)

@@ -891,7 +891,10 @@ fn require_all_troves_are_active(borrowers: Vec<Identity>) {
 #[storage(read)]
 fn internal_get_nominal_icr(borrower: Identity) -> u64 {
     match storage.troves.get(borrower).try_read() {
-        Some(trove) => return fm_compute_nominal_cr(trove.coll, trove.debt),
+        Some(trove) => {
+            let position = internal_get_entire_debt_and_coll(borrower);
+            return fm_compute_nominal_cr(position.entire_trove_coll, position.entire_trove_debt);
+        }
         None => return fm_compute_nominal_cr(0, 0),
     }
 }
