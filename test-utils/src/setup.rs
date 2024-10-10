@@ -554,10 +554,9 @@ pub mod common {
     pub async fn deploy_oracle(
         wallet: &WalletUnlocked,
         pyth: ContractId,
-        pyth_precision: u8,
         pyth_price_id: Bits256,
         redstone: ContractId,
-        redstone_precison: u8,
+        redstone_precison: u32,
         redstone_price_id: U256,
         debug: bool,
     ) -> Oracle<WalletUnlocked> {
@@ -575,8 +574,6 @@ pub mod common {
             .with_REDSTONE_PRICE_ID(redstone_price_id)
             .unwrap()
             .with_DEBUG(debug)
-            .unwrap()
-            .with_PYTH_PRECISION(pyth_precision)
             .unwrap()
             .with_REDSTONE_PRECISION(redstone_precison)
             .unwrap();
@@ -715,7 +712,6 @@ pub mod common {
                 let oracle = deploy_oracle(
                     &wallet,
                     contracts.pyth_oracle,
-                    contracts.pyth_precision,
                     contracts.pyth_price_id,
                     contracts.redstone_oracle,
                     contracts.redstone_precision,
@@ -735,7 +731,6 @@ pub mod common {
                     asset: Token::new(contracts.asset, wallet.clone()),
                     asset_id: contracts.asset_id,
                     pyth_price_id: contracts.pyth_price_id,
-                    pyth_precision: contracts.pyth_precision,
                     redstone_price_id: contracts.redstone_price_id,
                     redstone_precision: contracts.redstone_precision,
                 };
@@ -763,7 +758,6 @@ pub mod common {
                 let oracle = deploy_oracle(
                     &wallet,
                     pyth.contract_id().into(),
-                    9,
                     pyth_price_id,
                     redstone.contract_id().into(),
                     9,
@@ -816,7 +810,6 @@ pub mod common {
                     asset,
                     asset_id,
                     pyth_price_id,
-                    pyth_precision: 9,
                     redstone_price_id,
                     redstone_precision: 9,
                 };
@@ -835,7 +828,6 @@ pub mod common {
         let oracle = deploy_oracle(
             wallet,
             pyth.contract_id().into(),
-            9,
             DEFAULT_PYTH_PRICE_ID,
             redstone.contract_id().into(),
             9,
@@ -894,7 +886,8 @@ pub mod common {
             &contracts.active_pool,
             &contracts.sorted_troves,
         )
-        .await;
+        .await
+        .unwrap();
 
         let asset_id: AssetId = asset
             .contract_id()
@@ -909,7 +902,6 @@ pub mod common {
             asset,
             asset_id,
             pyth_price_id: DEFAULT_PYTH_PRICE_ID,
-            pyth_precision: 9,
             redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
             redstone_precision: 9,
         }

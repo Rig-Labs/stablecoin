@@ -14,7 +14,7 @@ use test_utils::{
 };
 
 const PYTH_PRECISION: u8 = 12;
-const REDSTONE_PRECISION: u8 = 6;
+const REDSTONE_PRECISION: u32 = 6;
 
 async fn setup() -> (
     Oracle<WalletUnlocked>,
@@ -43,7 +43,6 @@ async fn setup() -> (
     let oracle = deploy_oracle(
         &wallet,
         pyth.contract_id().into(),
-        PYTH_PRECISION,
         DEFAULT_PYTH_PRICE_ID,
         redstone.contract_id().into(),
         REDSTONE_PRECISION,
@@ -87,7 +86,7 @@ mod tests {
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
             )
             .await;
 
@@ -104,7 +103,7 @@ mod tests {
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
             )
             .await;
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -113,7 +112,7 @@ mod tests {
 
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_time(2, PYTH_TIMESTAMP - 1),
+                pyth_price_feed_with_time(2, PYTH_TIMESTAMP - 1, PYTH_PRECISION.into()),
             )
             .await;
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -135,7 +134,7 @@ mod tests {
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
             )
             .await;
             let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -146,7 +145,7 @@ mod tests {
 
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_time(2, PYTH_TIMESTAMP),
+                pyth_price_feed_with_time(2, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
             )
             .await;
             redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
@@ -174,7 +173,7 @@ mod tests {
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -186,7 +185,7 @@ mod tests {
 
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP + 1),
+                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
                     )
                     .await;
                     redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
@@ -204,7 +203,7 @@ mod tests {
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -216,7 +215,7 @@ mod tests {
 
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
@@ -242,7 +241,7 @@ mod tests {
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -254,7 +253,7 @@ mod tests {
 
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
@@ -284,7 +283,7 @@ mod tests {
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(1, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -296,7 +295,7 @@ mod tests {
 
                     pyth_oracle_abi::update_price_feeds(
                         &pyth,
-                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP),
+                        pyth_price_feed_with_time(2, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
                     )
                     .await;
                     redstone_oracle_abi::write_prices(&redstone, redstone_feed(3)).await;
@@ -323,7 +322,12 @@ mod tests {
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_confidence(price, PYTH_TIMESTAMP, confidence),
+                pyth_price_feed_with_confidence(
+                    price,
+                    PYTH_TIMESTAMP,
+                    confidence,
+                    PYTH_PRECISION.into(),
+                ),
             )
             .await;
             let result = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
@@ -341,7 +345,12 @@ mod tests {
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
             pyth_oracle_abi::update_price_feeds(
                 &pyth,
-                pyth_price_feed_with_confidence(pyth_price, PYTH_TIMESTAMP, pyth_confidence),
+                pyth_price_feed_with_confidence(
+                    pyth_price,
+                    PYTH_TIMESTAMP,
+                    pyth_confidence,
+                    PYTH_PRECISION.into(),
+                ),
             )
             .await;
             redstone_oracle_abi::write_prices(&redstone, redstone_feed(redstone_price / PRECISION))

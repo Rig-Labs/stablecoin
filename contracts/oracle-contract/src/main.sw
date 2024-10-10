@@ -37,14 +37,12 @@ configurable {
     PYTH: ContractId = ContractId::zero(),
     /// Price feed to query
     PYTH_PRICE_ID: PriceFeedId = ZERO_B256,
-    /// Precision of value returned by Pyth
-    PYTH_PRECISION: u8 = 9,
     /// Contract Address
     REDSTONE: ContractId = ContractId::zero(),
     /// Price feed to query
     REDSTONE_PRICE_ID: u256 = u256::min(),
     /// Precision of value returned by Redstone
-    REDSTONE_PRECISION: u8 = 9,
+    REDSTONE_PRECISION: u32 = 9,
     /// Timeout in seconds
     DEBUG: bool = false,
 }
@@ -75,8 +73,8 @@ impl Oracle for Contract {
         let last_price = storage.last_good_price.read();
         // Step 1: Query the Pyth oracle (primary source)
         let mut pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
-        pyth_price.price = convert_precision(pyth_price.price, PYTH_PRECISION);
-        pyth_price.confidence = convert_precision(pyth_price.confidence, PYTH_PRECISION); // Convert confidence to match precision
+        pyth_price.price = convert_precision(pyth_price.price, pyth_price.exponent);
+        pyth_price.confidence = convert_precision(pyth_price.confidence, pyth_price.exponent); // Convert confidence to match precision
         // Check if Pyth data is stale or outside confidence
         if is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
             // Step 2: Pyth is stale or outside confidence, query Redstone oracle (fallback source)

@@ -6,7 +6,8 @@ use test_utils::{
         coll_surplus_pool::{coll_surplus_pool_abi, CollSurplusPool},
         oracle::oracle_abi,
         pyth_oracle::{
-            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_TIMESTAMP,
+            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_PRECISION,
+            PYTH_TIMESTAMP,
         },
         token::token_abi,
         trove_manager::trove_manager_abi,
@@ -95,7 +96,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 

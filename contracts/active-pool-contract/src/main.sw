@@ -78,10 +78,11 @@ impl ActivePool for Contract {
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        require(amount > 0, "Active Pool: Amount must be greater than zero");
-        let new_amount = storage.asset_amount.get(asset_id).read() - amount;
-        storage.asset_amount.insert(asset_id, new_amount);
-        transfer(address, asset_id, amount);
+        if amount > 0 {
+            let new_amount = storage.asset_amount.get(asset_id).read() - amount;
+            storage.asset_amount.insert(asset_id, new_amount);
+            transfer(address, asset_id, amount);
+        }
     }
     // Increase the USDF debt for a given asset
     #[storage(read, write)]

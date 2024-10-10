@@ -11,7 +11,8 @@ use test_utils::{
         default_pool::default_pool_abi,
         oracle::oracle_abi,
         pyth_oracle::{
-            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_TIMESTAMP,
+            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_PRECISION,
+            PYTH_TIMESTAMP,
         },
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
@@ -119,7 +120,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -383,7 +384,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -664,7 +665,7 @@ async fn proper_full_liquidation_empty_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it

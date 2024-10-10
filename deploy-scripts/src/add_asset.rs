@@ -80,7 +80,6 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
             "asset_contract": asset_contract.asset.contract_id().to_string(),
             "asset_id": asset_contract.asset_id.to_string(),
             "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
-            "pyth_precision": asset_contract.pyth_precision,
             "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
             "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
             "redstone_price_id": asset_contract.redstone_price_id.to_string(),

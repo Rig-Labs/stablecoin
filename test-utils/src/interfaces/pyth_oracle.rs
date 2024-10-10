@@ -10,25 +10,30 @@ abigen!(Contract(
 
 pub const DEFAULT_PYTH_PRICE_ID: Bits256 = Bits256([0; 32]);
 pub const PYTH_TIMESTAMP: u64 = 1724166967;
+pub const PYTH_PRECISION: u32 = 9;
 
 pub fn pyth_price_feed(price: u64) -> Vec<(Bits256, Price)> {
     vec![(
         Bits256::zeroed(),
         Price {
             confidence: 0,
-            exponent: 0,
+            exponent: 9,
             price: price * PRECISION,
             publish_time: PYTH_TIMESTAMP,
         },
     )]
 }
 
-pub fn pyth_price_feed_with_time(price: u64, unix_timestamp: u64) -> Vec<(Bits256, Price)> {
+pub fn pyth_price_feed_with_time(
+    price: u64,
+    unix_timestamp: u64,
+    exponent: u32,
+) -> Vec<(Bits256, Price)> {
     vec![(
         Bits256::zeroed(),
         Price {
             confidence: 0,
-            exponent: 0,
+            exponent,
             price: price * PRECISION,
             publish_time: unix_timestamp,
         },
@@ -39,12 +44,13 @@ pub fn pyth_price_feed_with_confidence(
     price: u64,
     unix_timestamp: u64,
     confidence: u64,
+    exponent: u32,
 ) -> Vec<(Bits256, Price)> {
     vec![(
         Bits256::zeroed(),
         Price {
             confidence: confidence,
-            exponent: 0,
+            exponent,
             price: price,
             publish_time: unix_timestamp,
         },
@@ -56,7 +62,7 @@ pub fn pyth_price_no_precision_with_time(price: u64, unix_timestamp: u64) -> Vec
         Bits256::zeroed(),
         Price {
             confidence: 0,
-            exponent: 0,
+            exponent: 9,
             price,
             publish_time: unix_timestamp,
         },

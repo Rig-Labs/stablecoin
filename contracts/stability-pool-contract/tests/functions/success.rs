@@ -6,7 +6,8 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
         oracle::oracle_abi,
         pyth_oracle::{
-            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_TIMESTAMP,
+            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_PRECISION,
+            PYTH_TIMESTAMP,
         },
         stability_pool::{stability_pool_abi, stability_pool_utils, StabilityPool},
         token::token_abi,
@@ -278,7 +279,7 @@ async fn proper_one_sp_depositor_position() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -530,7 +531,7 @@ async fn proper_many_depositors_distribution() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -703,7 +704,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -855,13 +856,13 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
 
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[1].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -1068,7 +1069,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -1106,7 +1107,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
 
     pyth_oracle_abi::update_price_feeds(
         &new_asset_contracts.mock_pyth_oracle,
-        pyth_price_feed_with_time(10, PYTH_TIMESTAMP),
+        pyth_price_feed_with_time(10, PYTH_TIMESTAMP, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -1139,7 +1140,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     oracle_abi::set_debug_timestamp(&new_asset_contracts.oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &new_asset_contracts.mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 

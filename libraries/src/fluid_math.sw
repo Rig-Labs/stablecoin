@@ -32,18 +32,17 @@ pub const STABILITY_POOL_FEE: u64 = 100_000_000;
 pub const LIQUIDATOR_EXECUTION_GAS_FEE: u64 = 5_000_000;
 
 pub const ONE: u64 = 1_000_000_000;
-
 pub const BETA: u64 = 2;
 
-pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
+pub fn convert_precision(price: u64, current_precision: u32) -> u64 {
     let mut adjusted_price = 0;
     if current_precision > 9 {
         let precision = current_precision - 9;
-        let magnitude = 10.pow(precision.as_u32());
+        let magnitude = 10.pow(precision);
         adjusted_price = price / magnitude;
     } else if current_precision < 9 {
-        let precision = 9_u8 - current_precision;
-        let magnitude = 10.pow(precision.as_u32());
+        let precision = 9_u32 - current_precision;
+        let magnitude = 10.pow(precision);
         adjusted_price = price * magnitude;
     } else {
         adjusted_price = price;
@@ -53,15 +52,15 @@ pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
 }
 
 // Convert precision first to ensure accuracy, then downcast to u64 to fit Fluid's standard format
-pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u8) -> u64 {
+pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u32) -> u64 {
     let mut adjusted_price = 0;
     if current_precision > 9 {
         let precision = current_precision - 9;
-        let magnitude = 10.pow(precision.as_u32()).into();
+        let magnitude = 10.pow(precision).into();
         adjusted_price = price / magnitude;
     } else if current_precision < 9 {
-        let precision = 9_u8 - current_precision;
-        let magnitude = 10.pow(precision.as_u32()).into();
+        let precision = 9_u32 - current_precision;
+        let magnitude = 10.pow(precision).into();
         adjusted_price = price * magnitude;
     } else {
         adjusted_price = price;
