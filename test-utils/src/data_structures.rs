@@ -48,7 +48,6 @@ pub struct ExistingAssetContracts {
     pub asset_id: AssetId,
     pub pyth_oracle: ContractId,
     pub pyth_price_id: Bits256,
-    pub pyth_precision: u8,
     pub redstone_oracle: ContractId,
     pub redstone_price_id: U256,
     pub redstone_precision: u32,

@@ -79,7 +79,7 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt).await;
+        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt, false).await;
         initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true).await;
 
         // Add the first asset (Fuel)
@@ -110,28 +110,66 @@ pub mod common {
     pub async fn deploy_core_contracts(
         wallet: &WalletUnlocked,
         use_test_fpt: bool,
+        verbose: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying core contracts...");
+        let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let usdf = deploy_usdf_token(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let stability_pool = deploy_stability_pool(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let fpt_staking = deploy_fpt_staking(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let community_issuance = deploy_community_issuance(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let fpt_token = if use_test_fpt {
             deploy_test_fpt_token(wallet).await
         } else {
             deploy_fpt_token(wallet).await
         };
+        if verbose {
+            pb.inc();
+        }
         let protocol_manager = deploy_protocol_manager(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let coll_surplus_pool = deploy_coll_surplus_pool(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let default_pool = deploy_default_pool(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let active_pool = deploy_active_pool(wallet).await;
+        if verbose {
+            pb.inc();
+        }
         let sorted_troves = deploy_sorted_troves(wallet).await;
         let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
         let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
+        if verbose {
+            pb.inc();
+        }
         let usdf_asset_id = usdf.contract_id().asset_id(&AssetId::zeroed().into());
+        if verbose {
+            pb.inc();
+        }
 
         ProtocolContracts {
             borrow_operations,

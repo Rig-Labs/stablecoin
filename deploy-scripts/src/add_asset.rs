@@ -4,6 +4,7 @@ use fuels::prelude::*;
 use fuels::types::{Bits256, U256};
 use serde_json::json;
 
+use std::str::FromStr;
 use std::{fs::File, io::Write};
 use test_utils::data_structures::{AssetContracts, ExistingAssetContracts};
 use test_utils::interfaces::oracle::oracle_abi;
@@ -15,24 +16,40 @@ pub async fn add_asset() {
     dotenv().ok();
 
     let wallet = setup_wallet().await;
-    let address = wallet.address();
+    let address: Address = wallet.address().into();
     println!("🔑 Wallet address: {}", address);
 
     let core_contracts = load_core_contracts(wallet.clone());
-
     // you will need to set the existing asset contracts here manually and uncomment the below line
     let mut existing_asset_to_initialize: Option<ExistingAssetContracts> =
         Some(ExistingAssetContracts {
-            asset: ContractId::zeroed(),
-            asset_id: AssetId::zeroed(),
-            pyth_oracle: ContractId::zeroed(),
-            pyth_precision: 9,
-            pyth_price_id: Bits256::zeroed(),
-            redstone_oracle: ContractId::zeroed(),
-            redstone_price_id: U256::zero(),
+            asset: Bech32ContractId::from_str(
+                "fuel10skkmgaghljfp8zsxhn780kqptj97lt83rvfterdk5qpuft7ceusku5zl2",
+            )
+            .unwrap()
+            .into(),
+            asset_id: AssetId::from_str(
+                "4c28edd1de21752e93b347dcda4dfc6931fbf704ed7657f3ba9e759c93422b76",
+            )
+            .unwrap(),
+            pyth_oracle: ContractId::from_str(
+                "0xe31e04946c67fb41923f93d50ee7fc1c6c99d6e07c02860c6bea5f4a13919277",
+            )
+            .unwrap()
+            .into(),
+            pyth_price_id: Bits256::from_hex_str(
+                "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            )
+            .unwrap(),
+            redstone_oracle: Bech32ContractId::from_str(
+                "fuel10m8pzkysfpek9txxqgm653w8jmm9n3qma6029gsux2xxu6a72tysasc8x6",
+            )
+            .unwrap()
+            .into(),
+            redstone_price_id: U256::from_dec_str("868587").unwrap(),
             redstone_precision: 9,
         });
-    existing_asset_to_initialize = None;
+    // existing_asset_to_initialize = None;
 
     match existing_asset_to_initialize {
         Some(_) => {
@@ -57,7 +74,9 @@ pub async fn add_asset() {
         return;
     }
 
-    initialize_asset(&core_contracts, &asset_contracts).await;
+    initialize_asset(&core_contracts, &asset_contracts)
+        .await
+        .unwrap();
 
     write_asset_contracts_to_file(vec![asset_contracts]);
 
@@ -95,6 +114,19 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
 }
 
 async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
+    let current_pyth_price = pyth_oracle_abi::price(
+        &asset_contracts.mock_pyth_oracle,
+        &asset_contracts.pyth_price_id,
+    )
+    .await
+    .value;
+
+    let pyth_precision = current_pyth_price.exponent as usize;
+    println!(
+        "Current pyth price: {:.precision$}",
+        current_pyth_price.price as f64 / 10f64.powi(pyth_precision.try_into().unwrap()),
+        precision = pyth_precision
+    );
     let current_price = oracle_abi::get_price(
         &asset_contracts.oracle,
         &asset_contracts.mock_pyth_oracle,
@@ -103,13 +135,10 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     .await
     .value;
 
-    let current_pyth_price = pyth_oracle_abi::price(
-        &asset_contracts.mock_pyth_oracle,
-        &asset_contracts.pyth_price_id,
-    )
-    .await
-    .value
-    .price;
+    println!(
+        "Current oracle proxy price: {:.9}",
+        current_price as f64 / 1_000_000_000.0
+    );
 
     let current_redstone_price = redstone_oracle_abi::read_prices(
         &asset_contracts.mock_redstone_oracle,
@@ -119,14 +148,6 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     .value[0]
         .as_u64();
 
-    println!(
-        "Current oracle proxy price: {:.9}",
-        current_price as f64 / 1_000_000_000.0
-    );
-    println!(
-        "Current pyth price: {:.9}",
-        current_pyth_price as f64 / 1_000_000_000.0
-    );
     println!(
         "Current redstone price: {:.9}",
         current_redstone_price as f64 / 1_000_000_000.0
