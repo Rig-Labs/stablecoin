@@ -62,6 +62,8 @@ storage {
     usdf_contract: ContractId = ContractId::zero(),
     asset_contract: AssetId = AssetId::zero(),
     total_stakes: u64 = 0,
+    total_stakes_snapshot: u64 = 0,
+    total_collateral_snapshot: u64 = 0,
     l_asset: u64 = 0,
     l_usdf: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
@@ -435,6 +437,7 @@ fn internal_batch_liquidate_troves(
             asset_contract_cache,
         );
     }
+    internal_update_system_snapshots_exclude_coll_remainder(totals.total_coll_gas_compensation);
     // Send gas compensation to the caller (liquidator)
     if (totals.total_coll_gas_compensation > 0) {
         active_pool.send_asset(
@@ -694,7 +697,7 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
 #[storage(read, write)]
 fn internal_update_stake_and_total_stakes(address: Identity) -> u64 {
     let mut trove = storage.troves.get(address).read();
-    let new_stake = trove.coll;
+    let new_stake = internal_compute_new_stake(trove.coll);
     let old_stake = trove.stake;
     trove.stake = new_stake;
     storage.troves.insert(address, trove);
@@ -897,4 +900,60 @@ fn internal_get_nominal_icr(borrower: Identity) -> u64 {
         }
         None => return fm_compute_nominal_cr(0, 0),
     }
+}
+// Calculate a new stake based on the snapshots of the totalStakes and totalCollateral taken at the last liquidation
+#[storage(read)]
+fn internal_compute_new_stake(coll: u64) -> u64 {
+    let mut stake: u64 = 0;
+    if storage.total_collateral_snapshot.read() == 0 {
+        stake = coll;
+    } else {
+        /*
+        * The following assert() holds true because:
+        * - The system always contains >= 1 trove
+        * - When we close or liquidate a trove, we redistribute the pending rewards, so if all troves were closed/liquidated,
+        * rewards would’ve been emptied and totalCollateralSnapshot would be zero too.
+        */
+        require(
+            storage
+                .total_stakes_snapshot
+                .read() > 0,
+            "TroveManager: Total stakes snapshot is zero",
+        );
+        stake = fm_multiply_ratio(
+            coll,
+            storage
+                .total_stakes_snapshot
+                .read(),
+            storage
+                .total_collateral_snapshot
+                .read(),
+        );
+    }
+    return stake;
+}
+/*
+* Updates snapshots of system total stakes and total collateral, excluding a given collateral remainder from the calculation.
+* Used in a liquidation sequence.
+*
+* The calculation excludes a portion of collateral that is in the ActivePool:
+*
+* the total collateral gas compensation from the liquidation sequence
+*
+* The collateral as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
+*/
+#[storage(read, write)]
+fn internal_update_system_snapshots_exclude_coll_remainder(coll_remainder: u64) {
+    storage
+        .total_stakes_snapshot
+        .write(storage.total_stakes.read());
+
+    let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
+    let default_pool = abi(DefaultPool, storage.default_pool_contract.read().into());
+    let active_pool_coll = active_pool.get_asset(storage.asset_contract.read());
+    let liquidated_coll = default_pool.get_asset(storage.asset_contract.read());
+
+    storage
+        .total_collateral_snapshot
+        .write(active_pool_coll - coll_remainder + liquidated_coll);
 }

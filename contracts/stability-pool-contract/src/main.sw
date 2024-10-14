@@ -308,10 +308,6 @@ fn internal_update_g(fpt_issuance: u64) {
 fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: u64) -> u64 {
     let fpt_numerator = U128::from(fpt_issuance) * U128::from(DECIMAL_PRECISION) + storage.last_fpt_error.read();
     let fpt_per_unit_staked = fpt_numerator / U128::from(total_usdf_deposits);
-    require(
-        fpt_per_unit_staked != U128::zero(),
-        "StabilityPool: compute_fpt_per_unit_staked division rounded to zero error",
-    ); // unclear if needed
     storage
         .last_fpt_error
         .write(fpt_numerator - (fpt_per_unit_staked * U128::from(total_usdf_deposits)));

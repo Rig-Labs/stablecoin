@@ -90,7 +90,7 @@ impl Oracle for Contract {
             // By default redstone uses 8 decimal precision so it is generally safe to cast down
             let redstone_price = convert_precision_u256_and_downcast(redstone_price_u64, REDSTONE_PRECISION);
             // Check if Redstone data is also stale
-            if current_time - redstone_timestamp > TIMEOUT {
+            if current_time > redstone_timestamp + TIMEOUT {
                 // Both oracles are stale, use the most recent data available
                 if redstone_timestamp <= pyth_price.publish_time {
                     // Pyth data is more recent
@@ -143,7 +143,7 @@ impl Oracle for Contract {
 fn is_pyth_price_stale_or_outside_confidence(pyth_price: Price, current_time: u64) -> bool {
     // confidence within 4% is considered safe 
     let confidence_threshold = pyth_price.price / 25;
-    return current_time - pyth_price.publish_time > TIMEOUT || pyth_price.confidence > confidence_threshold;
+    return current_time > pyth_price.publish_time + TIMEOUT || pyth_price.confidence > confidence_threshold;
 }
 
 #[test]
