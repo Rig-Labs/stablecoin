@@ -15,8 +15,12 @@ use test_utils::{
 
 const PYTH_PRECISION: u8 = 12;
 const REDSTONE_PRECISION: u32 = 6;
+const DEFAULT_FUEL_VM_DECIMALS: u32 = 9;
 
-async fn setup() -> (
+async fn setup(
+    redstone_precision: u32,
+    fuel_vm_decimals: u32,
+) -> (
     Oracle<WalletUnlocked>,
     PythCore<WalletUnlocked>,
     RedstoneCore<WalletUnlocked>,
@@ -45,8 +49,9 @@ async fn setup() -> (
         pyth.contract_id().into(),
         DEFAULT_PYTH_PRICE_ID,
         redstone.contract_id().into(),
-        REDSTONE_PRECISION,
+        redstone_precision,
         DEFAULT_REDSTONE_PRICE_ID,
+        fuel_vm_decimals,
         true,
     )
     .await;
@@ -59,7 +64,7 @@ fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
 }
 
 fn convert_precision(price: u64, current_precision: u32) -> u64 {
-    let mut adjusted_price = 0;
+    let adjusted_price;
     if current_precision > 9 {
         adjusted_price = price / (10_u64.pow(current_precision - 9));
     } else if current_precision < 9 {
@@ -80,7 +85,8 @@ mod tests {
 
         #[tokio::test]
         async fn price() {
-            let (oracle, pyth, redstone) = setup().await;
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
             let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
@@ -97,7 +103,8 @@ mod tests {
 
         #[tokio::test]
         async fn fallback_to_last_price() {
-            let (oracle, pyth, redstone) = setup().await;
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
             let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
             oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
@@ -126,7 +133,8 @@ mod tests {
 
         #[tokio::test]
         async fn live_redstone() {
-            let (oracle, pyth, redstone) = setup().await;
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
             let expected_price_pyth = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
             let expected_price_redstone =
                 convert_precision(3 * PRECISION, REDSTONE_PRECISION.into());
@@ -167,7 +175,8 @@ mod tests {
 
                 #[tokio::test]
                 async fn price() {
-                    let (oracle, pyth, redstone) = setup().await;
+                    let (oracle, pyth, redstone) =
+                        setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
                     let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
@@ -197,7 +206,8 @@ mod tests {
 
                 #[tokio::test]
                 async fn fallback_last_price() {
-                    let (oracle, pyth, redstone) = setup().await;
+                    let (oracle, pyth, redstone) =
+                        setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
                     let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
@@ -232,7 +242,8 @@ mod tests {
 
                 #[tokio::test]
                 async fn price() {
-                    let (oracle, pyth, redstone) = setup().await;
+                    let (oracle, pyth, redstone) =
+                        setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
                     let expected_price_pyth =
                         convert_precision(1 * PRECISION, PYTH_PRECISION.into());
                     let expected_price_redstone =
@@ -277,7 +288,8 @@ mod tests {
 
                 #[tokio::test]
                 async fn fallback_last_price() {
-                    let (oracle, pyth, redstone) = setup().await;
+                    let (oracle, pyth, redstone) =
+                        setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
                     let expected_price = convert_precision(1 * PRECISION, PYTH_PRECISION.into());
 
                     oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
@@ -315,7 +327,8 @@ mod tests {
 
         #[tokio::test]
         async fn price_within_confidence() {
-            let (oracle, pyth, redstone) = setup().await;
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
             let price = 1000 * PRECISION;
             let confidence = price / 100; // 1% confidence, which is within the 4% threshold
 
@@ -337,7 +350,8 @@ mod tests {
 
         #[tokio::test]
         async fn price_outside_confidence_good_redstone() {
-            let (oracle, pyth, redstone) = setup().await;
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
             let pyth_price = 100 * PRECISION;
             let pyth_confidence = pyth_price / 20; // 5% confidence, which is outside the 4% threshold
             let redstone_price = 105 * PRECISION;
@@ -363,6 +377,110 @@ mod tests {
                 convert_precision(redstone_price, REDSTONE_PRECISION.into()),
                 result
             );
+        }
+    }
+
+    mod fuel_vm_decimals {
+        use super::*;
+
+        #[tokio::test]
+        async fn test_with_fuel_vm_decimals_8() {
+            let fuel_vm_decimals = 8;
+            let (oracle, pyth, redstone) = setup(REDSTONE_PRECISION, fuel_vm_decimals).await;
+
+            // Set a price of $5000 for 1 unit of the asset
+            let pyth_price = 5000;
+            let pyth_timestamp = PYTH_TIMESTAMP;
+
+            oracle_abi::set_debug_timestamp(&oracle, pyth_timestamp).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_time(pyth_price, pyth_timestamp, 9),
+            )
+            .await;
+
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            // Expected price calculation:
+            // 1. Convert Pyth price to 8 decimal precision: 5000 * 10^8 = 500_000_000_000
+            // 2. Multiply by 10 because 1_000_000_000 units with 8 decimals is 10 units of the asset
+            let expected_price = 5000 * PRECISION * 10;
+
+            assert_eq!(expected_price, price);
+        }
+
+        #[tokio::test]
+        async fn test_with_fuel_vm_decimals_12() {
+            let fuel_vm_decimals = 12;
+            let (oracle, pyth, redstone) = setup(REDSTONE_PRECISION, fuel_vm_decimals).await;
+
+            // Set a price of $5000 for 1 unit of the asset
+            let pyth_price = 5000;
+            let pyth_timestamp = PYTH_TIMESTAMP;
+
+            oracle_abi::set_debug_timestamp(&oracle, pyth_timestamp).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_time(pyth_price, pyth_timestamp, 9),
+            )
+            .await;
+
+            let price = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+
+            // Expected price calculation:
+            // 1. Convert Pyth price to 12 decimal precision: 5000 * 10^12 = 5_000_000_000_000_000
+            // 2. Divide by 1000 because 1_000_000_000 units with 12 decimals is 0.001 units of the asset
+            let expected_price = 5000 * PRECISION / 1000;
+
+            assert_eq!(expected_price, price);
+        }
+    }
+
+    mod pyth_exponent_changes {
+        use test_utils::interfaces::pyth_oracle::pyth_price_feed_with_confidence;
+
+        use super::*;
+
+        #[tokio::test]
+        async fn test_pyth_price_adjustment_different_exponents() {
+            let (oracle, pyth, redstone) =
+                setup(REDSTONE_PRECISION, DEFAULT_FUEL_VM_DECIMALS).await;
+            let expected_price = 1 * PRECISION; // $1.00 with 9 decimal places
+
+            // Test with exponent 9
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_confidence(1_000_000_000, PYTH_TIMESTAMP, 0, 9),
+            )
+            .await;
+            let price_exp_9 = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+            assert_eq!(expected_price, price_exp_9);
+
+            // Test with exponent 6
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + 1).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_confidence(1_000_000, PYTH_TIMESTAMP + 1, 0, 6),
+            )
+            .await;
+            let price_exp_6 = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+            assert_eq!(expected_price, price_exp_6);
+
+            // Test with exponent 12
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP + 2).await;
+            pyth_oracle_abi::update_price_feeds(
+                &pyth,
+                pyth_price_feed_with_confidence(1_000_000_000_000, PYTH_TIMESTAMP + 2, 0, 12),
+            )
+            .await;
+            let price_exp_12 = oracle_abi::get_price(&oracle, &pyth, &redstone).await.value;
+            assert_eq!(expected_price, price_exp_12);
+
+            // Assert that all prices are equal
+            assert_eq!(price_exp_9, price_exp_6);
+            assert_eq!(price_exp_9, price_exp_12);
+            assert_eq!(price_exp_6, price_exp_12);
         }
     }
 }

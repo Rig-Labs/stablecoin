@@ -166,6 +166,7 @@ pub mod utils {
                         trove_manager_contract_id,
                         wallet.clone(),
                     ),
+                    fuel_vm_decimals: asset_contract["fuel_vm_decimals"].as_u64().unwrap() as u32,
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
                     mock_redstone_oracle: RedstoneCore::new(redstone_contract_id, wallet.clone()),
                     pyth_price_id: Bits256::from_hex_str(

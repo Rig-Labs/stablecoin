@@ -45,7 +45,7 @@ pub mod deployment {
         let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
 
         let mut core_contracts = deploy_core_contracts(&wallet, false).await;
-        initialize_core_contracts(&mut core_contracts, &wallet, false, false).await;
+        initialize_core_contracts(&mut core_contracts, &wallet, false, false, true).await;
 
         let _ = vesting::instantiate_vesting_contract(
             &core_contracts.vesting_contract,

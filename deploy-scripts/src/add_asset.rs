@@ -31,6 +31,7 @@ pub async fn add_asset() {
             redstone_oracle: ContractId::zeroed(),
             redstone_price_id: U256::zero(),
             redstone_precision: 9,
+            fuel_vm_decimals: 9,
         });
     existing_asset_to_initialize = None;
 
@@ -84,6 +85,7 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
             "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
             "redstone_price_id": asset_contract.redstone_price_id.to_string(),
             "redstone_precision": asset_contract.redstone_precision,
+            "fuel_vm_decimals": asset_contract.fuel_vm_decimals,
         })
     }).collect::<Vec<serde_json::Value>>());
 
