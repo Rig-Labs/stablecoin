@@ -80,7 +80,7 @@ pub mod common {
         let wallet = wallets.pop().unwrap();
 
         let mut contracts = deploy_core_contracts(&wallet, use_test_fpt, false).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true, false).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -195,8 +195,10 @@ pub mod common {
         wallet: &WalletUnlocked,
         use_test_fpt: bool,
         debug: bool,
+        verbose: bool,
     ) {
         println!("Initializing core contracts...");
+        let mut pb = ProgressBar::new(11);
         if !use_test_fpt {
             fpt_token_abi::initialize(
                 &contracts.fpt_token,
@@ -204,6 +206,9 @@ pub mod common {
                 &contracts.community_issuance,
             )
             .await;
+        }
+        if verbose {
+            pb.inc();
         }
 
         community_issuance_abi::initialize(
@@ -215,6 +220,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         usdf_token_abi::initialize(
             &contracts.usdf,
@@ -224,6 +232,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
@@ -235,6 +246,9 @@ pub mod common {
             contracts.sorted_troves.contract_id().into(),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         stability_pool_abi::initialize(
             &contracts.stability_pool,
@@ -246,6 +260,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         fpt_staking_abi::initialize(
             &contracts.fpt_staking,
@@ -259,6 +276,9 @@ pub mod common {
                 .into(),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         protocol_manager_abi::initialize(
             &contracts.protocol_manager,
@@ -273,6 +293,9 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         coll_surplus_pool_abi::initialize(
             &contracts.coll_surplus_pool,
@@ -281,6 +304,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         default_pool_abi::initialize(
             &contracts.default_pool,
@@ -289,6 +315,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         active_pool_abi::initialize(
             &contracts.active_pool,
@@ -299,6 +328,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         sorted_troves_abi::initialize(
             &contracts.sorted_troves,
@@ -308,6 +340,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
     }
 
     async fn deploy_test_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
@@ -596,6 +631,7 @@ pub mod common {
         redstone: ContractId,
         redstone_precison: u32,
         redstone_price_id: U256,
+        fuel_vm_decimals: u32,
         debug: bool,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
@@ -614,6 +650,8 @@ pub mod common {
             .with_DEBUG(debug)
             .unwrap()
             .with_REDSTONE_PRECISION(redstone_precison)
+            .unwrap()
+            .with_FUEL_DECIMAL_REPRESENTATION(fuel_vm_decimals)
             .unwrap();
 
         let id = Contract::load_from(
@@ -754,6 +792,7 @@ pub mod common {
                     contracts.redstone_oracle,
                     contracts.redstone_precision,
                     contracts.redstone_price_id,
+                    contracts.fuel_vm_decimals,
                     false,
                 )
                 .await;
@@ -771,6 +810,7 @@ pub mod common {
                     pyth_price_id: contracts.pyth_price_id,
                     redstone_price_id: contracts.redstone_price_id,
                     redstone_precision: contracts.redstone_precision,
+                    fuel_vm_decimals: contracts.fuel_vm_decimals,
                 };
             }
             None => {
@@ -800,6 +840,7 @@ pub mod common {
                     redstone.contract_id().into(),
                     9,
                     redstone_price_id,
+                    9,
                     true,
                 )
                 .await;
@@ -825,7 +866,7 @@ pub mod common {
                     pyth_price_id,
                     Price {
                         confidence: 0,
-                        exponent: 0,
+                        exponent: 9,
                         price: 1 * PRECISION,
                         publish_time: PYTH_TIMESTAMP,
                     },
@@ -850,6 +891,7 @@ pub mod common {
                     pyth_price_id,
                     redstone_price_id,
                     redstone_precision: 9,
+                    fuel_vm_decimals: 9,
                 };
             }
         }
@@ -870,6 +912,7 @@ pub mod common {
             redstone.contract_id().into(),
             9,
             DEFAULT_REDSTONE_PRICE_ID,
+            9,
             true,
         )
         .await;
@@ -942,6 +985,7 @@ pub mod common {
             pyth_price_id: DEFAULT_PYTH_PRICE_ID,
             redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
             redstone_precision: 9,
+            fuel_vm_decimals: 9,
         }
     }
 

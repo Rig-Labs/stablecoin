@@ -41,6 +41,7 @@ pub struct AssetContracts<T: Account> {
     pub pyth_price_id: Bits256,
     pub redstone_price_id: U256,
     pub redstone_precision: u32,
+    pub fuel_vm_decimals: u32,
 }
 
 pub struct ExistingAssetContracts {
@@ -51,4 +52,5 @@ pub struct ExistingAssetContracts {
     pub redstone_oracle: ContractId,
     pub redstone_price_id: U256,
     pub redstone_precision: u32,
+    pub fuel_vm_decimals: u32,
 }
