@@ -88,6 +88,20 @@ pub mod pyth_oracle_abi {
             .unwrap()
     }
 
+    pub async fn price_unsafe<T: Account>(
+        oracle: &PythCore<T>,
+        price_feed_id: &Bits256,
+    ) -> CallResponse<Price> {
+        let tx_params = TxPolicies::default().with_tip(1);
+        oracle
+            .methods()
+            .price_unsafe(price_feed_id.clone())
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+            .unwrap()
+    }
+
     pub async fn update_price_feeds<T: Account>(
         oracle: &PythCore<T>,
         feeds: Vec<(Bits256, Price)>,

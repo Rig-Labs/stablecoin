@@ -136,6 +136,14 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     .await
     .value;
 
+    let current_pyth_price = pyth_oracle_abi::price_unsafe(
+        &asset_contracts.mock_pyth_oracle,
+        &asset_contracts.pyth_price_id,
+    )
+    .await
+    .value
+    .price;
+
     println!(
         "Current oracle proxy price: {:.9}",
         current_price as f64 / 1_000_000_000.0

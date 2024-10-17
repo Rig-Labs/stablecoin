@@ -79,7 +79,7 @@ impl Oracle for Contract {
         // Read the last stored valid price
         let last_price = storage.last_good_price.read();
         // Step 1: Query the Pyth oracle (primary source)
-        let mut pyth_price = abi(PythCore, PYTH.bits()).price(PYTH_PRICE_ID);
+        let mut pyth_price = abi(PythCore, PYTH.bits()).price_unsafe(PYTH_PRICE_ID);
         pyth_price = pyth_price_with_fuel_vm_precision_adjustment(pyth_price, FUEL_DECIMAL_REPRESENTATION);
         // Check if Pyth data is stale or outside confidence
         if is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
@@ -94,7 +94,10 @@ impl Oracle for Contract {
             let redstone_timestamp = redstone.read_timestamp();
             let redstone_price_u64 = redstone_prices.get(0).unwrap();
             // By default redstone uses 8 decimal precision so it is generally safe to cast down
-            let redstone_price = convert_precision_u256_and_downcast(redstone_price_u64, adjust_exponent(REDSTONE_PRECISION, FUEL_DECIMAL_REPRESENTATION));
+            let redstone_price = convert_precision_u256_and_downcast(
+                redstone_price_u64,
+                adjust_exponent(REDSTONE_PRECISION, FUEL_DECIMAL_REPRESENTATION),
+            );
             // Check if Redstone data is also stale
             if current_time > redstone_timestamp + TIMEOUT {
                 // Both oracles are stale, use the most recent data available
