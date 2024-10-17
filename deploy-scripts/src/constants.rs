@@ -1,0 +1,8 @@
+pub const PYTH_TESTNET_CONTRACT_ID: &str =
+    "0x25146735b29d4216639f7f8b1d7b921ff87a1d3051de62d6cceaacabeb33b8e7";
+pub const TESTNET_ASSET_CONTRACT_ID: &str =
+    "0x4ea6ccef1215d9479f1024dff70fc055ca538215d2c8c348beddffd54583d0e8";
+pub const TESTNET_ETH_ASSET_ID: &str =
+    "f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07";
+pub const TESTNET_PYTH_ETH_PRICE_ID: &str =
+    "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
