@@ -105,7 +105,7 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     .await
     .value;
 
-    let current_pyth_price = pyth_oracle_abi::price(
+    let current_pyth_price = pyth_oracle_abi::price_unsafe(
         &asset_contracts.mock_pyth_oracle,
         &asset_contracts.pyth_price_id,
     )

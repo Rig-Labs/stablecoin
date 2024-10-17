@@ -16,6 +16,8 @@ storage {
 abi PythCore {
     #[storage(read)]
     fn price(price_feed_id: PriceFeedId) -> Price;
+    #[storage(read)]
+    fn price_unsafe(price_feed_id: PriceFeedId) -> Price;
     // Directly exposed but logic is simplified
     #[storage(write)]
     fn update_price_feeds(feeds: Vec<(PriceFeedId, Price)>);
@@ -23,6 +25,13 @@ abi PythCore {
 impl PythCore for Contract {
     #[storage(read)]
     fn price(price_feed_id: PriceFeedId) -> Price {
+        let price_feed = storage.latest_price_feed.get(price_feed_id).try_read();
+        require(price_feed.is_some(), "Price feed not found");
+
+        return price_feed.unwrap();
+    }
+    #[storage(read)]
+    fn price_unsafe(price_feed_id: PriceFeedId) -> Price {
         let price_feed = storage.latest_price_feed.get(price_feed_id).try_read();
         require(price_feed.is_some(), "Price feed not found");
 
