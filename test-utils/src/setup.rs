@@ -643,7 +643,7 @@ pub mod common {
             .unwrap()
             .with_PYTH_PRICE_ID(pyth_price_id)
             .unwrap()
-            .with_REDSTONE(redstone)
+            .with_REDSTONE(redstone.into())
             .unwrap()
             .with_REDSTONE_PRICE_ID(redstone_price_id)
             .unwrap()
@@ -773,45 +773,21 @@ pub mod common {
 
     pub async fn deploy_asset_contracts(
         wallet: &WalletUnlocked,
-        existing_contracts: &Option<ExistingAssetContracts>,
+        existing_contracts: &ExistingAssetContracts,
+        debug: bool,
     ) -> AssetContracts<WalletUnlocked> {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(6);
-        let trove_manager = deploy_trove_manager_contract(&wallet).await;
 
-        pb.inc();
-
-        match existing_contracts {
-            Some(contracts) => {
-                pb.finish();
-
-                let oracle = deploy_oracle(
-                    &wallet,
-                    contracts.pyth_oracle,
-                    contracts.pyth_price_id,
-                    contracts.redstone_oracle,
-                    contracts.redstone_precision,
-                    contracts.redstone_price_id,
-                    contracts.fuel_vm_decimals,
-                    false,
+        // Deploy or use existing asset
+        let (asset, asset_id, fuel_vm_decimals) = match &existing_contracts.asset {
+            Some(asset_config) => {
+                pb.inc();
+                (
+                    Token::new(asset_config.asset, wallet.clone()),
+                    asset_config.asset_id,
+                    asset_config.fuel_vm_decimals,
                 )
-                .await;
-
-                return AssetContracts {
-                    oracle,
-                    mock_pyth_oracle: PythCore::new(contracts.pyth_oracle, wallet.clone()),
-                    mock_redstone_oracle: RedstoneCore::new(
-                        contracts.redstone_oracle,
-                        wallet.clone(),
-                    ),
-                    trove_manager,
-                    asset: Token::new(contracts.asset, wallet.clone()),
-                    asset_id: contracts.asset_id,
-                    pyth_price_id: contracts.pyth_price_id,
-                    redstone_price_id: contracts.redstone_price_id,
-                    redstone_precision: contracts.redstone_precision,
-                    fuel_vm_decimals: contracts.fuel_vm_decimals,
-                };
             }
             None => {
                 let asset = deploy_token(&wallet).await;
@@ -820,47 +796,37 @@ pub mod common {
                     .contract_id()
                     .asset_id(&AssetId::zeroed().into())
                     .into();
-
                 token_abi::mint_to_id(
                     &asset,
                     5000 * PRECISION,
                     Identity::Address(wallet.address().into()),
                 )
                 .await;
-
-                let pyth_price_id = Bits256::from(asset_id);
-                let redstone_price_id = U256::from(rand::thread_rng().gen_range(1..1_000_000));
-
-                let pyth = deploy_mock_pyth_oracle(&wallet).await;
-                let redstone = deploy_mock_redstone_oracle(&wallet).await;
-                let oracle = deploy_oracle(
-                    &wallet,
-                    pyth.contract_id().into(),
-                    pyth_price_id,
-                    redstone.contract_id().into(),
-                    9,
-                    redstone_price_id,
-                    9,
-                    true,
-                )
-                .await;
-                pb.inc();
-
-                println!("Deploying asset contracts... Done");
-                println!("Oracle: {}", oracle.contract_id());
-                println!("Mock Pyth Oracle: {}", pyth.contract_id());
-                println!("Mock Redstone Oracle: {}", redstone.contract_id());
-                println!("Trove Manager: {}", trove_manager.contract_id());
-                println!("Asset: {}", asset.contract_id());
-
-                let _ = token_abi::initialize(
+                token_abi::initialize(
                     &asset,
                     1_000_000_000,
                     &Identity::Address(wallet.address().into()),
                     "MOCK".to_string(),
                     "MOCK".to_string(),
                 )
-                .await;
+                .await
+                .unwrap();
+                (asset, asset_id, 9) // Default fuel_vm_decimals to 9
+            }
+        };
+
+        // Deploy or use existing Pyth oracle
+        let (mock_pyth_oracle, pyth_price_id) = match &existing_contracts.pyth_oracle {
+            Some(pyth_config) => {
+                pb.inc();
+                (
+                    PythCore::new(pyth_config.contract, wallet.clone()),
+                    pyth_config.price_id,
+                )
+            }
+            None => {
+                let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                let pyth_price_id = Bits256::from(asset_id);
                 pb.inc();
                 let pyth_feed = vec![(
                     pyth_price_id,
@@ -871,29 +837,81 @@ pub mod common {
                         publish_time: PYTH_TIMESTAMP,
                     },
                 )];
-                let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
-
-                oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
                 pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
-                pb.inc();
-
-                redstone_oracle_abi::write_prices(&redstone, redstone_feed).await;
-                redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
-                pb.inc();
-
-                return AssetContracts {
-                    oracle,
-                    mock_pyth_oracle: pyth,
-                    mock_redstone_oracle: redstone,
-                    trove_manager,
-                    asset,
-                    asset_id,
-                    pyth_price_id,
-                    redstone_price_id,
-                    redstone_precision: 9,
-                    fuel_vm_decimals: 9,
-                };
+                (pyth, pyth_price_id)
             }
+        };
+
+        // Deploy or use existing Redstone oracle
+        let (mock_redstone_oracle, redstone_price_id, redstone_precision) =
+            match &existing_contracts.redstone_oracle {
+                Some(redstone_config) => {
+                    pb.inc();
+                    (
+                        RedstoneCore::new(redstone_config.contract, wallet.clone()),
+                        redstone_config.price_id,
+                        redstone_config.precision,
+                    )
+                }
+                None => {
+                    let redstone = deploy_mock_redstone_oracle(&wallet).await;
+                    let redstone_price_id = U256::from(rand::thread_rng().gen_range(1..1_000_000));
+                    let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
+                    redstone_oracle_abi::write_prices(&redstone, redstone_feed).await;
+                    redstone_oracle_abi::set_timestamp(&redstone, PYTH_TIMESTAMP).await;
+                    pb.inc();
+                    (redstone, redstone_price_id, 9) // Default precision to 9
+                }
+            };
+
+        // Always deploy a new oracle and trove manager
+        let oracle = deploy_oracle(
+            &wallet,
+            mock_pyth_oracle.contract_id().into(),
+            pyth_price_id,
+            mock_redstone_oracle.contract_id().into(),
+            redstone_precision,
+            redstone_price_id,
+            fuel_vm_decimals,
+            debug,
+        )
+        .await;
+        pb.inc();
+
+        let trove_manager = deploy_trove_manager_contract(&wallet).await;
+        pb.inc();
+
+        // Set up price feeds if we deployed new oracles
+        if debug {
+            oracle_abi::set_debug_timestamp(&oracle, PYTH_TIMESTAMP).await;
+        }
+
+        println!("Deploying asset contracts... Done");
+        println!("Oracle: {}", oracle.contract_id());
+        println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
+        println!(
+            "Mock Redstone Oracle: {}",
+            mock_redstone_oracle.contract_id()
+        );
+        println!("Trove Manager: {}", trove_manager.contract_id());
+        println!("Asset: {}", asset.contract_id());
+        println!("Asset ID: {}", asset_id);
+        println!("Pyth Price ID: {:?}", pyth_price_id);
+        println!("Redstone Price ID: {}", redstone_price_id);
+        println!("Redstone Precision: {}", redstone_precision);
+        println!("Fuel VM Decimals: {}", fuel_vm_decimals);
+
+        AssetContracts {
+            oracle,
+            mock_pyth_oracle,
+            mock_redstone_oracle,
+            trove_manager,
+            asset,
+            asset_id,
+            pyth_price_id,
+            redstone_price_id,
+            redstone_precision,
+            fuel_vm_decimals,
         }
     }
 

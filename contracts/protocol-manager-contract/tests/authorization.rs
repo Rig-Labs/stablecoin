@@ -1,4 +1,5 @@
 use test_utils::{
+    data_structures::ExistingAssetContracts,
     interfaces::protocol_manager::{protocol_manager_abi, ProtocolManager},
     setup::common::{deploy_asset_contracts, initialize_asset, setup_protocol},
 };
@@ -30,7 +31,13 @@ async fn test_authorizations() {
         );
     }
     // Test 2: Unauthorized register_asset
-    let asset_contracts = deploy_asset_contracts(&protocol_manager_owner, &None).await;
+    let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        asset: None,
+        pyth_oracle: None,
+        redstone_oracle: None,
+    };
+    let asset_contracts =
+        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
     contracts.protocol_manager = protocol_manager_attacker.clone();
     let result = initialize_asset(&contracts, &asset_contracts).await;
 
@@ -53,7 +60,14 @@ async fn test_authorizations() {
     // Test 3: Authorized register_asset
     contracts.protocol_manager = protocol_manager_owner_contract.clone();
 
-    let asset_contracts_owner = deploy_asset_contracts(&protocol_manager_owner, &None).await;
+    let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        asset: None,
+        pyth_oracle: None,
+        redstone_oracle: None,
+    };
+
+    let asset_contracts_owner =
+        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
     let result = initialize_asset(&contracts, &asset_contracts_owner).await;
 
     assert!(
@@ -89,7 +103,13 @@ async fn test_authorizations() {
     );
 
     // Test 6: Unauthorized register_asset after renouncement
-    let unauthorized_asset_contracts = deploy_asset_contracts(&protocol_manager_owner, &None).await;
+    let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        asset: None,
+        pyth_oracle: None,
+        redstone_oracle: None,
+    };
+    let unauthorized_asset_contracts =
+        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
     let result = initialize_asset(&contracts, &unauthorized_asset_contracts).await;
 
     assert!(

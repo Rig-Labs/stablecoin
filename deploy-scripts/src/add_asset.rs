@@ -7,12 +7,15 @@ use serde_json::json;
 
 use std::str::FromStr;
 use std::{fs::File, io::Write};
-use test_utils::data_structures::{AssetContracts, ExistingAssetContracts};
+use test_utils::data_structures::{
+    AssetConfig, AssetContracts, ExistingAssetContracts, PythConfig, RedstoneConfig,
+};
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
 use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
 
 use test_utils::setup::common::*;
+
 pub async fn add_asset() {
     dotenv().ok();
 
@@ -22,37 +25,38 @@ pub async fn add_asset() {
 
     let core_contracts = load_core_contracts(wallet.clone());
     // you will need to set the existing asset contracts here manually and uncomment the below line
-    let mut existing_asset_to_initialize: Option<ExistingAssetContracts> =
-        Some(ExistingAssetContracts {
-            asset: ContractId::from_str(constants::TESTNET_ASSET_CONTRACT_ID)
-                .unwrap()
-                .into(),
+    let mut existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        asset: Some(AssetConfig {
+            asset: ContractId::from_str(constants::TESTNET_ASSET_CONTRACT_ID).unwrap(),
             asset_id: AssetId::from_str(constants::TESTNET_ETH_ASSET_ID).unwrap(),
-            pyth_oracle: ContractId::from_str(constants::PYTH_TESTNET_CONTRACT_ID)
-                .unwrap()
-                .into(),
-            pyth_price_id: Bits256::from_hex_str(constants::TESTNET_PYTH_ETH_PRICE_ID).unwrap(),
-            redstone_oracle: Bech32ContractId::from_str(
-                "fuel148jt0mwezxhe9jnsjejnrnm3m2s8sln3pdtefrq3qaeusy4svw6s5kv3df",
-            )
-            .unwrap()
-            .into(),
-            redstone_price_id: U256::from_dec_str("477326").unwrap(),
-            redstone_precision: 9,
             fuel_vm_decimals: 9,
-        });
-    existing_asset_to_initialize = None;
+        }),
+        pyth_oracle: Some(PythConfig {
+            contract: ContractId::from_str(constants::PYTH_TESTNET_CONTRACT_ID).unwrap(),
+            price_id: Bits256::from_hex_str(constants::TESTNET_PYTH_ETH_PRICE_ID).unwrap(),
+        }),
+        redstone_oracle: None,
+    };
 
-    match existing_asset_to_initialize {
+    existing_asset_to_initialize.asset = None;
+
+    match &existing_asset_to_initialize.asset {
         Some(_) => {
             println!("Existing asset to initialize");
         }
         None => {
             println!("Initializing new asset");
+
+            // if rpc url doesn't have testnet in it then cause a failure so it's obvious
+            let rpc_url = std::env::var("RPC").unwrap();
+            if !rpc_url.contains("testnet") {
+                panic!("RPC URL does not contain testnet, make sure you set the correct RPC URL in the .env file");
+            }
         }
     }
     // Deploy the asset contracts
-    let asset_contracts = deploy_asset_contracts(&wallet, &existing_asset_to_initialize).await;
+    let asset_contracts =
+        deploy_asset_contracts(&wallet, &existing_asset_to_initialize, false).await;
 
     query_oracles(&asset_contracts).await;
 
@@ -115,7 +119,7 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
 }
 
 async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
-    let current_pyth_price = pyth_oracle_abi::price(
+    let current_pyth_price = pyth_oracle_abi::price_unsafe(
         &asset_contracts.mock_pyth_oracle,
         &asset_contracts.pyth_price_id,
     )
@@ -135,14 +139,6 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     )
     .await
     .value;
-
-    let current_pyth_price = pyth_oracle_abi::price_unsafe(
-        &asset_contracts.mock_pyth_oracle,
-        &asset_contracts.pyth_price_id,
-    )
-    .await
-    .value
-    .price;
 
     println!(
         "Current oracle proxy price: {:.9}",

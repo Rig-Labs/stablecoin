@@ -77,6 +77,7 @@ pub mod deployment {
         let mut file = File::create("contracts.json").unwrap();
 
         let json = json!({
+            "rpc": std::env::var("RPC").unwrap(),
             "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
             "usdf_asset_id": contracts.usdf_asset_id.to_string(),

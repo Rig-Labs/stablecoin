@@ -45,12 +45,24 @@ pub struct AssetContracts<T: Account> {
 }
 
 pub struct ExistingAssetContracts {
+    pub asset: Option<AssetConfig>,
+    pub pyth_oracle: Option<PythConfig>,
+    pub redstone_oracle: Option<RedstoneConfig>,
+}
+
+pub struct AssetConfig {
     pub asset: ContractId,
     pub asset_id: AssetId,
-    pub pyth_oracle: ContractId,
-    pub pyth_price_id: Bits256,
-    pub redstone_oracle: ContractId,
-    pub redstone_price_id: U256,
-    pub redstone_precision: u32,
     pub fuel_vm_decimals: u32,
+}
+
+pub struct PythConfig {
+    pub contract: ContractId,
+    pub price_id: Bits256,
+}
+
+pub struct RedstoneConfig {
+    pub contract: ContractId,
+    pub price_id: U256,
+    pub precision: u32,
 }
