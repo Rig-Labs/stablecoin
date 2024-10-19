@@ -40,20 +40,20 @@ pub async fn add_asset() {
 
     existing_asset_to_initialize.asset = None;
 
-    match &existing_asset_to_initialize.asset {
-        Some(_) => {
-            println!("Existing asset to initialize");
+    if existing_asset_to_initialize.asset.is_none()
+        || existing_asset_to_initialize.pyth_oracle.is_none()
+        || existing_asset_to_initialize.redstone_oracle.is_none()
+    {
+        // if rpc url doesn't have testnet in it then cause a failure so it's obvious
+        let rpc_url = std::env::var("RPC").unwrap();
+        if !rpc_url.contains("testnet") {
+            panic!("RPC URL does not contain testnet, make sure you set the correct RPC URL in the .env file");
         }
-        None => {
-            println!("Initializing new asset");
-
-            // if rpc url doesn't have testnet in it then cause a failure so it's obvious
-            let rpc_url = std::env::var("RPC").unwrap();
-            if !rpc_url.contains("testnet") {
-                panic!("RPC URL does not contain testnet, make sure you set the correct RPC URL in the .env file");
-            }
-        }
+        println!("Initializing new asset");
+    } else {
+        println!("Existing asset to initialize");
     }
+
     // Deploy the asset contracts
     let asset_contracts =
         deploy_asset_contracts(&wallet, &existing_asset_to_initialize, false).await;
