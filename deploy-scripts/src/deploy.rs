@@ -80,12 +80,12 @@ pub mod deployment {
             "rpc": std::env::var("RPC").unwrap(),
             "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
-            "usdf_asset_id": contracts.usdf_asset_id.to_string(),
+            "usdf_asset_id": format!("0x{}", contracts.usdf_asset_id.to_string()),
             "stability_pool": contracts.stability_pool.contract_id().to_string(),
             "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
             "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
             "fpt_token": contracts.fpt_token.contract_id().to_string(),
-            "fpt_asset_id": contracts.fpt_asset_id.to_string(),
+            "fpt_asset_id": format!("0x{}", contracts.fpt_asset_id.to_string()),
             "community_issuance": contracts.community_issuance.contract_id().to_string(),
             "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
             "default_pool": contracts.default_pool.contract_id().to_string(),
@@ -99,7 +99,7 @@ pub mod deployment {
                     "oracle": asset_contracts.oracle.contract_id().to_string(),
                     "trove_manager": asset_contracts.trove_manager.contract_id().to_string(),
                     "asset_contract": asset_contracts.asset.contract_id().to_string(),
-                    "asset_id": asset_contracts.asset_id.to_string(),
+                    "asset_id": format!("0x{}", asset_contracts.asset_id.to_string()),
                 })
             }).collect::<Vec<serde_json::Value>>()
         });

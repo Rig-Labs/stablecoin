@@ -98,7 +98,7 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
             "oracle": asset_contract.oracle.contract_id().to_string(),
             "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
             "asset_contract": asset_contract.asset.contract_id().to_string(),
-            "asset_id": asset_contract.asset_id.to_string(),
+            "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
             "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
             "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
             "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
@@ -135,7 +135,7 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     let current_price = oracle_abi::get_price(
         &asset_contracts.oracle,
         &asset_contracts.mock_pyth_oracle,
-        &asset_contracts.mock_redstone_oracle,
+        &Some(asset_contracts.mock_redstone_oracle.clone()),
     )
     .await
     .value;

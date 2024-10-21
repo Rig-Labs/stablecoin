@@ -628,11 +628,9 @@ pub mod common {
         wallet: &WalletUnlocked,
         pyth: ContractId,
         pyth_price_id: Bits256,
-        redstone: ContractId,
-        redstone_precison: u32,
-        redstone_price_id: U256,
         fuel_vm_decimals: u32,
         debug: bool,
+        initializer: Identity,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -643,15 +641,11 @@ pub mod common {
             .unwrap()
             .with_PYTH_PRICE_ID(pyth_price_id)
             .unwrap()
-            .with_REDSTONE(redstone.into())
-            .unwrap()
-            .with_REDSTONE_PRICE_ID(redstone_price_id)
-            .unwrap()
             .with_DEBUG(debug)
             .unwrap()
-            .with_REDSTONE_PRECISION(redstone_precison)
-            .unwrap()
             .with_FUEL_DECIMAL_REPRESENTATION(fuel_vm_decimals)
+            .unwrap()
+            .with_INITIALIZER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
@@ -779,15 +773,37 @@ pub mod common {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(6);
 
-        // Deploy or use existing asset
-        let (asset, asset_id, fuel_vm_decimals) = match &existing_contracts.asset {
-            Some(asset_config) => {
-                pb.inc();
-                (
-                    Token::new(asset_config.asset, wallet.clone()),
-                    asset_config.asset_id,
-                    asset_config.fuel_vm_decimals,
+        pb.inc();
+
+        match existing_contracts {
+            Some(contracts) => {
+                pb.finish();
+
+                let oracle = deploy_oracle(
+                    &wallet,
+                    contracts.pyth_oracle,
+                    contracts.pyth_price_id,
+                    contracts.fuel_vm_decimals,
+                    false,
+                    Identity::Address(wallet.address().into()),
                 )
+                .await;
+
+                return AssetContracts {
+                    oracle,
+                    mock_pyth_oracle: PythCore::new(contracts.pyth_oracle, wallet.clone()),
+                    mock_redstone_oracle: RedstoneCore::new(
+                        contracts.redstone_oracle,
+                        wallet.clone(),
+                    ),
+                    trove_manager,
+                    asset: Token::new(contracts.asset, wallet.clone()),
+                    asset_id: contracts.asset_id,
+                    pyth_price_id: contracts.pyth_price_id,
+                    redstone_price_id: contracts.redstone_price_id,
+                    redstone_precision: contracts.redstone_precision,
+                    fuel_vm_decimals: contracts.fuel_vm_decimals,
+                };
             }
             None => {
                 let asset = deploy_token(&wallet).await;
@@ -802,7 +818,31 @@ pub mod common {
                     Identity::Address(wallet.address().into()),
                 )
                 .await;
-                token_abi::initialize(
+
+                let pyth_price_id = Bits256::from(asset_id);
+                let redstone_price_id = U256::from(rand::thread_rng().gen_range(1..1_000_000));
+
+                let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                let redstone = deploy_mock_redstone_oracle(&wallet).await;
+                let oracle = deploy_oracle(
+                    &wallet,
+                    pyth.contract_id().into(),
+                    pyth_price_id,
+                    9,
+                    true,
+                    Identity::Address(wallet.address().into()),
+                )
+                .await;
+                pb.inc();
+
+                println!("Deploying asset contracts... Done");
+                println!("Oracle: {}", oracle.contract_id());
+                println!("Mock Pyth Oracle: {}", pyth.contract_id());
+                println!("Mock Redstone Oracle: {}", redstone.contract_id());
+                println!("Trove Manager: {}", trove_manager.contract_id());
+                println!("Asset: {}", asset.contract_id());
+
+                let _ = token_abi::initialize(
                     &asset,
                     1_000_000_000,
                     &Identity::Address(wallet.address().into()),
@@ -927,11 +967,9 @@ pub mod common {
             wallet,
             pyth.contract_id().into(),
             DEFAULT_PYTH_PRICE_ID,
-            redstone.contract_id().into(),
-            9,
-            DEFAULT_REDSTONE_PRICE_ID,
             9,
             true,
+            Identity::Address(wallet.address().into()),
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(wallet).await;
