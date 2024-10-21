@@ -40,9 +40,9 @@ pub async fn add_asset() {
 
     existing_asset_to_initialize.asset = None;
 
+    // Redstone oracle is not required for initialization
     if existing_asset_to_initialize.asset.is_none()
         || existing_asset_to_initialize.pyth_oracle.is_none()
-        || existing_asset_to_initialize.redstone_oracle.is_none()
     {
         // if rpc url doesn't have testnet in it then cause a failure so it's obvious
         let rpc_url = std::env::var("RPC").unwrap();
