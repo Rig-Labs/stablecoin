@@ -28,6 +28,7 @@ use libraries::{
     oracle_interface::RedstoneCore,
     oracle_interface::{
         Oracle,
+        RedstoneConfig,
     },
 };
 use std::{block::timestamp, constants::ZERO_B256,};
@@ -42,16 +43,12 @@ configurable {
     PYTH: ContractId = ContractId::zero(),
     /// Price feed to query
     PYTH_PRICE_ID: PriceFeedId = ZERO_B256,
-    /// Contract Address
-    REDSTONE: ContractId = ContractId::zero(),
-    /// Price feed to query
-    REDSTONE_PRICE_ID: u256 = u256::min(),
-    /// Precision of value returned by Redstone
-    REDSTONE_PRECISION: u32 = 9,
     /// Decimal representation of the asset in the Fuel network
     FUEL_DECIMAL_REPRESENTATION: u32 = 9,
     /// Timeout in seconds
     DEBUG: bool = false,
+    /// Initializer
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
 }
 // Timeout period for considering oracle data as stale (4 hours in seconds)
 const TIMEOUT: u64 = 14400;
@@ -66,11 +63,20 @@ storage {
     },
     // Used for simulating different timestamps during testing
     debug_timestamp: u64 = 0,
+    redstone_config: Option<RedstoneConfig> = None,
 }
 
 impl Oracle for Contract {
     #[storage(read, write)]
     fn get_price() -> u64 {
+        // Step 1: Query the Pyth oracle (primary source)
+        let mut pyth_price = abi(PythCore, PYTH.bits()).price_unsafe(PYTH_PRICE_ID);
+        pyth_price = pyth_price_with_fuel_vm_precision_adjustment(pyth_price, FUEL_DECIMAL_REPRESENTATION);
+        let redstone_config = storage.redstone_config.read();
+        // If Redstone is not configured, return the latest Pyth price regardless of staleness and confidence
+        if redstone_config.is_none() {
+            return pyth_price.price;
+        }
         // Determine the current timestamp based on debug mode
         let current_time = match DEBUG {
             true => storage.debug_timestamp.read(),
@@ -78,17 +84,16 @@ impl Oracle for Contract {
         };
         // Read the last stored valid price
         let last_price = storage.last_good_price.read();
-        // Step 1: Query the Pyth oracle (primary source)
-        let mut pyth_price = abi(PythCore, PYTH.bits()).price_unsafe(PYTH_PRICE_ID);
-        pyth_price = pyth_price_with_fuel_vm_precision_adjustment(pyth_price, FUEL_DECIMAL_REPRESENTATION);
         // Check if Pyth data is stale or outside confidence
         if is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
             // Step 2: Pyth is stale or outside confidence, query Redstone oracle (fallback source)
+            let config = redstone_config.unwrap();
+
             let mut feed = Vec::with_capacity(1);
-            feed.push(REDSTONE_PRICE_ID);
+            feed.push(config.price_id);
 
             // Fuel Bug workaround: trait coherence
-            let id = REDSTONE.bits();
+            let id = config.contract_id.bits();
             let redstone = abi(RedstoneCore, id);
             let redstone_prices = redstone.read_prices(feed);
             let redstone_timestamp = redstone.read_timestamp();
@@ -96,7 +101,7 @@ impl Oracle for Contract {
             // By default redstone uses 8 decimal precision so it is generally safe to cast down
             let redstone_price = convert_precision_u256_and_downcast(
                 redstone_price_u64,
-                adjust_exponent(REDSTONE_PRECISION, FUEL_DECIMAL_REPRESENTATION),
+                adjust_exponent(config.precision, FUEL_DECIMAL_REPRESENTATION),
             );
             // Check if Redstone data is also stale
             if current_time > redstone_timestamp + TIMEOUT {
@@ -146,6 +151,23 @@ impl Oracle for Contract {
         // Allow setting a custom timestamp for testing, but only in debug mode
         require(DEBUG, "ORACLE: Debug is not enabled");
         storage.debug_timestamp.write(timestamp);
+    }
+
+    #[storage(read, write)]
+    fn set_redstone_config(config: RedstoneConfig) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "ORACLE: Only initializer can set Redstone config",
+        );
+        require(
+            storage
+                .redstone_config
+                .read()
+                .is_none(),
+            "ORACLE: Redstone config already set",
+        );
+        storage.redstone_config.write(Some(config));
     }
 }
 // Assets in the fuel VM can have a different decimal representation

@@ -590,11 +590,9 @@ pub mod common {
         wallet: &WalletUnlocked,
         pyth: ContractId,
         pyth_price_id: Bits256,
-        redstone: ContractId,
-        redstone_precison: u32,
-        redstone_price_id: U256,
         fuel_vm_decimals: u32,
         debug: bool,
+        initializer: Identity,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -605,15 +603,11 @@ pub mod common {
             .unwrap()
             .with_PYTH_PRICE_ID(pyth_price_id)
             .unwrap()
-            .with_REDSTONE(redstone)
-            .unwrap()
-            .with_REDSTONE_PRICE_ID(redstone_price_id)
-            .unwrap()
             .with_DEBUG(debug)
             .unwrap()
-            .with_REDSTONE_PRECISION(redstone_precison)
-            .unwrap()
             .with_FUEL_DECIMAL_REPRESENTATION(fuel_vm_decimals)
+            .unwrap()
+            .with_INITIALIZER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
@@ -751,11 +745,9 @@ pub mod common {
                     &wallet,
                     contracts.pyth_oracle,
                     contracts.pyth_price_id,
-                    contracts.redstone_oracle,
-                    contracts.redstone_precision,
-                    contracts.redstone_price_id,
                     contracts.fuel_vm_decimals,
                     false,
+                    Identity::Address(wallet.address().into()),
                 )
                 .await;
 
@@ -799,11 +791,9 @@ pub mod common {
                     &wallet,
                     pyth.contract_id().into(),
                     pyth_price_id,
-                    redstone.contract_id().into(),
-                    9,
-                    redstone_price_id,
                     9,
                     true,
+                    Identity::Address(wallet.address().into()),
                 )
                 .await;
                 pb.inc();
@@ -871,11 +861,9 @@ pub mod common {
             wallet,
             pyth.contract_id().into(),
             DEFAULT_PYTH_PRICE_ID,
-            redstone.contract_id().into(),
-            9,
-            DEFAULT_REDSTONE_PRICE_ID,
             9,
             true,
+            Identity::Address(wallet.address().into()),
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(wallet).await;

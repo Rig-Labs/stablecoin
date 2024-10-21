@@ -9,11 +9,23 @@ abi Oracle {
     // Testing workaround
     #[storage(write)]
     fn set_debug_timestamp(timestamp: u64);
+
+    #[storage(read, write)]
+    fn set_redstone_config(config: RedstoneConfig);
 }
 
 pub struct Price {
     pub value: u64,
     pub time: u64,
+}
+
+pub struct RedstoneConfig {
+    /// Contract address
+    pub contract_id: ContractId,
+    /// Price feed ID
+    pub price_id: u256,
+    /// Precision
+    pub precision: u32,
 }
 
 impl Price {
