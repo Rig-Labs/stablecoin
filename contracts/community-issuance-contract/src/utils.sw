@@ -16,15 +16,15 @@ pub fn internal_get_fpt_supply_cap(
         return FPT_SUPPLY_CAP / 2;
     } else {
         // time transition started will always be less than current time
-        let time_diff = U128::from_u64(current_time - time_transition_started);
-        let supply_cap_over_2 = U128::from_u64(FPT_SUPPLY_CAP / 2);
-        let transition_completed_ratio = time_diff * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(total_transition_time_seconds);
+        let time_diff = U128::from(current_time - time_transition_started);
+        let supply_cap_over_2 = U128::from(FPT_SUPPLY_CAP / 2);
+        let transition_completed_ratio = time_diff * U128::from(DECIMAL_PRECISION) / U128::from(total_transition_time_seconds);
         // transition completed, without this we will eventually overflow
-        if (transition_completed_ratio > U128::from_u64(DECIMAL_PRECISION))
+        if (transition_completed_ratio > U128::from(DECIMAL_PRECISION))
         {
             return FPT_SUPPLY_CAP;
         }
-        let current_supply_cap = supply_cap_over_2 + (supply_cap_over_2 * transition_completed_ratio / U128::from_u64(DECIMAL_PRECISION));
+        let current_supply_cap = supply_cap_over_2 + (supply_cap_over_2 * transition_completed_ratio / U128::from(DECIMAL_PRECISION));
         let current_supply_cap_64 = current_supply_cap.as_u64().unwrap();
         return current_supply_cap_64;
     }
@@ -32,9 +32,9 @@ pub fn internal_get_fpt_supply_cap(
 pub fn internal_get_cumulative_issuance_fraction(current_time: u64, deployment_time: u64) -> u64 {
     let time_passed_in_minutes = (current_time - deployment_time) / SECONDS_IN_ONE_MINUTE;
     let power = dec_pow(ISSUANCE_FACTOR, time_passed_in_minutes);
-    let cumulative_issuance_fraction = U128::from_u64(DECIMAL_PRECISION) - power;
+    let cumulative_issuance_fraction = U128::from(DECIMAL_PRECISION) - power;
     require(
-        cumulative_issuance_fraction <= U128::from_u64(DECIMAL_PRECISION),
+        cumulative_issuance_fraction <= U128::from(DECIMAL_PRECISION),
         "CommunityIssuance: Cumulative issuance fraction is greater than DECIMAL_PRECISION",
     );
     return cumulative_issuance_fraction.as_u64().unwrap()
@@ -48,12 +48,12 @@ pub fn test_issue_fpt(
     total_fpt_issued: u64,
     has_transitioned_rewards: bool,
 ) -> u64 {
-    let latest_total_fpt_issued = (U128::from_u64(internal_get_fpt_supply_cap(
+    let latest_total_fpt_issued = (U128::from(internal_get_fpt_supply_cap(
         time_transition_started,
         total_transition_time_seconds,
         current_time,
         has_transitioned_rewards,
-    )) * U128::from_u64(internal_get_cumulative_issuance_fraction(current_time, deployment_time))) / U128::from_u64(DECIMAL_PRECISION);
+    )) * U128::from(internal_get_cumulative_issuance_fraction(current_time, deployment_time))) / U128::from(DECIMAL_PRECISION);
     let issuance = latest_total_fpt_issued.as_u64().unwrap() - total_fpt_issued;
     return issuance
 }
@@ -146,7 +146,7 @@ fn test_supply_cap_transition() {
         current_time,
         has_transitioned_rewards,
     );
-    let time_diff = U128::from_u64(current_time - time_transition_started);
+    let time_diff = U128::from(current_time - time_transition_started);
     let expect = (FPT_SUPPLY_CAP / 2) + (FPT_SUPPLY_CAP / 2 * 3 / 4);
     assert(supply_cap_during_transition == expect);
     let current_time = 60 * 60 * 24 * 30 * 12;
@@ -200,7 +200,7 @@ fn test_emissions_schedule_before_transition() {
         total_fpt_issued,
         has_transitioned_rewards,
     );
-    let issuance_pre_transition = (U128::from_u64((FPT_SUPPLY_CAP / 2)) * U128::from_u64(internal_get_cumulative_issuance_fraction(current_time, deployment_time))) / U128::from_u64(DECIMAL_PRECISION);
+    let issuance_pre_transition = (U128::from((FPT_SUPPLY_CAP / 2)) * U128::from(internal_get_cumulative_issuance_fraction(current_time, deployment_time))) / U128::from(DECIMAL_PRECISION);
     assert(issuance == issuance_pre_transition.as_u64().unwrap());
     // test emissions before transition
     // check that half of half of the fpt supply is issued before transitioned at 1 year mark
@@ -330,7 +330,7 @@ fn test_emissions_schedule_during_transition() {
         total_fpt_issued,
         has_transitioned_rewards,
     );
-    let expect = (U128::from_u64(FPT_SUPPLY_CAP) * U128::from_u64(3) / U128::from_u64(4)).as_u64().unwrap();
+    let expect = (U128::from(FPT_SUPPLY_CAP) * U128::from(3u64) / U128::from(4u64)).as_u64().unwrap();
     let diff = fm_abs_diff(issuance, expect);
     assert(diff <= 1_000_000_000_000_000);
     // 3/4 of the way through emissions after 2 years, half way through transition
@@ -348,7 +348,7 @@ fn test_emissions_schedule_during_transition() {
         total_fpt_issued,
         has_transitioned_rewards,
     );
-    let expect = (U128::from_u64(FPT_SUPPLY_CAP) * U128::from_u64(3) / U128::from_u64(4) * U128::from_u64(3) / U128::from_u64(4)).as_u64().unwrap();
+    let expect = (U128::from(FPT_SUPPLY_CAP) * U128::from(3u64) / U128::from(4u64) * U128::from(3u64) / U128::from(4u64)).as_u64().unwrap();
     let diff = fm_abs_diff(issuance, expect);
     assert(diff <= 1_000_000_000_000_000);
 }

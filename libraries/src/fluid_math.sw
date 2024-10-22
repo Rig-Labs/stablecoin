@@ -5,8 +5,6 @@ use numbers::*;
 use std::{hash::*, u128::U128};
 
 pub const ZERO_B256 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-// Using Precision 6 until u128 is available
-pub const PCT_100: u64 = 1_000_000_000;
 
 pub const SECONDS_IN_ONE_MINUTE: u64 = 60;
 
@@ -19,8 +17,6 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
 pub const MCR: u64 = 1_350_000_000;
-
-pub const MAX_U64: u64 = 18_446_744_073_709_551_615;
 // 10 USDF 
 pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
 
@@ -36,18 +32,17 @@ pub const STABILITY_POOL_FEE: u64 = 100_000_000;
 pub const LIQUIDATOR_EXECUTION_GAS_FEE: u64 = 5_000_000;
 
 pub const ONE: u64 = 1_000_000_000;
-
 pub const BETA: u64 = 2;
 
-pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
+pub fn convert_precision(price: u64, current_precision: u32) -> u64 {
     let mut adjusted_price = 0;
     if current_precision > 9 {
         let precision = current_precision - 9;
-        let magnitude = 10.pow(precision.as_u32());
+        let magnitude = 10.pow(precision);
         adjusted_price = price / magnitude;
     } else if current_precision < 9 {
-        let precision = 9_u8 - current_precision;
-        let magnitude = 10.pow(precision.as_u32());
+        let precision = 9_u32 - current_precision;
+        let magnitude = 10.pow(precision);
         adjusted_price = price * magnitude;
     } else {
         adjusted_price = price;
@@ -56,42 +51,55 @@ pub fn convert_precision(price: u64, current_precision: u8) -> u64 {
     adjusted_price
 }
 
-pub fn get_default_asset_id(temp_contract: ContractId) -> AssetId {
-    AssetId::from(sha256((temp_contract, ZERO_B256)))
+// Convert precision first to ensure accuracy, then downcast to u64 to fit Fluid's standard format
+pub fn convert_precision_u256_and_downcast(price: u256, current_precision: u32) -> u64 {
+    let mut adjusted_price = 0;
+    if current_precision > 9 {
+        let precision = current_precision - 9;
+        let magnitude = 10.pow(precision).into();
+        adjusted_price = price / magnitude;
+    } else if current_precision < 9 {
+        let precision = 9_u32 - current_precision;
+        let magnitude = 10.pow(precision).into();
+        adjusted_price = price * magnitude;
+    } else {
+        adjusted_price = price;
+    }
+    u64::try_from(adjusted_price).unwrap()
 }
 
 // 0.5% one-time borrow fee
 pub fn fm_compute_borrow_fee(debt: u64) -> u64 {
-    let fee = U128::from_u64(debt) * U128::from_u64(BORROWING_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    let fee = U128::from(debt) * U128::from(BORROWING_FEE_FLOOR) / U128::from(DECIMAL_PRECISION);
     return fee.as_u64().unwrap();
 }
 
 // 1% redemption fee
 pub fn fm_compute_redemption_fee(debt: u64) -> u64 {
-    let fee = U128::from_u64(debt) * U128::from_u64(REDEMPTION_FEE_FLOOR) / U128::from_u64(DECIMAL_PRECISION);
+    let fee = U128::from(debt) * U128::from(REDEMPTION_FEE_FLOOR) / U128::from(DECIMAL_PRECISION);
     return fee.as_u64().unwrap();
 }
 
 pub fn fm_compute_nominal_cr(coll: u64, debt: u64) -> u64 {
     if (debt > 0) {
-        let ncr: U128 = U128::from_u64(coll) * U128::from_u64(DECIMAL_PRECISION) / U128::from_u64(debt);
+        let ncr: U128 = U128::from(coll) * U128::from(DECIMAL_PRECISION) / U128::from(debt);
         return ncr.as_u64().unwrap();
     } else {
-        return MAX_U64;
+        return u64::max();
     }
 }
 
 pub fn fm_multiply_ratio(value: u64, numerator: u64, denominator: u64) -> u64 {
-    let ratio: U128 = U128::from_u64(value) * U128::from_u64(numerator) / U128::from_u64(denominator);
+    let ratio: U128 = U128::from(value) * U128::from(numerator) / U128::from(denominator);
     return ratio.as_u64().unwrap();
 }
 
 pub fn fm_compute_cr(coll: u64, debt: u64, price: u64) -> u64 {
     if (debt > 0) {
-        let cr: U128 = U128::from_u64(coll) * U128::from_u64(price) / U128::from_u64(debt);
+        let cr: U128 = U128::from(coll) * U128::from(price) / U128::from(debt);
         return cr.as_u64().unwrap();
     } else {
-        return MAX_U64;
+        return u64::max();
     }
 }
 
@@ -119,7 +127,7 @@ pub fn fm_max(a: u64, b: u64) -> u64 {
 
 pub fn dec_mul(a: U128, b: U128) -> U128 {
     let prod = a * b;
-    let dec_prod = (prod + U128::from_u64(DECIMAL_PRECISION / 2)) / U128::from_u64(DECIMAL_PRECISION);
+    let dec_prod = (prod + U128::from(DECIMAL_PRECISION / 2)) / U128::from(DECIMAL_PRECISION);
     return dec_prod;
 }
 
@@ -129,18 +137,18 @@ pub fn dec_pow(base: u64, _minutes: u64) -> U128 {
         minutes = 525600000;
     }
 
-    let mut y = U128::from_u64(DECIMAL_PRECISION);
-    let mut x = U128::from_u64(base);
-    let mut n = U128::from_u64(minutes);
+    let mut y = U128::from(DECIMAL_PRECISION);
+    let mut x = U128::from(base);
+    let mut n = U128::from(minutes);
 
-    while n > U128::from_u64(1) {
-        if n % U128::from_u64(2) == U128::from_u64(0) {
+    while n > U128::from(1u64) {
+        if n % U128::from(2u64) == U128::from(0u64) {
             x = dec_mul(x, x);
-            n = n / U128::from_u64(2);
+            n = n / U128::from(2u64);
         } else {
             y = dec_mul(x, y);
             x = dec_mul(x, x);
-            n = (n - U128::from_u64(1)) / U128::from_u64(2);
+            n = (n - U128::from(1u64)) / U128::from(2u64);
         }
     }
 
@@ -160,7 +168,7 @@ fn test_dec_pow_zero() {
     let base = 1_000_000_000;
     let exponent = 0;
     let result = dec_pow(base, exponent);
-    assert(result == U128::from_u64(DECIMAL_PRECISION));
+    assert(result == U128::from(DECIMAL_PRECISION));
 }
 
 #[test]
@@ -220,4 +228,36 @@ fn test_precision_less_than_current_pow() {
 
     let result = convert_precision(price, precision);
     assert_eq(result, price * 10.pow(3));
+}
+
+#[test]
+fn test_precision_u256_less_than_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 8;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 10_000_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_more_than_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 10;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 100_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_is_equal_to_current() {
+    let price: u256 = 1_000_000_000_000;
+    let precision = 9;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 1_000_000_000_000);
+}
+
+#[test]
+fn test_precision_u256_less_than_current_pow() {
+    let price: u256 = 1_000_000;
+    let precision = 6;
+    let result = convert_precision_u256_and_downcast(price, precision);
+    assert_eq(result, 1_000_000_000);
 }

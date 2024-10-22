@@ -6,3 +6,4 @@ name = "mock-pyth-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+pyth_interface = { git = "https://github.com/pyth-network/pyth-crosschain", rev = "04280eae6822b6d52d9f3502f1038b638381b37f" }

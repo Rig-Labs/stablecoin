@@ -36,10 +36,16 @@ use std::{
         msg_amount,
     },
 };
+use sway_libs::ownership::*;
+use standards::{src5::*,};
 
 const ONE_WEEK_IN_SECONDS: u64 = 604_800;
-const SIX_MONTHS_IN_SECONDS: u64 = 15_780_000;
-const ONE_YEAR_IN_SECONDS: u64 = 31_104_000;
+const SIX_MONTHS_IN_SECONDS: u64 = 15_552_000; // 180 days
+const ONE_YEAR_IN_SECONDS: u64 = 31_104_000; // 360 days
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     stability_pool_contract: ContractId = ContractId::zero(),
@@ -47,7 +53,6 @@ storage {
     is_initialized: bool = false,
     total_fpt_issued: u64 = 0,
     deployment_time: u64 = 0,
-    admin: Identity = Identity::Address(Address::zero()),
     debug: bool = false,
     debug_timestamp: u64 = 0,
     has_transitioned_rewards: bool = false,
@@ -88,6 +93,11 @@ impl CommunityIssuance for Contract {
         debugging: bool,
     ) {
         require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "CommunityIssuance: Caller is not initializer",
+        );
+        require(
             !storage
                 .is_initialized
                 .read(),
@@ -98,9 +108,11 @@ impl CommunityIssuance for Contract {
             .write(stability_pool_contract);
         storage.fpt_token_contract.write(fpt_token_contract);
         storage.is_initialized.write(true);
-        storage.admin.write(admin);
         storage.debug.write(debugging);
         storage.deployment_time.write(internal_get_current_time());
+
+        // Initialize ownership
+        initialize_ownership(admin);
     }
 
     /// @notice Issues FPT tokens based on the current issuance schedule
@@ -177,7 +189,7 @@ impl CommunityIssuance for Contract {
     /// @custom:access-control Admin only
     #[storage(read, write)]
     fn start_rewards_increase_transition(total_transition_time_seconds: u64) {
-        internal_require_caller_is_admin();
+        only_owner();
         require(
             !storage
                 .has_transitioned_rewards
@@ -225,6 +237,13 @@ impl CommunityIssuance for Contract {
     }
 }
 
+impl SRC5 for Contract {
+    #[storage(read)]
+    fn owner() -> State {
+        _owner()
+    }
+}
+
 /// @notice Checks if the caller is the Stability Pool contract
 /// @dev This function is used to restrict access to certain functions to only the Stability Pool
 /// @custom:throws "CommunityIssuance: Caller must be stability pool" if the caller is not the Stability Pool contract
@@ -234,20 +253,6 @@ fn internal_require_caller_is_stability_pool() {
         msg_sender()
             .unwrap() == Identity::ContractId(storage.stability_pool_contract.read()),
         "CommunityIssuance: Caller must be stability pool",
-    );
-}
-
-/// @notice Checks if the caller is the admin of the contract
-/// @dev This function is used to restrict access to certain functions to only the admin
-/// @custom:throws "CommunityIssuance: Caller must be admin" if the caller is not the admin
-#[storage(read)]
-fn internal_require_caller_is_admin() {
-    require(
-        msg_sender()
-            .unwrap() == storage
-            .admin
-            .read(),
-        "CommunityIssuance: Caller must be admin",
     );
 }
 

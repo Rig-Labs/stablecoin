@@ -10,6 +10,6 @@ for contract in $contracts_path/*; do
     echo "Generating types for $contract_name"
     echo "ABI path: $abi_path"
     echo "Types path: $types_path"
-    npx fuels typegen --inputs "$abi_path" -o "$types_path"
+    npx fuels typegen --inputs "$abi_path" -o "$types_path" --silent
   fi
 done

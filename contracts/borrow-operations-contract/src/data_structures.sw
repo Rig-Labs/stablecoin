@@ -5,7 +5,7 @@ pub struct AssetContracts {
     pub oracle: ContractId,
 }
 
-pub struct LocalVariables_OpenTrove {
+pub struct LocalVariablesOpenTrove {
     pub price: u64,
     pub usdf_fee: u64,
     pub net_debt: u64,
@@ -15,9 +15,9 @@ pub struct LocalVariables_OpenTrove {
     pub array_index: u64,
 }
 
-impl LocalVariables_OpenTrove {
+impl LocalVariablesOpenTrove {
     pub fn new() -> Self {
-        LocalVariables_OpenTrove {
+        LocalVariablesOpenTrove {
             price: 0,
             usdf_fee: 0,
             net_debt: 0,
@@ -29,7 +29,7 @@ impl LocalVariables_OpenTrove {
     }
 }
 
-pub struct LocalVariables_AdjustTrove {
+pub struct LocalVariablesAdjustTrove {
     pub price: u64,
     pub coll_change: u64,
     pub net_debt_change: u64,
@@ -45,9 +45,9 @@ pub struct LocalVariables_AdjustTrove {
     pub stake: u64,
 }
 
-impl LocalVariables_AdjustTrove {
+impl LocalVariablesAdjustTrove {
     pub fn new() -> Self {
-        LocalVariables_AdjustTrove {
+        LocalVariablesAdjustTrove {
             price: 0,
             coll_change: 0,
             net_debt_change: 0,

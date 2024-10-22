@@ -31,6 +31,7 @@ pub async fn add_asset() {
             redstone_oracle: ContractId::zeroed(),
             redstone_price_id: U256::zero(),
             redstone_precision: 9,
+            fuel_vm_decimals: 9,
         });
     existing_asset_to_initialize = None;
 
@@ -78,13 +79,13 @@ fn write_asset_contracts_to_file(asset_contracts: Vec<AssetContracts<WalletUnloc
             "oracle": asset_contract.oracle.contract_id().to_string(),
             "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
             "asset_contract": asset_contract.asset.contract_id().to_string(),
-            "asset_id": asset_contract.asset_id.to_string(),
+            "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
             "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
-            "pyth_precision": asset_contract.pyth_precision,
             "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
             "redstone_contract": asset_contract.mock_redstone_oracle.contract_id().to_string(),
             "redstone_price_id": asset_contract.redstone_price_id.to_string(),
             "redstone_precision": asset_contract.redstone_precision,
+            "fuel_vm_decimals": asset_contract.fuel_vm_decimals,
         })
     }).collect::<Vec<serde_json::Value>>());
 
@@ -99,12 +100,12 @@ async fn query_oracles(asset_contracts: &AssetContracts<WalletUnlocked>) {
     let current_price = oracle_abi::get_price(
         &asset_contracts.oracle,
         &asset_contracts.mock_pyth_oracle,
-        &asset_contracts.mock_redstone_oracle,
+        &Some(asset_contracts.mock_redstone_oracle.clone()),
     )
     .await
     .value;
 
-    let current_pyth_price = pyth_oracle_abi::price(
+    let current_pyth_price = pyth_oracle_abi::price_unsafe(
         &asset_contracts.mock_pyth_oracle,
         &asset_contracts.pyth_price_id,
     )

@@ -166,15 +166,15 @@ pub mod utils {
                         trove_manager_contract_id,
                         wallet.clone(),
                     ),
+                    fuel_vm_decimals: asset_contract["fuel_vm_decimals"].as_u64().unwrap() as u32,
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
                     mock_redstone_oracle: RedstoneCore::new(redstone_contract_id, wallet.clone()),
                     pyth_price_id: Bits256::from_hex_str(
                         asset_contract["pyth_price_id"].as_str().unwrap(),
                     )
                     .unwrap(),
-                    pyth_precision: asset_contract["pyth_precision"].as_u64().unwrap() as u8,
                     redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap()
-                        as u8,
+                        as u32,
                     redstone_price_id: U256::from_str(
                         asset_contract["redstone_price_id"].as_str().unwrap(),
                     )

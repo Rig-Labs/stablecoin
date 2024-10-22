@@ -631,3 +631,51 @@ async fn test_emissions_multiple_deposits() {
         "distributed user balance incorrect from 1 year of staking rewards"
     );
 }
+
+#[tokio::test]
+async fn test_only_owner_can_start_rewards_increase_transition() {
+    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
+
+    let attacker = wallets.pop().unwrap();
+
+    community_issuance_abi::set_current_time(&contracts.community_issuance, 31104000 + 1).await;
+
+    // Create a CommunityIssuance instance for the attacker
+    let community_issuance_attacker = CommunityIssuance::new(
+        contracts.community_issuance.contract_id().clone(),
+        attacker.clone(),
+    );
+
+    // Attempt to start the rewards increase transition as the attacker
+    let result = community_issuance_abi::start_rewards_increase_transition(
+        &community_issuance_attacker,
+        604800 + 1,
+    )
+    .await;
+
+    // Assert that the unauthorized call fails
+    assert!(
+        result.is_err(),
+        "Unauthorized user should not be able to start rewards increase transition"
+    );
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("NotOwner"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
+
+    // Now try with the admin (owner)
+    let result = community_issuance_abi::start_rewards_increase_transition(
+        &contracts.community_issuance,
+        604800 + 1,
+    )
+    .await;
+
+    // Assert that the authorized call succeeds
+    assert!(
+        result.is_ok(),
+        "Authorized user should be able to start rewards increase transition"
+    );
+}

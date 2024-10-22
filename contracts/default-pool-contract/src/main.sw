@@ -19,6 +19,10 @@ use std::{
     },
     hash::Hash,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 
 storage {
     protocol_manager: Identity = Identity::Address(Address::zero()),
@@ -33,6 +37,11 @@ storage {
 impl DefaultPool for Contract {
     #[storage(read, write)]
     fn initialize(protocol_manager: Identity, active_pool_contract: ContractId) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "DefaultPool: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized
@@ -95,14 +104,14 @@ impl DefaultPool for Contract {
     #[storage(read, write), payable]
     fn recieve() {
         require_is_active_pool_contract();
-        require_is_asset_id();
+        require_is_valid_asset_id();
         let new_amount = storage.asset_amount.get(msg_asset_id()).read() + msg_amount();
         storage.asset_amount.insert(msg_asset_id(), new_amount);
     }
 }
 
 #[storage(read)]
-fn require_is_asset_id() {
+fn require_is_valid_asset_id() {
     let asset_id = msg_asset_id();
     let valid_asset_id = storage.valid_asset_ids.get(asset_id).read();
     require(valid_asset_id, "DefaultPool: Asset is not correct");

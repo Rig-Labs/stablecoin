@@ -6,6 +6,7 @@ pub mod default_pool;
 pub mod fpt_staking;
 pub mod fpt_token;
 pub mod hint_helper;
+pub mod multi_trove_getter;
 pub mod oracle;
 pub mod protocol_manager;
 pub mod pyth_oracle;

@@ -70,7 +70,7 @@ pub mod community_issuance_abi {
     pub async fn start_rewards_increase_transition<T: Account>(
         instance: &CommunityIssuance<T>,
         transition_time: u64,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = instance
@@ -80,6 +80,6 @@ pub mod community_issuance_abi {
             .call()
             .await;
 
-        return res.unwrap();
+        return res;
     }
 }

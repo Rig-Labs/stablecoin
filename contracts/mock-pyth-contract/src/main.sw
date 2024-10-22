@@ -8,27 +8,38 @@ contract;
 // - Ensuring compatibility with the Pyth oracle interface for testing
 //
 // To the auditor: This contract is not used in the system. It is only used for testing.
-
-use libraries::oracle_interface::{PythCore, PythError, PythPrice, PythPriceFeed, PythPriceFeedId};
 use std::{block::timestamp, hash::Hash};
-
+use pyth_interface::data_structures::price::{Price, PriceFeed, PriceFeedId};
 storage {
-    latest_price_feed: StorageMap<PythPriceFeedId, PythPriceFeed> = StorageMap {},
+    latest_price_feed: StorageMap<PriceFeedId, Price> = StorageMap {},
 }
-
+abi PythCore {
+    #[storage(read)]
+    fn price(price_feed_id: PriceFeedId) -> Price;
+    #[storage(read)]
+    fn price_unsafe(price_feed_id: PriceFeedId) -> Price;
+    // Directly exposed but logic is simplified
+    #[storage(write)]
+    fn update_price_feeds(feeds: Vec<(PriceFeedId, Price)>);
+}
 impl PythCore for Contract {
     #[storage(read)]
-    fn price(price_feed_id: PythPriceFeedId) -> PythPrice {
+    fn price(price_feed_id: PriceFeedId) -> Price {
         let price_feed = storage.latest_price_feed.get(price_feed_id).try_read();
-        require(price_feed.is_some(), PythError::PriceFeedNotFound);
+        require(price_feed.is_some(), "Price feed not found");
 
-        price_feed.unwrap().price
+        return price_feed.unwrap();
     }
+    #[storage(read)]
+    fn price_unsafe(price_feed_id: PriceFeedId) -> Price {
+        let price_feed = storage.latest_price_feed.get(price_feed_id).try_read();
+        require(price_feed.is_some(), "Price feed not found");
 
+        return price_feed.unwrap();
+    }
     #[storage(write)]
-    fn update_price_feeds(feeds: Vec<(PythPriceFeedId, PythPriceFeed)>) {
+    fn update_price_feeds(feeds: Vec<(PriceFeedId, Price)>) {
         let mut feed_index = 0;
-
         while feed_index < feeds.len() {
             storage
                 .latest_price_feed

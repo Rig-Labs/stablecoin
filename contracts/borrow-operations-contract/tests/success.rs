@@ -642,6 +642,7 @@ async fn proper_decrease_debt() {
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
+        &contracts.default_pool,
         repay_amount,
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),

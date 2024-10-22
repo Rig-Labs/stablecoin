@@ -21,7 +21,7 @@ format: ## Format the code
 -------Deployer Scripts-------:
 
 deploy: ## Run the deployment script for core contracts
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
+	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
 
 add-asset: ## Run the script to add assets to the protocol
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset

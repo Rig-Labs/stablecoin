@@ -16,7 +16,7 @@ contract;
 
 mod data_structures;
 use ::data_structures::{AssetContracts, Snapshots};
-
+use standards::src3::SRC3;
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::usdf_token_interface::USDFToken;
@@ -27,14 +27,7 @@ use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::community_issuance_interface::CommunityIssuance;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::fluid_math::numbers::*;
-use libraries::fluid_math::{
-    DECIMAL_PRECISION,
-    fm_min,
-    get_default_asset_id,
-    MCR,
-    null_contract,
-    null_identity_address,
-};
+use libraries::fluid_math::{DECIMAL_PRECISION, fm_min, MCR, null_contract, null_identity_address,};
 use std::{
     asset::transfer,
     call_frames::{
@@ -47,7 +40,12 @@ use std::{
     storage::storage_vec::*,
     u128::U128,
 };
-const SCALE_FACTOR = 1_000_000_000;
+const SCALE_FACTOR: u64 = 1_000_000_000;
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     active_pool_contract: ContractId = ContractId::zero(),
@@ -96,10 +94,10 @@ storage {
     *
     * So, every time the Stability Pool is emptied by a liquidation, we reset P = 1 and currentScale = 0, and increment the currentEpoch by 1.
     */
-    p: U128 = U128::from_u64(DECIMAL_PRECISION),
-    last_fpt_error: U128 = U128::from_u64(0),
+    p: U128 = U128::from(DECIMAL_PRECISION),
+    last_fpt_error: U128 = U128::zero(),
     last_asset_error_offset: StorageMap<AssetId, U128> = StorageMap::<AssetId, U128> {},
-    last_usdf_error_offset: U128 = U128::from_u64(0),
+    last_usdf_error_offset: U128 = U128::zero(),
     is_initialized: bool = false,
     // Locks to prevent reentrancy for functions not using Checks-Effects-Interactions pattern
     lock_provide_to_stability_pool: bool = false,
@@ -116,6 +114,11 @@ impl StabilityPool for Contract {
         sorted_troves_contract: ContractId,
     ) {
         require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "StabilityPool: Caller is not initializer",
+        );
+        require(
             storage
                 .is_initialized
                 .read() == false,
@@ -131,7 +134,7 @@ impl StabilityPool for Contract {
         storage.is_initialized.write(true);
         storage
             .usdf_asset_id
-            .write(get_default_asset_id(usdf_contract));
+            .write(AssetId::new(usdf_contract, SubId::zero()));
     }
     #[storage(read, write)]
     fn add_asset(
@@ -143,7 +146,7 @@ impl StabilityPool for Contract {
         storage.valid_assets.push(asset_contract);
         storage
             .last_asset_error_offset
-            .insert(asset_contract, U128::from_u64(0));
+            .insert(asset_contract, U128::zero());
         storage
             .asset_contracts
             .insert(
@@ -200,20 +203,17 @@ impl StabilityPool for Contract {
             "StabilityPool: Withdraw is locked",
         );
         storage.lock_withdraw_from_stability_pool.write(true);
-
         require_no_undercollateralized_troves();
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         require_user_has_initial_deposit(initial_deposit);
         internal_trigger_fpt_issuance();
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-
         let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
         let new_position = compounded_usdf_deposit - usdf_to_withdraw;
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
-
         storage.lock_withdraw_from_stability_pool.write(false);
     }
     /*
@@ -234,7 +234,6 @@ impl StabilityPool for Contract {
             "StabilityPool: Offset is locked",
         );
         storage.lock_offset.write(true);
-
         require_caller_is_trove_manager();
         let total_usdf = storage.total_usdf_deposits.read();
         if total_usdf == 0 || debt_to_offset == 0 {
@@ -249,7 +248,6 @@ impl StabilityPool for Contract {
             asset_contract,
         );
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_contract);
-
         storage.lock_offset.write(false);
     }
     #[storage(read)]
@@ -298,21 +296,21 @@ fn internal_update_g(fpt_issuance: u64) {
         return;
     }
     let fpt_per_unit_staked = internal_compute_fpt_per_unit_staked(fpt_issuance, storage.total_usdf_deposits.read());
-    let marginal_fpt_gain = U128::from_u64(fpt_per_unit_staked) * storage.p.read();
+    let marginal_fpt_gain = U128::from(fpt_per_unit_staked) * storage.p.read();
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
-    let new_epoch_to_scale_to_gain = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::from_u64(0)) + marginal_fpt_gain;
+    let new_epoch_to_scale_to_gain = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::zero()) + marginal_fpt_gain;
     storage
         .epoch_to_scale_to_gain
         .insert((current_epoch, current_scale), new_epoch_to_scale_to_gain);
 }
 #[storage(read, write)]
 fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: u64) -> u64 {
-    let fpt_numerator = U128::from_u64(fpt_issuance) * U128::from_u64(DECIMAL_PRECISION) + storage.last_fpt_error.read();
-    let fpt_per_unit_staked = fpt_numerator / U128::from_u64(total_usdf_deposits);
+    let fpt_numerator = U128::from(fpt_issuance) * U128::from(DECIMAL_PRECISION) + storage.last_fpt_error.read();
+    let fpt_per_unit_staked = fpt_numerator / U128::from(total_usdf_deposits);
     storage
         .last_fpt_error
-        .write(fpt_numerator - (fpt_per_unit_staked * U128::from_u64(total_usdf_deposits)));
+        .write(fpt_numerator - (fpt_per_unit_staked * U128::from(total_usdf_deposits)));
     fpt_per_unit_staked.as_u64().unwrap()
 }
 #[storage(read)]
@@ -339,10 +337,9 @@ fn internal_get_fpt_gain_from_snapshots(initial_stake: u64, snapshots: Snapshots
     let scale_snapshot = snapshots.scale;
     let g_snapshot = snapshots.G;
     let p_snapshot = snapshots.P;
-
-    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).try_read().unwrap_or(U128::from_u64(0)) - g_snapshot;
-    let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)).try_read().unwrap_or(U128::from_u64(0)) / U128::from_u64(SCALE_FACTOR);
-    let gain = (U128::from_u64(initial_stake) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
+    let first_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot)).try_read().unwrap_or(U128::zero()) - g_snapshot;
+    let second_portion = storage.epoch_to_scale_to_gain.get((epoch_snapshot, scale_snapshot + 1)).try_read().unwrap_or(U128::zero()) / U128::from(SCALE_FACTOR);
+    let gain = (U128::from(initial_stake) * (first_portion + second_portion)) / p_snapshot / U128::from(DECIMAL_PRECISION);
     return gain.as_u64().unwrap();
 }
 #[storage(read)]
@@ -383,7 +380,7 @@ fn internal_get_depositor_asset_gain(depositor: Identity, asset: AssetId) -> u64
     if initial_deposit == 0 {
         return 0;
     }
-    let s_snapshot = storage.deposit_snapshot_s_per_asset.get((depositor, asset)).try_read().unwrap_or(U128::from_u64(0));
+    let s_snapshot = storage.deposit_snapshot_s_per_asset.get((depositor, asset)).try_read().unwrap_or(U128::zero());
     let mut snapshots = storage.deposit_snapshots.get(depositor).try_read().unwrap_or(Snapshots::default());
     return internal_get_asset_gain_from_snapshots(initial_deposit, snapshots, s_snapshot, asset);
 }
@@ -397,9 +394,9 @@ fn internal_get_asset_gain_from_snapshots(
     let epoch_snapshot = snapshots.epoch;
     let scale_snapshot = snapshots.scale;
     let p_snapshot = snapshots.P;
-    let first_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot, asset)).try_read().unwrap_or(U128::from_u64(0)) - s_snapshot;
-    let second_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot + 1, asset)).try_read().unwrap_or(U128::from_u64(0)) / U128::from_u64(SCALE_FACTOR);
-    let gain = (U128::from_u64(initial_deposit) * (first_portion + second_portion)) / p_snapshot / U128::from_u64(DECIMAL_PRECISION);
+    let first_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot, asset)).try_read().unwrap_or(U128::zero()) - s_snapshot;
+    let second_portion = storage.epoch_to_scale_to_sum.get((epoch_snapshot, scale_snapshot + 1, asset)).try_read().unwrap_or(U128::zero()) / U128::from(SCALE_FACTOR);
+    let gain = (U128::from(initial_deposit) * (first_portion + second_portion)) / p_snapshot / U128::from(DECIMAL_PRECISION);
     return gain.as_u64().unwrap();
 }
 #[storage(read)]
@@ -419,16 +416,16 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     if (epoch_snapshot < storage.current_epoch.read()) {
         return 0;
     }
-    let mut compounded_stake: U128 = U128::from_u64(0);
+    let mut compounded_stake: U128 = U128::zero();
     let scale_diff = storage.current_scale.read() - scale_snapshot;
     if (scale_diff == 0) {
-        compounded_stake = U128::from_u64(initial_stake) * storage.p.read() / p_snapshot;
+        compounded_stake = U128::from(initial_stake) * storage.p.read() / p_snapshot;
     } else if (scale_diff == 1) {
-        compounded_stake = U128::from_u64(initial_stake) * storage.p.read() / p_snapshot / U128::from_u64(SCALE_FACTOR);
+        compounded_stake = U128::from(initial_stake) * storage.p.read() / p_snapshot / U128::from(SCALE_FACTOR);
     } else {
-        compounded_stake = U128::from_u64(0);
+        compounded_stake = U128::zero();
     }
-    if (compounded_stake < U128::from_u64(initial_stake) / U128::from_u64(DECIMAL_PRECISION))
+    if (compounded_stake < U128::from(initial_stake) / U128::from(DECIMAL_PRECISION))
     {
         return 0;
     }
@@ -455,7 +452,7 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
     let current_p = storage.p.read();
-    let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::from_u64(0));
+    let current_g = storage.epoch_to_scale_to_gain.get((current_epoch, current_scale)).try_read().unwrap_or(U128::zero());
     let snapshots = Snapshots {
         epoch: current_epoch,
         scale: current_scale,
@@ -465,7 +462,7 @@ fn internal_update_deposits_and_snapshots(depositor: Identity, amount: u64) {
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap().read();
-        let current_s: U128 = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::from_u64(0));
+        let current_s: U128 = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::zero());
         storage
             .deposit_snapshot_s_per_asset
             .insert((depositor, asset), current_s);
@@ -510,23 +507,19 @@ fn require_caller_is_trove_manager() {
 #[storage(read)]
 fn require_no_undercollateralized_troves() {
     let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().into());
-
     let mut i = 0;
     while i < storage.valid_assets.len() {
         let asset = storage.valid_assets.get(i).unwrap().read();
         let asset_contracts = storage.asset_contracts.get(asset).read();
         let trove_manager = abi(TroveManager, asset_contracts.trove_manager.into());
         let oracle = abi(Oracle, asset_contracts.oracle.into());
-
         let price = oracle.get_price();
-        let first = sorted_troves.get_first(asset);
-
+        let last = sorted_troves.get_last(asset);
         require(
-            first == Identity::Address(Address::zero()) || trove_manager
-                .get_current_icr(first, price) > MCR,
+            last == Identity::Address(Address::zero()) || trove_manager
+                .get_current_icr(last, price) > MCR,
             "StabilityPool: There are undercollateralized troves",
         );
-
         i += 1;
     }
 }
@@ -540,30 +533,30 @@ fn compute_rewards_per_unit_staked(
     total_usdf_deposits: u64,
     asset_contract: AssetId,
 ) -> (U128, U128) {
-    let asset_numerator: U128 = U128::from_u64(coll_to_add) * U128::from_u64(DECIMAL_PRECISION) + storage.last_asset_error_offset.get(asset_contract).try_read().unwrap_or(U128::from_u64(0));
+    let asset_numerator: U128 = U128::from(coll_to_add) * U128::from(DECIMAL_PRECISION) + storage.last_asset_error_offset.get(asset_contract).try_read().unwrap_or(U128::zero());
     require(
         debt_to_offset <= total_usdf_deposits,
         "StabilityPool: Debt offset exceeds total USDF deposits",
     );
-    let mut usdf_loss_per_unit_staked: U128 = U128::from_u64(0);
+    let mut usdf_loss_per_unit_staked: U128 = U128::zero();
     if (debt_to_offset == total_usdf_deposits) {
-        usdf_loss_per_unit_staked = U128::from_u64(DECIMAL_PRECISION);
-        storage.last_usdf_error_offset.write(U128::from_u64(0));
+        usdf_loss_per_unit_staked = U128::from(DECIMAL_PRECISION);
+        storage.last_usdf_error_offset.write(U128::zero());
     } else {
-        let usdf_loss_per_unit_staked_numerator: U128 = U128::from_u64(debt_to_offset) * U128::from_u64(DECIMAL_PRECISION) - storage.last_usdf_error_offset.read();
-        usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from_u64(total_usdf_deposits) + U128::from_u64(1);
+        let usdf_loss_per_unit_staked_numerator: U128 = U128::from(debt_to_offset) * U128::from(DECIMAL_PRECISION) - storage.last_usdf_error_offset.read();
+        usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from(total_usdf_deposits) + U128::from(1u64);
         storage
             .last_usdf_error_offset
             .write(
-                usdf_loss_per_unit_staked * U128::from_u64(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator,
+                usdf_loss_per_unit_staked * U128::from(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator,
             );
     }
-    let asset_gain_per_unit_staked = asset_numerator / U128::from_u64(total_usdf_deposits);
+    let asset_gain_per_unit_staked = asset_numerator / U128::from(total_usdf_deposits);
     storage
         .last_asset_error_offset
         .insert(
             asset_contract,
-            asset_numerator - (asset_gain_per_unit_staked * U128::from_u64(total_usdf_deposits)),
+            asset_numerator - (asset_gain_per_unit_staked * U128::from(total_usdf_deposits)),
         );
     return (asset_gain_per_unit_staked, usdf_loss_per_unit_staked);
 }
@@ -574,32 +567,32 @@ fn update_reward_sum_and_product(
     asset: AssetId,
 ) {
     let current_p = storage.p.read();
-    let mut new_p: U128 = U128::from_u64(0);
-    let new_product_factor = U128::from_u64(DECIMAL_PRECISION) - usdf_loss_per_unit_staked;
+    let mut new_p: U128 = U128::zero();
+    let new_product_factor = U128::from(DECIMAL_PRECISION) - usdf_loss_per_unit_staked;
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
-    let current_s = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::from_u64(0));
+    let current_s = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::zero());
     let marginal_asset_gain: U128 = asset_gain_per_unit_staked * current_p;
     let new_sum = current_s + marginal_asset_gain;
     storage
         .epoch_to_scale_to_sum
         .insert((current_epoch, current_scale, asset), new_sum);
-    if (new_product_factor == U128::from_u64(0)) {
+    if (new_product_factor == U128::zero()) {
         storage
             .current_epoch
             .write(storage.current_epoch.read() + 1);
         storage.current_scale.write(0);
-        new_p = U128::from_u64(DECIMAL_PRECISION);
-    } else if (current_p * new_product_factor / U128::from_u64(DECIMAL_PRECISION) < U128::from_u64(SCALE_FACTOR))
+        new_p = U128::from(DECIMAL_PRECISION);
+    } else if (current_p * new_product_factor / U128::from(DECIMAL_PRECISION) < U128::from(SCALE_FACTOR))
     {
-        new_p = current_p * new_product_factor * U128::from_u64(SCALE_FACTOR) / U128::from_u64(DECIMAL_PRECISION);
+        new_p = current_p * new_product_factor * U128::from(SCALE_FACTOR) / U128::from(DECIMAL_PRECISION);
         storage
             .current_scale
             .write(storage.current_scale.read() + 1);
     } else {
-        new_p = current_p * new_product_factor / U128::from_u64(DECIMAL_PRECISION);
+        new_p = current_p * new_product_factor / U128::from(DECIMAL_PRECISION);
     }
-    require(new_p > U128::from_u64(0), "StabilityPool: New p is 0");
+    require(new_p > U128::zero(), "StabilityPool: New p is 0");
     storage.p.write(new_p);
 }
 #[storage(read, write)]
@@ -609,7 +602,7 @@ fn internal_move_offset_coll_and_debt(
     asset_contract: AssetId,
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
-    let usdf_contract = abi(USDFToken, storage.usdf_contract.read().bits());
+    let usdf_contract = abi(SRC3, storage.usdf_contract.read().bits());
     internal_decrease_usdf(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_contract);
     active_pool.decrease_usdf_debt(debt_to_offset, asset_contract);
@@ -617,7 +610,7 @@ fn internal_move_offset_coll_and_debt(
         .burn {
             coins: debt_to_offset,
             asset_id: storage.usdf_asset_id.read().bits(),
-        }();
+        }(SubId::zero(), debt_to_offset);
     active_pool.send_asset(
         Identity::ContractId(ContractId::this()),
         coll_to_add,

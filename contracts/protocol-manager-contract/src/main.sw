@@ -23,7 +23,7 @@ use libraries::usdf_token_interface::USDFToken;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::fluid_math::*;
 use sway_libs::ownership::*;
-use standards::src5::*;
+use standards::{src3::SRC3, src5::*,};
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -36,8 +36,11 @@ use std::{
     hash::*,
     storage::storage_vec::*,
 };
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
 storage {
-    owner: State = State::Uninitialized,
     borrow_operations_contract: ContractId = ContractId::zero(),
     fpt_staking_contract: ContractId = ContractId::zero(),
     usdf_token_contract: ContractId = ContractId::zero(),
@@ -65,6 +68,11 @@ impl ProtocolManager for Contract {
         initial_owner: Identity,
     ) {
         require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "ProtocolManager: Caller is not initializer",
+        );
+        require(
             storage
                 .is_initialized
                 .read() == false,
@@ -88,6 +96,7 @@ impl ProtocolManager for Contract {
         oracle: ContractId,
     ) {
         only_owner();
+        require_asset_not_registered(asset_address);
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().bits());
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().bits());
         let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().bits());
@@ -119,17 +128,11 @@ impl ProtocolManager for Contract {
     #[storage(read, write)]
     fn renounce_admin() {
         only_owner();
-        storage
-            .owner
-            .write(State::Initialized(Identity::Address(Address::zero())));
-    }
-    #[storage(read)]
-    fn owner() -> State {
-        storage.owner.read()
+        renounce_ownership();
     }
     #[storage(read, write), payable]
     fn redeem_collateral(
-        max_itterations: u64,
+        max_iterations: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
@@ -149,22 +152,22 @@ impl ProtocolManager for Contract {
         );
         let usdf_contract_cache = storage.usdf_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
-        let usdf = abi(USDFToken, usdf_contract_cache.bits());
+        let usdf = abi(SRC3, usdf_contract_cache.bits());
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
         let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
         let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.bits());
         let mut assets_info = get_all_assets_info();
         let mut remaining_usdf = msg_amount();
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
-        let mut remaining_itterations = max_itterations;
+        let mut remaining_iterations = max_iterations;
 
         // Iterate through troves, redeeming collateral until conditions are met
-        while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_itterations > 0) {
+        while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_iterations > 0) {
             let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
             let price = assets_info.prices.get(index).unwrap();
             let mut totals = assets_info.redemption_totals.get(index).unwrap();
-            remaining_itterations -= 1;
+            remaining_iterations -= 1;
             let next_user_to_check = sorted_troves.get_prev(current_borrower, contracts_cache.asset_address);
 
             // Apply pending rewards to ensure up-to-date trove state
@@ -190,7 +193,7 @@ impl ProtocolManager for Contract {
             totals.total_asset_drawn += single_redemption.asset_lot;
             remaining_usdf -= single_redemption.usdf_lot;
 
-            let mut next_cr = MAX_U64;
+            let mut next_cr = u64::max();
             if (next_user_to_check != null_identity_address()) {
                 next_cr = trove_manager_contract.get_current_icr(next_user_to_check, price);
             }
@@ -251,15 +254,15 @@ impl ProtocolManager for Contract {
         usdf
             .burn {
                 coins: total_usdf_redeemed,
-                asset_id: get_default_asset_id(usdf_contract_cache).bits(),
-            }();
+                asset_id: AssetId::new(usdf_contract_cache, SubId::zero()).bits(),
+            }(SubId::zero(), total_usdf_redeemed);
 
         // Return any remaining USDF to the redeemer
         if (remaining_usdf > 0) {
             transfer(
                 msg_sender()
                     .unwrap(),
-                get_default_asset_id(usdf_contract_cache),
+                AssetId::new(usdf_contract_cache, SubId::zero()),
                 remaining_usdf,
             );
         }
@@ -267,11 +270,18 @@ impl ProtocolManager for Contract {
         storage.lock_redeem_collateral.write(false);
     }
 }
+
+impl SRC5 for Contract {
+    #[storage(read)]
+    fn owner() -> State {
+        _owner()
+    }
+}
 // --- Helper functions ---
 #[storage(read)]
 fn require_valid_usdf_id() {
     require(
-        msg_asset_id() == get_default_asset_id(storage.usdf_token_contract.read()),
+        msg_asset_id() == AssetId::new(storage.usdf_token_contract.read(), SubId::zero()),
         "ProtocolManager: Invalid asset being transfered",
     );
 }
@@ -301,7 +311,7 @@ fn get_all_assets_info() -> AssetInfo {
         let asset = assets.get(i).unwrap();
         let price = oracle.get_price();
         let mut current_borrower = sorted_troves.get_last(asset);
-        let mut current_cr = MAX_U64;
+        let mut current_cr = u64::max();
         if (current_borrower != null_identity_address()) {
             current_cr = trove_manager.get_current_icr(current_borrower, price);
         }
@@ -341,4 +351,16 @@ fn find_min_borrower(current_borrowers: Vec<Identity>, current_crs: Vec<u64>) ->
         i += 1;
     }
     (min_borrower, min_index)
+}
+
+#[storage(read)]
+fn require_asset_not_registered(asset_id: AssetId) {
+    let length = storage.assets.len();
+    let mut i = 0;
+    while (i < length) {
+        if (storage.assets.get(i).unwrap().read() == asset_id) {
+            revert(0);
+        }
+        i += 1;
+    }
 }

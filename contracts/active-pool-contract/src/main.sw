@@ -18,6 +18,11 @@ use std::{
     hash::Hash,
 };
 
+configurable {
+    /// Initializer identity
+    INITIALIZER: Identity = Identity::Address(Address::zero()),
+}
+
 storage {
     borrow_operations_contract: Identity = Identity::Address(Address::zero()),
     stability_pool_contract: Identity = Identity::Address(Address::zero()),
@@ -37,6 +42,11 @@ impl ActivePool for Contract {
         default_pool: ContractId,
         protocol_manager: Identity,
     ) {
+        require(
+            msg_sender()
+                .unwrap() == INITIALIZER,
+            "Active Pool: Caller is not initializer",
+        );
         require(
             storage
                 .is_initialized
@@ -68,9 +78,11 @@ impl ActivePool for Contract {
     #[storage(read, write)]
     fn send_asset(address: Identity, amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        let new_amount = storage.asset_amount.get(asset_id).read() - amount;
-        storage.asset_amount.insert(asset_id, new_amount);
-        transfer(address, asset_id, amount);
+        if amount > 0 {
+            let new_amount = storage.asset_amount.get(asset_id).read() - amount;
+            storage.asset_amount.insert(asset_id, new_amount);
+            transfer(address, asset_id, amount);
+        }
     }
     // Increase the USDF debt for a given asset
     #[storage(read, write)]
@@ -105,7 +117,7 @@ impl ActivePool for Contract {
     fn recieve() {
         require_caller_is_borrow_operations_or_default_pool();
         let asset_id = msg_asset_id();
-        require_is_asset_id(asset_id);
+        require_is_valid_asset_id(asset_id);
         let new_amount = storage.asset_amount.get(asset_id).try_read().unwrap_or(0) + msg_amount();
         storage.asset_amount.insert(asset_id, new_amount);
     }
@@ -121,7 +133,7 @@ impl ActivePool for Contract {
 }
 // --- Helper functions ---
 #[storage(read)]
-fn require_is_asset_id(asset_id: AssetId) {
+fn require_is_valid_asset_id(asset_id: AssetId) {
     let valid_asset_id = storage.valid_asset_ids.get(asset_id).try_read().unwrap_or(false);
     require(valid_asset_id, "Active Pool: Asset ID is not correct");
 }

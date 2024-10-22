@@ -9,15 +9,17 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
+        multi_trove_getter::{multi_trove_getter_abi, multi_trove_getter_utils},
         oracle::oracle_abi,
         pyth_oracle::{
-            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_TIMESTAMP,
+            pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_PRECISION,
+            PYTH_TIMESTAMP,
         },
         stability_pool::{stability_pool_abi, StabilityPool},
         token::token_abi,
         trove_manager::{trove_manager_abi, trove_manager_utils, Status},
     },
-    setup::common::setup_protocol,
+    setup::common::{deploy_multi_trove_getter, setup_protocol},
     utils::{assert_within_threshold, with_liquidation_penalty, with_min_borrow_fee},
 };
 
@@ -119,7 +121,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -383,7 +385,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
 
@@ -664,7 +666,7 @@ async fn proper_full_liquidation_empty_sp() {
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
-        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1),
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
     )
     .await;
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
@@ -821,4 +823,221 @@ async fn proper_full_liquidation_empty_sp() {
         1_100 * PRECISION - expected_default_pool_asset - gas_compensation,
         "Liquidated wallet collateral surplus was not 50_000"
     );
+}
+
+#[tokio::test]
+async fn test_trove_sorting_after_liquidation_and_rewards() {
+    let (contracts, admin, mut wallets) = setup_protocol(5, false, false).await;
+
+    let multi_trove_getter =
+        deploy_multi_trove_getter(&admin, &contracts.sorted_troves.contract_id().into()).await;
+
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed(10),
+    )
+    .await;
+
+    let wallet_a = wallets.pop().unwrap();
+    let wallet_b = wallets.pop().unwrap();
+    let wallet_c = wallets.pop().unwrap();
+
+    let balance = 35_000 * PRECISION;
+    for wallet in [&wallet_a, &wallet_b, &wallet_c] {
+        token_abi::mint_to_id(
+            &contracts.asset_contracts[0].asset,
+            balance,
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+    }
+
+    let borrow_operations_a = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet_a.clone(),
+    );
+    let borrow_operations_b = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet_b.clone(),
+    );
+    let borrow_operations_c = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        wallet_c.clone(),
+    );
+
+    // Open troveA
+    borrow_operations_abi::open_trove(
+        &borrow_operations_a,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.active_pool,
+        3_000 * PRECISION,
+        1_000 * PRECISION,
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await
+    .unwrap();
+
+    // Open troveB
+    borrow_operations_abi::open_trove(
+        &borrow_operations_b,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.active_pool,
+        1_000 * PRECISION,
+        1_000 * PRECISION,
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await
+    .unwrap();
+
+    // Liquidate troveB
+    oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
+    pyth_oracle_abi::update_price_feeds(
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        pyth_price_feed_with_time(1, PYTH_TIMESTAMP + 1, PYTH_PRECISION.into()),
+    )
+    .await;
+
+    multi_trove_getter_utils::assert_sorted_troves_by_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    multi_trove_getter_utils::print_troves_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    trove_manager_abi::liquidate(
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.community_issuance,
+        &contracts.stability_pool,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.sorted_troves,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        &contracts.coll_surplus_pool,
+        &contracts.usdf,
+        Identity::Address(wallet_b.address().into()),
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await
+    .unwrap();
+    println!("liquidated trove");
+
+    multi_trove_getter_utils::assert_sorted_troves_by_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    multi_trove_getter_utils::print_troves_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    // Open troveC
+    borrow_operations_abi::open_trove(
+        &borrow_operations_c,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.active_pool,
+        2_500 * PRECISION,
+        1_000 * PRECISION,
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await
+    .unwrap();
+
+    println!("opened troveC");
+    // Check trove order before applying rewards
+    multi_trove_getter_utils::assert_sorted_troves_by_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    multi_trove_getter_utils::print_troves_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    // pay off 1 USDF debt of trove A
+    borrow_operations_abi::repay_usdf(
+        &borrow_operations_a,
+        &contracts.asset_contracts[0].oracle,
+        &contracts.asset_contracts[0].mock_pyth_oracle,
+        &contracts.asset_contracts[0].mock_redstone_oracle,
+        &contracts.asset_contracts[0].asset,
+        &contracts.usdf,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.active_pool,
+        &contracts.default_pool,
+        1 * PRECISION,
+        Identity::Address(Address::zeroed()),
+        Identity::Address(Address::zeroed()),
+    )
+    .await
+    .unwrap();
+
+    println!("repaid 1 USDF debt of trove A to trigger reward application");
+
+    multi_trove_getter_utils::assert_sorted_troves_by_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
+
+    multi_trove_getter_utils::print_troves_cr(
+        &multi_trove_getter,
+        &contracts.asset_contracts[0].trove_manager,
+        &contracts.sorted_troves,
+        &contracts.asset_contracts[0].asset_id,
+    )
+    .await;
 }

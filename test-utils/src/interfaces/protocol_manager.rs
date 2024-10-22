@@ -19,6 +19,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::usdf_token::USDFToken;
     use data_structures::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
+    use fuels::types::errors::Error;
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::{Address, AssetId};
     use fuels::{
@@ -74,7 +75,7 @@ pub mod protocol_manager_abi {
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
         sorted_troves: &SortedTroves<T>,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         protocol_manager
@@ -93,7 +94,6 @@ pub mod protocol_manager_abi {
             ])
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn redeem_collateral<T: Account>(
@@ -171,5 +171,21 @@ pub mod protocol_manager_abi {
             .call()
             .await
             .unwrap()
+    }
+
+    pub async fn renounce_admin<T: Account>(
+        protocol_manager: &ProtocolManager<T>,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_witness_limit(2000000)
+            .with_script_gas_limit(2000000);
+
+        protocol_manager
+            .methods()
+            .renounce_admin()
+            .with_tx_policies(tx_params)
+            .call()
+            .await
     }
 }

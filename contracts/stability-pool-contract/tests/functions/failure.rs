@@ -91,6 +91,20 @@ async fn fails_withdraw_with_undercollateralized_trove() {
     .await;
 
     let liquidated_wallet = wallets.pop().unwrap();
+    let healthy_wallet = wallets.pop().unwrap();
+    // Open one trove that is not undercollateralized
+    borrow_operations_utils::mint_token_and_open_trove(
+        healthy_wallet.clone(),
+        &contracts.asset_contracts[0],
+        &contracts.borrow_operations,
+        &contracts.usdf,
+        &contracts.fpt_staking,
+        &contracts.active_pool,
+        &contracts.sorted_troves,
+        100_000 * PRECISION,
+        3_000 * PRECISION,
+    )
+    .await;
 
     // Admin opens a trove and deposits to stability pool
     borrow_operations_utils::mint_token_and_open_trove(

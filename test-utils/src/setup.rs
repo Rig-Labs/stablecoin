@@ -1,24 +1,24 @@
 use super::interfaces::{
-    active_pool::ActivePool,
-    borrow_operations::BorrowOperations,
-    coll_surplus_pool::CollSurplusPool,
-    community_issuance::CommunityIssuance,
-    default_pool::DefaultPool,
-    fpt_staking::FPTStaking,
-    fpt_token::FPTToken,
+    active_pool::{ActivePool, ActivePoolConfigurables},
+    borrow_operations::{BorrowOperations, BorrowOperationsConfigurables},
+    coll_surplus_pool::{CollSurplusPool, CollSurplusPoolConfigurables},
+    community_issuance::{CommunityIssuance, CommunityIssuanceConfigurables},
+    default_pool::{DefaultPool, DefaultPoolConfigurables},
+    fpt_staking::{FPTStaking, FPTStakingConfigurables},
+    fpt_token::{FPTToken, FPTTokenConfigurables},
     hint_helper::HintHelper,
+    multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
     oracle::{Oracle, OracleConfigurables},
-    protocol_manager::ProtocolManager,
-    pyth_oracle::{PythCore, PythPrice, PythPriceFeed, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
+    protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
+    pyth_oracle::{Price, PythCore, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
-    sorted_troves::SortedTroves,
-    stability_pool::StabilityPool,
+    sorted_troves::{SortedTroves, SortedTrovesConfigurables},
+    stability_pool::{StabilityPool, StabilityPoolConfigurables},
     token::Token,
-    trove_manager::TroveManagerContract,
-    usdf_token::USDFToken,
-    vesting::VestingContract,
+    trove_manager::{TroveManagerContract, TroveManagerContractConfigurables},
+    usdf_token::{USDFToken, USDFTokenConfigurables},
+    vesting::{VestingContract, VestingContractConfigurables},
 };
-
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
 
 pub mod common {
@@ -80,7 +80,7 @@ pub mod common {
         let wallet = wallets.pop().unwrap();
 
         let mut contracts = deploy_core_contracts(&wallet, use_test_fpt).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true, false).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -128,7 +128,7 @@ pub mod common {
         let default_pool = deploy_default_pool(wallet).await;
         let active_pool = deploy_active_pool(wallet).await;
         let sorted_troves = deploy_sorted_troves(wallet).await;
-        let vesting_contract = deploy_vesting_contract(wallet).await;
+        let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
         let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
         let usdf_asset_id = usdf.contract_id().asset_id(&AssetId::zeroed().into());
@@ -157,8 +157,10 @@ pub mod common {
         wallet: &WalletUnlocked,
         use_test_fpt: bool,
         debug: bool,
+        verbose: bool,
     ) {
         println!("Initializing core contracts...");
+        let mut pb = ProgressBar::new(11);
         if !use_test_fpt {
             fpt_token_abi::initialize(
                 &contracts.fpt_token,
@@ -166,6 +168,9 @@ pub mod common {
                 &contracts.community_issuance,
             )
             .await;
+        }
+        if verbose {
+            pb.inc();
         }
 
         community_issuance_abi::initialize(
@@ -177,6 +182,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         usdf_token_abi::initialize(
             &contracts.usdf,
@@ -186,6 +194,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
@@ -197,6 +208,9 @@ pub mod common {
             contracts.sorted_troves.contract_id().into(),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         stability_pool_abi::initialize(
             &contracts.stability_pool,
@@ -208,6 +222,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         fpt_staking_abi::initialize(
             &contracts.fpt_staking,
@@ -221,6 +238,9 @@ pub mod common {
                 .into(),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         protocol_manager_abi::initialize(
             &contracts.protocol_manager,
@@ -235,6 +255,9 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
+        if verbose {
+            pb.inc();
+        }
 
         coll_surplus_pool_abi::initialize(
             &contracts.coll_surplus_pool,
@@ -243,6 +266,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         default_pool_abi::initialize(
             &contracts.default_pool,
@@ -251,6 +277,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         active_pool_abi::initialize(
             &contracts.active_pool,
@@ -261,6 +290,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
 
         sorted_troves_abi::initialize(
             &contracts.sorted_troves,
@@ -270,6 +302,9 @@ pub mod common {
         )
         .await
         .unwrap();
+        if verbose {
+            pb.inc();
+        }
     }
 
     async fn deploy_test_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
@@ -324,9 +359,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = FPTTokenConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -338,7 +380,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables.clone())
+                        .with_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -353,14 +397,21 @@ pub mod common {
     pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
-        let tx_policy = TxPolicies::default().with_tip(1);
+        let tx_policies = TxPolicies::default().with_tip(1);
+
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = SortedTrovesConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
 
         let id = Contract::load_from(
             &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
-        .deploy(&wallet.clone(), tx_policy)
+        .deploy(&wallet.clone(), tx_policies)
         .await;
 
         match id {
@@ -369,10 +420,12 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables)
+                        .with_salt(salt),
                 )
                 .unwrap()
-                .deploy(&wallet.clone(), tx_policy)
+                .deploy(&wallet.clone(), tx_policies)
                 .await
                 .unwrap();
 
@@ -388,9 +441,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = TroveManagerContractConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -402,7 +462,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables)
+                        .with_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -416,14 +478,24 @@ pub mod common {
 
     pub async fn deploy_vesting_contract(
         wallet: &WalletUnlocked,
+        total_amount: u64,
     ) -> VestingContract<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = VestingContractConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap()
+            .with_TOTAL_AMOUNT(total_amount)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -434,7 +506,9 @@ pub mod common {
             Err(_) => {
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables)
+                        .with_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -515,12 +589,10 @@ pub mod common {
     pub async fn deploy_oracle(
         wallet: &WalletUnlocked,
         pyth: ContractId,
-        pyth_precision: u8,
         pyth_price_id: Bits256,
-        redstone: ContractId,
-        redstone_precison: u8,
-        redstone_price_id: U256,
+        fuel_vm_decimals: u32,
         debug: bool,
+        initializer: Identity,
     ) -> Oracle<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -531,15 +603,11 @@ pub mod common {
             .unwrap()
             .with_PYTH_PRICE_ID(pyth_price_id)
             .unwrap()
-            .with_REDSTONE(redstone)
-            .unwrap()
-            .with_REDSTONE_PRICE_ID(redstone_price_id)
-            .unwrap()
             .with_DEBUG(debug)
             .unwrap()
-            .with_PYTH_PRECISION(pyth_precision)
+            .with_FUEL_DECIMAL_REPRESENTATION(fuel_vm_decimals)
             .unwrap()
-            .with_REDSTONE_PRECISION(redstone_precison)
+            .with_INITIALIZER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
@@ -580,9 +648,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = ProtocolManagerConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -599,9 +674,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = BorrowOperationsConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -615,7 +697,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables)
+                        .with_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -660,12 +744,10 @@ pub mod common {
                 let oracle = deploy_oracle(
                     &wallet,
                     contracts.pyth_oracle,
-                    contracts.pyth_precision,
                     contracts.pyth_price_id,
-                    contracts.redstone_oracle,
-                    contracts.redstone_precision,
-                    contracts.redstone_price_id,
+                    contracts.fuel_vm_decimals,
                     false,
+                    Identity::Address(wallet.address().into()),
                 )
                 .await;
 
@@ -680,9 +762,9 @@ pub mod common {
                     asset: Token::new(contracts.asset, wallet.clone()),
                     asset_id: contracts.asset_id,
                     pyth_price_id: contracts.pyth_price_id,
-                    pyth_precision: contracts.pyth_precision,
                     redstone_price_id: contracts.redstone_price_id,
                     redstone_precision: contracts.redstone_precision,
+                    fuel_vm_decimals: contracts.fuel_vm_decimals,
                 };
             }
             None => {
@@ -708,12 +790,10 @@ pub mod common {
                 let oracle = deploy_oracle(
                     &wallet,
                     pyth.contract_id().into(),
-                    9,
                     pyth_price_id,
-                    redstone.contract_id().into(),
                     9,
-                    redstone_price_id,
                     true,
+                    Identity::Address(wallet.address().into()),
                 )
                 .await;
                 pb.inc();
@@ -736,11 +816,11 @@ pub mod common {
                 pb.inc();
                 let pyth_feed = vec![(
                     pyth_price_id,
-                    PythPriceFeed {
-                        price: PythPrice {
-                            price: 1 * PRECISION,
-                            publish_time: PYTH_TIMESTAMP,
-                        },
+                    Price {
+                        confidence: 0,
+                        exponent: 9,
+                        price: 1 * PRECISION,
+                        publish_time: PYTH_TIMESTAMP,
                     },
                 )];
                 let redstone_feed = redstone_price_feed_with_id(redstone_price_id, vec![1]);
@@ -761,9 +841,9 @@ pub mod common {
                     asset,
                     asset_id,
                     pyth_price_id,
-                    pyth_precision: 9,
                     redstone_price_id,
                     redstone_precision: 9,
+                    fuel_vm_decimals: 9,
                 };
             }
         }
@@ -780,12 +860,10 @@ pub mod common {
         let oracle = deploy_oracle(
             wallet,
             pyth.contract_id().into(),
-            9,
             DEFAULT_PYTH_PRICE_ID,
-            redstone.contract_id().into(),
             9,
-            DEFAULT_REDSTONE_PRICE_ID,
             true,
+            Identity::Address(wallet.address().into()),
         )
         .await;
         let trove_manager = deploy_trove_manager_contract(wallet).await;
@@ -839,7 +917,8 @@ pub mod common {
             &contracts.active_pool,
             &contracts.sorted_troves,
         )
-        .await;
+        .await
+        .unwrap();
 
         let asset_id: AssetId = asset
             .contract_id()
@@ -854,16 +933,16 @@ pub mod common {
             asset,
             asset_id,
             pyth_price_id: DEFAULT_PYTH_PRICE_ID,
-            pyth_precision: 9,
             redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
             redstone_precision: 9,
+            fuel_vm_decimals: 9,
         }
     }
 
     pub async fn initialize_asset<T: Account>(
         core_protocol_contracts: &ProtocolContracts<T>,
         asset_contracts: &AssetContracts<T>,
-    ) -> () {
+    ) -> Result<CallResponse<()>> {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(2);
 
@@ -889,10 +968,11 @@ pub mod common {
                 .contract_id()
                 .into(),
         )
-        .await;
+        .await
+        .unwrap();
         pb.inc();
 
-        let _ = protocol_manager_abi::register_asset(
+        protocol_manager_abi::register_asset(
             &core_protocol_contracts.protocol_manager,
             asset_contracts.asset_id,
             asset_contracts.trove_manager.contract_id().into(),
@@ -906,8 +986,7 @@ pub mod common {
             &core_protocol_contracts.active_pool,
             &core_protocol_contracts.sorted_troves,
         )
-        .await;
-        pb.inc();
+        .await
     }
 
     pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {
@@ -915,9 +994,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = ActivePoolConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_configurables(configurables.clone())
+                .with_salt(salt),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -931,7 +1017,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_configurables(configurables)
+                        .with_salt(salt),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -948,9 +1036,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = StabilityPoolConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -964,7 +1059,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -981,9 +1078,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = DefaultPoolConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -997,7 +1101,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -1016,9 +1122,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = CollSurplusPoolConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -1032,7 +1145,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -1051,9 +1166,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = CommunityIssuanceConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -1067,7 +1189,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -1084,9 +1208,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = FPTStakingConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -1100,7 +1231,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -1117,9 +1250,16 @@ pub mod common {
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
+        let initializer = Identity::Address(wallet.address().into());
+        let configurables = USDFTokenConfigurables::default()
+            .with_INITIALIZER(initializer)
+            .unwrap();
+
         let id = Contract::load_from(
             &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
-            LoadConfiguration::default().with_salt(salt),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
@@ -1133,7 +1273,9 @@ pub mod common {
                 wait();
                 let id = Contract::load_from(
                     &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default().with_salt(salt),
+                    LoadConfiguration::default()
+                        .with_salt(salt)
+                        .with_configurables(configurables.clone()),
                 )
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
@@ -1159,6 +1301,31 @@ pub mod common {
         .unwrap();
 
         HintHelper::new(id, wallet.clone())
+    }
+
+    pub async fn deploy_multi_trove_getter(
+        wallet: &WalletUnlocked,
+        sorted_troves_contract_id: &ContractId,
+    ) -> MultiTroveGetter<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        let configurables = MultiTroveGetterConfigurables::default()
+            .with_SORTED_TROVES_CONTRACT(sorted_troves_contract_id.clone().into())
+            .unwrap();
+
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(MULTI_TROVE_GETTER_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default()
+                .with_salt(salt)
+                .with_configurables(configurables.clone()),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), TxPolicies::default().with_tip(1))
+        .await
+        .unwrap();
+
+        MultiTroveGetter::new(id, wallet.clone())
     }
 
     pub fn print_response<T>(response: &CallResponse<T>)

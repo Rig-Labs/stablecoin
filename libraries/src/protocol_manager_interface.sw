@@ -24,11 +24,9 @@ abi ProtocolManager {
     fn renounce_admin();
     #[storage(read, write), payable]
     fn redeem_collateral(
-        max_itterations: u64,
+        max_iterations: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     );
-    #[storage(read)]
-    fn owner() -> State;
 }

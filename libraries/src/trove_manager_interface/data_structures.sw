@@ -47,20 +47,6 @@ impl Status {
         }
     }
 }
-
-pub struct Asset {
-    /// Identifier of asset
-    id: ContractId,
-    /// Amount of asset that can represent reserve amount, deposit amount, withdraw amount and more depending on the context
-    amount: u64,
-}
-
-impl Asset {
-    pub fn new(id: ContractId, amount: u64) -> Self {
-        Self { id, amount }
-    }
-}
-
 pub struct RewardSnapshot {
     pub asset: u64,
     pub usdf_debt: u64,
