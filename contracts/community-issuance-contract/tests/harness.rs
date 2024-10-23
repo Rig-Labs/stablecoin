@@ -340,8 +340,8 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     )
     .await
     .unwrap();
-
-    community_issuance_abi::set_current_time(&contracts.community_issuance, 31104000 + 1).await;
+    let deadline = 31_536_000 + 1;
+    community_issuance_abi::set_current_time(&contracts.community_issuance, deadline).await;
 
     let community_issuance_wallet1 = CommunityIssuance::new(
         contracts.community_issuance.contract_id().clone(),
