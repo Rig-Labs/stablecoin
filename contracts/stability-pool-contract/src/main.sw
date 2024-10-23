@@ -176,8 +176,6 @@ impl StabilityPool for Contract {
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         internal_trigger_fpt_issuance();
         let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-        // loss only for events
-        let usdf_loss = initial_deposit - compounded_usdf_deposit;
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap());
         let new_position = compounded_usdf_deposit + msg_amount();
