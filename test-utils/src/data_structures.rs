@@ -44,6 +44,16 @@ pub struct AssetContracts<T: Account> {
     pub fuel_vm_decimals: u32,
 }
 
+pub struct AssetContractsOptionalRedstone<T: Account> {
+    pub asset: Token<T>,
+    pub oracle: Oracle<T>,
+    pub mock_pyth_oracle: PythCore<T>,
+    pub trove_manager: TroveManagerContract<T>,
+    pub asset_id: AssetId,
+    pub pyth_price_id: Bits256,
+    pub redstone_config: Option<RedstoneConfig>,
+}
+
 pub struct ExistingAssetContracts {
     pub asset: Option<AssetConfig>,
     pub pyth_oracle: Option<PythConfig>,

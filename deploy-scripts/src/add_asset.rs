@@ -2,13 +2,13 @@ use crate::constants;
 use crate::utils::utils::*;
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::{Bits256, U256};
+use fuels::types::Bits256;
 use serde_json::json;
 
 use std::str::FromStr;
 use std::{fs::File, io::Write};
 use test_utils::data_structures::{
-    AssetConfig, AssetContracts, ExistingAssetContracts, PythConfig, RedstoneConfig,
+    AssetConfig, AssetContracts, ExistingAssetContracts, PythConfig,
 };
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;

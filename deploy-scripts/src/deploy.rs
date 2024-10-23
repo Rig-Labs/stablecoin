@@ -4,13 +4,19 @@ use dotenv::dotenv;
 use fuels::prelude::*;
 use serde_json::json;
 
+const VESTING_SCHEDULE_PATH: &str =
+    "deploy-scripts/vesting/fluid_vesting_team_and_investors_test.csv";
+const CLIFF_PERCENTAGE: f64 = 0.0;
+const SECONDS_TO_CLIFF: u64 = 0;
+const SECONDS_VESTING_DURATION: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
+
 pub mod deployment {
-    const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/test_vesting.json";
+
     use fuels::types::Bits256;
     use test_utils::data_structures::ProtocolContracts;
     use test_utils::interfaces::hint_helper::HintHelper;
     use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
-    use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_json_file};
+    use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_csv};
 
     use crate::utils::utils::setup_wallet;
 
@@ -42,17 +48,23 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all_core_contracts(
         wallet: WalletUnlocked,
     ) -> ProtocolContracts<WalletUnlocked> {
-        let vesting_schedules = load_vesting_schedules_from_json_file(VESTING_SCHEDULE_PATH);
-
+        let vesting_schedules = load_vesting_schedules_from_csv(
+            VESTING_SCHEDULE_PATH,
+            CLIFF_PERCENTAGE,
+            SECONDS_TO_CLIFF,
+            SECONDS_VESTING_DURATION,
+        );
         let mut core_contracts = deploy_core_contracts(&wallet, false, true).await;
         initialize_core_contracts(&mut core_contracts, &wallet, false, false, true).await;
 
-        let _ = vesting::instantiate_vesting_contract(
+        vesting::instantiate_vesting_contract(
             &core_contracts.vesting_contract,
             &core_contracts.fpt_asset_id,
             vesting_schedules,
+            false,
         )
-        .await;
+        .await
+        .unwrap();
 
         return core_contracts;
     }

@@ -14,7 +14,8 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
-
+csv = { workspace = true }
+tai64 = { workspace = true }
 [lib]
 doctest = false
 test = false

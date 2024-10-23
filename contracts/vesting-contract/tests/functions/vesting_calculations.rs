@@ -34,6 +34,7 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
@@ -60,6 +61,7 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
@@ -90,6 +92,7 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
@@ -175,6 +178,7 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
@@ -338,6 +342,7 @@ mod failure {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
