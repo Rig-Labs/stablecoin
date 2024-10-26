@@ -7,8 +7,8 @@ abigen!(Contract(
     abi = "contracts/oracle-contract/out/debug/oracle-contract-abi.json"
 ));
 
-// 4 hours
-pub const ORACLE_TIMEOUT: u64 = 14400;
+// 10 minutes
+pub const ORACLE_TIMEOUT: u64 = 600;
 
 pub mod oracle_abi {
 

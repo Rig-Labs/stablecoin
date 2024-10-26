@@ -50,8 +50,8 @@ configurable {
     /// Initializer
     INITIALIZER: Identity = Identity::Address(Address::zero()),
 }
-// Timeout period for considering oracle data as stale (4 hours in seconds)
-const TIMEOUT: u64 = 14400;
+// Timeout period for considering oracle data as stale (10 minutes in seconds)
+const TIMEOUT: u64 = 600;
 
 storage {
     /// The last valid price from either Pyth or Redstone
