@@ -299,7 +299,7 @@ pub mod borrow_operations_abi {
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
         amount: u64,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -339,7 +339,6 @@ pub mod borrow_operations_abi {
             .unwrap()
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn add_asset<T: Account>(

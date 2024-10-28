@@ -56,7 +56,7 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         fpt_asset_id: AssetId,
         fpt_deposit_amount: u64,
-    ) -> CallResponse<()> {
+    ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
@@ -73,7 +73,6 @@ pub mod fpt_staking_abi {
             .unwrap()
             .call()
             .await
-            .unwrap()
     }
 
     pub async fn unstake<T: Account>(

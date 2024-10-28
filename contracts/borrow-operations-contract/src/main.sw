@@ -11,9 +11,11 @@ contract;
 // - Enforcing system parameters and stability conditions
 
 mod data_structures;
+mod events;
 
 use standards::{src3::SRC3,};
 use ::data_structures::{AssetContracts, LocalVariablesAdjustTrove, LocalVariablesOpenTrove};
+use ::events::{AdjustTroveEvent, CloseTroveEvent, OpenTroveEvent};
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::active_pool_interface::ActivePool;
 use libraries::token_interface::Token;
@@ -27,6 +29,9 @@ use libraries::fluid_math::*;
 use std::{
     asset::transfer,
     auth::msg_sender,
+    block::{
+        timestamp,
+    },
     call_frames::{
         msg_asset_id,
     },
@@ -34,6 +39,7 @@ use std::{
         msg_amount,
     },
     hash::*,
+    logging::log,
 };
 
 configurable {
@@ -138,6 +144,13 @@ impl BorrowOperations for Contract {
             usdf_contract,
             asset_contract,
         );
+        log(OpenTroveEvent {
+            timestamp: timestamp(),
+            user: sender,
+            asset_id: asset_contract,
+            collateral: msg_amount(),
+            debt: vars.net_debt,
+        });
     }
     // Add collateral to an existing trove
     #[storage(read, write), payable]
@@ -265,6 +278,13 @@ impl BorrowOperations for Contract {
             transfer(borrower, usdf_asset_id, excess_usdf_returned);
         }
 
+        log(CloseTroveEvent {
+            timestamp: timestamp(),
+            user: borrower,
+            asset_id: asset_contract,
+            collateral: coll,
+            debt: debt,
+        });
         storage.lock_close_trove.write(false);
     }
     // Claim collateral from liquidations
@@ -435,6 +455,17 @@ fn internal_adjust_trove(
         usdf_contract_cache,
     );
 
+    log(AdjustTroveEvent {
+        timestamp: timestamp(),
+        user: borrower,
+        asset_id: asset,
+        collateral_change: vars.coll_change,
+        debt_change: vars.net_debt_change,
+        is_collateral_increase: vars.is_coll_increase,
+        is_debt_increase: is_debt_increase,
+        total_collateral: new_position_res.0,
+        total_debt: new_position_res.1,
+    });
     storage.lock_internal_adjust_trove.write(false);
 }
 
