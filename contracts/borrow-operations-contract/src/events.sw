@@ -1,7 +1,6 @@
 library;
 
 pub struct OpenTroveEvent {
-    pub timestamp: u64,
     pub user: Identity,
     pub asset_id: AssetId,
     pub collateral: u64,
@@ -9,7 +8,6 @@ pub struct OpenTroveEvent {
 }
 
 pub struct AdjustTroveEvent {
-    pub timestamp: u64,
     pub user: Identity,
     pub asset_id: AssetId,
     pub collateral_change: u64,
@@ -21,7 +19,6 @@ pub struct AdjustTroveEvent {
 }
 
 pub struct CloseTroveEvent {
-    pub timestamp: u64,
     pub user: Identity,
     pub asset_id: AssetId,
     pub collateral: u64,

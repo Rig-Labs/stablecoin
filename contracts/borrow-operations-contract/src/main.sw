@@ -29,9 +29,6 @@ use libraries::fluid_math::*;
 use std::{
     asset::transfer,
     auth::msg_sender,
-    block::{
-        timestamp,
-    },
     call_frames::{
         msg_asset_id,
     },
@@ -145,7 +142,6 @@ impl BorrowOperations for Contract {
             asset_contract,
         );
         log(OpenTroveEvent {
-            timestamp: timestamp(),
             user: sender,
             asset_id: asset_contract,
             collateral: msg_amount(),
@@ -279,7 +275,6 @@ impl BorrowOperations for Contract {
         }
 
         log(CloseTroveEvent {
-            timestamp: timestamp(),
             user: borrower,
             asset_id: asset_contract,
             collateral: coll,
@@ -456,7 +451,6 @@ fn internal_adjust_trove(
     );
 
     log(AdjustTroveEvent {
-        timestamp: timestamp(),
         user: borrower,
         asset_id: asset,
         collateral_change: vars.coll_change,

@@ -67,16 +67,38 @@ async fn proper_stability_deposit() {
     )
     .await
     .unwrap();
-
-    let _res = stability_pool_abi::provide_to_stability_pool(
+    let deposit_amount = 600 * PRECISION;
+    let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
         &contracts.usdf,
         &contracts.asset_contracts[0].asset,
-        600 * PRECISION,
+        deposit_amount,
     )
     .await
     .unwrap();
+
+    let logs = res.decode_logs();
+    let provide_event = logs
+        .results
+        .iter()
+        .find(|log| {
+            log.as_ref()
+                .unwrap()
+                .contains("ProvideToStabilityPoolEvent")
+        })
+        .expect("ProvideToStabilityPoolEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        provide_event.contains(&admin.address().hash().to_string()),
+        "ProvideToStabilityPoolEvent should contain user address"
+    );
+    assert!(
+        provide_event.contains(&deposit_amount.to_string()),
+        "ProvideToStabilityPoolEvent should contain deposit amount"
+    );
 
     // print_response(&res);
 
@@ -152,7 +174,7 @@ async fn proper_stability_widthdrawl() {
     )
     .await
     .unwrap();
-
+    let withdraw_amount = 300 * PRECISION;
     let res = stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
@@ -163,11 +185,32 @@ async fn proper_stability_widthdrawl() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].trove_manager,
-        300 * PRECISION,
+        withdraw_amount,
     )
     .await
     .unwrap();
-    print_response(&res);
+
+    let logs = res.decode_logs();
+    let withdraw_event = logs
+        .results
+        .iter()
+        .find(|log| {
+            log.as_ref()
+                .unwrap()
+                .contains("WithdrawFromStabilityPoolEvent")
+        })
+        .expect("WithdrawFromStabilityPoolEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        withdraw_event.contains(&admin.address().hash().to_string()),
+        "WithdrawFromStabilityPoolEvent should contain user address"
+    );
+    assert!(
+        withdraw_event.contains(&withdraw_amount.to_string()),
+        "WithdrawFromStabilityPoolEvent should contain withdraw amount"
+    );
 
     stability_pool_utils::assert_pool_asset(
         &contracts.stability_pool,
@@ -176,13 +219,13 @@ async fn proper_stability_widthdrawl() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 300 * PRECISION)
+    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, withdraw_amount)
         .await;
 
     stability_pool_utils::assert_compounded_usdf_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
-        300 * PRECISION,
+        withdraw_amount,
     )
     .await;
 
@@ -866,7 +909,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await;
 
-    trove_manager_abi::liquidate(
+    let res = trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
@@ -884,6 +927,25 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await
     .unwrap();
+
+    let logs = res.decode_logs();
+    let liquidation_event = logs
+        .results
+        .iter()
+        .find(|log| {
+            log.as_ref()
+                .unwrap()
+                .contains("StabilityPoolLiquidationEvent")
+        })
+        .expect("StabilityPoolLiquidationEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        liquidation_event.contains(&contracts.asset_contracts[0].asset_id.to_string()),
+        "StabilityPoolLiquidationEvent should contain asset_id"
+    );
+    println!("liquidation_event: {}", liquidation_event);
 
     trove_manager_abi::liquidate(
         &contracts.asset_contracts[1].trove_manager,

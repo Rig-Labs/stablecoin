@@ -4,7 +4,7 @@ contract;
 // It also interfaces with other core contracts like StabilityPool, ActivePool, and DefaultPool.
 mod data_structures;
 mod utils;
-
+mod events;
 use ::utils::{add_liquidation_vals_to_totals, get_offset_and_redistribution_vals};
 use ::data_structures::{
     EntireTroveDebtAndColl,
@@ -15,6 +15,7 @@ use ::data_structures::{
     RedemptionTotals,
     Trove,
 };
+use ::events::{RedemptionEvent, TroveFullLiquidationEvent, TrovePartialLiquidationEvent,};
 use standards::src3::SRC3;
 use libraries::trove_manager_interface::TroveManager;
 use libraries::usdf_token_interface::USDFToken;
@@ -43,6 +44,7 @@ use std::{
         msg_amount,
     },
     hash::Hash,
+    logging::log,
     storage::storage_vec::*,
     u128::U128,
 };
@@ -645,6 +647,13 @@ fn internal_apply_liquidation(
             lower_partial_hint,
             asset_contract_cache,
         );
+
+        // Add TroveUpdatedEvent for partial liquidation
+        log(TrovePartialLiquidationEvent {
+            borrower: borrower,
+            remaining_debt: liquidation_values.remaining_trove_debt,
+            remaining_collateral: liquidation_values.remaining_trove_coll,
+        });
     } else {
         // liquidation of entire trove, sends the surplus to the coll surplus pool
         let coll_surplus_contract = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().into());
@@ -656,6 +665,13 @@ fn internal_apply_liquidation(
                 .coll_surplus,
             asset_contract_cache,
         );
+
+        // Add TroveLiquidatedEvent for full liquidation
+        log(TroveFullLiquidationEvent {
+            borrower: borrower,
+            debt: liquidation_values.entire_trove_debt,
+            collateral: liquidation_values.entire_trove_coll,
+        });
     }
 }
 #[storage(read, write)]
@@ -820,6 +836,13 @@ fn internal_redeem_collateral_from_trove(
         // Update the stake and total stakes
         internal_update_stake_and_total_stakes(borrower);
     }
+    // Add RedemptionEvent before returning
+    log(RedemptionEvent {
+        borrower: borrower,
+        usdf_amount: single_redemption_values.usdf_lot,
+        collateral_amount: single_redemption_values.asset_lot,
+        collateral_price: price,
+    });
     storage
         .lock_internal_redeem_collateral_from_trove
         .write(false);
@@ -932,16 +955,15 @@ fn internal_compute_new_stake(coll: u64) -> u64 {
     }
     return stake;
 }
-/*
-* Updates snapshots of system total stakes and total collateral, excluding a given collateral remainder from the calculation.
-* Used in a liquidation sequence.
-*
-* The calculation excludes a portion of collateral that is in the ActivePool:
-*
-* the total collateral gas compensation from the liquidation sequence
-*
-* The collateral as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
-*/
+//
+// Updates snapshots of system total stakes and total collateral, excluding a given collateral remainder from the calculation.
+// Used in a liquidation sequence.
+//
+// The calculation excludes a portion of collateral that is in the ActivePool:
+// the total collateral gas compensation from the liquidation sequence
+//
+// The collateral as compensation must be excluded as it is always sent out at the very end of the liquidation sequence.
+//
 #[storage(read, write)]
 fn internal_update_system_snapshots_exclude_coll_remainder(coll_remainder: u64) {
     storage
