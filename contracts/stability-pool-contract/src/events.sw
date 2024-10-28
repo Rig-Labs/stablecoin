@@ -19,4 +19,3 @@ pub struct StabilityPoolLiquidationEvent {
     pub debt_to_offset: u64,
     pub collateral_to_offset: u64,
 }
-

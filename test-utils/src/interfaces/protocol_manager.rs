@@ -188,4 +188,18 @@ pub mod protocol_manager_abi {
             .call()
             .await
     }
+
+    pub async fn transfer_owner<T: Account>(
+        protocol_manager: &ProtocolManager<T>,
+        new_owner: Identity,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        protocol_manager
+            .methods()
+            .transfer_owner(new_owner)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
 }

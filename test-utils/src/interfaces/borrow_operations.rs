@@ -420,6 +420,54 @@ pub mod borrow_operations_abi {
             .await
             .unwrap()
     }
+
+    // Add these new functions to the module
+    pub async fn set_pauser<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        pauser: Identity,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .set_pauser(pauser)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn transfer_owner<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+        new_owner: Identity,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .transfer_owner(new_owner)
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn renounce_owner<T: Account>(
+        borrow_operations: &BorrowOperations<T>,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default()
+            .with_tip(1)
+            .with_script_gas_limit(2000000);
+
+        borrow_operations
+            .methods()
+            .renounce_owner()
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
 }
 
 pub mod borrow_operations_utils {

@@ -26,6 +26,7 @@ use libraries::coll_surplus_pool_interface::CollSurplusPool;
 use libraries::oracle_interface::Oracle;
 use libraries::borrow_operations_interface::BorrowOperations;
 use libraries::fluid_math::*;
+use sway_libs::ownership::*;
 use std::{
     asset::transfer,
     auth::msg_sender,
@@ -93,7 +94,26 @@ impl BorrowOperations for Contract {
             .usdf_asset_id
             .write(AssetId::new(usdf_contract, SubId::zero()));
         storage.pauser.write(msg_sender().unwrap());
+        initialize_ownership(msg_sender().unwrap());
         storage.is_initialized.write(true);
+    }
+
+    #[storage(read, write)]
+    fn set_pauser(pauser: Identity) {
+        only_owner();
+        storage.pauser.write(pauser);
+    }
+
+    #[storage(read, write)]
+    fn transfer_owner(new_owner: Identity) {
+        only_owner();
+        transfer_ownership(new_owner);
+    }
+
+    #[storage(read, write)]
+    fn renounce_owner() {
+        only_owner();
+        renounce_ownership();
     }
 
     // --- Borrower Trove Operations ---
