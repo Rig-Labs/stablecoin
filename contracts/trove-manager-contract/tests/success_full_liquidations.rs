@@ -127,7 +127,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
 
-    let _res = trove_manager_abi::liquidate(
+    let res = trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
@@ -145,6 +145,21 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     )
     .await
     .unwrap();
+
+    let logs = res.decode_logs();
+    let liquidation_event = logs
+        .results
+        .iter()
+        .find(|log| log.as_ref().unwrap().contains("TroveFullLiquidationEvent"))
+        .expect("TroveFullLiquidationEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        liquidation_event.contains(&liquidated_wallet.address().hash().to_string()),
+        "TroveFullLiquidationEvent should contain user address"
+    );
+    println!("liquidated trove");
 
     // print_response(&res);
 
@@ -930,7 +945,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
     )
     .await;
 
-    trove_manager_abi::liquidate(
+    let _res = trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
@@ -948,7 +963,6 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
     )
     .await
     .unwrap();
-    println!("liquidated trove");
 
     multi_trove_getter_utils::assert_sorted_troves_by_cr(
         &multi_trove_getter,

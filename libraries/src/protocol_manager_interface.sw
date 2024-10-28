@@ -29,4 +29,6 @@ abi ProtocolManager {
         upper_partial_hint: Identity,
         lower_partial_hint: Identity,
     );
+    #[storage(read, write)]
+    fn transfer_owner(new_owner: Identity);
 }

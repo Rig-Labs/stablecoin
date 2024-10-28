@@ -165,6 +165,24 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts,
     )
     .await;
+
+    let logs = res.decode_logs();
+    let redemption_event = logs
+        .results
+        .iter()
+        .find(|log| log.as_ref().unwrap().contains("RedemptionEvent"))
+        .expect("RedemptionEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        redemption_event.contains(&healthy_wallet3.address().hash().to_string()),
+        "RedemptionEvent should contain user address"
+    );
+    assert!(
+        redemption_event.contains(&redemption_amount.to_string()),
+        "RedemptionEvent should contain redemption amount"
+    );
     print_response(&res);
 
     let active_pool_asset = active_pool_abi::get_asset(
