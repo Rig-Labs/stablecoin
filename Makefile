@@ -23,8 +23,8 @@ format: ## Format the code
 deploy: ## Run the deployment script for core contracts
 	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
 
-add-asset: ## Run the script to add assets to the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset
+add-asset: ## Run the script to add assets to the protocol (usage: make add-asset ASSET=ETH)
+	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset $(ASSET)
 
 pause: ## Pause the protocol
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run pause

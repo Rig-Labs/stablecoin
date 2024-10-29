@@ -1,4 +1,4 @@
-use crate::utils::utils::{load_core_contracts, setup_wallet};
+use crate::utils::utils::{is_testnet, load_core_contracts, setup_wallet};
 use dotenv::dotenv;
 
 use test_utils::interfaces::borrow_operations::borrow_operations_abi;
@@ -10,7 +10,8 @@ pub async fn pause_protocol() {
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
-    let core_contracts = load_core_contracts(wallet.clone());
+    let is_testnet = is_testnet(wallet.clone()).await;
+    let core_contracts = load_core_contracts(wallet.clone(), is_testnet);
 
     println!("Are you sure you want to pause the protocol? (y/n)");
     let mut input = String::new();
@@ -36,7 +37,8 @@ pub async fn unpause_protocol() {
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
-    let core_contracts = load_core_contracts(wallet.clone());
+    let is_testnet = is_testnet(wallet.clone()).await;
+    let core_contracts = load_core_contracts(wallet.clone(), is_testnet);
 
     println!("Are you sure you want to unpause the protocol? (y/n)");
     let mut input = String::new();

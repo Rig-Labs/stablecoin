@@ -7,7 +7,7 @@ use serde_json::json;
 const VESTING_SCHEDULE_PATH: &str =
     "deploy-scripts/vesting/fluid_vesting_team_and_investors_test.csv";
 const CLIFF_PERCENTAGE: f64 = 0.0;
-const SECONDS_TO_CLIFF: u64 = 0;
+const SECONDS_TO_CLIFF: u64 = 7 * 24 * 60 * 60; // 7 days
 const SECONDS_VESTING_DURATION: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
 
 pub mod deployment {
@@ -18,7 +18,8 @@ pub mod deployment {
     use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
     use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_csv};
 
-    use crate::utils::utils::setup_wallet;
+    use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
+    use crate::utils::utils::{is_testnet, setup_wallet};
 
     use super::*;
 
@@ -30,19 +31,21 @@ pub mod deployment {
     pub async fn deploy() {
         //--------------- Deploy ---------------
         dotenv().ok();
-
-        //--------------- WALLET ---------------
         let wallet = setup_wallet().await;
+        let is_testnet = is_testnet(wallet.clone()).await;
+        let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
         let address = wallet.address();
+        //--------------- WALLET ---------------
         println!("🔑 Wallet address: {}", address);
-
+        println!("🔑 Is testnet: {}", is_testnet);
+        println!("🔑 Network name: {}", network_name);
         //--------------- Deploy ---------------
         let core_contracts = deploy_and_initialize_all_core_contracts(wallet.clone()).await;
         let (hint_helper, multi_trove_getter) =
             deploy_frontend_helper_contracts(wallet.clone(), &core_contracts).await;
 
         //--------------- Write to file ---------------
-        write_contracts_to_file(core_contracts, hint_helper, multi_trove_getter);
+        write_contracts_to_file(core_contracts, hint_helper, multi_trove_getter, is_testnet);
     }
 
     pub async fn deploy_and_initialize_all_core_contracts(
@@ -85,8 +88,13 @@ pub mod deployment {
         contracts: ProtocolContracts<WalletUnlocked>,
         hint_helper: HintHelper<WalletUnlocked>,
         multi_trove_getter: MultiTroveGetter<WalletUnlocked>,
+        is_testnet: bool,
     ) {
-        let mut file = File::create("contracts.json").unwrap();
+        let mut file = File::create(match is_testnet {
+            true => TESTNET_CONTRACTS_FILE,
+            false => MAINNET_CONTRACTS_FILE,
+        })
+        .unwrap();
 
         let json = json!({
             "rpc": std::env::var("RPC").unwrap(),

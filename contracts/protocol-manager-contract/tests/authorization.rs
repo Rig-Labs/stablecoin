@@ -32,12 +32,18 @@ async fn test_authorizations() {
     }
     // Test 2: Unauthorized register_asset
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        symbol: "".to_string(),
         asset: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
-    let asset_contracts =
-        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
+    let asset_contracts = deploy_asset_contracts(
+        &protocol_manager_owner,
+        &existing_asset_to_initialize,
+        true,
+        true,
+    )
+    .await;
     contracts.protocol_manager = protocol_manager_attacker.clone();
     let result = initialize_asset(&contracts, &asset_contracts).await;
 
@@ -61,13 +67,19 @@ async fn test_authorizations() {
     contracts.protocol_manager = protocol_manager_owner_contract.clone();
 
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        symbol: "".to_string(),
         asset: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
 
-    let asset_contracts_owner =
-        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
+    let asset_contracts_owner = deploy_asset_contracts(
+        &protocol_manager_owner,
+        &existing_asset_to_initialize,
+        true,
+        true,
+    )
+    .await;
     let result = initialize_asset(&contracts, &asset_contracts_owner).await;
 
     assert!(
@@ -125,7 +137,19 @@ async fn test_authorizations() {
     );
 
     // Verify old owner can't perform admin actions
-    let asset_contracts = deploy_asset_contracts(&protocol_manager_owner, &None).await;
+    let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        symbol: "".to_string(),
+        asset: None,
+        pyth_oracle: None,
+        redstone_oracle: None,
+    };
+    let asset_contracts = deploy_asset_contracts(
+        &protocol_manager_owner,
+        &existing_asset_to_initialize,
+        true,
+        true,
+    )
+    .await;
     let result = initialize_asset(&contracts, &asset_contracts).await;
     assert!(
         result.is_err(),
@@ -153,12 +177,18 @@ async fn test_authorizations() {
 
     // Test 6: Unauthorized register_asset after renouncement
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
+        symbol: "".to_string(),
         asset: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
-    let unauthorized_asset_contracts =
-        deploy_asset_contracts(&protocol_manager_owner, &existing_asset_to_initialize, true).await;
+    let unauthorized_asset_contracts = deploy_asset_contracts(
+        &protocol_manager_owner,
+        &existing_asset_to_initialize,
+        true,
+        true,
+    )
+    .await;
     let result = initialize_asset(&contracts, &unauthorized_asset_contracts).await;
 
     assert!(

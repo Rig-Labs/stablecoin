@@ -18,7 +18,7 @@ pub struct ProtocolContracts<T: Account> {
     pub usdf: USDFToken<T>,
     pub stability_pool: StabilityPool<T>,
     pub protocol_manager: ProtocolManager<T>,
-    pub asset_contracts: Vec<AssetContracts<T>>,
+    pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
     pub fpt_staking: FPTStaking<T>,
     pub coll_surplus_pool: CollSurplusPool<T>,
     pub sorted_troves: SortedTroves<T>,
@@ -43,18 +43,20 @@ pub struct AssetContracts<T: Account> {
     pub redstone_precision: u32,
     pub fuel_vm_decimals: u32,
 }
-
 pub struct AssetContractsOptionalRedstone<T: Account> {
+    pub symbol: String,
     pub asset: Token<T>,
     pub oracle: Oracle<T>,
     pub mock_pyth_oracle: PythCore<T>,
     pub trove_manager: TroveManagerContract<T>,
     pub asset_id: AssetId,
     pub pyth_price_id: Bits256,
+    pub fuel_vm_decimals: u32,
     pub redstone_config: Option<RedstoneConfig>,
 }
 
 pub struct ExistingAssetContracts {
+    pub symbol: String,
     pub asset: Option<AssetConfig>,
     pub pyth_oracle: Option<PythConfig>,
     pub redstone_oracle: Option<RedstoneConfig>,

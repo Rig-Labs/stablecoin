@@ -19,7 +19,8 @@ pub async fn sanity_check() {
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
-    let core_contracts = load_core_contracts(wallet.clone());
+    let is_testnet = is_testnet(wallet.clone()).await;
+    let core_contracts = load_core_contracts(wallet.clone(), is_testnet);
 
     let provider = wallet.provider().unwrap();
 
@@ -166,6 +167,7 @@ pub async fn sanity_check() {
         core_contracts.fpt_asset_id,
         fpt_balance,
     )
-    .await;
+    .await
+    .unwrap();
     println!("Staked FPT");
 }

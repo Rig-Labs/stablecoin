@@ -18,6 +18,8 @@ pub mod utils {
             vesting::VestingContract,
         },
     };
+
+    use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
     pub async fn setup_wallet() -> WalletUnlocked {
         let rpc = match std::env::var("RPC") {
             Ok(s) => s,
@@ -43,8 +45,15 @@ pub mod utils {
         .unwrap()
     }
 
-    pub fn load_core_contracts(wallet: WalletUnlocked) -> ProtocolContracts<WalletUnlocked> {
-        let json = std::fs::read_to_string("contracts.json").unwrap();
+    pub fn load_core_contracts(
+        wallet: WalletUnlocked,
+        is_testnet: bool,
+    ) -> ProtocolContracts<WalletUnlocked> {
+        let json = std::fs::read_to_string(match is_testnet {
+            true => TESTNET_CONTRACTS_FILE,
+            false => MAINNET_CONTRACTS_FILE,
+        })
+        .unwrap();
         let contracts: serde_json::Value = serde_json::from_str(&json).unwrap();
 
         let borrow_operations_contract_id: Bech32ContractId = contracts["borrow_operations"]
@@ -151,9 +160,9 @@ pub mod utils {
                     .unwrap();
                 let redstone_contract_id: Bech32ContractId = asset_contract["redstone_contract"]
                     .as_str()
-                    .unwrap()
+                    .unwrap_or("0")
                     .parse()
-                    .unwrap();
+                    .unwrap_or(Bech32ContractId::default());
 
                 AssetContracts {
                     asset: Token::new(asset_contract_id, wallet.clone()),
@@ -173,10 +182,10 @@ pub mod utils {
                         asset_contract["pyth_price_id"].as_str().unwrap(),
                     )
                     .unwrap(),
-                    redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap()
+                    redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap_or(9)
                         as u32,
                     redstone_price_id: U256::from_str(
-                        asset_contract["redstone_price_id"].as_str().unwrap(),
+                        asset_contract["redstone_price_id"].as_str().unwrap_or("0"),
                     )
                     .unwrap(),
                 }
@@ -202,5 +211,10 @@ pub mod utils {
         };
 
         protocol_contracts
+    }
+
+    pub async fn is_testnet(wallet: WalletUnlocked) -> bool {
+        let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
+        network_name.to_lowercase().contains("testnet")
     }
 }
