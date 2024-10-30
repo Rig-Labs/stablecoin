@@ -1,5 +1,8 @@
 contract;
 
+mod events;
+
+use ::events::{StakeEvent, UnstakeEvent};
 use libraries::fluid_math::{
     DECIMAL_PRECISION,
     fm_min,
@@ -20,6 +23,7 @@ use std::{
     hash::Hash,
     storage::storage_vec::*,
 };
+
 configurable {
     /// Initializer identity
     INITIALIZER: Identity = Identity::Address(Address::zero()),
@@ -117,6 +121,10 @@ impl FPTStaking for Contract {
             .total_fpt_staked
             .write(storage.total_fpt_staked.read() + amount);
 
+        log(StakeEvent {
+            user: id,
+            amount: amount,
+        });
         storage.lock_stake.write(false);
     }
 
@@ -163,6 +171,11 @@ impl FPTStaking for Contract {
                     amount_to_withdraw,
                 );
             }
+
+            log(UnstakeEvent {
+                user: id,
+                amount: amount_to_withdraw,
+            });
         }
 
         storage.lock_unstake.write(false);

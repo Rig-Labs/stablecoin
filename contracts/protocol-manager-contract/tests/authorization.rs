@@ -80,8 +80,57 @@ async fn test_authorizations() {
 
     assert!(result.is_err(), "Duplicate asset registration should fail");
 
+    // Test unauthorized transfer
+    let result = protocol_manager_abi::transfer_owner(
+        &protocol_manager_attacker,
+        fuels::types::Identity::Address(attacker.address().into()),
+    )
+    .await;
+    assert!(
+        result.is_err(),
+        "Unauthorized user should not be able to transfer ownership"
+    );
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("NotOwner"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
+
+    // Test authorized transfer
+    let new_owner = wallets.pop().unwrap();
+    let result = protocol_manager_abi::transfer_owner(
+        &protocol_manager_owner_contract,
+        fuels::types::Identity::Address(new_owner.address().into()),
+    )
+    .await;
+    assert!(
+        result.is_ok(),
+        "Authorized user should be able to transfer ownership"
+    );
+
+    // Verify old owner can't perform admin actions
+    let asset_contracts = deploy_asset_contracts(&protocol_manager_owner, &None).await;
+    let result = initialize_asset(&contracts, &asset_contracts).await;
+    assert!(
+        result.is_err(),
+        "Old owner should not be able to initialize an asset after transfer"
+    );
+    if let Err(error) = result {
+        assert!(
+            error.to_string().contains("NotOwner"),
+            "Unexpected error message: {}",
+            error
+        );
+    }
+
+    let new_protocol_manager_owner = ProtocolManager::new(
+        contracts.protocol_manager.contract_id().clone(),
+        new_owner.clone(),
+    );
     // Test 5: Authorized renounce_admin
-    let result = protocol_manager_abi::renounce_admin(&protocol_manager_owner_contract).await;
+    let result = protocol_manager_abi::renounce_admin(&new_protocol_manager_owner).await;
 
     assert!(
         result.is_ok(),

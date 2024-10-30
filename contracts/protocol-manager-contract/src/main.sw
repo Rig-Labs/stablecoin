@@ -269,6 +269,11 @@ impl ProtocolManager for Contract {
 
         storage.lock_redeem_collateral.write(false);
     }
+    #[storage(read, write)]
+    fn transfer_owner(new_owner: Identity) {
+        only_owner();
+        transfer_ownership(new_owner);
+    }
 }
 
 impl SRC5 for Contract {

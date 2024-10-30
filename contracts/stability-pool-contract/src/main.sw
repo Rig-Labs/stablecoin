@@ -15,7 +15,14 @@ contract;
 // Solidity reference: https://github.com/liquity/dev/blob/main/packages/contracts/contracts/StabilityPool.sol
 
 mod data_structures;
+mod events;
 use ::data_structures::{AssetContracts, Snapshots};
+use ::events::{
+    ProvideToStabilityPoolEvent,
+    StabilityPoolLiquidationEvent,
+    WithdrawFromStabilityPoolEvent,
+};
+
 use standards::src3::SRC3;
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::stability_pool_interface::StabilityPool;
@@ -183,6 +190,12 @@ impl StabilityPool for Contract {
         storage
             .total_usdf_deposits
             .write(storage.total_usdf_deposits.read() + msg_amount());
+        log(ProvideToStabilityPoolEvent {
+            user: msg_sender().unwrap(),
+            amount_to_deposit: msg_amount(),
+            initial_amount: initial_deposit,
+            compounded_amount: compounded_usdf_deposit,
+        });
         storage.lock_provide_to_stability_pool.write(false);
     }
     /*
@@ -212,6 +225,12 @@ impl StabilityPool for Contract {
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
+        log(WithdrawFromStabilityPoolEvent {
+            user: msg_sender().unwrap(),
+            amount_to_withdraw: usdf_to_withdraw,
+            initial_amount: initial_deposit,
+            compounded_amount: compounded_usdf_deposit,
+        });
         storage.lock_withdraw_from_stability_pool.write(false);
     }
     /*
@@ -246,6 +265,11 @@ impl StabilityPool for Contract {
             asset_contract,
         );
         internal_move_offset_coll_and_debt(coll_to_offset, debt_to_offset, asset_contract);
+        log(StabilityPoolLiquidationEvent {
+            asset_id: asset_contract,
+            debt_to_offset: debt_to_offset,
+            collateral_to_offset: coll_to_offset,
+        });
         storage.lock_offset.write(false);
     }
     #[storage(read)]

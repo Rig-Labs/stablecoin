@@ -18,6 +18,15 @@ abi BorrowOperations {
         oracle_contract: ContractId,
     );
 
+    #[storage(read, write)]
+    fn set_pauser(pauser: Identity);
+
+    #[storage(read, write)]
+    fn transfer_owner(new_owner: Identity);
+
+    #[storage(read, write)]
+    fn renounce_owner();
+
     #[storage(read), payable]
     fn open_trove(usdf_amount: u64, upper_hint: Identity, lower_hint: Identity);
 

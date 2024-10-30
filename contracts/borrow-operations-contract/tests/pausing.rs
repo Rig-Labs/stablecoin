@@ -13,18 +13,90 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_permissions() {
-    let (contracts, admin, mut wallets) = setup_protocol(2, false, false).await;
+    let (contracts, admin, mut wallets) = setup_protocol(5, false, false).await;
+
+    // Test set_pauser
+    let new_pauser = wallets.pop().unwrap();
+    let result = borrow_operations_abi::set_pauser(
+        &contracts.borrow_operations,
+        Identity::Address(new_pauser.address().into()),
+    )
+    .await;
+    let borrow_operations_new_pauser = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        new_pauser.clone(),
+    );
+    assert!(result.is_ok(), "Admin should be able to set a new pauser");
+
+    // Verify unauthorized set_pauser
+    let unauthorized_wallet = wallets.pop().unwrap();
+    let unauthorized_borrow_operations = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        unauthorized_wallet.clone(),
+    );
+    let result = borrow_operations_abi::set_pauser(
+        &unauthorized_borrow_operations,
+        Identity::Address(unauthorized_wallet.address().into()),
+    )
+    .await;
+    assert!(
+        result.is_err(),
+        "Unauthorized wallet should not be able to set pauser"
+    );
+
+    // Test transfer_owner
+    let new_owner = wallets.pop().unwrap();
+    let result = borrow_operations_abi::transfer_owner(
+        &contracts.borrow_operations,
+        Identity::Address(new_owner.address().into()),
+    )
+    .await;
+    assert!(result.is_ok(), "Admin should be able to transfer ownership");
+
+    // Verify old owner can't perform admin actions
+    let result = borrow_operations_abi::set_pauser(
+        &contracts.borrow_operations,
+        Identity::Address(admin.address().into()),
+    )
+    .await;
+    assert!(
+        result.is_err(),
+        "Old owner should not be able to set pauser after transfer"
+    );
+
+    // Test renounce_owner
+    let new_borrow_operations = BorrowOperations::new(
+        contracts.borrow_operations.contract_id().clone(),
+        new_owner.clone(),
+    );
+    let result = borrow_operations_abi::renounce_owner(&new_borrow_operations).await;
+    assert!(
+        result.is_ok(),
+        "New owner should be able to renounce ownership"
+    );
+
+    // Verify no owner can perform admin actions
+    let result = borrow_operations_abi::set_pauser(
+        &new_borrow_operations,
+        Identity::Address(new_owner.address().into()),
+    )
+    .await;
+    assert!(
+        result.is_err(),
+        "No owner should be able to set pauser after renouncement"
+    );
 
     let pauser = borrow_operations_abi::get_pauser(&contracts.borrow_operations)
         .await
         .unwrap();
     assert_eq!(
         pauser.value,
-        Identity::Address(admin.address().into()),
-        "Pauser should be the admin"
+        Identity::Address(new_pauser.address().into()),
+        "Pauser should be the new pauser"
     );
+
     // Test setting pause status to true
-    let _ = borrow_operations_abi::set_pause_status(&contracts.borrow_operations, true)
+    let _ = borrow_operations_abi::set_pause_status(&borrow_operations_new_pauser, true)
         .await
         .unwrap();
 
@@ -34,7 +106,7 @@ async fn test_permissions() {
     assert!(status.value, "Failed to set pause status to true");
 
     // Test setting pause status to false
-    let _ = borrow_operations_abi::set_pause_status(&contracts.borrow_operations, false)
+    let _ = borrow_operations_abi::set_pause_status(&borrow_operations_new_pauser, false)
         .await
         .unwrap();
     let status = borrow_operations_abi::get_is_paused(&contracts.borrow_operations)

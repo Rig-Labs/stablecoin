@@ -121,7 +121,7 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     .await;
 
     // Wallet 1 has collateral ratio of 110% and wallet 2 has 200% so we can liquidate it
-    trove_manager_abi::liquidate(
+    let res = trove_manager_abi::liquidate(
         &contracts.asset_contracts[0].trove_manager,
         &contracts.community_issuance,
         &contracts.stability_pool,
@@ -139,6 +139,24 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     )
     .await
     .unwrap();
+
+    let logs = res.decode_logs();
+    let liquidation_event = logs
+        .results
+        .iter()
+        .find(|log| {
+            log.as_ref()
+                .unwrap()
+                .contains("TrovePartialLiquidationEvent")
+        })
+        .expect("TrovePartialLiquidationEvent not found")
+        .as_ref()
+        .unwrap();
+
+    assert!(
+        liquidation_event.contains(&wallet1.address().hash().to_string()),
+        "TrovePartialLiquidationEvent should contain user address"
+    );
 
     let status = trove_manager_abi::get_trove_status(
         &contracts.asset_contracts[0].trove_manager,
