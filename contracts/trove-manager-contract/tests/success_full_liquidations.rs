@@ -9,7 +9,7 @@ use test_utils::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::coll_surplus_pool_abi,
         default_pool::default_pool_abi,
-        multi_trove_getter::{multi_trove_getter_abi, multi_trove_getter_utils},
+        multi_trove_getter::multi_trove_getter_utils,
         oracle::oracle_abi,
         pyth_oracle::{
             pyth_oracle_abi, pyth_price_feed, pyth_price_feed_with_time, PYTH_PRECISION,

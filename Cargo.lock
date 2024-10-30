@@ -1347,6 +1347,7 @@ dependencies = [
 name = "deploy-scripts"
 version = "0.0.0"
 dependencies = [
+ "csv",
  "dotenv",
  "fuels",
  "futures",
@@ -1354,6 +1355,7 @@ dependencies = [
  "pbr",
  "serde",
  "serde_json",
+ "tai64",
  "test-utils",
  "tokio",
 ]

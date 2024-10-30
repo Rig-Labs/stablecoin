@@ -66,7 +66,8 @@ async fn setup(
                 precision: redstone_precision,
             },
         )
-        .await;
+        .await
+        .unwrap();
 
         return (oracle, pyth, Some(redstone));
     }

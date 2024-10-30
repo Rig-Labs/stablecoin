@@ -3,7 +3,7 @@ use rand::{self, Rng};
 
 use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
-use test_utils::interfaces::sorted_troves::{self, SortedTroves};
+use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
 use test_utils::setup::common::{

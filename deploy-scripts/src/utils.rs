@@ -1,16 +1,19 @@
 pub mod utils {
+    use csv::ReaderBuilder;
     use fuels::accounts::{provider::Provider, wallet::WalletUnlocked};
     use fuels::prelude::*;
     use fuels::types::bech32::Bech32ContractId;
-    use fuels::types::{Bits256, U256};
+    use fuels::types::{Bits256, Identity, U256};
     use serde_json::json;
     use std::fs::File;
     use std::io::Write;
     use std::str::FromStr;
-    use test_utils::data_structures::{AssetContracts, AssetContractsOptionalRedstone};
+    use test_utils::data_structures::{AssetContracts, AssetContractsOptionalRedstone, PRECISION};
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
     use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
+    use test_utils::interfaces::vesting::{VestingSchedule, TOTAL_AMOUNT_VESTED};
+    use test_utils::setup::common::get_absolute_path_from_relative;
     use test_utils::{
         data_structures::ProtocolContracts,
         interfaces::{
@@ -341,5 +344,81 @@ pub mod utils {
     }
     pub fn to_hex_str(bits: &Bits256) -> String {
         format!("0x{}", hex::encode(bits.0))
+    }
+
+    pub fn load_vesting_schedules_from_csv(
+        path: &str,
+        cliff_percentage: f64,
+        seconds_to_cliff: u64,
+        seconds_vesting_duration: u64,
+        treasury_identity: Identity,
+    ) -> Vec<VestingSchedule> {
+        let absolute_path = get_absolute_path_from_relative(path);
+        let file = File::open(&absolute_path).expect("Failed to open file");
+        let mut reader = ReaderBuilder::new()
+            .flexible(true)
+            .trim(csv::Trim::All)
+            .from_reader(file);
+
+        let now_unix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
+
+        let cliff_timestamp = now_unix + seconds_to_cliff;
+        let end_timestamp = cliff_timestamp + seconds_vesting_duration;
+
+        let cliff_timestamp = tai64::Tai64::from_unix(cliff_timestamp.try_into().unwrap());
+        let end_timestamp = tai64::Tai64::from_unix(end_timestamp.try_into().unwrap());
+
+        let mut schedules = Vec::new();
+
+        for result in reader.records() {
+            let record = result.expect("Failed to read CSV record");
+            if record.len() < 5 || record[1].is_empty() {
+                continue; // Skip empty or invalid rows
+            }
+
+            println!("record: {:?}", record);
+
+            let total_amount = (record[1].replace([',', '"'], "").parse::<f64>().unwrap()
+                * PRECISION as f64) as u64;
+            let recipient = if !record[2].is_empty() {
+                Identity::Address(Address::from_str(&record[2]).unwrap())
+            } else if !record[3].is_empty() {
+                continue;
+                // ignore the recipient for now since ETH addresses are not supported yet
+                // Identity::Address(Address::from_str(&record[3]).unwrap())
+            } else {
+                continue; // Skip if both wallet addresses are empty
+            };
+
+            let schedule = VestingSchedule {
+                cliff_amount: (total_amount as f64 * cliff_percentage) as u64,
+                cliff_timestamp: cliff_timestamp.0,
+                end_timestamp: end_timestamp.0,
+                claimed_amount: 0,
+                total_amount,
+                recipient,
+            };
+
+            println!("schedule: {:?}", schedule);
+
+            schedules.push(schedule);
+        }
+        // take the sum of all total_amounts
+        let total_sum: u64 = schedules.iter().map(|s| s.total_amount).sum();
+        println!("Total sum of all vesting amounts: {}", total_sum);
+        // add one more schedule with the remaining amount
+        // TODO: find the total amount vested
+        schedules.push(VestingSchedule {
+            cliff_amount: total_sum,
+            cliff_timestamp: cliff_timestamp.0,
+            end_timestamp: end_timestamp.0,
+            claimed_amount: 0,
+            total_amount: TOTAL_AMOUNT_VESTED - total_sum,
+            recipient: treasury_identity,
+        });
+        schedules
     }
 }

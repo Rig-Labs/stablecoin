@@ -14,7 +14,7 @@ use test_utils::{
         trove_manager::trove_manager_abi,
     },
     setup::common::{add_asset, assert_within_threshold, setup_protocol},
-    utils::{print_response, with_min_borrow_fee},
+    utils::with_min_borrow_fee,
 };
 
 #[tokio::test]

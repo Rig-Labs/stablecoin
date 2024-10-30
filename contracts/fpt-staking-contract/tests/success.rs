@@ -66,7 +66,9 @@ async fn proper_staking_deposit() {
 
     let mock_token_asset_id = mock_token.contract_id().asset_id(&AssetId::zeroed().into());
 
-    fpt_staking_abi::stake(&contracts.fpt_staking, mock_token_asset_id, 1 * PRECISION).await;
+    fpt_staking_abi::stake(&contracts.fpt_staking, mock_token_asset_id, 1 * PRECISION)
+        .await
+        .unwrap();
 
     let fpt_balance = provider
         .get_asset_balance(admin.address().into(), fpt_asset_id)
@@ -133,14 +135,16 @@ async fn proper_staking_multiple_positions() {
         mock_token_asset_id,
         1 * PRECISION,
     )
-    .await;
+    .await
+    .unwrap();
 
     fpt_staking_abi::stake(
         &fpt_staking_healthy_wallet2,
         mock_token_asset_id,
         1 * PRECISION,
     )
-    .await;
+    .await
+    .unwrap();
 
     let fpt_balance_user1 = provider
         .get_asset_balance(healthy_wallet1.address().into(), fpt_asset_id)

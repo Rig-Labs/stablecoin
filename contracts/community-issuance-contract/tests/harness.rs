@@ -227,7 +227,8 @@ async fn test_admin_start_rewards_increase_transition() {
         &contracts.community_issuance,
         604800 + 1,
     )
-    .await;
+    .await
+    .unwrap();
 
     community_issuance_abi::set_current_time(
         &contracts.community_issuance,
@@ -634,7 +635,7 @@ async fn test_emissions_multiple_deposits() {
 
 #[tokio::test]
 async fn test_only_owner_can_start_rewards_increase_transition() {
-    let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
+    let (contracts, _admin, mut wallets) = setup_protocol(4, false, false).await;
 
     let attacker = wallets.pop().unwrap();
 

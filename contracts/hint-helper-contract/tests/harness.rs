@@ -1,4 +1,4 @@
-use fuels::{prelude::*, types::Identity};
+use fuels::types::Identity;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP};

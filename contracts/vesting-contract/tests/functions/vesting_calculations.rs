@@ -315,9 +315,7 @@ mod success {
 }
 
 mod failure {
-    use test_utils::interfaces::vesting::{
-        get_vesting_schedule, instantiate_vesting_contract, VestingContract,
-    };
+    use test_utils::interfaces::vesting::{get_vesting_schedule, instantiate_vesting_contract};
 
     use super::*;
 

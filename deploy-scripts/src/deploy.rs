@@ -2,7 +2,20 @@ use std::{fs::File, io::Write};
 
 use dotenv::dotenv;
 use fuels::prelude::*;
+use fuels::types::{Bits256, Identity};
 use serde_json::json;
+use std::str::FromStr;
+use test_utils::data_structures::ProtocolContracts;
+use test_utils::interfaces::hint_helper::HintHelper;
+use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
+use test_utils::interfaces::vesting;
+
+use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
+use crate::utils::utils::{is_testnet, load_vesting_schedules_from_csv, setup_wallet};
+
+use test_utils::setup::common::{
+    deploy_core_contracts, deploy_hint_helper, deploy_multi_trove_getter, initialize_core_contracts,
+};
 
 const VESTING_SCHEDULE_PATH: &str =
     "deploy-scripts/vesting/fluid_vesting_team_and_investors_test.csv";
@@ -11,23 +24,7 @@ const SECONDS_TO_CLIFF: u64 = 7 * 24 * 60 * 60; // 7 days
 const SECONDS_VESTING_DURATION: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
 
 pub mod deployment {
-
-    use fuels::types::Bits256;
-    use test_utils::data_structures::ProtocolContracts;
-    use test_utils::interfaces::hint_helper::HintHelper;
-    use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
-    use test_utils::interfaces::vesting::{self, load_vesting_schedules_from_csv};
-
-    use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
-    use crate::utils::utils::{is_testnet, setup_wallet};
-
     use super::*;
-
-    use test_utils::setup::common::{
-        deploy_core_contracts, deploy_hint_helper, deploy_multi_trove_getter,
-        initialize_core_contracts,
-    };
-
     pub async fn deploy() {
         //--------------- Deploy ---------------
         dotenv().ok();
@@ -51,11 +48,17 @@ pub mod deployment {
     pub async fn deploy_and_initialize_all_core_contracts(
         wallet: WalletUnlocked,
     ) -> ProtocolContracts<WalletUnlocked> {
+        let treasury_identity = Identity::Address(
+            Address::from_str("0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785")
+                .unwrap(),
+        );
+
         let vesting_schedules = load_vesting_schedules_from_csv(
             VESTING_SCHEDULE_PATH,
             CLIFF_PERCENTAGE,
             SECONDS_TO_CLIFF,
             SECONDS_VESTING_DURATION,
+            treasury_identity,
         );
         let mut core_contracts = deploy_core_contracts(&wallet, false, true).await;
         initialize_core_contracts(&mut core_contracts, &wallet, false, false, true).await;
