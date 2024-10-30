@@ -3,6 +3,7 @@ use deploy_scripts::{
     deploy::deployment::deploy,
     pause::{pause_protocol, unpause_protocol},
     sanity_check::sanity_check,
+    transfer_ownership::transfer_owner,
 };
 
 #[tokio::main]
@@ -10,7 +11,7 @@ pub async fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         println!(
-            "Please specify 'deploy', 'add-asset <symbol>', 'pause', 'unpause', or 'sanity-check'"
+            "Please specify 'deploy', 'add-asset <symbol>', 'pause', 'unpause', 'sanity-check', or 'transfer-owner <address>'"
         );
         return;
     }
@@ -27,8 +28,15 @@ pub async fn main() {
         "pause" => pause_protocol().await,
         "unpause" => unpause_protocol().await,
         "sanity-check" => sanity_check().await,
+        "transfer-owner" => {
+            if args.len() < 3 {
+                println!("Please specify the new owner address");
+                return;
+            }
+            transfer_owner(&args[2]).await
+        },
         _ => println!(
-            "Invalid argument. Use 'deploy', 'add-asset <symbol>', 'pause', 'unpause', or 'sanity-check'"
+            "Invalid argument. Use 'deploy', 'add-asset <symbol>', 'pause', 'unpause', 'sanity-check', or 'transfer-owner <address>'"
         ),
     }
 }

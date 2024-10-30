@@ -3,7 +3,7 @@ include .env
 export $(shell sed 's/=.*//' .env)
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-.PHONY: help tests build-and-test generate-types deploy add-asset pause unpause sanity-check
+.PHONY: help tests build-and-test generate-types deploy add-asset pause unpause sanity-check transfer-owner
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -34,3 +34,6 @@ unpause: ## Unpause the protocol
 
 sanity-check: ## Run the sanity check script
 	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run sanity-check
+
+transfer-owner: ## Transfer ownership of the protocol (usage: make transfer-owner ADDRESS=<new_owner_address>)
+	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run transfer-owner $(ADDRESS)
