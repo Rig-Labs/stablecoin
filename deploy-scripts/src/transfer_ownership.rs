@@ -1,7 +1,9 @@
 use crate::utils::utils::{is_testnet, load_core_contracts, setup_wallet};
 use dotenv::dotenv;
 use fuels::types::Identity;
-use test_utils::interfaces::borrow_operations::borrow_operations_abi;
+use test_utils::interfaces::{
+    borrow_operations::borrow_operations_abi, protocol_manager::protocol_manager_abi,
+};
 
 pub async fn transfer_owner(new_owner: &str) {
     dotenv().ok();
@@ -35,6 +37,11 @@ pub async fn transfer_owner(new_owner: &str) {
     )
     .await
     .unwrap();
+
+    let _ =
+        protocol_manager_abi::transfer_owner(&core_contracts.protocol_manager, new_owner_identity)
+            .await
+            .unwrap();
 
     println!("Ownership transferred successfully to {}", new_owner);
 }
