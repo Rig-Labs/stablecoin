@@ -24,6 +24,11 @@ pub async fn add_asset(symbol: &str) {
     let asset_constants = match (symbol.to_uppercase().as_str(), is_testnet) {
         // Testnet
         ("ETH", true) => &constants::TESTNET_ETH_CONSTANTS,
+        ("WSTETH", true) => &constants::TESTNET_WSTETH_CONSTANTS,
+        ("EZETH", true) => &constants::TESTNET_EZETH_CONSTANTS,
+        ("WEETH", true) => &constants::TESTNET_WEETH_CONSTANTS,
+        ("RSETH", true) => &constants::TESTNET_RSETH_CONSTANTS,
+        ("METH", true) => &constants::TESTNET_METH_CONSTANTS,
         // Mainnet
         ("ETH", false) => &constants::MAINNET_ETH_CONSTANTS,
         ("WSTETH", false) => &constants::MAINNET_WSTETH_CONSTANTS,
@@ -53,7 +58,7 @@ pub async fn add_asset(symbol: &str) {
             contract: ContractId::from_str(asset_constants.pyth_contract_id).unwrap(),
             price_id: Bits256::from_hex_str(asset_constants.pyth_price_id).unwrap(),
         }),
-        redstone_oracle: None,
+        redstone_oracle: None, // TODO: Add redstone oracle when it's ready
     };
 
     // Redstone oracle is not required for initialization

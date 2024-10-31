@@ -76,6 +76,52 @@ pub const TESTNET_ETH_CONSTANTS: AssetConstants = AssetConstants {
     decimals: 9,
 };
 
+pub const TESTNET_WSTETH_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "WSTETH",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_WSTETH_PRICE_ID,
+    decimals: 9,
+};
+
+pub const TESTNET_EZETH_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "EZETH",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_EZETH_PRICE_ID,
+    decimals: 9,
+};
+
+pub const TESTNET_WEETH_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "WEETH",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_WEETH_PRICE_ID,
+    decimals: 9,
+};
+
+pub const TESTNET_RSETH_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "RSETH",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_RSETH_PRICE_ID,
+    decimals: 9,
+};
+
+pub const TESTNET_METH_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "METH",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_METH_PRICE_ID,
+    decimals: 9,
+};
+
+// Mainnet
 pub const MAINNET_ETH_CONSTANTS: AssetConstants = AssetConstants {
     symbol: "ETH",
     asset_contract_id: Some(MAINNET_ASSET_CONTRACT_ID),
