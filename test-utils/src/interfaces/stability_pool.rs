@@ -154,7 +154,7 @@ pub mod stability_pool_abi {
         sorted_troves: &SortedTroves<T>,
         oracle: &Oracle<T>,
         pyth_oracle: &PythCore<T>,
-        redstone_oracle: &RedstoneCore<T>,
+        _redstone_oracle: &RedstoneCore<T>,
         trove_manager: &TroveManagerContract<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {

@@ -57,7 +57,7 @@ pub mod borrow_operations_abi {
         borrow_operations: &BorrowOperations<T>,
         oracle: &Oracle<T>,
         mock_pyth: &PythCore<T>,
-        mock_redstone: &RedstoneCore<T>,
+        _mock_redstone: &RedstoneCore<T>,
         asset_token: &Token<T>,
         usdf_token: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,

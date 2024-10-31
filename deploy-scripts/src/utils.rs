@@ -27,13 +27,18 @@ pub mod utils {
         },
     };
 
-    use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
+    use crate::constants::{
+        MAINNET_CONTRACTS_FILE, MAINNET_RPC, TESTNET_CONTRACTS_FILE, TESTNET_RPC,
+    };
     pub async fn setup_wallet() -> WalletUnlocked {
-        let rpc = match std::env::var("RPC") {
-            Ok(s) => s,
-            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
+        let network =
+            std::env::var("NETWORK").expect("NETWORK must be set to 'mainnet' or 'testnet'");
+
+        let rpc: String = match network.as_str() {
+            "mainnet" => MAINNET_RPC.to_string(),
+            "testnet" => TESTNET_RPC.to_string(),
+            _ => panic!("❌ NETWORK must be 'mainnet' or 'testnet'"),
         };
-        println!("RPC: {}", rpc);
 
         let provider = match Provider::connect(rpc).await {
             Ok(p) => p,
@@ -367,7 +372,9 @@ pub mod utils {
 
         let cliff_timestamp = now_unix + seconds_to_cliff;
         let end_timestamp = cliff_timestamp + seconds_vesting_duration;
+        let now_unix_and_5_minutes = now_unix + 5 * 60;
 
+        let now_and_5_minutes = tai64::Tai64::from_unix(now_unix_and_5_minutes.try_into().unwrap());
         let cliff_timestamp = tai64::Tai64::from_unix(cliff_timestamp.try_into().unwrap());
         let end_timestamp = tai64::Tai64::from_unix(end_timestamp.try_into().unwrap());
 
@@ -402,21 +409,21 @@ pub mod utils {
                 recipient,
             };
 
-            println!("schedule: {:?}", schedule);
-
             schedules.push(schedule);
         }
         // take the sum of all total_amounts
         let total_sum: u64 = schedules.iter().map(|s| s.total_amount).sum();
         println!("Total sum of all vesting amounts: {}", total_sum);
         // add one more schedule with the remaining amount
-        // TODO: find the total amount vested
+        let remaining_amount = TOTAL_AMOUNT_VESTED - total_sum;
+        println!("Remaining amount: {}", remaining_amount);
+        // treasury vesting schedule
         schedules.push(VestingSchedule {
-            cliff_amount: total_sum,
-            cliff_timestamp: cliff_timestamp.0,
+            cliff_amount: remaining_amount,
+            cliff_timestamp: now_and_5_minutes.0, // cliff timestamp is now + 5 minutes
             end_timestamp: end_timestamp.0,
             claimed_amount: 0,
-            total_amount: TOTAL_AMOUNT_VESTED - total_sum,
+            total_amount: remaining_amount,
             recipient: treasury_identity,
         });
         schedules

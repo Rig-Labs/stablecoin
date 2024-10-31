@@ -29,10 +29,11 @@ pub mod deployment {
     pub async fn deploy() {
         //--------------- Deploy ---------------
         dotenv().ok();
+
         let wallet = setup_wallet().await;
-        let is_testnet = is_testnet(wallet.clone()).await;
         let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
         let address = wallet.address();
+        let is_testnet = is_testnet(wallet.clone()).await;
         //--------------- WALLET ---------------
         println!("🔑 Wallet address: {}", address);
         println!("🔑 Is testnet: {}", is_testnet);
@@ -113,7 +114,6 @@ pub mod deployment {
         .unwrap();
 
         let json = json!({
-            "rpc": std::env::var("RPC").unwrap(),
             "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
             "usdf_asset_id": format!("0x{}", contracts.usdf_asset_id.to_string()),

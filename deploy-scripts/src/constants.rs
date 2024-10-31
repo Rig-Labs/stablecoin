@@ -5,6 +5,9 @@
 pub const TESTNET_CONTRACTS_FILE: &str = "testnet.contracts.json";
 pub const MAINNET_CONTRACTS_FILE: &str = "mainnet.contracts.json";
 
+pub const TESTNET_RPC: &str = "https://testnet.fuel.network/v1/playground";
+pub const MAINNET_RPC: &str = "https://mainnet.fuel.network/v1/playground";
+
 pub const TESTNET_TREASURY_IDENTITY: &str =
     "0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785";
 pub const MAINNET_TREASURY_IDENTITY: &str =

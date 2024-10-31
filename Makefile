@@ -20,20 +20,20 @@ format: ## Format the code
 
 -------Deployer Scripts-------:
 
-deploy: ## Run the deployment script for core contracts
-	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
+deploy: ## Run the deployment script for core contracts (usage: make deploy NETWORK=<mainnet|testnet>)
+	@forc build && cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run deploy
 
-add-asset: ## Run the script to add assets to the protocol (usage: make add-asset ASSET=ETH)
-	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset $(ASSET)
+add-asset: ## Run the script to add assets to the protocol (usage: make add-asset NETWORK=<mainnet|testnet> ASSET=ETH)
+	@forc build && cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run add-asset $(ASSET)
 
-pause: ## Pause the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run pause
+pause: ## Pause the protocol (usage: make pause NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run pause
 
-unpause: ## Unpause the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run unpause
+unpause: ## Unpause the protocol (usage: make unpause NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run unpause
 
-sanity-check: ## Run the sanity check script
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run sanity-check
+sanity-check: ## Run the sanity check script (usage: make sanity-check NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run sanity-check
 
-transfer-owner: ## Transfer ownership of the protocol (usage: make transfer-owner ADDRESS=<new_owner_address>)
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run transfer-owner $(ADDRESS)
+transfer-owner: ## Transfer ownership of the protocol (usage: make transfer-owner NETWORK=<mainnet|testnet> ADDRESS=<new_owner_address>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run transfer-owner $(ADDRESS)
