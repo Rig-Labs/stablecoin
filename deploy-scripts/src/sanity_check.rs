@@ -12,7 +12,7 @@ use test_utils::data_structures::PRECISION;
 
 pub async fn sanity_check() {
     dotenv().ok();
-    let collateral_amount = 4000 * PRECISION;
+    let collateral_amount = 4 * PRECISION;
     let debt = 1000 * PRECISION;
 
     let wallet = setup_wallet().await;

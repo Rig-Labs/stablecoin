@@ -19,8 +19,8 @@ pub mod fpt_staking_abi {
         fpt_staking: &FPTStaking<T>,
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
-        fpt_address: AssetId,
-        usdf_address: AssetId,
+        fpt_asset_id: AssetId,
+        usdf_asset_id: AssetId,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
@@ -29,8 +29,8 @@ pub mod fpt_staking_abi {
             .initialize(
                 protocol_manager_address,
                 borrower_operations_address,
-                fpt_address.into(),
-                usdf_address.into(),
+                fpt_asset_id.into(),
+                usdf_asset_id.into(),
             )
             .with_tx_policies(tx_params)
             .call()

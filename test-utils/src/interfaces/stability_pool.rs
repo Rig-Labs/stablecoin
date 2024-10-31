@@ -174,7 +174,7 @@ pub mod stability_pool_abi {
                 sorted_troves,
                 oracle,
                 pyth_oracle,
-                redstone_oracle,
+                // redstone_oracle,
                 trove_manager,
             ])
             .call()

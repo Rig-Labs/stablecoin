@@ -4,6 +4,11 @@
 
 pub const TESTNET_CONTRACTS_FILE: &str = "testnet.contracts.json";
 pub const MAINNET_CONTRACTS_FILE: &str = "mainnet.contracts.json";
+
+pub const TESTNET_TREASURY_IDENTITY: &str =
+    "0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785";
+pub const MAINNET_TREASURY_IDENTITY: &str =
+    "0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785";
 // Testnet
 pub const TESTNET_PYTH_CONTRACT_ID: &str =
     "0x25146735b29d4216639f7f8b1d7b921ff87a1d3051de62d6cceaacabeb33b8e7";

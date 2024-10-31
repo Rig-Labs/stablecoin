@@ -272,11 +272,7 @@ pub mod common {
             contracts.protocol_manager.contract_id().into(),
             contracts.borrow_operations.contract_id().into(),
             contracts.fpt_asset_id,
-            contracts
-                .usdf
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
+            contracts.usdf_asset_id,
         )
         .await;
         if verbose {

@@ -88,7 +88,7 @@ pub mod borrow_operations_abi {
             .with_contracts(&[
                 oracle,
                 mock_pyth,
-                mock_redstone,
+                //mock_redstone,
                 active_pool,
                 usdf_token,
                 sorted_troves,

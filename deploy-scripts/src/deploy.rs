@@ -17,13 +17,14 @@ use test_utils::setup::common::{
     deploy_core_contracts, deploy_hint_helper, deploy_multi_trove_getter, initialize_core_contracts,
 };
 
-const VESTING_SCHEDULE_PATH: &str =
-    "deploy-scripts/vesting/fluid_vesting_team_and_investors_test.csv";
-const CLIFF_PERCENTAGE: f64 = 0.0;
+const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/vesting.csv";
+const CLIFF_PERCENTAGE: f64 = 0.0; // 0% cliff
 const SECONDS_TO_CLIFF: u64 = 7 * 24 * 60 * 60; // 7 days
 const SECONDS_VESTING_DURATION: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
 
 pub mod deployment {
+    use crate::constants::{MAINNET_TREASURY_IDENTITY, TESTNET_TREASURY_IDENTITY};
+
     use super::*;
     pub async fn deploy() {
         //--------------- Deploy ---------------
@@ -36,8 +37,16 @@ pub mod deployment {
         println!("🔑 Wallet address: {}", address);
         println!("🔑 Is testnet: {}", is_testnet);
         println!("🔑 Network name: {}", network_name);
+        println!(
+            "🔑 Treasury identity: {}",
+            match is_testnet {
+                true => TESTNET_TREASURY_IDENTITY,
+                false => MAINNET_TREASURY_IDENTITY,
+            }
+        );
         //--------------- Deploy ---------------
-        let core_contracts = deploy_and_initialize_all_core_contracts(wallet.clone()).await;
+        let core_contracts =
+            deploy_and_initialize_all_core_contracts(wallet.clone(), is_testnet).await;
         let (hint_helper, multi_trove_getter) =
             deploy_frontend_helper_contracts(wallet.clone(), &core_contracts).await;
 
@@ -47,10 +56,14 @@ pub mod deployment {
 
     pub async fn deploy_and_initialize_all_core_contracts(
         wallet: WalletUnlocked,
+        is_testnet: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         let treasury_identity = Identity::Address(
-            Address::from_str("0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785")
-                .unwrap(),
+            Address::from_str(match is_testnet {
+                true => TESTNET_TREASURY_IDENTITY,
+                false => MAINNET_TREASURY_IDENTITY,
+            })
+            .unwrap(),
         );
 
         let vesting_schedules = load_vesting_schedules_from_csv(
