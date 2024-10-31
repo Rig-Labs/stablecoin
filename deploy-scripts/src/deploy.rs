@@ -32,10 +32,10 @@ pub mod deployment {
 
         let wallet = setup_wallet().await;
         let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
-        let address = wallet.address();
+        let address: Address = wallet.address().into();
         let is_testnet = is_testnet(wallet.clone()).await;
         //--------------- WALLET ---------------
-        println!("🔑 Wallet address: {}", address);
+        println!("🔑 Wallet address: 0x{}", address);
         println!("🔑 Is testnet: {}", is_testnet);
         println!("🔑 Network name: {}", network_name);
         println!(

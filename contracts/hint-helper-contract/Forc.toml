@@ -6,3 +6,6 @@ name = "hint-helper-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

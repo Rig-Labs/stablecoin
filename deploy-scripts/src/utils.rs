@@ -386,7 +386,7 @@ pub mod utils {
                 continue; // Skip empty or invalid rows
             }
 
-            println!("record: {:?}", record);
+            // println!("record: {:?}", record);
 
             let total_amount = (record[1].replace([',', '"'], "").parse::<f64>().unwrap()
                 * PRECISION as f64) as u64;
