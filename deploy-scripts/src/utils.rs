@@ -363,6 +363,7 @@ pub mod utils {
         let mut reader = ReaderBuilder::new()
             .flexible(true)
             .trim(csv::Trim::All)
+            .has_headers(false)
             .from_reader(file);
 
         let now_unix = std::time::SystemTime::now()
@@ -383,7 +384,7 @@ pub mod utils {
         for result in reader.records() {
             let record = result.expect("Failed to read CSV record");
             if record.len() < 5 || record[1].is_empty() {
-                continue; // Skip empty or invalid rows
+                panic!("Invalid row found in CSV: {:?}", record);
             }
 
             println!("record: {:?}", record);
@@ -393,11 +394,9 @@ pub mod utils {
             let recipient = if !record[2].is_empty() {
                 Identity::Address(Address::from_str(&record[2]).unwrap())
             } else if !record[3].is_empty() {
-                continue;
-                // ignore the recipient for now since ETH addresses are not supported yet
-                // Identity::Address(Address::from_str(&record[3]).unwrap())
+                panic!("ETH addresses are not supported yet: {:?}", record);
             } else {
-                continue; // Skip if both wallet addresses are empty
+                panic!("No valid wallet address found in row: {:?}", record);
             };
 
             let schedule = VestingSchedule {
