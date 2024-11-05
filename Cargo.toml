@@ -9,6 +9,7 @@ members = [
     "./contracts/borrow-operations-contract",
     "./contracts/protocol-manager-contract",
     "./contracts/token-contract",
+    "./contracts/proxy-contract",
     "./contracts/usdf-token-contract",
     "./contracts/active-pool-contract",
     "./contracts/coll-surplus-pool-contract",

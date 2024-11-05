@@ -38,6 +38,7 @@ pub mod common {
             fpt_token::fpt_token_abi,
             oracle::oracle_abi,
             protocol_manager::protocol_manager_abi,
+            proxy::Proxy,
             pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
             redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id},
             sorted_troves::sorted_troves_abi,
@@ -52,12 +53,13 @@ pub mod common {
         // accounts::rand::{self, Rng},
         prelude::*,
         programs::responses::CallResponse,
-        types::{Bits256, ContractId, Identity, U256},
+        tx::StorageSlot,
+        types::{Bits256, Bytes32, ContractId, Identity, U256},
     };
     use pbr::ProgressBar;
     // use pbr::ProgressBar;
     use rand::Rng;
-    use std::env;
+    use std::{env, str::FromStr};
 
     pub async fn setup_protocol(
         num_wallets: u64,
@@ -1421,5 +1423,87 @@ pub mod common {
 
     pub fn wait() {
         std::thread::sleep(std::time::Duration::from_secs(12));
+    }
+
+    pub async fn deploy_proxy(target: ContractId, owner: WalletUnlocked) -> Proxy<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        // Storage keys for the proxy target contract
+        // These match the storage slots defined in the proxy contract's storage layout
+        // See contracts/proxy-contract/src/main.sw storage section
+        let target_key0 =
+            Bytes32::from_str("0x7bb458adc1d118713319a5baa00a2d049dd64d2916477d2688d76970c898cd55")
+                .unwrap();
+        let target_key1 =
+            Bytes32::from_str("0x7bb458adc1d118713319a5baa00a2d049dd64d2916477d2688d76970c898cd56")
+                .unwrap();
+
+        // Convert target ContractId to storage value format
+        let target_value = Bytes32::new(target.into());
+        let mut target_value0 = Bytes32::new([0u8; 32]);
+        let mut target_value1 = Bytes32::new([0u8; 32]);
+
+        // Split target value across two storage slots
+        // First slot: Set flag byte and first part of target
+        target_value0[7] = 1; // Flag byte indicating initialized state
+        for n in 8..32 {
+            target_value0[n] = target_value[n - 8];
+        }
+        // Second slot: Remaining bytes of target
+        for n in 0..8 {
+            target_value1[n] = target_value[n + 24];
+        }
+
+        // Storage keys for the proxy owner
+        // These match the storage slots for the proxy owner state
+        let owner_key0 =
+            Bytes32::from_str("bb79927b15d9259ea316f2ecb2297d6cc8851888a98278c0a2e03e1a091ea754")
+                .unwrap();
+        let owner_key1 =
+            Bytes32::from_str("bb79927b15d9259ea316f2ecb2297d6cc8851888a98278c0a2e03e1a091ea755")
+                .unwrap();
+
+        // Convert owner address to storage value format
+        let owner_value = Bytes32::new(Address::from(owner.address()).into());
+        let mut owner_value0 = Bytes32::new([0u8; 32]);
+        let mut owner_value1 = Bytes32::new([0u8; 32]);
+
+        // Split owner value across two storage slots
+        // First slot: Set flag byte and first part of owner address
+        owner_value0[7] = 1; // Flag byte indicating initialized state
+        for n in 16..32 {
+            owner_value0[n] = owner_value[n - 16];
+        }
+        // Second slot: Remaining bytes of owner address
+        for n in 0..16 {
+            owner_value1[n] = owner_value[n + 16];
+        }
+
+        // Create storage configuration with the initialized slots
+        let storage_slots = [
+            StorageSlot::new(target_key0, target_value0),
+            StorageSlot::new(target_key1, target_value1),
+            StorageSlot::new(owner_key0, owner_value0),
+            StorageSlot::new(owner_key1, owner_value1),
+        ];
+        let storage_configuration =
+            StorageConfiguration::default().add_slot_overrides(storage_slots);
+
+        // Deploy the proxy contract with the initialized storage
+        let contract_configuration =
+            LoadConfiguration::default().with_storage_configuration(storage_configuration);
+
+        let contract_id = Contract::load_from(
+            &get_absolute_path_from_relative(PROXY_CONTRACT_BINARY_PATH),
+            contract_configuration,
+        )
+        .unwrap()
+        .with_salt(salt)
+        .deploy(&owner, TxPolicies::default())
+        .await
+        .unwrap();
+
+        Proxy::new(contract_id, owner)
     }
 }

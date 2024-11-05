@@ -9,6 +9,7 @@ pub mod hint_helper;
 pub mod multi_trove_getter;
 pub mod oracle;
 pub mod protocol_manager;
+pub mod proxy;
 pub mod pyth_oracle;
 pub mod redstone_oracle;
 pub mod sorted_troves;
