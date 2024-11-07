@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         community_issuance::{community_issuance_abi, CommunityIssuance},
@@ -444,17 +444,26 @@ async fn test_emissions_multiple_deposits() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
-    let borrow_operations_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet2.clone(),
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
-    let borrow_operations_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet3.clone(),
+    let borrow_operations_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;

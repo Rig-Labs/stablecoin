@@ -1,6 +1,6 @@
 use fuels::types::{Address, Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         oracle::oracle_abi,
@@ -32,9 +32,12 @@ async fn fails_to_liquidate_trove_not_under_mcr() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(

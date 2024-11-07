@@ -16,6 +16,8 @@ abigen!(Contract(
 
 pub mod stability_pool_abi {
 
+    use crate::data_structures::ContractInstance;
+
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},
@@ -151,7 +153,7 @@ pub mod stability_pool_abi {
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &USDFToken<T>,
         mock_token: &Token<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         oracle: &Oracle<T>,
         pyth_oracle: &PythCore<T>,
         _redstone_oracle: &RedstoneCore<T>,
@@ -171,11 +173,22 @@ pub mod stability_pool_abi {
                 usdf_token,
                 mock_token,
                 community_issuance,
-                sorted_troves,
+                &sorted_troves.contract,
                 oracle,
                 pyth_oracle,
                 // redstone_oracle,
                 trove_manager,
+            ])
+            .with_contract_ids(&[
+                sorted_troves.contract.contract_id().into(),
+                sorted_troves.implementation_id.into(),
+                trove_manager.contract_id().into(),
+                oracle.contract_id().into(),
+                pyth_oracle.contract_id().into(),
+                // redstone_oracle.contract_id().into(),
+                usdf_token.contract_id().into(),
+                mock_token.contract_id().into(),
+                community_issuance.contract_id().into(),
             ])
             .call()
             .await

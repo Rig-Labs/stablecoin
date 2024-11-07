@@ -1,7 +1,7 @@
 use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
-    data_structures::{POST_LIQUIDATION_COLLATERAL_RATIO, PRECISION},
+    data_structures::{ContractInstance, POST_LIQUIDATION_COLLATERAL_RATIO, PRECISION},
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -49,14 +49,20 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet2.clone(),
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -271,19 +277,28 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     )
     .await;
 
-    let borrow_operations_liquidated_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations_liquidated_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let starting_col: u64 = 12_000 * PRECISION;
@@ -613,19 +628,28 @@ async fn proper_partial_liquidation_empty_sp() {
     )
     .await;
 
-    let borrow_operations_liquidated_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations_liquidated_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let starting_col: u64 = 12_000 * PRECISION;

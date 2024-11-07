@@ -3,7 +3,7 @@ use std::cmp::min;
 use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -52,14 +52,20 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     )
     .await;
 
-    let borrow_operations_liquidated_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations_liquidated_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let usdf_deposit_to_be_liquidated = 1_000 * PRECISION;
@@ -308,19 +314,28 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     )
     .await;
 
-    let borrow_operations_liquidated_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations_liquidated_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -604,19 +619,28 @@ async fn proper_full_liquidation_empty_sp() {
     )
     .await;
 
-    let borrow_operations_liquidated_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations_liquidated_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -844,8 +868,11 @@ async fn proper_full_liquidation_empty_sp() {
 async fn test_trove_sorting_after_liquidation_and_rewards() {
     let (contracts, admin, mut wallets) = setup_protocol(5, false, false).await;
 
-    let multi_trove_getter =
-        deploy_multi_trove_getter(&admin, &contracts.sorted_troves.contract_id().into()).await;
+    let multi_trove_getter = deploy_multi_trove_getter(
+        &admin,
+        &contracts.sorted_troves.contract.contract_id().into(),
+    )
+    .await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -868,17 +895,26 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
         .await;
     }
 
-    let borrow_operations_a = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet_a.clone(),
+    let borrow_operations_a = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet_a.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
-    let borrow_operations_b = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet_b.clone(),
+    let borrow_operations_b = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet_b.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
-    let borrow_operations_c = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet_c.clone(),
+    let borrow_operations_c = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet_c.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     // Open troveA

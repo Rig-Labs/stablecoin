@@ -1,6 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         coll_surplus_pool::{coll_surplus_pool_abi, CollSurplusPool},
@@ -35,9 +35,12 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
     )
     .await;
 
-    let borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     borrow_operations_abi::open_trove(
@@ -61,9 +64,12 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
 
     // At least one healthy trove needed for liquidation
     let healthy_wallet = wallets.pop().unwrap();
-    let healthy_wallet_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet.clone(),
+    let healthy_wallet_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     token_abi::mint_to_id(

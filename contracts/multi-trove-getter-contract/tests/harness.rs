@@ -12,8 +12,11 @@ async fn test_get_multiple_sorted_troves() {
     let (contracts, _admin, mut wallets) = setup_protocol(20, false, false).await;
     let wallet = wallets.pop().unwrap();
 
-    let multi_trove_getter =
-        deploy_multi_trove_getter(&wallet, &contracts.sorted_troves.contract_id().into()).await;
+    let multi_trove_getter = deploy_multi_trove_getter(
+        &wallet,
+        &contracts.sorted_troves.contract.contract_id().into(),
+    )
+    .await;
 
     // create 10 troves each with 600 USDF debt and n * 1000 collateral
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;

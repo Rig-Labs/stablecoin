@@ -225,7 +225,10 @@ pub mod utils {
             community_issuance,
             vesting_contract,
             coll_surplus_pool,
-            sorted_troves,
+            sorted_troves: ContractInstance::new(
+                sorted_troves.clone(),
+                sorted_troves.contract_id().into(), // TODO: Remove this
+            ),
             default_pool,
             active_pool,
         };

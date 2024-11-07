@@ -35,7 +35,7 @@ pub struct ProtocolContracts<T: Account> {
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
     pub fpt_staking: FPTStaking<T>,
     pub coll_surplus_pool: CollSurplusPool<T>,
-    pub sorted_troves: SortedTroves<T>,
+    pub sorted_troves: ContractInstance<SortedTroves<T>>,
     pub default_pool: DefaultPool<T>,
     pub active_pool: ActivePool<T>,
     pub fpt_token: FPTToken<T>,
@@ -91,4 +91,85 @@ pub struct RedstoneConfig {
     pub contract: ContractId,
     pub price_id: U256,
     pub precision: u32,
+}
+
+impl<T: Account> ProtocolContracts<T> {
+    pub fn print_contract_ids(&self) {
+        println!(
+            "Borrow Operations Contract ID: {:?}",
+            self.borrow_operations.contract.contract_id()
+        );
+        println!(
+            "Borrow Operations Implementation ID: {:?}",
+            self.borrow_operations.implementation_id
+        );
+        println!("USDF Token Contract ID: {:?}", self.usdf.contract_id());
+        println!(
+            "Stability Pool Contract ID: {:?}",
+            self.stability_pool.contract_id()
+        );
+        println!(
+            "Protocol Manager Contract ID: {:?}",
+            self.protocol_manager.contract_id()
+        );
+        for asset_contract in &self.asset_contracts {
+            println!(
+                "Asset Contract ID: {:?}",
+                asset_contract.asset.contract_id()
+            );
+            println!(
+                "Oracle Contract ID: {:?}",
+                asset_contract.oracle.contract_id()
+            );
+            println!(
+                "Mock Pyth Oracle Contract ID: {:?}",
+                asset_contract.mock_pyth_oracle.contract_id()
+            );
+            println!(
+                "Mock Redstone Oracle Contract ID: {:?}",
+                asset_contract.mock_redstone_oracle.contract_id()
+            );
+            println!(
+                "Trove Manager Contract ID: {:?}",
+                asset_contract.trove_manager.contract_id()
+            );
+        }
+        println!(
+            "FPT Staking Contract ID: {:?}",
+            self.fpt_staking.contract_id()
+        );
+        println!(
+            "Coll Surplus Pool Contract ID: {:?}",
+            self.coll_surplus_pool.contract_id()
+        );
+        println!(
+            "Sorted Troves Contract ID: {:?}",
+            self.sorted_troves.contract.contract_id()
+        );
+        println!(
+            "Sorted Troves Implementation ID: {:?}",
+            self.sorted_troves.implementation_id
+        );
+        println!(
+            "Default Pool Contract ID: {:?}",
+            self.default_pool.contract_id()
+        );
+        println!(
+            "Active Pool Contract ID: {:?}",
+            self.active_pool.contract_id()
+        );
+        println!("FPT Token Contract ID: {:?}", self.fpt_token.contract_id());
+        println!(
+            "Community Issuance Contract ID: {:?}",
+            self.community_issuance.contract_id()
+        );
+        println!(
+            "Vesting Contract ID: {:?}",
+            self.vesting_contract.contract.contract_id()
+        );
+        println!(
+            "Vesting Implementation ID: {:?}",
+            self.vesting_contract.implementation_id
+        );
+    }
 }

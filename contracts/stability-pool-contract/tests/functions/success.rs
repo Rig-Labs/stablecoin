@@ -1,7 +1,7 @@
 use crate::utils::setup::setup;
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, borrow_operations_utils, BorrowOperations},
         oracle::oracle_abi,
@@ -284,9 +284,12 @@ async fn proper_one_sp_depositor_position() {
     .await
     .unwrap();
 
-    let liq_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let liq_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -480,9 +483,12 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    let liq_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let liq_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -703,9 +709,12 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .await
     .unwrap();
 
-    let liq_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        liquidated_wallet.clone(),
+    let liq_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            liquidated_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(

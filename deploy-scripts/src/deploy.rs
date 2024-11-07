@@ -94,9 +94,11 @@ pub mod deployment {
         core_contracts: &ProtocolContracts<WalletUnlocked>,
     ) -> (HintHelper<WalletUnlocked>, MultiTroveGetter<WalletUnlocked>) {
         let hint_helper = deploy_hint_helper(&wallet).await;
-        let multi_trove_getter =
-            deploy_multi_trove_getter(&wallet, &core_contracts.sorted_troves.contract_id().into())
-                .await;
+        let multi_trove_getter = deploy_multi_trove_getter(
+            &wallet,
+            &core_contracts.sorted_troves.contract.contract_id().into(),
+        )
+        .await;
 
         return (hint_helper, multi_trove_getter);
     }
@@ -126,7 +128,7 @@ pub mod deployment {
             "coll_surplus_pool": contracts.coll_surplus_pool.contract_id().to_string(),
             "default_pool": contracts.default_pool.contract_id().to_string(),
             "active_pool": contracts.active_pool.contract_id().to_string(),
-            "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
+            "sorted_troves": contracts.sorted_troves.contract.contract_id().to_string(),
             "vesting_contract": contracts.vesting_contract.contract.contract_id().to_string(),
             "hint_helper": hint_helper.contract_id().to_string(),
             "multi_trove_getter": multi_trove_getter.contract_id().to_string(),

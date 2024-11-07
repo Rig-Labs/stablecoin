@@ -20,12 +20,12 @@ async fn proper_intialize() {
 
     assert_eq!(
         vesting_contract,
-        contracts.vesting_contract.contract_id().into()
+        contracts.vesting_contract.contract.contract_id().into()
     );
 
     let fpt_balance_vesting = provider
         .get_contract_asset_balance(
-            contracts.vesting_contract.contract_id().into(),
+            contracts.vesting_contract.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await

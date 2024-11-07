@@ -34,7 +34,7 @@ mod success {
             recipient_identity,
         )];
 
-        let res = instantiate_vesting_contract(
+        instantiate_vesting_contract(
             &vest,
             &asset
                 .contract_id()

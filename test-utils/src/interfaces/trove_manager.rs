@@ -23,6 +23,8 @@ pub mod trove_manager_abi {
         types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
 
+    use crate::data_structures::ContractInstance;
+
     use super::*;
 
     pub async fn get_nominal_icr<T: Account>(
@@ -44,7 +46,7 @@ pub mod trove_manager_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
@@ -64,12 +66,25 @@ pub mod trove_manager_abi {
                 oracle,
                 pyth,
                 redstone,
-                sorted_troves,
+                &sorted_troves.contract,
                 active_pool,
                 default_pool,
                 coll_surplus_pool,
                 usdf,
                 community_issuance,
+            ])
+            .with_contract_ids(&[
+                sorted_troves.contract.contract_id().into(),
+                sorted_troves.implementation_id.into(),
+                stability_pool.contract_id().into(),
+                oracle.contract_id().into(),
+                pyth.contract_id().into(),
+                redstone.contract_id().into(),
+                active_pool.contract_id().into(),
+                default_pool.contract_id().into(),
+                coll_surplus_pool.contract_id().into(),
+                usdf.contract_id().into(),
+                community_issuance.contract_id().into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
@@ -83,7 +98,7 @@ pub mod trove_manager_abi {
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
@@ -103,12 +118,25 @@ pub mod trove_manager_abi {
                 oracle,
                 pyth,
                 redstone,
-                sorted_troves,
+                &sorted_troves.contract,
                 active_pool,
                 default_pool,
                 coll_surplus_pool,
                 usdf,
                 community_issuance,
+            ])
+            .with_contract_ids(&[
+                sorted_troves.contract.contract_id().into(),
+                sorted_troves.implementation_id.into(),
+                stability_pool.contract_id().into(),
+                oracle.contract_id().into(),
+                pyth.contract_id().into(),
+                redstone.contract_id().into(),
+                active_pool.contract_id().into(),
+                default_pool.contract_id().into(),
+                coll_surplus_pool.contract_id().into(),
+                usdf.contract_id().into(),
+                community_issuance.contract_id().into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
@@ -284,14 +312,15 @@ pub mod trove_manager_utils {
     };
 
     use crate::{
-        interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
+        data_structures::ContractInstance, interfaces::sorted_troves::sorted_troves_abi,
+        setup::common::assert_within_threshold,
     };
 
     use super::*;
 
     pub async fn set_coll_and_debt_insert<T: Account>(
         trove_manager: &TroveManagerContract<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         coll: u64,
         debt: u64,

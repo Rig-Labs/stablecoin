@@ -19,6 +19,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::usdf_token::USDFToken;
     use data_structures::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
+    use fuels::types::bech32::Bech32ContractId;
     use fuels::types::errors::Error;
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::{Address, AssetId};
@@ -74,11 +75,9 @@ pub mod protocol_manager_abi {
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
-        println!("impl: {:?}", borrow_operations.implementation_id);
-        println!("contract: {:?}", borrow_operations.contract.contract_id());
         protocol_manager
             .methods()
             .register_asset(asset.into(), trove_manager, oracle)
@@ -91,9 +90,20 @@ pub mod protocol_manager_abi {
                 coll_surplus_pool,
                 default_pool,
                 active_pool,
-                sorted_troves,
+                &sorted_troves.contract,
             ])
-            .with_contract_ids(&[borrow_operations.implementation_id.into()])
+            .with_contract_ids(&[
+                borrow_operations.contract.contract_id().into(),
+                borrow_operations.implementation_id.into(),
+                sorted_troves.implementation_id.into(),
+                sorted_troves.contract.contract_id().into(),
+                coll_surplus_pool.contract_id().into(),
+                default_pool.contract_id().into(),
+                active_pool.contract_id().into(),
+                fpt_staking.contract_id().into(),
+                usdf.contract_id().into(),
+                stability_pool.contract_id().into(),
+            ])
             .call()
             .await
     }
@@ -110,7 +120,7 @@ pub mod protocol_manager_abi {
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
-        sorted_troves: &SortedTroves<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         aswith_contracts: &Vec<AssetContracts<T>>,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default()
@@ -140,7 +150,24 @@ pub mod protocol_manager_abi {
         with_contracts.push(default_pool);
         with_contracts.push(active_pool);
         with_contracts.push(usdf);
-        with_contracts.push(sorted_troves);
+        with_contracts.push(&sorted_troves.contract);
+
+        let mut with_contract_ids: Vec<Bech32ContractId> = Vec::new();
+        with_contract_ids.push(sorted_troves.contract.contract_id().into());
+        with_contract_ids.push(sorted_troves.implementation_id.into());
+        with_contract_ids.push(fpt_staking.contract_id().into());
+        with_contract_ids.push(coll_surplus_pool.contract_id().into());
+        with_contract_ids.push(default_pool.contract_id().into());
+        with_contract_ids.push(active_pool.contract_id().into());
+        with_contract_ids.push(usdf.contract_id().into());
+        with_contract_ids.push(sorted_troves.contract.contract_id().into());
+
+        for contracts in aswith_contracts.iter() {
+            with_contract_ids.push(contracts.trove_manager.contract_id().into());
+            with_contract_ids.push(contracts.oracle.contract_id().into());
+            with_contract_ids.push(contracts.mock_pyth_oracle.contract_id().into());
+            with_contract_ids.push(contracts.mock_redstone_oracle.contract_id().into());
+        }
 
         protocol_manager
             .methods()
@@ -154,6 +181,7 @@ pub mod protocol_manager_abi {
             .call_params(call_params)
             .unwrap()
             .with_contracts(&with_contracts)
+            .with_contract_ids(&with_contract_ids.to_vec())
             .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
             .call()
             .await

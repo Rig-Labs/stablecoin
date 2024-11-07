@@ -1,6 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
@@ -176,9 +176,12 @@ async fn proper_staking_multiple_positions() {
 
     // println!("Asset balance user {}", asset_user_balance);
 
-    let borrow_operations_healthy_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let borrow_operations_healthy_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
