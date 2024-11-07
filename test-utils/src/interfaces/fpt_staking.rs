@@ -9,6 +9,7 @@ abigen!(Contract(
 pub mod fpt_staking_abi {
 
     use super::*;
+    use crate::data_structures::ContractInstance;
     use crate::interfaces::token::Token;
     use crate::interfaces::usdf_token::USDFToken;
     use fuels::prelude::{Account, AssetId, CallParameters, Error};
@@ -77,7 +78,7 @@ pub mod fpt_staking_abi {
 
     pub async fn unstake<T: Account>(
         fpt_staking: &FPTStaking<T>,
-        usdf_token: &USDFToken<T>,
+        usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
         fpt_token: &Token<T>,
         amount: u64,
@@ -91,7 +92,13 @@ pub mod fpt_staking_abi {
             .methods()
             .unstake(amount)
             .with_tx_policies(tx_params)
-            .with_contracts(&[usdf_token, mock_token, fpt_token])
+            .with_contracts(&[&usdf_token.contract, mock_token, fpt_token])
+            .with_contract_ids(&[
+                usdf_token.contract.contract_id().into(),
+                usdf_token.implementation_id.into(),
+                mock_token.contract_id().into(),
+                fpt_token.contract_id().into(),
+            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
             .call()
             .await

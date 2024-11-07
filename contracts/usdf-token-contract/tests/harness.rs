@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         active_pool::{active_pool_abi, ActivePool},
         default_pool::{default_pool_abi, DefaultPool},
@@ -224,8 +224,10 @@ async fn fails_unauthorized_usdf_operations() {
     let attacker = wallets.pop().unwrap();
 
     // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker =
-        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+    let usdf_token_attacker = ContractInstance::new(
+        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
+        contracts.usdf.implementation_id,
+    );
 
     // Try to add a trove manager using the attacker's wallet
     let result =
@@ -247,8 +249,10 @@ async fn fails_unauthorized_usdf_operations() {
     }
 
     // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker =
-        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+    let usdf_token_attacker = ContractInstance::new(
+        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
+        contracts.usdf.implementation_id,
+    );
 
     // Test 1: Unauthorized add_trove_manager
     let result =

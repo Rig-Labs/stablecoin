@@ -69,13 +69,16 @@ pub mod stability_pool_abi {
     pub async fn provide_to_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
         community_issuance: &CommunityIssuance<T>,
-        usdf_token: &USDFToken<T>,
+        usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
-        let usdf_asset_id = usdf_token.contract_id().asset_id(&AssetId::zeroed().into());
+        let usdf_asset_id = usdf_token
+            .contract
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into());
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
@@ -88,7 +91,13 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
-            .with_contracts(&[usdf_token, mock_token, community_issuance])
+            .with_contracts(&[&usdf_token.contract, mock_token, community_issuance])
+            .with_contract_ids(&[
+                usdf_token.contract.contract_id().into(),
+                usdf_token.implementation_id.into(),
+                mock_token.contract_id().into(),
+                community_issuance.contract_id().into(),
+            ])
             .call()
             .await
     }
@@ -151,7 +160,7 @@ pub mod stability_pool_abi {
     pub async fn withdraw_from_stability_pool<T: Account>(
         stability_pool: &StabilityPool<T>,
         community_issuance: &CommunityIssuance<T>,
-        usdf_token: &USDFToken<T>,
+        usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         oracle: &Oracle<T>,
@@ -170,7 +179,7 @@ pub mod stability_pool_abi {
             .with_tx_policies(tx_params)
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
             .with_contracts(&[
-                usdf_token,
+                &usdf_token.contract,
                 mock_token,
                 community_issuance,
                 &sorted_troves.contract,
@@ -186,7 +195,8 @@ pub mod stability_pool_abi {
                 oracle.contract_id().into(),
                 pyth_oracle.contract_id().into(),
                 // redstone_oracle.contract_id().into(),
-                usdf_token.contract_id().into(),
+                usdf_token.contract.contract_id().into(),
+                usdf_token.implementation_id.into(),
                 mock_token.contract_id().into(),
                 community_issuance.contract_id().into(),
             ])

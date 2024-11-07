@@ -63,6 +63,7 @@ async fn proper_creating_trove() {
             admin.address().into(),
             contracts
                 .usdf
+                .contract
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
@@ -439,11 +440,7 @@ async fn proper_increase_debt() {
 
     let provider = admin.provider().unwrap();
 
-    let usdf_asset_id: AssetId = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -596,11 +593,7 @@ async fn proper_decrease_debt() {
 
     let provider = admin.provider().unwrap();
 
-    let usdf_asset_id = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id = contracts.usdf_asset_id;
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 800 * PRECISION;
@@ -945,11 +938,7 @@ async fn proper_close_trove() {
     .unwrap();
 
     // Transfering to cover the fee
-    let usdf_asset_id: AssetId = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
     let amount = borrow_amount1 / 200;
     let tx_parms = TxPolicies::default()
         .with_tip(1)
@@ -1123,14 +1112,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .unwrap();
 
     let usdf_balance = provider
-        .get_asset_balance(
-            admin.address().into(),
-            contracts
-                .usdf
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
-        )
+        .get_asset_balance(admin.address().into(), contracts.usdf_asset_id)
         .await
         .unwrap();
 
@@ -1285,14 +1267,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .unwrap();
 
     let usdf_balance = provider
-        .get_asset_balance(
-            admin.address().into(),
-            contracts
-                .usdf
-                .contract_id()
-                .asset_id(&AssetId::zeroed().into())
-                .into(),
-        )
+        .get_asset_balance(admin.address().into(), contracts.usdf_asset_id)
         .await
         .unwrap();
 
@@ -1369,13 +1344,7 @@ async fn proper_creating_trove_with_2nd_asset() {
 
     // println!("{:?}", hex_string);
 
-    println!(
-        "Expected: {:?}",
-        contracts
-            .usdf
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into())
-    );
+    println!("Expected: {:?}", contracts.usdf_asset_id);
 
     let _res = borrow_operations_abi::close_trove(
         &contracts.borrow_operations,

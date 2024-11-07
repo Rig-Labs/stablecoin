@@ -29,7 +29,7 @@ impl<C> ContractInstance<C> {
 
 pub struct ProtocolContracts<T: Account> {
     pub borrow_operations: ContractInstance<BorrowOperations<T>>,
-    pub usdf: USDFToken<T>,
+    pub usdf: ContractInstance<USDFToken<T>>,
     pub stability_pool: StabilityPool<T>,
     pub protocol_manager: ProtocolManager<T>,
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
@@ -103,7 +103,14 @@ impl<T: Account> ProtocolContracts<T> {
             "Borrow Operations Implementation ID: {:?}",
             self.borrow_operations.implementation_id
         );
-        println!("USDF Token Contract ID: {:?}", self.usdf.contract_id());
+        println!(
+            "USDF Token Contract ID: {:?}",
+            self.usdf.contract.contract_id()
+        );
+        println!(
+            "USDF Token Implementation ID: {:?}",
+            self.usdf.implementation_id
+        );
         println!(
             "Stability Pool Contract ID: {:?}",
             self.stability_pool.contract_id()

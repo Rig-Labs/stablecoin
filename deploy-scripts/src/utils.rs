@@ -14,6 +14,7 @@ pub mod utils {
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
     use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
+    use test_utils::interfaces::usdf_token::USDFToken;
     use test_utils::interfaces::vesting::{VestingSchedule, TOTAL_AMOUNT_VESTED};
     use test_utils::setup::common::get_absolute_path_from_relative;
     use test_utils::{
@@ -214,7 +215,10 @@ pub mod utils {
 
         let protocol_contracts = ProtocolContracts {
             borrow_operations,
-            usdf,
+            usdf: ContractInstance::new(
+                USDFToken::new(usdf.contract_id(), wallet.clone()),
+                usdf.contract_id().into(), //remove this later
+            ),
             stability_pool,
             protocol_manager,
             asset_contracts,

@@ -89,11 +89,7 @@ async fn proper_staking_multiple_positions() {
         .contract_id()
         .asset_id(&AssetId::zeroed().into())
         .into();
-    let usdf_asset_id = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id = contracts.usdf_asset_id;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();

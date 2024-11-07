@@ -520,11 +520,7 @@ async fn proper_many_depositors_distribution() {
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
 
     admin
@@ -746,11 +742,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;

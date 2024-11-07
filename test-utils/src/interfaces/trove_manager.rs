@@ -50,7 +50,7 @@ pub mod trove_manager_abi {
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
-        usdf: &USDFToken<T>,
+        usdf: &ContractInstance<USDFToken<T>>,
         ids: Vec<Identity>,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -70,7 +70,7 @@ pub mod trove_manager_abi {
                 active_pool,
                 default_pool,
                 coll_surplus_pool,
-                usdf,
+                &usdf.contract,
                 community_issuance,
             ])
             .with_contract_ids(&[
@@ -83,7 +83,8 @@ pub mod trove_manager_abi {
                 active_pool.contract_id().into(),
                 default_pool.contract_id().into(),
                 coll_surplus_pool.contract_id().into(),
-                usdf.contract_id().into(),
+                usdf.contract.contract_id().into(),
+                usdf.implementation_id.into(),
                 community_issuance.contract_id().into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
@@ -102,7 +103,7 @@ pub mod trove_manager_abi {
         active_pool: &ActivePool<T>,
         default_pool: &DefaultPool<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
-        usdf: &USDFToken<T>,
+        usdf: &ContractInstance<USDFToken<T>>,
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -122,7 +123,7 @@ pub mod trove_manager_abi {
                 active_pool,
                 default_pool,
                 coll_surplus_pool,
-                usdf,
+                &usdf.contract,
                 community_issuance,
             ])
             .with_contract_ids(&[
@@ -135,7 +136,8 @@ pub mod trove_manager_abi {
                 active_pool.contract_id().into(),
                 default_pool.contract_id().into(),
                 coll_surplus_pool.contract_id().into(),
-                usdf.contract_id().into(),
+                usdf.contract.contract_id().into(),
+                usdf.implementation_id.into(),
                 community_issuance.contract_id().into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))

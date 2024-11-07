@@ -70,7 +70,7 @@ pub mod protocol_manager_abi {
         oracle: ContractId,
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         stability_pool: &StabilityPool<T>,
-        usdf: &USDFToken<T>,
+        usdf: &ContractInstance<USDFToken<T>>,
         fpt_staking: &FPTStaking<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
@@ -85,7 +85,7 @@ pub mod protocol_manager_abi {
             .with_contracts(&[
                 &borrow_operations.contract,
                 stability_pool,
-                usdf,
+                &usdf.contract,
                 fpt_staking,
                 coll_surplus_pool,
                 default_pool,
@@ -101,7 +101,8 @@ pub mod protocol_manager_abi {
                 default_pool.contract_id().into(),
                 active_pool.contract_id().into(),
                 fpt_staking.contract_id().into(),
-                usdf.contract_id().into(),
+                usdf.contract.contract_id().into(),
+                usdf.implementation_id.into(),
                 stability_pool.contract_id().into(),
             ])
             .call()
@@ -115,7 +116,7 @@ pub mod protocol_manager_abi {
         partial_redemption_hint: u64,
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
-        usdf: &USDFToken<T>,
+        usdf: &ContractInstance<USDFToken<T>>,
         fpt_staking: &FPTStaking<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
@@ -128,6 +129,7 @@ pub mod protocol_manager_abi {
             .with_witness_limit(2000000)
             .with_script_gas_limit(2000000);
         let usdf_asset_id = usdf
+            .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
@@ -149,7 +151,7 @@ pub mod protocol_manager_abi {
         with_contracts.push(coll_surplus_pool);
         with_contracts.push(default_pool);
         with_contracts.push(active_pool);
-        with_contracts.push(usdf);
+        with_contracts.push(&usdf.contract);
         with_contracts.push(&sorted_troves.contract);
 
         let mut with_contract_ids: Vec<Bech32ContractId> = Vec::new();
@@ -159,7 +161,8 @@ pub mod protocol_manager_abi {
         with_contract_ids.push(coll_surplus_pool.contract_id().into());
         with_contract_ids.push(default_pool.contract_id().into());
         with_contract_ids.push(active_pool.contract_id().into());
-        with_contract_ids.push(usdf.contract_id().into());
+        with_contract_ids.push(usdf.contract.contract_id().into());
+        with_contract_ids.push(usdf.implementation_id.into());
         with_contract_ids.push(sorted_troves.contract.contract_id().into());
 
         for contracts in aswith_contracts.iter() {
