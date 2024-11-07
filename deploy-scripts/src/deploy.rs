@@ -77,7 +77,7 @@ pub mod deployment {
         let mut core_contracts = deploy_core_contracts(&wallet, false, true).await;
         initialize_core_contracts(&mut core_contracts, &wallet, false, false, true).await;
 
-        vesting::instantiate_vesting_contract(
+        vesting::vesting_abi::instantiate_vesting_contract(
             &core_contracts.vesting_contract,
             &core_contracts.fpt_asset_id,
             vesting_schedules,
@@ -114,7 +114,7 @@ pub mod deployment {
         .unwrap();
 
         let json = json!({
-            "borrow_operations": contracts.borrow_operations.contract_id().to_string(),
+            "borrow_operations": contracts.borrow_operations.contract.contract_id().to_string(),
             "usdf": contracts.usdf.contract_id().to_string(),
             "usdf_asset_id": format!("0x{}", contracts.usdf_asset_id.to_string()),
             "stability_pool": contracts.stability_pool.contract_id().to_string(),
@@ -127,7 +127,7 @@ pub mod deployment {
             "default_pool": contracts.default_pool.contract_id().to_string(),
             "active_pool": contracts.active_pool.contract_id().to_string(),
             "sorted_troves": contracts.sorted_troves.contract_id().to_string(),
-            "vesting_contract": contracts.vesting_contract.contract_id().to_string(),
+            "vesting_contract": contracts.vesting_contract.contract.contract_id().to_string(),
             "hint_helper": hint_helper.contract_id().to_string(),
             "multi_trove_getter": multi_trove_getter.contract_id().to_string(),
             "asset_contracts": contracts.asset_contracts.iter().map(|asset_contracts| {

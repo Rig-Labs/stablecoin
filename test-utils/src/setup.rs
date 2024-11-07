@@ -25,8 +25,8 @@ pub mod common {
     use super::*;
     use crate::{
         data_structures::{
-            AssetContracts, AssetContractsOptionalRedstone, ExistingAssetContracts,
-            ProtocolContracts, RedstoneConfig, PRECISION,
+            AssetContracts, AssetContractsOptionalRedstone, ContractInstance,
+            ExistingAssetContracts, ProtocolContracts, RedstoneConfig, PRECISION,
         },
         interfaces::{
             active_pool::active_pool_abi,
@@ -121,6 +121,7 @@ pub mod common {
         let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(wallet).await;
+
         if verbose {
             pb.inc();
         }
@@ -207,7 +208,7 @@ pub mod common {
         if !use_test_fpt {
             fpt_token_abi::initialize(
                 &contracts.fpt_token,
-                &contracts.vesting_contract,
+                &contracts.vesting_contract.contract,
                 &contracts.community_issuance,
             )
             .await;
@@ -233,7 +234,7 @@ pub mod common {
             &contracts.usdf,
             contracts.protocol_manager.contract_id().into(),
             Identity::ContractId(contracts.stability_pool.contract_id().into()),
-            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
+            Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -272,7 +273,7 @@ pub mod common {
         fpt_staking_abi::initialize(
             &contracts.fpt_staking,
             contracts.protocol_manager.contract_id().into(),
-            contracts.borrow_operations.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
             contracts.fpt_asset_id,
             contracts.usdf_asset_id,
         )
@@ -283,7 +284,7 @@ pub mod common {
 
         protocol_manager_abi::initialize(
             &contracts.protocol_manager,
-            contracts.borrow_operations.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
             contracts.stability_pool.contract_id().into(),
             contracts.fpt_staking.contract_id().into(),
             contracts.usdf.contract_id().into(),
@@ -300,7 +301,7 @@ pub mod common {
 
         coll_surplus_pool_abi::initialize(
             &contracts.coll_surplus_pool,
-            contracts.borrow_operations.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
             Identity::ContractId(contracts.protocol_manager.contract_id().into()),
         )
         .await
@@ -322,7 +323,7 @@ pub mod common {
 
         active_pool_abi::initialize(
             &contracts.active_pool,
-            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
+            Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
             Identity::ContractId(contracts.stability_pool.contract_id().into()),
             contracts.default_pool.contract_id().into(),
             Identity::ContractId(contracts.protocol_manager.contract_id().into()),
@@ -337,7 +338,7 @@ pub mod common {
             &contracts.sorted_troves,
             100_000_000,
             contracts.protocol_manager.contract_id().into(),
-            contracts.borrow_operations.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -518,7 +519,7 @@ pub mod common {
     pub async fn deploy_vesting_contract(
         wallet: &WalletUnlocked,
         total_amount: u64,
-    ) -> VestingContract<WalletUnlocked> {
+    ) -> ContractInstance<VestingContract<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -538,25 +539,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            VESTING_CONTRACT_STORAGE_PATH,
+        )
         .await;
 
-        match id {
-            Ok(id) => return VestingContract::new(id, wallet.clone()),
-            Err(_) => {
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return VestingContract::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            VestingContract::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_mock_pyth_oracle(wallet: &WalletUnlocked) -> PythCore<WalletUnlocked> {
@@ -708,7 +704,7 @@ pub mod common {
 
     pub async fn deploy_borrow_operations(
         wallet: &WalletUnlocked,
-    ) -> BorrowOperations<WalletUnlocked> {
+    ) -> ContractInstance<BorrowOperations<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -726,28 +722,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            BORROW_OPERATIONS_CONTRACT_STORAGE_PATH,
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return BorrowOperations::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return BorrowOperations::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            BorrowOperations::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
@@ -955,7 +943,7 @@ pub mod common {
 
         trove_manager_abi::initialize(
             &trove_manager,
-            contracts.borrow_operations.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
             contracts.sorted_troves.contract_id().into(),
             oracle.contract_id().into(),
             contracts.stability_pool.contract_id().into(),
@@ -1024,6 +1012,7 @@ pub mod common {
             &asset_contracts.trove_manager,
             core_protocol_contracts
                 .borrow_operations
+                .contract
                 .contract_id()
                 .into(),
             core_protocol_contracts.sorted_troves.contract_id().into(),
@@ -1425,7 +1414,11 @@ pub mod common {
         std::thread::sleep(std::time::Duration::from_secs(12));
     }
 
-    pub async fn deploy_proxy(target: ContractId, owner: WalletUnlocked) -> Proxy<WalletUnlocked> {
+    pub async fn deploy_proxy(
+        target: ContractId,
+        owner: WalletUnlocked,
+        additional_storage_path: &str,
+    ) -> Proxy<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
 
@@ -1487,9 +1480,12 @@ pub mod common {
             StorageSlot::new(owner_key0, owner_value0),
             StorageSlot::new(owner_key1, owner_value1),
         ];
-        let storage_configuration =
-            StorageConfiguration::default().add_slot_overrides(storage_slots);
-
+        let storage_configuration = StorageConfiguration::default()
+            .add_slot_overrides(storage_slots)
+            .add_slot_overrides_from_file(get_absolute_path_from_relative(
+                VESTING_CONTRACT_STORAGE_PATH,
+            ))
+            .unwrap();
         // Deploy the proxy contract with the initialized storage
         let contract_configuration =
             LoadConfiguration::default().with_storage_configuration(storage_configuration);

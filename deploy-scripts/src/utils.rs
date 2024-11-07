@@ -8,7 +8,9 @@ pub mod utils {
     use std::fs::File;
     use std::io::Write;
     use std::str::FromStr;
-    use test_utils::data_structures::{AssetContracts, AssetContractsOptionalRedstone, PRECISION};
+    use test_utils::data_structures::{
+        AssetContracts, AssetContractsOptionalRedstone, ContractInstance, PRECISION,
+    };
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
     use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
@@ -74,9 +76,11 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let borrow_operations =
-            BorrowOperations::new(borrow_operations_contract_id, wallet.clone());
-
+        let borrow_operations = ContractInstance::new(
+            BorrowOperations::new(borrow_operations_contract_id.clone(), wallet.clone()),
+            borrow_operations_contract_id.into(),
+        );
+        // TODO: Remove this
         let usdf_contract_id: Bech32ContractId =
             contracts["usdf"].as_str().unwrap().parse().unwrap();
         let usdf =
@@ -139,7 +143,10 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
+        let vesting_contract = ContractInstance::new(
+            VestingContract::new(vesting_contract_id.clone(), wallet.clone()),
+            vesting_contract_id.into(),
+        );
 
         let fpt_asset_id: AssetId =
             AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();

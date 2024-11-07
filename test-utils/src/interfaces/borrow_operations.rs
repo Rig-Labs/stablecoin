@@ -8,6 +8,7 @@ abigen!(Contract(
 
 pub mod borrow_operations_abi {
     use super::*;
+    use crate::data_structures::ContractInstance;
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
     use crate::interfaces::default_pool::DefaultPool;
@@ -25,7 +26,7 @@ pub mod borrow_operations_abi {
     use fuels::types::{AssetId, Identity};
 
     pub async fn initialize<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         usdf_contract: ContractId,
         fpt_staking_contract: ContractId,
         protocol_manager_contract: ContractId,
@@ -38,6 +39,7 @@ pub mod borrow_operations_abi {
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .initialize(
                 usdf_contract,
@@ -48,13 +50,14 @@ pub mod borrow_operations_abi {
                 sorted_troves_contract,
             )
             .with_tx_policies(tx_params)
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .call()
             .await
             .unwrap()
     }
 
     pub async fn open_trove<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         mock_pyth: &PythCore<T>,
         _mock_redstone: &RedstoneCore<T>,
@@ -81,6 +84,7 @@ pub mod borrow_operations_abi {
             .with_asset_id(asset_id);
 
         return borrow_operations
+            .contract
             .methods()
             .open_trove(usdf_amount_withdrawn, upper_hint, lower_hint)
             .call_params(call_params)
@@ -95,6 +99,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 fpt_staking,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .with_tx_policies(tx_params)
             .call()
@@ -102,7 +107,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn add_coll<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -129,6 +134,7 @@ pub mod borrow_operations_abi {
             .with_asset_id(mock_asset_id);
 
         borrow_operations
+            .contract
             .methods()
             .add_coll(lower_hint, upper_hint)
             .call_params(call_params)
@@ -143,6 +149,7 @@ pub mod borrow_operations_abi {
                 active_pool,
                 usdf_token,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call()
@@ -150,7 +157,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn withdraw_coll<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -172,6 +179,7 @@ pub mod borrow_operations_abi {
             .into();
 
         borrow_operations
+            .contract
             .methods()
             .withdraw_coll(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
@@ -183,6 +191,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 active_pool,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call()
@@ -190,7 +199,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn withdraw_usdf<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -214,6 +223,7 @@ pub mod borrow_operations_abi {
             .into();
 
         borrow_operations
+            .contract
             .methods()
             .withdraw_usdf(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
@@ -227,6 +237,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
                 fpt_staking,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call()
@@ -234,7 +245,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn repay_usdf<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -266,6 +277,7 @@ pub mod borrow_operations_abi {
             .into();
 
         borrow_operations
+            .contract
             .methods()
             .repay_usdf(lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
@@ -279,6 +291,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
                 default_pool,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call_params(call_params)
@@ -288,7 +301,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn close_trove<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -320,6 +333,7 @@ pub mod borrow_operations_abi {
             .into();
 
         borrow_operations
+            .contract
             .methods()
             .close_trove(mock_asset_id.into())
             .with_contracts(&[
@@ -333,6 +347,7 @@ pub mod borrow_operations_abi {
                 usdf_token,
                 fpt_staking,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .with_tx_policies(tx_params)
             .call_params(call_params)
@@ -342,7 +357,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn add_asset<T: Account>(
-        borrow_operations: BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: ContractId,
         trove_manager: ContractId,
         asset: AssetId,
@@ -352,6 +367,7 @@ pub mod borrow_operations_abi {
             .with_script_gas_limit(2000000);
 
         return borrow_operations
+            .contract
             .methods()
             .add_asset(asset.into(), trove_manager, oracle)
             .with_tx_policies(tx_params)
@@ -360,7 +376,7 @@ pub mod borrow_operations_abi {
     }
 
     pub async fn set_pause_status<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         is_paused: bool,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -368,54 +384,62 @@ pub mod borrow_operations_abi {
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .set_pause_status(is_paused)
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn get_pauser<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<Identity>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .get_pauser()
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn get_is_paused<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<bool>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .get_is_paused()
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn claim_coll<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         active_pool: &ActivePool<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
         asset: AssetId,
     ) -> CallResponse<()> {
         borrow_operations
+            .contract
             .methods()
             .claim_collateral(asset.into())
             .with_contracts(&[active_pool, coll_surplus_pool])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .call()
             .await
             .unwrap()
@@ -423,7 +447,7 @@ pub mod borrow_operations_abi {
 
     // Add these new functions to the module
     pub async fn set_pauser<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         pauser: Identity,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -431,15 +455,17 @@ pub mod borrow_operations_abi {
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .set_pauser(pauser)
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn transfer_owner<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         new_owner: Identity,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -447,23 +473,27 @@ pub mod borrow_operations_abi {
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .transfer_owner(new_owner)
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn renounce_owner<T: Account>(
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(2000000);
 
         borrow_operations
+            .contract
             .methods()
             .renounce_owner()
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -475,6 +505,7 @@ pub mod borrow_operations_utils {
     use fuels::types::{Address, Identity};
 
     use super::*;
+    use crate::data_structures::ContractInstance;
     use crate::interfaces::active_pool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::sorted_troves::SortedTroves;
@@ -484,7 +515,7 @@ pub mod borrow_operations_utils {
     pub async fn mint_token_and_open_trove<T: Account>(
         wallet: WalletUnlocked,
         asset_contracts: &AssetContracts<WalletUnlocked>,
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         usdf: &USDFToken<WalletUnlocked>,
         fpt_staking: &FPTStaking<WalletUnlocked>,
         active_pool: &active_pool::ActivePool<WalletUnlocked>,
@@ -499,8 +530,13 @@ pub mod borrow_operations_utils {
         )
         .await;
 
-        let borrow_operations_healthy_wallet1 =
-            BorrowOperations::new(borrow_operations.contract_id().clone(), wallet.clone());
+        let borrow_operations_healthy_wallet1 = ContractInstance::new(
+            BorrowOperations::new(
+                borrow_operations.contract.contract_id().clone(),
+                wallet.clone(),
+            ),
+            borrow_operations.implementation_id.into(),
+        );
 
         borrow_operations_abi::open_trove(
             &borrow_operations_healthy_wallet1,

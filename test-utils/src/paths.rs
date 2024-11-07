@@ -87,6 +87,7 @@ pub const MULTI_TROVE_GETTER_CONTRACT_BINARY_PATH: &str =
 pub const MULTI_TROVE_GETTER_CONTRACT_STORAGE_PATH: &str =
     "contracts/multi-trove-getter-contract/out/debug/multi-trove-getter-contract-storage_slots.json";
 
-pub const PROXY_CONTRACT_BINARY_PATH: &str = "contracts/proxy-contract/out/debug/proxy.bin";
+pub const PROXY_CONTRACT_BINARY_PATH: &str =
+    "contracts/proxy-contract/out/debug/proxy-contract.bin";
 pub const PROXY_CONTRACT_STORAGE_PATH: &str =
-    "contracts/proxy-contract/out/debug/proxy-storage_slots.json";
+    "contracts/proxy-contract/out/debug/proxy-contract-storage_slots.json";

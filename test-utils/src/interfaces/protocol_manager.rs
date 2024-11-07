@@ -8,7 +8,7 @@ abigen!(Contract(
 
 pub mod protocol_manager_abi {
     use super::*;
-    use crate::data_structures;
+    use crate::data_structures::{self, ContractInstance};
     use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::borrow_operations::BorrowOperations;
     use crate::interfaces::coll_surplus_pool::CollSurplusPool;
@@ -67,7 +67,7 @@ pub mod protocol_manager_abi {
         asset: AssetId,
         trove_manager: ContractId,
         oracle: ContractId,
-        borrow_operations: &BorrowOperations<T>,
+        borrow_operations: &ContractInstance<BorrowOperations<T>>,
         stability_pool: &StabilityPool<T>,
         usdf: &USDFToken<T>,
         fpt_staking: &FPTStaking<T>,
@@ -77,13 +77,14 @@ pub mod protocol_manager_abi {
         sorted_troves: &SortedTroves<T>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
-
+        println!("impl: {:?}", borrow_operations.implementation_id);
+        println!("contract: {:?}", borrow_operations.contract.contract_id());
         protocol_manager
             .methods()
             .register_asset(asset.into(), trove_manager, oracle)
             .with_tx_policies(tx_params)
             .with_contracts(&[
-                borrow_operations,
+                &borrow_operations.contract,
                 stability_pool,
                 usdf,
                 fpt_staking,
@@ -92,6 +93,7 @@ pub mod protocol_manager_abi {
                 active_pool,
                 sorted_troves,
             ])
+            .with_contract_ids(&[borrow_operations.implementation_id.into()])
             .call()
             .await
     }

@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::{borrow_operations_abi, BorrowOperations},
@@ -764,14 +764,20 @@ async fn proper_open_multiple_troves() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet2.clone(),
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let deposit_amount1 = 3000 * PRECISION;
@@ -893,14 +899,20 @@ async fn proper_close_trove() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let borrow_operations_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet2.clone(),
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let deposit_amount1 = 3000 * PRECISION;
@@ -1214,8 +1226,13 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
 
-    let borrow_operations_wallet2 =
-        BorrowOperations::new(contracts.borrow_operations.contract_id().clone(), wallet2);
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
+    );
 
     let deposit_amount2 = 1200 * PRECISION;
     let borrow_amount2 = 600 * PRECISION;

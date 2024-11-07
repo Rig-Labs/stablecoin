@@ -1,4 +1,5 @@
 use fuels::prelude::*;
+use test_utils::data_structures::ContractInstance;
 use test_utils::interfaces::vesting::VestingContract;
 use test_utils::setup::common::deploy_vesting_contract;
 use test_utils::{interfaces::token::Token, setup::common::deploy_token};
@@ -6,16 +7,11 @@ use test_utils::{interfaces::token::Token, setup::common::deploy_token};
 pub async fn setup(
     total_amount: u64,
 ) -> (
-    VestingContract<WalletUnlocked>,
+    ContractInstance<VestingContract<WalletUnlocked>>,
     WalletUnlocked,
     WalletUnlocked,
     Token<WalletUnlocked>,
 ) {
-    // let config = Config {
-    //     manual_blocks_enabled: true, // Necessary so the `produce_blocks` API can be used locally
-    //     ..Config::local_node()
-    // };
-
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
             Some(2),             /* Single wallet */
@@ -31,11 +27,12 @@ pub async fn setup(
     let wallet = wallets.pop().unwrap();
     let wallet2 = wallets.pop().unwrap();
 
-    let instance = deploy_vesting_contract(&wallet.clone(), total_amount).await;
+    // First deploy the target contract
+    let vesting = deploy_vesting_contract(&wallet.clone(), total_amount).await;
 
     let asset = deploy_token(&wallet).await;
 
-    (instance, wallet, wallet2, asset)
+    (vesting, wallet, wallet2, asset)
 }
 
 pub mod test_helpers {
@@ -77,6 +74,7 @@ pub mod test_helpers {
                 asset_id,
                 TxPolicies::default(),
             )
-            .await;
+            .await
+            .unwrap();
     }
 }

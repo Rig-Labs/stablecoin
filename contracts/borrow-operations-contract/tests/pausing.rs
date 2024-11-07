@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         oracle::oracle_abi,
@@ -22,17 +22,23 @@ async fn test_permissions() {
         Identity::Address(new_pauser.address().into()),
     )
     .await;
-    let borrow_operations_new_pauser = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        new_pauser.clone(),
+    let borrow_operations_new_pauser = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            new_pauser.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
     assert!(result.is_ok(), "Admin should be able to set a new pauser");
 
     // Verify unauthorized set_pauser
     let unauthorized_wallet = wallets.pop().unwrap();
-    let unauthorized_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        unauthorized_wallet.clone(),
+    let unauthorized_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            unauthorized_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
     let result = borrow_operations_abi::set_pauser(
         &unauthorized_borrow_operations,
@@ -65,9 +71,12 @@ async fn test_permissions() {
     );
 
     // Test renounce_owner
-    let new_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        new_owner.clone(),
+    let new_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            new_owner.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
     let result = borrow_operations_abi::renounce_owner(&new_borrow_operations).await;
     assert!(
@@ -115,9 +124,12 @@ async fn test_permissions() {
     assert!(!status.value, "Failed to set pause status to false");
 
     let unauthorized_wallet = wallets.pop().unwrap();
-    let unauthorized_borrow_operations = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        unauthorized_wallet.clone(),
+    let unauthorized_borrow_operations = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            unauthorized_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     // Try to set pause status with unauthorized wallet

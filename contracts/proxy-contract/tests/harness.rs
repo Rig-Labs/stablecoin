@@ -1,6 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     interfaces::proxy::{proxy_abi, Proxy, State},
+    paths::PROXY_CONTRACT_STORAGE_PATH,
     setup::common::deploy_proxy,
 };
 
@@ -23,7 +24,12 @@ async fn get_contract_instance() -> (Proxy<WalletUnlocked>, WalletUnlocked, Wall
     let wallet2 = wallets.pop().unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let instance = deploy_proxy(ContractId::from(DEFAULT_TARGET_CONTRACT_ID), wallet.clone()).await;
+    let instance = deploy_proxy(
+        ContractId::from(DEFAULT_TARGET_CONTRACT_ID),
+        wallet.clone(),
+        PROXY_CONTRACT_STORAGE_PATH,
+    )
+    .await;
 
     (instance, wallet, wallet2)
 }

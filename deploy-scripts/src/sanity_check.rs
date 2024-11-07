@@ -39,7 +39,7 @@ pub async fn sanity_check() {
 
     let vesting_contract_balance = provider
         .get_contract_asset_balance(
-            core_contracts.vesting_contract.contract_id(),
+            core_contracts.vesting_contract.contract.contract_id(),
             core_contracts.fpt_asset_id.into(),
         )
         .await

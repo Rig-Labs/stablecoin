@@ -103,22 +103,22 @@ pub async fn testing_query() {
     let mock_amount_deposit = 2 * PRECISION;
     let usdf_amount_withdrawn = 600 * PRECISION;
 
-    let _res = borrow_operations_abi::open_trove(
-        &borrow_operations,
-        &oracle,
-        &pyth,
-        &redstone,
-        &asset_token,
-        &usdf_token,
-        &fpt_staking,
-        &sorted_troves,
-        &trove_manager,
-        &active_pool,
-        mock_amount_deposit,
-        usdf_amount_withdrawn,
-        null_hint.clone(),
-        null_hint.clone(),
-    )
-    .await
-    .unwrap();
+    // let _res = borrow_operations_abi::open_trove(
+    //     &borrow_operations,
+    //     &oracle,
+    //     &pyth,
+    //     &redstone,
+    //     &asset_token,
+    //     &usdf_token,
+    //     &fpt_staking,
+    //     &sorted_troves,
+    //     &trove_manager,
+    //     &active_pool,
+    //     mock_amount_deposit,
+    //     usdf_amount_withdrawn,
+    //     null_hint.clone(),
+    //     null_hint.clone(),
+    // )
+    // .await
+    // .unwrap();
 }

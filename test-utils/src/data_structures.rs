@@ -13,8 +13,22 @@ use fuels::{
 pub const PRECISION: u64 = 1_000_000_000;
 pub const POST_LIQUIDATION_COLLATERAL_RATIO: u64 = 1_500_000_000;
 
+pub struct ContractInstance<C> {
+    pub contract: C,
+    pub implementation_id: ContractId,
+}
+
+impl<C> ContractInstance<C> {
+    pub fn new(contract: C, implementation_id: ContractId) -> Self {
+        Self {
+            contract,
+            implementation_id,
+        }
+    }
+}
+
 pub struct ProtocolContracts<T: Account> {
-    pub borrow_operations: BorrowOperations<T>,
+    pub borrow_operations: ContractInstance<BorrowOperations<T>>,
     pub usdf: USDFToken<T>,
     pub stability_pool: StabilityPool<T>,
     pub protocol_manager: ProtocolManager<T>,
@@ -26,7 +40,7 @@ pub struct ProtocolContracts<T: Account> {
     pub active_pool: ActivePool<T>,
     pub fpt_token: FPTToken<T>,
     pub community_issuance: CommunityIssuance<T>,
-    pub vesting_contract: VestingContract<T>,
+    pub vesting_contract: ContractInstance<VestingContract<T>>,
     pub fpt_asset_id: AssetId,
     pub usdf_asset_id: AssetId,
 }

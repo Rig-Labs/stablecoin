@@ -19,31 +19,79 @@ abigen!(Contract(
 
 pub const TOTAL_AMOUNT_VESTED: u64 = 100_000_000 * 68 / 100 * PRECISION;
 
-pub async fn instantiate_vesting_contract<T: Account>(
-    contract: &VestingContract<T>,
-    asset_contract: &AssetId,
-    schedules: Vec<VestingSchedule>,
-    debug: bool,
-) -> Result<CallResponse<()>, Error> {
-    contract
-        .methods()
-        .constructor(asset_contract.clone().into(), schedules, debug)
-        .call()
-        .await
-}
+pub mod vesting_abi {
+    use fuels::types::transaction_builders::VariableOutputPolicy;
 
-pub async fn set_timestamp<T: Account>(
-    contract: &VestingContract<T>,
-    timestamp: u64,
-) -> CallResponse<()> {
-    contract
-        .methods()
-        .set_current_time(timestamp)
-        .call()
-        .await
-        .unwrap()
-}
+    use crate::data_structures::ContractInstance;
 
+    use super::*;
+    pub async fn instantiate_vesting_contract<T: Account>(
+        contract: &ContractInstance<VestingContract<T>>,
+        asset_contract: &AssetId,
+        schedules: Vec<VestingSchedule>,
+        debug: bool,
+    ) -> Result<CallResponse<()>, Error> {
+        contract
+            .contract
+            .methods()
+            .constructor(asset_contract.clone().into(), schedules, debug)
+            .with_contract_ids(&[contract.implementation_id.into()])
+            .call()
+            .await
+    }
+
+    pub async fn set_timestamp<T: Account>(
+        contract: &ContractInstance<VestingContract<T>>,
+        timestamp: u64,
+    ) -> Result<CallResponse<()>, Error> {
+        contract
+            .contract
+            .methods()
+            .set_current_time(timestamp)
+            .with_contract_ids(&[contract.implementation_id.into()])
+            .call()
+            .await
+    }
+    pub async fn get_vesting_schedule_call<T: Account>(
+        contract: &ContractInstance<VestingContract<T>>,
+        recipient: Identity,
+    ) -> Result<CallResponse<VestingSchedule>, Error> {
+        contract
+            .contract
+            .methods()
+            .get_vesting_schedule(recipient)
+            .with_contract_ids(&[contract.implementation_id.into()])
+            .call()
+            .await
+    }
+
+    pub async fn get_redeemable_amount<T: Account>(
+        contract: &ContractInstance<VestingContract<T>>,
+        timestamp: u64,
+        recipient: Identity,
+    ) -> Result<CallResponse<u64>, Error> {
+        contract
+            .contract
+            .methods()
+            .get_redeemable_amount(timestamp, recipient)
+            .with_contract_ids(&[contract.implementation_id.into()])
+            .call()
+            .await
+    }
+
+    pub async fn claim_vested_tokens<T: Account>(
+        contract: &ContractInstance<VestingContract<T>>,
+    ) -> Result<CallResponse<()>, Error> {
+        contract
+            .contract
+            .methods()
+            .claim_vested_tokens()
+            .with_contract_ids(&[contract.implementation_id.into()])
+            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
+            .call()
+            .await
+    }
+}
 pub fn load_vesting_schedules_from_json_file(path: &str) -> Vec<VestingSchedule> {
     let absolute_path = get_absolute_path_from_relative(path);
 

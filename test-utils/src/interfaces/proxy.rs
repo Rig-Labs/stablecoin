@@ -3,7 +3,7 @@ use fuels::programs::responses::CallResponse;
 
 abigen!(Contract(
     name = "Proxy",
-    abi = "contracts/proxy-contract/out/debug/proxy-abi.json"
+    abi = "contracts/proxy-contract/out/debug/proxy-contract-abi.json"
 ));
 
 pub mod proxy_abi {
