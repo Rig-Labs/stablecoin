@@ -249,7 +249,7 @@ pub mod common {
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
             contracts.usdf.contract.contract_id().into(),
-            contracts.fpt_staking.contract_id().into(),
+            contracts.fpt_staking.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract_id().into(),
             contracts.active_pool.contract_id().into(),
@@ -290,7 +290,7 @@ pub mod common {
             &contracts.protocol_manager,
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.stability_pool.contract.contract_id().into(),
-            contracts.fpt_staking.contract_id().into(),
+            contracts.fpt_staking.contract.contract_id().into(),
             contracts.usdf.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract_id().into(),
             contracts.default_pool.contract_id().into(),
@@ -1279,7 +1279,9 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_fpt_staking(wallet: &WalletUnlocked) -> FPTStaking<WalletUnlocked> {
+    pub async fn deploy_fpt_staking(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTStaking<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1297,28 +1299,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(FPT_STAKING_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return FPTStaking::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return FPTStaking::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            FPTStaking::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_usdf_token(

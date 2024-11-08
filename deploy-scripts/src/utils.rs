@@ -109,7 +109,10 @@ pub mod utils {
 
         let fpt_staking_contract_id: Bech32ContractId =
             contracts["fpt_staking"].as_str().unwrap().parse().unwrap();
-        let fpt_staking = FPTStaking::new(fpt_staking_contract_id, wallet.clone());
+        let fpt_staking = ContractInstance::new(
+            FPTStaking::new(fpt_staking_contract_id.clone(), wallet.clone()),
+            fpt_staking_contract_id.into(),
+        );
 
         let fpt_token_contract_id: Bech32ContractId =
             contracts["fpt_token"].as_str().unwrap().parse().unwrap();

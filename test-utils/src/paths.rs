@@ -66,6 +66,8 @@ pub const FPT_TOKEN_CONTRACT_STORAGE_PATH: &str =
 
 pub const FPT_STAKING_CONTRACT_BINARY_PATH: &str =
     "contracts/fpt-staking-contract/out/debug/fpt-staking-contract.bin";
+pub const FPT_STAKING_CONTRACT_STORAGE_PATH: &str =
+    "contracts/fpt-staking-contract/out/debug/fpt-staking-contract-storage_slots.json";
 
 pub const PROTCOL_MANAGER_CONTRACT_BINARY_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract.bin";

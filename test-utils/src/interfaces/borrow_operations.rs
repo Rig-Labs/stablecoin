@@ -63,7 +63,7 @@ pub mod borrow_operations_abi {
         _mock_redstone: &RedstoneCore<T>,
         asset_token: &Token<T>,
         usdf_token: &ContractInstance<USDFToken<T>>,
-        fpt_staking: &FPTStaking<T>,
+        fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
@@ -97,7 +97,7 @@ pub mod borrow_operations_abi {
                 &usdf_token.contract,
                 &sorted_troves.contract,
                 trove_manager,
-                fpt_staking,
+                &fpt_staking.contract,
             ])
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
@@ -105,7 +105,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.implementation_id.into(),
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract_id().into(),
-                fpt_staking.contract_id().into(),
+                fpt_staking.contract.contract_id().into(),
+                fpt_staking.implementation_id.into(),
                 oracle.contract_id().into(),
                 mock_pyth.contract_id().into(),
                 active_pool.contract_id().into(),
@@ -241,7 +242,7 @@ pub mod borrow_operations_abi {
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
         usdf_token: &ContractInstance<USDFToken<T>>,
-        fpt_staking: &FPTStaking<T>,
+        fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
@@ -271,7 +272,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 active_pool,
                 &usdf_token.contract,
-                fpt_staking,
+                &fpt_staking.contract,
             ])
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
@@ -286,7 +287,8 @@ pub mod borrow_operations_abi {
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 active_pool.contract_id().into(),
-                fpt_staking.contract_id().into(),
+                fpt_staking.contract.contract_id().into(),
+                fpt_staking.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
@@ -372,7 +374,7 @@ pub mod borrow_operations_abi {
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
         usdf_token: &ContractInstance<USDFToken<T>>,
-        fpt_staking: &FPTStaking<T>,
+        fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
@@ -411,7 +413,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 active_pool,
                 &usdf_token.contract,
-                fpt_staking,
+                &fpt_staking.contract,
             ])
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
@@ -426,6 +428,8 @@ pub mod borrow_operations_abi {
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 active_pool.contract_id().into(),
+                fpt_staking.contract.contract_id().into(),
+                fpt_staking.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .with_tx_policies(tx_params)
@@ -601,7 +605,7 @@ pub mod borrow_operations_utils {
         asset_contracts: &AssetContracts<WalletUnlocked>,
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         usdf: &ContractInstance<USDFToken<WalletUnlocked>>,
-        fpt_staking: &FPTStaking<WalletUnlocked>,
+        fpt_staking: &ContractInstance<FPTStaking<WalletUnlocked>>,
         active_pool: &active_pool::ActivePool<WalletUnlocked>,
         sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         amount: u64,

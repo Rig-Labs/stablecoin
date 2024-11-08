@@ -76,7 +76,7 @@ pub mod protocol_manager_abi {
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
         usdf: &ContractInstance<USDFToken<T>>,
-        fpt_staking: &FPTStaking<T>,
+        fpt_staking: &ContractInstance<FPTStaking<T>>,
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
@@ -92,7 +92,7 @@ pub mod protocol_manager_abi {
                 &borrow_operations.contract,
                 &stability_pool.contract,
                 &usdf.contract,
-                fpt_staking,
+                &fpt_staking.contract,
                 coll_surplus_pool,
                 default_pool,
                 active_pool,
@@ -108,7 +108,8 @@ pub mod protocol_manager_abi {
                 coll_surplus_pool.contract_id().into(),
                 default_pool.contract_id().into(),
                 active_pool.contract_id().into(),
-                fpt_staking.contract_id().into(),
+                fpt_staking.contract.contract_id().into(),
+                fpt_staking.implementation_id.into(),
                 usdf.contract.contract_id().into(),
                 usdf.implementation_id.into(),
                 stability_pool.contract.contract_id().into(),
@@ -126,7 +127,7 @@ pub mod protocol_manager_abi {
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
         usdf: &ContractInstance<USDFToken<T>>,
-        fpt_staking: &FPTStaking<T>,
+        fpt_staking: &ContractInstance<FPTStaking<T>>,
         coll_surplus_pool: &CollSurplusPool<T>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
@@ -156,7 +157,7 @@ pub mod protocol_manager_abi {
             with_contracts.push(&contracts.mock_redstone_oracle);
         }
 
-        with_contracts.push(fpt_staking);
+        with_contracts.push(&fpt_staking.contract);
         with_contracts.push(coll_surplus_pool);
         with_contracts.push(default_pool);
         with_contracts.push(active_pool);
@@ -166,7 +167,8 @@ pub mod protocol_manager_abi {
         let mut with_contract_ids: Vec<Bech32ContractId> = Vec::new();
         with_contract_ids.push(sorted_troves.contract.contract_id().into());
         with_contract_ids.push(sorted_troves.implementation_id.into());
-        with_contract_ids.push(fpt_staking.contract_id().into());
+        with_contract_ids.push(fpt_staking.contract.contract_id().into());
+        with_contract_ids.push(fpt_staking.implementation_id.into());
         with_contract_ids.push(coll_surplus_pool.contract_id().into());
         with_contract_ids.push(default_pool.contract_id().into());
         with_contract_ids.push(active_pool.contract_id().into());

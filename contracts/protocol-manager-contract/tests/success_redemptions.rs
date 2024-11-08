@@ -236,7 +236,7 @@ async fn proper_redemption_from_partially_closed() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), mock_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
@@ -459,7 +459,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), mock_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), mock_asset_id)
         .await
         .unwrap();
 

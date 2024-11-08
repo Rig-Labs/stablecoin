@@ -190,12 +190,15 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), mock_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
     let fees2 = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), st_mock_asset_id)
+        .get_contract_asset_balance(
+            &contracts.fpt_staking.contract.contract_id(),
+            st_mock_asset_id,
+        )
         .await
         .unwrap();
 
