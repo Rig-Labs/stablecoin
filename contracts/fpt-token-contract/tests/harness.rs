@@ -39,7 +39,7 @@ async fn proper_intialize() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await

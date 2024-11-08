@@ -36,7 +36,7 @@ async fn test_emissions() {
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -108,7 +108,7 @@ async fn test_emissions() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -171,7 +171,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -250,7 +250,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -292,7 +292,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -344,9 +344,12 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     let deadline = 31_536_000 + 1;
     community_issuance_abi::set_current_time(&contracts.community_issuance, deadline).await;
 
-    let community_issuance_wallet1 = CommunityIssuance::new(
-        contracts.community_issuance.contract_id().clone(),
-        wallet1.clone(),
+    let community_issuance_wallet1 = ContractInstance::new(
+        CommunityIssuance::new(
+            contracts.community_issuance.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.community_issuance.implementation_id,
     );
     // this is to test that anyone can call this function
     community_issuance_abi::public_start_rewards_increase_transition_after_deadline(
@@ -374,7 +377,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -415,7 +418,7 @@ async fn test_emissions_multiple_deposits() {
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -660,9 +663,12 @@ async fn test_only_owner_can_start_rewards_increase_transition() {
     community_issuance_abi::set_current_time(&contracts.community_issuance, 31104000 + 1).await;
 
     // Create a CommunityIssuance instance for the attacker
-    let community_issuance_attacker = CommunityIssuance::new(
-        contracts.community_issuance.contract_id().clone(),
-        attacker.clone(),
+    let community_issuance_attacker = ContractInstance::new(
+        CommunityIssuance::new(
+            contracts.community_issuance.contract.contract_id().clone(),
+            attacker.clone(),
+        ),
+        contracts.community_issuance.implementation_id,
     );
 
     // Attempt to start the rewards increase transition as the attacker

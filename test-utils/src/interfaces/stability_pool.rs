@@ -77,7 +77,7 @@ pub mod stability_pool_abi {
 
     pub async fn provide_to_stability_pool<T: Account>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
-        community_issuance: &CommunityIssuance<T>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
         usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
         amount: u64,
@@ -101,14 +101,19 @@ pub mod stability_pool_abi {
             .call_params(call_params)
             .unwrap()
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
-            .with_contracts(&[&usdf_token.contract, mock_token, community_issuance])
+            .with_contracts(&[
+                &usdf_token.contract,
+                mock_token,
+                &community_issuance.contract,
+            ])
             .with_contract_ids(&[
                 stability_pool.contract.contract_id().into(),
                 stability_pool.implementation_id.into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 mock_token.contract_id().into(),
-                community_issuance.contract_id().into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
             ])
             .call()
             .await
@@ -196,7 +201,7 @@ pub mod stability_pool_abi {
 
     pub async fn withdraw_from_stability_pool<T: Account>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
-        community_issuance: &CommunityIssuance<T>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
         usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
@@ -219,7 +224,7 @@ pub mod stability_pool_abi {
             .with_contracts(&[
                 &usdf_token.contract,
                 mock_token,
-                community_issuance,
+                &community_issuance.contract,
                 &sorted_troves.contract,
                 oracle,
                 pyth_oracle,
@@ -236,7 +241,8 @@ pub mod stability_pool_abi {
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 mock_token.contract_id().into(),
-                community_issuance.contract_id().into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
                 stability_pool.contract.contract_id().into(),
                 stability_pool.implementation_id.into(),
             ])

@@ -26,7 +26,7 @@ pub async fn sanity_check() {
 
     let community_issuance_balance = provider
         .get_contract_asset_balance(
-            core_contracts.community_issuance.contract_id(),
+            core_contracts.community_issuance.contract.contract_id(),
             core_contracts.fpt_asset_id.into(),
         )
         .await

@@ -41,7 +41,7 @@ pub mod trove_manager_abi {
 
     pub async fn batch_liquidate_troves<T: Account>(
         trove_manager: &TroveManagerContract<T>,
-        community_issuance: &CommunityIssuance<T>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
@@ -71,7 +71,7 @@ pub mod trove_manager_abi {
                 &default_pool.contract,
                 &coll_surplus_pool.contract,
                 &usdf.contract,
-                community_issuance,
+                &community_issuance.contract,
             ])
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
@@ -89,7 +89,8 @@ pub mod trove_manager_abi {
                 coll_surplus_pool.implementation_id.into(),
                 usdf.contract.contract_id().into(),
                 usdf.implementation_id.into(),
-                community_issuance.contract_id().into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
@@ -98,7 +99,7 @@ pub mod trove_manager_abi {
 
     pub async fn liquidate<T: Account>(
         trove_manager: &TroveManagerContract<T>,
-        community_issuance: &CommunityIssuance<T>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
@@ -128,7 +129,7 @@ pub mod trove_manager_abi {
                 &default_pool.contract,
                 &coll_surplus_pool.contract,
                 &usdf.contract,
-                community_issuance,
+                &community_issuance.contract,
             ])
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
@@ -146,7 +147,8 @@ pub mod trove_manager_abi {
                 coll_surplus_pool.implementation_id.into(),
                 usdf.contract.contract_id().into(),
                 usdf.implementation_id.into(),
-                community_issuance.contract_id().into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()

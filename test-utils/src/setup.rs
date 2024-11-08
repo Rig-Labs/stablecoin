@@ -263,7 +263,7 @@ pub mod common {
         stability_pool_abi::initialize(
             &contracts.stability_pool,
             contracts.usdf.contract.contract_id().into(),
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
             contracts.sorted_troves.contract.contract_id().into(),
@@ -1226,7 +1226,7 @@ pub mod common {
 
     pub async fn deploy_community_issuance(
         wallet: &WalletUnlocked,
-    ) -> CommunityIssuance<WalletUnlocked> {
+    ) -> ContractInstance<CommunityIssuance<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1244,28 +1244,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(COMMUNITY_ISSUANCE_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return CommunityIssuance::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return CommunityIssuance::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            CommunityIssuance::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_fpt_staking(

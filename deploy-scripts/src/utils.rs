@@ -123,8 +123,10 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let community_issuance =
-            CommunityIssuance::new(community_issuance_contract_id, wallet.clone());
+        let community_issuance = ContractInstance::new(
+            CommunityIssuance::new(community_issuance_contract_id.clone(), wallet.clone()),
+            community_issuance_contract_id.into(),
+        );
 
         let coll_surplus_pool_contract_id: Bech32ContractId = contracts["coll_surplus_pool"]
             .as_str()
