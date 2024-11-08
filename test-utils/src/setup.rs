@@ -626,7 +626,7 @@ pub mod common {
         fuel_vm_decimals: u32,
         debug: bool,
         initializer: Identity,
-    ) -> Oracle<WalletUnlocked> {
+    ) -> ContractInstance<Oracle<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -651,27 +651,17 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(ORACLE_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return Oracle::new(id, wallet.clone());
-            }
-            Err(_) => {
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return Oracle::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(Oracle::new(proxy.contract_id(), wallet.clone()), id.into())
     }
 
     pub async fn deploy_protocol_manager(
@@ -889,7 +879,7 @@ pub mod common {
         }
 
         println!("Deploying asset contracts... Done");
-        println!("Oracle: {}", oracle.contract_id());
+        println!("Oracle: {}", oracle.contract.contract_id());
         println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
 
         println!("Trove Manager: {}", trove_manager.contract.contract_id());
@@ -953,7 +943,7 @@ pub mod common {
             &trove_manager,
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.sorted_troves.contract.contract_id().into(),
-            oracle.contract_id().into(),
+            oracle.contract.contract_id().into(),
             contracts.stability_pool.contract.contract_id().into(),
             contracts.default_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -977,7 +967,7 @@ pub mod common {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             trove_manager.contract.contract_id().into(),
-            oracle.contract_id().into(),
+            oracle.contract.contract_id().into(),
             &contracts.borrow_operations,
             &contracts.stability_pool,
             &contracts.usdf,
@@ -1028,7 +1018,7 @@ pub mod common {
                 .contract
                 .contract_id()
                 .into(),
-            asset_contracts.oracle.contract_id().into(),
+            asset_contracts.oracle.contract.contract_id().into(),
             core_protocol_contracts
                 .stability_pool
                 .contract
@@ -1065,7 +1055,7 @@ pub mod common {
             &core_protocol_contracts.protocol_manager,
             asset_contracts.asset_id,
             asset_contracts.trove_manager.contract.contract_id().into(),
-            asset_contracts.oracle.contract_id().into(),
+            asset_contracts.oracle.contract.contract_id().into(),
             &core_protocol_contracts.borrow_operations,
             &core_protocol_contracts.stability_pool,
             &core_protocol_contracts.usdf,

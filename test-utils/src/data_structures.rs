@@ -56,7 +56,7 @@ pub struct ProtocolContracts<T: Account> {
 
 pub struct AssetContracts<T: Account> {
     pub asset: Token<T>,
-    pub oracle: Oracle<T>,
+    pub oracle: ContractInstance<Oracle<T>>,
     pub mock_pyth_oracle: PythCore<T>,
     pub mock_redstone_oracle: RedstoneCore<T>,
     pub trove_manager: ContractInstance<TroveManagerContract<T>>,
@@ -69,7 +69,7 @@ pub struct AssetContracts<T: Account> {
 pub struct AssetContractsOptionalRedstone<T: Account> {
     pub symbol: String,
     pub asset: Token<T>,
-    pub oracle: Oracle<T>,
+    pub oracle: ContractInstance<Oracle<T>>,
     pub mock_pyth_oracle: PythCore<T>,
     pub trove_manager: ContractInstance<TroveManagerContract<T>>,
     pub asset_id: AssetId,
@@ -135,7 +135,7 @@ impl<T: Account> ProtocolContracts<T> {
             );
             println!(
                 "Oracle Contract ID: {:?}",
-                asset_contract.oracle.contract_id()
+                asset_contract.oracle.contract.contract_id()
             );
             println!(
                 "Mock Pyth Oracle Contract ID: {:?}",

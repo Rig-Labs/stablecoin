@@ -58,7 +58,7 @@ pub mod borrow_operations_abi {
 
     pub async fn open_trove<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         mock_pyth: &PythCore<T>,
         _mock_redstone: &RedstoneCore<T>,
         asset_token: &Token<T>,
@@ -90,7 +90,7 @@ pub mod borrow_operations_abi {
             .call_params(call_params)
             .unwrap()
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 mock_pyth,
                 //mock_redstone,
                 &active_pool.contract,
@@ -106,7 +106,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 mock_pyth.contract_id().into(),
                 active_pool.contract.contract_id().into(),
                 active_pool.implementation_id.into(),
@@ -123,7 +124,7 @@ pub mod borrow_operations_abi {
 
     pub async fn add_coll<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
@@ -155,7 +156,7 @@ pub mod borrow_operations_abi {
             .call_params(call_params)
             .unwrap()
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 pyth,
                 redstone,
                 mock_token,
@@ -171,7 +172,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),
@@ -188,7 +190,7 @@ pub mod borrow_operations_abi {
 
     pub async fn withdraw_coll<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
@@ -213,7 +215,7 @@ pub mod borrow_operations_abi {
             .methods()
             .withdraw_coll(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 pyth,
                 redstone,
                 mock_token,
@@ -228,7 +230,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),
@@ -243,7 +246,7 @@ pub mod borrow_operations_abi {
 
     pub async fn withdraw_usdf<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
@@ -270,7 +273,7 @@ pub mod borrow_operations_abi {
             .methods()
             .withdraw_usdf(amount, lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 pyth,
                 redstone,
                 mock_token,
@@ -287,7 +290,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),
@@ -306,7 +310,7 @@ pub mod borrow_operations_abi {
 
     pub async fn repay_usdf<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
@@ -342,7 +346,7 @@ pub mod borrow_operations_abi {
             .methods()
             .repay_usdf(lower_hint, upper_hint, mock_asset_id.into())
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 pyth,
                 redstone,
                 mock_token,
@@ -359,7 +363,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),
@@ -380,7 +385,7 @@ pub mod borrow_operations_abi {
 
     pub async fn close_trove<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &Oracle<T>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
@@ -416,7 +421,7 @@ pub mod borrow_operations_abi {
             .methods()
             .close_trove(mock_asset_id.into())
             .with_contracts(&[
-                oracle,
+                &oracle.contract,
                 pyth,
                 redstone,
                 mock_token,
@@ -433,7 +438,8 @@ pub mod borrow_operations_abi {
                 sorted_troves.contract.contract_id().into(),
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
-                oracle.contract_id().into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),

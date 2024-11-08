@@ -211,9 +211,12 @@ pub mod utils {
                 AssetContracts {
                     asset: Token::new(asset_contract_id, wallet.clone()),
                     asset_id,
-                    oracle: test_utils::interfaces::oracle::Oracle::new(
-                        oracle_contract_id,
-                        wallet.clone(),
+                    oracle: ContractInstance::new(
+                        test_utils::interfaces::oracle::Oracle::new(
+                            oracle_contract_id.clone(),
+                            wallet.clone(),
+                        ),
+                        oracle_contract_id.into(),
                     ),
                     trove_manager: ContractInstance::new(
                         TroveManagerContract::new(
@@ -295,7 +298,7 @@ pub mod utils {
         for asset_contract in asset_contracts {
             existing_asset_contracts.push(json!({
                 "symbol": asset_contract.symbol,
-                "oracle": asset_contract.oracle.contract_id().to_string(),
+                "oracle": asset_contract.oracle.contract.contract_id().to_string(),
                 "trove_manager": asset_contract.trove_manager.contract.contract_id().to_string(),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),

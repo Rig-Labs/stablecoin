@@ -46,62 +46,62 @@ pub async fn testing_query() {
     let pyth = PythCore::new(id.clone(), wallet.clone());
     let redstone = RedstoneCore::new(id, wallet.clone());
 
-    let res = oracle_abi::get_price(&oracle, &pyth, &Some(redstone.clone())).await;
+    // let res = oracle_abi::get_price(&oracle, &pyth, &Some(redstone.clone())).await;
 
-    println!("Result: {:#?}", res.value);
+    // println!("Result: {:#?}", res.value);
 
-    let borrow_operations_id: Bech32ContractId =
-        "fuel1wnys85mec9vna4y577r97w0u4egdpmnvuxv32cph8uqqzmx8694sd7wqtw"
-            .parse()
-            .expect("Invalid ID");
+    // let borrow_operations_id: Bech32ContractId =
+    //     "fuel1wnys85mec9vna4y577r97w0u4egdpmnvuxv32cph8uqqzmx8694sd7wqtw"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let borrow_operations = BorrowOperations::new(borrow_operations_id, wallet.clone());
+    // let borrow_operations = BorrowOperations::new(borrow_operations_id, wallet.clone());
 
-    let null_hint = Identity::Address(Address::default());
+    // let null_hint = Identity::Address(Address::default());
 
-    let asset_token_id: Bech32ContractId =
-        "fuel1ql6d5vjmuqs0v2tev7su73zjrpajffy9cjccvll38mxmamaeteuqml4pxl"
-            .parse()
-            .expect("Invalid ID");
-    let asset_token = Token::new(asset_token_id, wallet.clone());
+    // let asset_token_id: Bech32ContractId =
+    //     "fuel1ql6d5vjmuqs0v2tev7su73zjrpajffy9cjccvll38mxmamaeteuqml4pxl"
+    //         .parse()
+    //         .expect("Invalid ID");
+    // let asset_token = Token::new(asset_token_id, wallet.clone());
 
-    let usdf_token_id: Bech32ContractId =
-        "fuel1an59xymuwqj9r757agfcu0wetqadsl0lc6xw7xe3vka23d0z2tfqa8t7c5"
-            .parse()
-            .expect("Invalid ID");
+    // let usdf_token_id: Bech32ContractId =
+    //     "fuel1an59xymuwqj9r757agfcu0wetqadsl0lc6xw7xe3vka23d0z2tfqa8t7c5"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let usdf_token = USDFToken::new(usdf_token_id, wallet.clone());
+    // let usdf_token = USDFToken::new(usdf_token_id, wallet.clone());
 
-    let fpt_staking_id: Bech32ContractId =
-        "fuel14a5zgt9yz04rwnt7z7dyxuhtdlzyjtu9nfxw7pl3ares0zd85svqwlntrm"
-            .parse()
-            .expect("Invalid ID");
+    // let fpt_staking_id: Bech32ContractId =
+    //     "fuel14a5zgt9yz04rwnt7z7dyxuhtdlzyjtu9nfxw7pl3ares0zd85svqwlntrm"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let fpt_staking = FPTStaking::new(fpt_staking_id, wallet.clone());
+    // let fpt_staking = FPTStaking::new(fpt_staking_id, wallet.clone());
 
-    let sorted_troves_id: Bech32ContractId =
-        "fuel17q7999tp3s55jk7ev9sj6kmzp3qfmr8rnwnf6dzg9df4z3jrh74qpg5x22"
-            .parse()
-            .expect("Invalid ID");
+    // let sorted_troves_id: Bech32ContractId =
+    //     "fuel17q7999tp3s55jk7ev9sj6kmzp3qfmr8rnwnf6dzg9df4z3jrh74qpg5x22"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let sorted_troves = SortedTroves::new(sorted_troves_id, wallet.clone());
+    // let sorted_troves = SortedTroves::new(sorted_troves_id, wallet.clone());
 
-    let trove_manager_id: Bech32ContractId =
-        "fuel17thhl04jewnftymwksgufgcsegea72a6pjfwgxg0nptvc0ys5yjq05arr4"
-            .parse()
-            .expect("Invalid ID");
+    // let trove_manager_id: Bech32ContractId =
+    //     "fuel17thhl04jewnftymwksgufgcsegea72a6pjfwgxg0nptvc0ys5yjq05arr4"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let trove_manager = TroveManagerContract::new(trove_manager_id, wallet.clone());
+    // let trove_manager = TroveManagerContract::new(trove_manager_id, wallet.clone());
 
-    let active_pool_id: Bech32ContractId =
-        "fuel12qxy3gk3wdm3cytlfsaegzth7cnn5de5q8hrg6cdukff2k0zhcws3rxqef"
-            .parse()
-            .expect("Invalid ID");
+    // let active_pool_id: Bech32ContractId =
+    //     "fuel12qxy3gk3wdm3cytlfsaegzth7cnn5de5q8hrg6cdukff2k0zhcws3rxqef"
+    //         .parse()
+    //         .expect("Invalid ID");
 
-    let active_pool = ActivePool::new(active_pool_id, wallet.clone());
+    // let active_pool = ActivePool::new(active_pool_id, wallet.clone());
 
-    let mock_amount_deposit = 2 * PRECISION;
-    let usdf_amount_withdrawn = 600 * PRECISION;
+    // let mock_amount_deposit = 2 * PRECISION;
+    // let usdf_amount_withdrawn = 600 * PRECISION;
 
     // let _res = borrow_operations_abi::open_trove(
     //     &borrow_operations,

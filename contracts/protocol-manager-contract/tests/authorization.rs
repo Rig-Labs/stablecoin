@@ -102,7 +102,7 @@ async fn test_authorizations() {
             .contract
             .contract_id()
             .into(),
-        asset_contracts_owner.oracle.contract_id().into(),
+        asset_contracts_owner.oracle.contract.contract_id().into(),
         &contracts.borrow_operations,
         &contracts.stability_pool,
         &contracts.usdf,

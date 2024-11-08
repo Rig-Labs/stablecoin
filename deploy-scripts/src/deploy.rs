@@ -134,7 +134,7 @@ pub mod deployment {
             "multi_trove_getter": multi_trove_getter.contract_id().to_string(),
             "asset_contracts": contracts.asset_contracts.iter().map(|asset_contracts| {
                 json!({
-                    "oracle": asset_contracts.oracle.contract_id().to_string(),
+                    "oracle": asset_contracts.oracle.contract.contract_id().to_string(),
                     "trove_manager": asset_contracts.trove_manager.contract.contract_id().to_string(),
                     "asset_contract": asset_contracts.asset.contract_id().to_string(),
                     "asset_id": format!("0x{}", asset_contracts.asset_id.to_string()),
