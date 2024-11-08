@@ -543,14 +543,20 @@ async fn proper_many_depositors_distribution() {
         .await
         .unwrap();
 
-    let depositor_2_sp = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        depositor_2.clone(),
+    let depositor_2_sp = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            depositor_2.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
-    let depositor_3_sp = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        depositor_3.clone(),
+    let depositor_3_sp = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            depositor_3.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::provide_to_stability_pool(
@@ -781,9 +787,12 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         .await
         .unwrap();
 
-    let depositor_2_sp = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        depositor_2.clone(),
+    let depositor_2_sp = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            depositor_2.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::provide_to_stability_pool(

@@ -104,9 +104,12 @@ async fn proper_partial_liquidation_enough_usdf_in_sp() {
     .await
     .unwrap();
 
-    let stability_pool_wallet2 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet2.clone(),
+    let stability_pool_wallet2 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::provide_to_stability_pool(
@@ -363,9 +366,12 @@ async fn proper_partial_liquidation_partial_usdf_in_sp() {
     .await
     .unwrap();
 
-    let stability_pool_healthy_wallet1 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let stability_pool_healthy_wallet1 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::provide_to_stability_pool(

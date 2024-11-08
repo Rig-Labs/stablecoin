@@ -42,7 +42,7 @@ pub mod trove_manager_abi {
     pub async fn batch_liquidate_troves<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         community_issuance: &CommunityIssuance<T>,
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -62,7 +62,7 @@ pub mod trove_manager_abi {
             .batch_liquidate_troves(ids, upper_hint, lower_hint)
             .with_tx_policies(tx_params)
             .with_contracts(&[
-                stability_pool,
+                &stability_pool.contract,
                 oracle,
                 pyth,
                 redstone,
@@ -76,7 +76,8 @@ pub mod trove_manager_abi {
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
                 sorted_troves.implementation_id.into(),
-                stability_pool.contract_id().into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
                 oracle.contract_id().into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
@@ -95,7 +96,7 @@ pub mod trove_manager_abi {
     pub async fn liquidate<T: Account>(
         trove_manager: &TroveManagerContract<T>,
         community_issuance: &CommunityIssuance<T>,
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         oracle: &Oracle<T>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
@@ -115,7 +116,7 @@ pub mod trove_manager_abi {
             .liquidate(id, upper_hint, lower_hint)
             .with_tx_policies(tx_params)
             .with_contracts(&[
-                stability_pool,
+                &stability_pool.contract,
                 oracle,
                 pyth,
                 redstone,
@@ -129,7 +130,8 @@ pub mod trove_manager_abi {
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
                 sorted_troves.implementation_id.into(),
-                stability_pool.contract_id().into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
                 oracle.contract_id().into(),
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),

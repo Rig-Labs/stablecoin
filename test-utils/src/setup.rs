@@ -223,7 +223,7 @@ pub mod common {
 
         community_issuance_abi::initialize(
             &contracts.community_issuance,
-            contracts.stability_pool.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
             contracts.fpt_asset_id,
             &Identity::Address(wallet.address().into()),
             debug,
@@ -237,7 +237,7 @@ pub mod common {
         usdf_token_abi::initialize(
             &contracts.usdf,
             contracts.protocol_manager.contract_id().into(),
-            Identity::ContractId(contracts.stability_pool.contract_id().into()),
+            Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
         )
         .await
@@ -289,7 +289,7 @@ pub mod common {
         protocol_manager_abi::initialize(
             &contracts.protocol_manager,
             contracts.borrow_operations.contract.contract_id().into(),
-            contracts.stability_pool.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
             contracts.fpt_staking.contract_id().into(),
             contracts.usdf.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract_id().into(),
@@ -328,7 +328,7 @@ pub mod common {
         active_pool_abi::initialize(
             &contracts.active_pool,
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
-            Identity::ContractId(contracts.stability_pool.contract_id().into()),
+            Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             contracts.default_pool.contract_id().into(),
             Identity::ContractId(contracts.protocol_manager.contract_id().into()),
         )
@@ -946,7 +946,7 @@ pub mod common {
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.sorted_troves.contract.contract_id().into(),
             oracle.contract_id().into(),
-            contracts.stability_pool.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
             contracts.default_pool.contract_id().into(),
             contracts.active_pool.contract_id().into(),
             contracts.coll_surplus_pool.contract_id().into(),
@@ -1021,7 +1021,11 @@ pub mod common {
                 .contract_id()
                 .into(),
             asset_contracts.oracle.contract_id().into(),
-            core_protocol_contracts.stability_pool.contract_id().into(),
+            core_protocol_contracts
+                .stability_pool
+                .contract
+                .contract_id()
+                .into(),
             core_protocol_contracts.default_pool.contract_id().into(),
             core_protocol_contracts.active_pool.contract_id().into(),
             core_protocol_contracts
@@ -1098,7 +1102,9 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool<WalletUnlocked> {
+    pub async fn deploy_stability_pool(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<StabilityPool<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1116,28 +1122,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(STABILITY_POOL_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return StabilityPool::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return StabilityPool::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            StabilityPool::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool<WalletUnlocked> {

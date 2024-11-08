@@ -30,7 +30,7 @@ impl<C> ContractInstance<C> {
 pub struct ProtocolContracts<T: Account> {
     pub borrow_operations: ContractInstance<BorrowOperations<T>>,
     pub usdf: ContractInstance<USDFToken<T>>,
-    pub stability_pool: StabilityPool<T>,
+    pub stability_pool: ContractInstance<StabilityPool<T>>,
     pub protocol_manager: ProtocolManager<T>,
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
     pub fpt_staking: FPTStaking<T>,
@@ -113,7 +113,7 @@ impl<T: Account> ProtocolContracts<T> {
         );
         println!(
             "Stability Pool Contract ID: {:?}",
-            self.stability_pool.contract_id()
+            self.stability_pool.contract.contract_id()
         );
         println!(
             "Protocol Manager Contract ID: {:?}",

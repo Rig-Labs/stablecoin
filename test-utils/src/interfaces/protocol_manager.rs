@@ -69,7 +69,7 @@ pub mod protocol_manager_abi {
         trove_manager: ContractId,
         oracle: ContractId,
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         usdf: &ContractInstance<USDFToken<T>>,
         fpt_staking: &FPTStaking<T>,
         coll_surplus_pool: &CollSurplusPool<T>,
@@ -84,7 +84,7 @@ pub mod protocol_manager_abi {
             .with_tx_policies(tx_params)
             .with_contracts(&[
                 &borrow_operations.contract,
-                stability_pool,
+                &stability_pool.contract,
                 &usdf.contract,
                 fpt_staking,
                 coll_surplus_pool,
@@ -103,7 +103,8 @@ pub mod protocol_manager_abi {
                 fpt_staking.contract_id().into(),
                 usdf.contract.contract_id().into(),
                 usdf.implementation_id.into(),
-                stability_pool.contract_id().into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
             ])
             .call()
             .await

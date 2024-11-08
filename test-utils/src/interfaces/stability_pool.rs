@@ -26,8 +26,7 @@ pub mod stability_pool_abi {
     };
 
     pub async fn initialize<T: Account>(
-        stability_pool: &StabilityPool<T>,
-
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         usdf_address: ContractId,
         community_issuance_address: ContractId,
         protocol_manager_contract: ContractId,
@@ -37,6 +36,7 @@ pub mod stability_pool_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         stability_pool
+            .contract
             .methods()
             .initialize(
                 usdf_address,
@@ -45,13 +45,17 @@ pub mod stability_pool_abi {
                 active_pool,
                 sorted_troves,
             )
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn add_asset<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         trove_manager: ContractId,
         asset_address: AssetId,
         oracle_address: ContractId,
@@ -59,15 +63,20 @@ pub mod stability_pool_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         stability_pool
+            .contract
             .methods()
             .add_asset(trove_manager, asset_address.into(), oracle_address)
             .with_tx_policies(tx_params)
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
     pub async fn provide_to_stability_pool<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
@@ -85,6 +94,7 @@ pub mod stability_pool_abi {
             .with_asset_id(usdf_asset_id);
 
         stability_pool
+            .contract
             .methods()
             .provide_to_stability_pool()
             .with_tx_policies(tx_params)
@@ -93,6 +103,8 @@ pub mod stability_pool_abi {
             .with_variable_output_policy(VariableOutputPolicy::Exactly(2))
             .with_contracts(&[&usdf_token.contract, mock_token, community_issuance])
             .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 mock_token.contract_id().into(),
@@ -103,62 +115,87 @@ pub mod stability_pool_abi {
     }
 
     pub async fn get_asset<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         asset_address: AssetId,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
+            .contract
             .methods()
             .get_asset(asset_address)
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
     pub async fn get_total_usdf_deposits<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
+            .contract
             .methods()
             .get_total_usdf_deposits()
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
     pub async fn get_depositor_asset_gain<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         asset_id: AssetId,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
+            .contract
             .methods()
             .get_depositor_asset_gain(depositor, asset_id.into())
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
-    pub async fn get_compounded_usdf_deposit(
-        stability_pool: &StabilityPool<WalletUnlocked>,
+    pub async fn get_compounded_usdf_deposit<T: Account>(
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
+            .contract
             .methods()
             .get_compounded_usdf_deposit(depositor)
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
     pub async fn get_depositor_fpt_gain<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
+            .contract
             .methods()
             .get_depositor_fpt_gain(depositor)
+            .with_contract_ids(&[
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+            ])
             .call()
             .await
     }
 
     pub async fn withdraw_from_stability_pool<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         community_issuance: &CommunityIssuance<T>,
         usdf_token: &ContractInstance<USDFToken<T>>,
         mock_token: &Token<T>,
@@ -174,6 +211,7 @@ pub mod stability_pool_abi {
             .with_script_gas_limit(2000000);
 
         stability_pool
+            .contract
             .methods()
             .withdraw_from_stability_pool(amount)
             .with_tx_policies(tx_params)
@@ -199,6 +237,8 @@ pub mod stability_pool_abi {
                 usdf_token.implementation_id.into(),
                 mock_token.contract_id().into(),
                 community_issuance.contract_id().into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
             ])
             .call()
             .await
@@ -211,12 +251,12 @@ pub mod stability_pool_utils {
         types::{AssetId, Identity},
     };
 
-    use crate::setup::common::assert_within_threshold;
+    use crate::{data_structures::ContractInstance, setup::common::assert_within_threshold};
 
     use super::*;
 
     pub async fn assert_pool_asset<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         expected_asset_amount: u64,
         asset_address: AssetId,
     ) {
@@ -229,7 +269,7 @@ pub mod stability_pool_utils {
     }
 
     pub async fn assert_total_usdf_deposits<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         expected_usdf_amount: u64,
     ) {
         let total_usdf_deposits =
@@ -242,7 +282,7 @@ pub mod stability_pool_utils {
     }
 
     pub async fn assert_depositor_asset_gain<T: Account>(
-        stability_pool: &StabilityPool<T>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         expected_asset_gain: u64,
         asset_address: AssetId,
@@ -266,8 +306,8 @@ pub mod stability_pool_utils {
         );
     }
 
-    pub async fn assert_compounded_usdf_deposit(
-        stability_pool: &StabilityPool<WalletUnlocked>,
+    pub async fn assert_compounded_usdf_deposit<T: Account>(
+        stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         expected_compounded_usdf_deposit: u64,
     ) {

@@ -530,17 +530,26 @@ async fn test_emissions_multiple_deposits() {
     .await
     .unwrap();
 
-    let stability_pool_wallet1 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet1.clone(),
+    let stability_pool_wallet1 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
-    let stability_pool_wallet2 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet2.clone(),
+    let stability_pool_wallet2 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
-    let stability_pool_wallet3 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet3.clone(),
+    let stability_pool_wallet3 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet3.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet1,

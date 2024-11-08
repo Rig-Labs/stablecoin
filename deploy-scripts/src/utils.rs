@@ -92,7 +92,10 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let stability_pool = StabilityPool::new(stability_pool_contract_id, wallet.clone());
+        let stability_pool = ContractInstance::new(
+            StabilityPool::new(stability_pool_contract_id.clone(), wallet.clone()),
+            stability_pool_contract_id.into(),
+        );
 
         let protocol_manager_contract_id: Bech32ContractId = contracts["protocol_manager"]
             .as_str()
