@@ -20,7 +20,7 @@ pub mod stability_pool_abi {
 
     use super::*;
     use fuels::{
-        prelude::{Account, CallParameters, Error, TxPolicies, WalletUnlocked},
+        prelude::{Account, CallParameters, Error, TxPolicies},
         programs::responses::CallResponse,
         types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
@@ -255,7 +255,7 @@ pub mod stability_pool_abi {
 
 pub mod stability_pool_utils {
     use fuels::{
-        prelude::{Account, WalletUnlocked},
+        prelude::Account,
         types::{AssetId, Identity},
     };
 

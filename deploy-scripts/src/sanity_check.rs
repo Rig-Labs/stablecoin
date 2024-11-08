@@ -137,23 +137,6 @@ pub async fn sanity_check() {
     .await
     .unwrap();
 
-    println!("Waiting 30 seconds to accumulate rewards");
-    sleep(Duration::from_secs(30));
-    stability_pool_abi::withdraw_from_stability_pool(
-        &core_contracts.stability_pool,
-        &core_contracts.community_issuance,
-        &core_contracts.usdf,
-        &core_contracts.asset_contracts[0].asset,
-        &core_contracts.sorted_troves,
-        &core_contracts.asset_contracts[0].oracle,
-        &core_contracts.asset_contracts[0].mock_pyth_oracle,
-        &core_contracts.asset_contracts[0].mock_redstone_oracle,
-        &core_contracts.asset_contracts[0].trove_manager,
-        stability_pool_balance / 3,
-    )
-    .await
-    .unwrap();
-
     let fpt_balance = provider
         .get_asset_balance(wallet.address().into(), core_contracts.fpt_asset_id.into())
         .await

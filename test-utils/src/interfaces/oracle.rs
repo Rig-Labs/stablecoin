@@ -18,7 +18,7 @@ pub mod oracle_abi {
     use fuels::{
         prelude::{Account, TxPolicies},
         programs::calls::ContractDependency,
-        types::{bech32::Bech32ContractId, errors::Error, ContractId},
+        types::{bech32::Bech32ContractId, errors::Error},
     };
 
     pub async fn get_price<T: Account>(
