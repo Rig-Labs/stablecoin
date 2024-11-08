@@ -513,20 +513,21 @@ pub mod borrow_operations_abi {
     pub async fn claim_coll<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         active_pool: &ActivePool<T>,
-        coll_surplus_pool: &CollSurplusPool<T>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         asset: AssetId,
     ) -> CallResponse<()> {
         borrow_operations
             .contract
             .methods()
             .claim_collateral(asset.into())
-            .with_contracts(&[active_pool, coll_surplus_pool])
+            .with_contracts(&[active_pool, &coll_surplus_pool.contract])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
                 borrow_operations.implementation_id.into(),
                 active_pool.contract_id().into(),
-                coll_surplus_pool.contract_id().into(),
+                coll_surplus_pool.contract.contract_id().into(),
+                coll_surplus_pool.implementation_id.into(),
             ])
             .call()
             .await

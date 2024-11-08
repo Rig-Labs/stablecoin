@@ -77,7 +77,7 @@ pub mod protocol_manager_abi {
         stability_pool: &ContractInstance<StabilityPool<T>>,
         usdf: &ContractInstance<USDFToken<T>>,
         fpt_staking: &ContractInstance<FPTStaking<T>>,
-        coll_surplus_pool: &CollSurplusPool<T>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
@@ -93,7 +93,7 @@ pub mod protocol_manager_abi {
                 &stability_pool.contract,
                 &usdf.contract,
                 &fpt_staking.contract,
-                coll_surplus_pool,
+                &coll_surplus_pool.contract,
                 default_pool,
                 active_pool,
                 &sorted_troves.contract,
@@ -105,7 +105,8 @@ pub mod protocol_manager_abi {
                 borrow_operations.implementation_id.into(),
                 sorted_troves.implementation_id.into(),
                 sorted_troves.contract.contract_id().into(),
-                coll_surplus_pool.contract_id().into(),
+                coll_surplus_pool.contract.contract_id().into(),
+                coll_surplus_pool.implementation_id.into(),
                 default_pool.contract_id().into(),
                 active_pool.contract_id().into(),
                 fpt_staking.contract.contract_id().into(),
@@ -128,7 +129,7 @@ pub mod protocol_manager_abi {
         lower_partial_hint: Option<Identity>,
         usdf: &ContractInstance<USDFToken<T>>,
         fpt_staking: &ContractInstance<FPTStaking<T>>,
-        coll_surplus_pool: &CollSurplusPool<T>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         default_pool: &DefaultPool<T>,
         active_pool: &ActivePool<T>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
@@ -158,7 +159,7 @@ pub mod protocol_manager_abi {
         }
 
         with_contracts.push(&fpt_staking.contract);
-        with_contracts.push(coll_surplus_pool);
+        with_contracts.push(&coll_surplus_pool.contract);
         with_contracts.push(default_pool);
         with_contracts.push(active_pool);
         with_contracts.push(&usdf.contract);
@@ -169,7 +170,8 @@ pub mod protocol_manager_abi {
         with_contract_ids.push(sorted_troves.implementation_id.into());
         with_contract_ids.push(fpt_staking.contract.contract_id().into());
         with_contract_ids.push(fpt_staking.implementation_id.into());
-        with_contract_ids.push(coll_surplus_pool.contract_id().into());
+        with_contract_ids.push(coll_surplus_pool.contract.contract_id().into());
+        with_contract_ids.push(coll_surplus_pool.implementation_id.into());
         with_contract_ids.push(default_pool.contract_id().into());
         with_contract_ids.push(active_pool.contract_id().into());
         with_contract_ids.push(usdf.contract.contract_id().into());

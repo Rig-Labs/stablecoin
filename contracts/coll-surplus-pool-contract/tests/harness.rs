@@ -177,18 +177,26 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
 #[tokio::test]
 async fn test_coll_surplus_pool_access_control() {
     let (contracts, admin, mut wallets) = setup_protocol(3, false, false).await;
-    let coll_surplus_pool = CollSurplusPool::new(
-        contracts.coll_surplus_pool.contract_id().clone(),
-        admin.clone(),
+    let coll_surplus_pool = ContractInstance::new(
+        CollSurplusPool::new(
+            contracts.coll_surplus_pool.contract.contract_id().clone(),
+            admin.clone(),
+        ),
+        contracts.coll_surplus_pool.implementation_id,
     );
     let unauthorized_wallet = wallets.pop().unwrap();
 
-    // Test initialize access control
-    let result = coll_surplus_pool_abi::initialize(
-        &CollSurplusPool::new(
-            coll_surplus_pool.contract_id().clone(),
+    let coll_surplus_unauthorized = ContractInstance::new(
+        CollSurplusPool::new(
+            contracts.coll_surplus_pool.contract.contract_id().clone(),
             unauthorized_wallet.clone(),
         ),
+        contracts.coll_surplus_pool.implementation_id,
+    );
+
+    // Test initialize access control
+    let result = coll_surplus_pool_abi::initialize(
+        &coll_surplus_unauthorized,
         ContractId::from([0u8; 32]),
         Identity::Address(unauthorized_wallet.address().into()),
     )
@@ -200,10 +208,7 @@ async fn test_coll_surplus_pool_access_control() {
 
     // Test add_asset access control
     let result = coll_surplus_pool_abi::add_asset(
-        &CollSurplusPool::new(
-            coll_surplus_pool.contract_id().clone(),
-            unauthorized_wallet.clone(),
-        ),
+        &coll_surplus_unauthorized,
         AssetId::default(),
         Identity::Address(unauthorized_wallet.address().into()),
     )
@@ -215,10 +220,7 @@ async fn test_coll_surplus_pool_access_control() {
 
     // Test claim_coll access control
     let result = coll_surplus_pool_abi::claim_coll(
-        &CollSurplusPool::new(
-            coll_surplus_pool.contract_id().clone(),
-            unauthorized_wallet.clone(),
-        ),
+        &coll_surplus_unauthorized,
         Identity::Address(unauthorized_wallet.address().into()),
         &contracts.active_pool,
         AssetId::default(),
@@ -231,10 +233,7 @@ async fn test_coll_surplus_pool_access_control() {
 
     // Test account_surplus access control
     let result = coll_surplus_pool_abi::account_surplus(
-        &CollSurplusPool::new(
-            coll_surplus_pool.contract_id().clone(),
-            unauthorized_wallet.clone(),
-        ),
+        &coll_surplus_unauthorized,
         Identity::Address(unauthorized_wallet.address().into()),
         100,
         AssetId::default(),

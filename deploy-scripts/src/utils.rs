@@ -131,7 +131,10 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let coll_surplus_pool = CollSurplusPool::new(coll_surplus_pool_contract_id, wallet.clone());
+        let coll_surplus_pool = ContractInstance::new(
+            CollSurplusPool::new(coll_surplus_pool_contract_id.clone(), wallet.clone()),
+            coll_surplus_pool_contract_id.into(),
+        );
 
         let default_pool_contract_id: Bech32ContractId =
             contracts["default_pool"].as_str().unwrap().parse().unwrap();
