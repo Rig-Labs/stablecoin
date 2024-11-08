@@ -6,3 +6,6 @@ name = "mock-trove-manager-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

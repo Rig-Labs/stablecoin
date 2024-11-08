@@ -6,3 +6,6 @@ name = "fpt-staking-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

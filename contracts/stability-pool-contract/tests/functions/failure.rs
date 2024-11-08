@@ -1,6 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::borrow_operations_utils,
         oracle::oracle_abi,
@@ -53,9 +53,12 @@ async fn fails_unauthorized() {
 
     let attacker = wallets.pop().unwrap();
 
-    let stability_pool_attacker = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        attacker.clone(),
+    let stability_pool_attacker = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            attacker.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::initialize(

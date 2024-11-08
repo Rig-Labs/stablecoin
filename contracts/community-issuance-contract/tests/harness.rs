@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         community_issuance::{community_issuance_abi, CommunityIssuance},
@@ -26,17 +26,13 @@ fn abs_dif(a: u64, b: u64) -> u64 {
 async fn test_emissions() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -108,7 +104,7 @@ async fn test_emissions() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -161,17 +157,13 @@ async fn test_emissions() {
 async fn test_admin_start_rewards_increase_transition() {
     let (contracts, admin, mut _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -250,7 +242,7 @@ async fn test_admin_start_rewards_increase_transition() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -280,11 +272,7 @@ async fn test_admin_start_rewards_increase_transition() {
 async fn test_public_start_rewards_increase_transition_after_deadline() {
     let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     let wallet1 = wallets.pop().unwrap();
 
@@ -292,7 +280,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -344,9 +332,12 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     let deadline = 31_536_000 + 1;
     community_issuance_abi::set_current_time(&contracts.community_issuance, deadline).await;
 
-    let community_issuance_wallet1 = CommunityIssuance::new(
-        contracts.community_issuance.contract_id().clone(),
-        wallet1.clone(),
+    let community_issuance_wallet1 = ContractInstance::new(
+        CommunityIssuance::new(
+            contracts.community_issuance.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.community_issuance.implementation_id,
     );
     // this is to test that anyone can call this function
     community_issuance_abi::public_start_rewards_increase_transition_after_deadline(
@@ -374,7 +365,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -405,17 +396,13 @@ async fn test_emissions_multiple_deposits() {
     let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
 
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     community_issuance_abi::set_current_time(&contracts.community_issuance, 0).await;
 
     let total_emissions = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -444,17 +431,26 @@ async fn test_emissions_multiple_deposits() {
     )
     .await;
 
-    let borrow_operations_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet1.clone(),
+    let borrow_operations_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
-    let borrow_operations_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet2.clone(),
+    let borrow_operations_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
-    let borrow_operations_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        wallet3.clone(),
+    let borrow_operations_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -521,17 +517,26 @@ async fn test_emissions_multiple_deposits() {
     .await
     .unwrap();
 
-    let stability_pool_wallet1 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet1.clone(),
+    let stability_pool_wallet1 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet1.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
-    let stability_pool_wallet2 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet2.clone(),
+    let stability_pool_wallet2 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet2.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
-    let stability_pool_wallet3 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        wallet3.clone(),
+    let stability_pool_wallet3 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            wallet3.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet1,
@@ -642,9 +647,12 @@ async fn test_only_owner_can_start_rewards_increase_transition() {
     community_issuance_abi::set_current_time(&contracts.community_issuance, 31104000 + 1).await;
 
     // Create a CommunityIssuance instance for the attacker
-    let community_issuance_attacker = CommunityIssuance::new(
-        contracts.community_issuance.contract_id().clone(),
-        attacker.clone(),
+    let community_issuance_attacker = ContractInstance::new(
+        CommunityIssuance::new(
+            contracts.community_issuance.contract.contract_id().clone(),
+            attacker.clone(),
+        ),
+        contracts.community_issuance.implementation_id,
     );
 
     // Attempt to start the rewards increase transition as the attacker

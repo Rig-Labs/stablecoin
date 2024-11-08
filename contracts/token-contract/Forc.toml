@@ -6,3 +6,6 @@ name = "token-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

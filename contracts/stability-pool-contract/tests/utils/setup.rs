@@ -3,6 +3,7 @@ use rand::{self, Rng};
 
 use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
+use test_utils::data_structures::ContractInstance;
 use test_utils::interfaces::sorted_troves::SortedTroves;
 use test_utils::interfaces::stability_pool::{stability_pool_abi, StabilityPool};
 use test_utils::interfaces::token::{token_abi, Token};
@@ -133,7 +134,7 @@ pub async fn remove(
 pub async fn setup(
     num_wallets: Option<u64>,
 ) -> (
-    StabilityPool<WalletUnlocked>,
+    ContractInstance<StabilityPool<WalletUnlocked>>,
     MockTroveManagerContract<WalletUnlocked>,
     Token<WalletUnlocked>,
     WalletUnlocked,
@@ -195,9 +196,9 @@ pub async fn setup(
     stability_pool_abi::initialize(
         &stability_pool,
         usdf_token.contract_id().into(),
-        stability_pool.contract_id().into(),
+        stability_pool.contract.contract_id().into(),
         mock_token.contract_id().into(),
-        active_pool.contract_id().into(),
+        active_pool.contract.contract_id().into(),
         sorted_troves.contract_id().into(),
     )
     .await
@@ -205,9 +206,9 @@ pub async fn setup(
 
     initialize(
         &trove_instance,
-        stability_pool.contract_id().into(),
-        stability_pool.contract_id().into(),
-        stability_pool.contract_id().into(),
+        stability_pool.contract.contract_id().into(),
+        stability_pool.contract.contract_id().into(),
+        stability_pool.contract.contract_id().into(),
     )
     .await
     .unwrap();

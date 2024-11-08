@@ -8,7 +8,9 @@ pub mod utils {
     use std::fs::File;
     use std::io::Write;
     use std::str::FromStr;
-    use test_utils::data_structures::{AssetContracts, AssetContractsOptionalRedstone, PRECISION};
+    use test_utils::data_structures::{
+        AssetContracts, AssetContractsOptionalRedstone, ContractInstance, PRECISION,
+    };
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
     use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
@@ -27,13 +29,18 @@ pub mod utils {
         },
     };
 
-    use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
+    use crate::constants::{
+        MAINNET_CONTRACTS_FILE, MAINNET_RPC, TESTNET_CONTRACTS_FILE, TESTNET_RPC,
+    };
     pub async fn setup_wallet() -> WalletUnlocked {
-        let rpc = match std::env::var("RPC") {
-            Ok(s) => s,
-            Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
+        let network =
+            std::env::var("NETWORK").expect("NETWORK must be set to 'mainnet' or 'testnet'");
+
+        let rpc: String = match network.as_str() {
+            "mainnet" => MAINNET_RPC.to_string(),
+            "testnet" => TESTNET_RPC.to_string(),
+            _ => panic!("❌ NETWORK must be 'mainnet' or 'testnet'"),
         };
-        println!("RPC: {}", rpc);
 
         let provider = match Provider::connect(rpc).await {
             Ok(p) => p,
@@ -69,72 +76,172 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let borrow_operations =
-            BorrowOperations::new(borrow_operations_contract_id, wallet.clone());
-
+        let borrow_operations_implementation_id: ContractId = contracts
+            ["borrow_operations_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let borrow_operations = ContractInstance::new(
+            BorrowOperations::new(borrow_operations_contract_id.clone(), wallet.clone()),
+            borrow_operations_implementation_id.into(),
+        );
         let usdf_contract_id: Bech32ContractId =
             contracts["usdf"].as_str().unwrap().parse().unwrap();
-        let usdf =
-            test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone());
+        let usdf_implementation_id: ContractId = contracts["usdf_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let usdf = ContractInstance::new(
+            test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone()),
+            usdf_implementation_id.into(),
+        );
 
         let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let stability_pool = StabilityPool::new(stability_pool_contract_id, wallet.clone());
+        let stability_pool_implementation_id: ContractId = contracts
+            ["stability_pool_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let stability_pool = ContractInstance::new(
+            StabilityPool::new(stability_pool_contract_id.clone(), wallet.clone()),
+            stability_pool_implementation_id.into(),
+        );
 
         let protocol_manager_contract_id: Bech32ContractId = contracts["protocol_manager"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let protocol_manager = ProtocolManager::new(protocol_manager_contract_id, wallet.clone());
+        let protocol_manager_implementation_id: ContractId = contracts
+            ["protocol_manager_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let protocol_manager = ContractInstance::new(
+            ProtocolManager::new(protocol_manager_contract_id.clone(), wallet.clone()),
+            protocol_manager_implementation_id.into(),
+        );
 
         let fpt_staking_contract_id: Bech32ContractId =
             contracts["fpt_staking"].as_str().unwrap().parse().unwrap();
-        let fpt_staking = FPTStaking::new(fpt_staking_contract_id, wallet.clone());
+        let fpt_staking_implementation_id: ContractId = contracts["fpt_staking_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let fpt_staking = ContractInstance::new(
+            FPTStaking::new(fpt_staking_contract_id.clone(), wallet.clone()),
+            fpt_staking_implementation_id.into(),
+        );
 
         let fpt_token_contract_id: Bech32ContractId =
             contracts["fpt_token"].as_str().unwrap().parse().unwrap();
-        let fpt_token = FPTToken::new(fpt_token_contract_id.clone(), wallet.clone());
+        let fpt_token_implementation_id: ContractId = contracts["fpt_token_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let fpt_token = ContractInstance::new(
+            FPTToken::new(fpt_token_contract_id.clone(), wallet.clone()),
+            fpt_token_implementation_id.into(),
+        );
 
         let community_issuance_contract_id: Bech32ContractId = contracts["community_issuance"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let community_issuance =
-            CommunityIssuance::new(community_issuance_contract_id, wallet.clone());
+        let community_issuance_implementation_id: ContractId = contracts
+            ["community_issuance_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let community_issuance = ContractInstance::new(
+            CommunityIssuance::new(community_issuance_contract_id.clone(), wallet.clone()),
+            community_issuance_implementation_id.into(),
+        );
 
         let coll_surplus_pool_contract_id: Bech32ContractId = contracts["coll_surplus_pool"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let coll_surplus_pool = CollSurplusPool::new(coll_surplus_pool_contract_id, wallet.clone());
+        let coll_surplus_pool_implementation_id: ContractId = contracts
+            ["coll_surplus_pool_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let coll_surplus_pool = ContractInstance::new(
+            CollSurplusPool::new(coll_surplus_pool_contract_id.clone(), wallet.clone()),
+            coll_surplus_pool_implementation_id.into(),
+        );
 
         let default_pool_contract_id: Bech32ContractId =
             contracts["default_pool"].as_str().unwrap().parse().unwrap();
-        let default_pool = DefaultPool::new(default_pool_contract_id, wallet.clone());
+        let default_pool_implementation_id: ContractId = contracts
+            ["default_pool_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let default_pool = ContractInstance::new(
+            DefaultPool::new(default_pool_contract_id.clone(), wallet.clone()),
+            default_pool_implementation_id.into(),
+        );
 
         let active_pool_contract_id: Bech32ContractId =
             contracts["active_pool"].as_str().unwrap().parse().unwrap();
-        let active_pool = ActivePool::new(active_pool_contract_id, wallet.clone());
+        let active_pool_implementation_id: ContractId = contracts["active_pool_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let active_pool = ContractInstance::new(
+            ActivePool::new(active_pool_contract_id.clone(), wallet.clone()),
+            active_pool_implementation_id.into(),
+        );
 
         let sorted_troves_contract_id: Bech32ContractId = contracts["sorted_troves"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let sorted_troves = SortedTroves::new(sorted_troves_contract_id, wallet.clone());
+        let sorted_troves_implementation_id: ContractId = contracts
+            ["sorted_troves_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let sorted_troves = ContractInstance::new(
+            SortedTroves::new(sorted_troves_contract_id.clone(), wallet.clone()),
+            sorted_troves_implementation_id.into(),
+        );
 
         let vesting_contract_id: Bech32ContractId = contracts["vesting_contract"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let vesting_contract = VestingContract::new(vesting_contract_id, wallet.clone());
+        let vesting_contract_implementation_id: ContractId = contracts
+            ["vesting_contract_implementation_id"]
+            .as_str()
+            .unwrap()
+            .parse()
+            .unwrap();
+        let vesting_contract = ContractInstance::new(
+            VestingContract::new(vesting_contract_id.clone(), wallet.clone()),
+            vesting_contract_implementation_id.into(),
+        );
 
         let fpt_asset_id: AssetId =
             AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();
@@ -156,7 +263,19 @@ pub mod utils {
                     AssetId::from_str(asset_contract["asset_id"].as_str().unwrap()).unwrap();
                 let oracle_contract_id: Bech32ContractId =
                     asset_contract["oracle"].as_str().unwrap().parse().unwrap();
+                let oracle_implementation_id: ContractId = asset_contract
+                    ["oracle_implementation_id"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
                 let trove_manager_contract_id: Bech32ContractId = asset_contract["trove_manager"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                let trove_manager_implementation_id: ContractId = asset_contract
+                    ["trove_manager_implementation_id"]
                     .as_str()
                     .unwrap()
                     .parse()
@@ -175,13 +294,19 @@ pub mod utils {
                 AssetContracts {
                     asset: Token::new(asset_contract_id, wallet.clone()),
                     asset_id,
-                    oracle: test_utils::interfaces::oracle::Oracle::new(
-                        oracle_contract_id,
-                        wallet.clone(),
+                    oracle: ContractInstance::new(
+                        test_utils::interfaces::oracle::Oracle::new(
+                            oracle_contract_id.clone(),
+                            wallet.clone(),
+                        ),
+                        oracle_implementation_id.into(),
                     ),
-                    trove_manager: TroveManagerContract::new(
-                        trove_manager_contract_id,
-                        wallet.clone(),
+                    trove_manager: ContractInstance::new(
+                        TroveManagerContract::new(
+                            trove_manager_contract_id.clone(),
+                            wallet.clone(),
+                        ),
+                        trove_manager_implementation_id.into(),
                     ),
                     fuel_vm_decimals: asset_contract["fuel_vm_decimals"].as_u64().unwrap() as u32,
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
@@ -250,8 +375,10 @@ pub mod utils {
         for asset_contract in asset_contracts {
             existing_asset_contracts.push(json!({
                 "symbol": asset_contract.symbol,
-                "oracle": asset_contract.oracle.contract_id().to_string(),
-                "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
+                "oracle": asset_contract.oracle.contract.contract_id().to_string(),
+                "oracle_implementation_id": format!("0x{}", asset_contract.oracle.implementation_id.to_string()),
+                "trove_manager": asset_contract.trove_manager.contract.contract_id().to_string(),
+                "trove_manager_implementation_id": format!("0x{}", asset_contract.trove_manager.implementation_id.to_string()),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
                 "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
@@ -358,6 +485,7 @@ pub mod utils {
         let mut reader = ReaderBuilder::new()
             .flexible(true)
             .trim(csv::Trim::All)
+            .has_headers(false)
             .from_reader(file);
 
         let now_unix = std::time::SystemTime::now()
@@ -367,7 +495,9 @@ pub mod utils {
 
         let cliff_timestamp = now_unix + seconds_to_cliff;
         let end_timestamp = cliff_timestamp + seconds_vesting_duration;
+        let now_unix_and_5_minutes = now_unix + 5 * 60;
 
+        let now_and_5_minutes = tai64::Tai64::from_unix(now_unix_and_5_minutes.try_into().unwrap());
         let cliff_timestamp = tai64::Tai64::from_unix(cliff_timestamp.try_into().unwrap());
         let end_timestamp = tai64::Tai64::from_unix(end_timestamp.try_into().unwrap());
 
@@ -376,21 +506,19 @@ pub mod utils {
         for result in reader.records() {
             let record = result.expect("Failed to read CSV record");
             if record.len() < 5 || record[1].is_empty() {
-                continue; // Skip empty or invalid rows
+                panic!("Invalid row found in CSV: {:?}", record);
             }
 
-            println!("record: {:?}", record);
+            // println!("record: {:?}", record);
 
             let total_amount = (record[1].replace([',', '"'], "").parse::<f64>().unwrap()
                 * PRECISION as f64) as u64;
             let recipient = if !record[2].is_empty() {
                 Identity::Address(Address::from_str(&record[2]).unwrap())
             } else if !record[3].is_empty() {
-                continue;
-                // ignore the recipient for now since ETH addresses are not supported yet
-                // Identity::Address(Address::from_str(&record[3]).unwrap())
+                panic!("ETH addresses are not supported yet: {:?}", record);
             } else {
-                continue; // Skip if both wallet addresses are empty
+                panic!("No valid wallet address found in row: {:?}", record);
             };
 
             let schedule = VestingSchedule {
@@ -402,21 +530,21 @@ pub mod utils {
                 recipient,
             };
 
-            println!("schedule: {:?}", schedule);
-
             schedules.push(schedule);
         }
         // take the sum of all total_amounts
         let total_sum: u64 = schedules.iter().map(|s| s.total_amount).sum();
         println!("Total sum of all vesting amounts: {}", total_sum);
         // add one more schedule with the remaining amount
-        // TODO: find the total amount vested
+        let remaining_amount = TOTAL_AMOUNT_VESTED - total_sum;
+        println!("Remaining amount: {}", remaining_amount);
+        // treasury vesting schedule
         schedules.push(VestingSchedule {
-            cliff_amount: total_sum,
-            cliff_timestamp: cliff_timestamp.0,
+            cliff_amount: remaining_amount,
+            cliff_timestamp: now_and_5_minutes.0, // cliff timestamp is now + 5 minutes
             end_timestamp: end_timestamp.0,
             claimed_amount: 0,
-            total_amount: TOTAL_AMOUNT_VESTED - total_sum,
+            total_amount: remaining_amount,
             recipient: treasury_identity,
         });
         schedules

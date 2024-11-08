@@ -13,7 +13,7 @@ async fn fails_unstake_wrong_amount() {
     let (contracts, admin, mut _wallets) = setup_protocol(4, false, true).await;
 
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         _wallets.pop().unwrap().clone(),
     );
     token_abi::mint_to_id(

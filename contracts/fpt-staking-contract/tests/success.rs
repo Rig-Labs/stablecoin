@@ -1,6 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         fpt_staking::{fpt_staking_abi, FPTStaking},
@@ -47,14 +47,10 @@ async fn proper_staking_deposit() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         _wallets.pop().unwrap().clone(),
     );
     token_abi::mint_to_id(
@@ -84,23 +80,16 @@ async fn proper_staking_multiple_positions() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
-    let usdf_asset_id = contracts
-        .usdf
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
+
+    let usdf_asset_id = contracts.usdf_asset_id;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
     let healthy_wallet3 = wallets.pop().unwrap();
 
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         healthy_wallet1.clone(),
     );
 
@@ -118,14 +107,20 @@ async fn proper_staking_multiple_positions() {
     )
     .await;
 
-    let fpt_staking_healthy_wallet1 = FPTStaking::new(
-        contracts.fpt_staking.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let fpt_staking_healthy_wallet1 = ContractInstance::new(
+        FPTStaking::new(
+            contracts.fpt_staking.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.fpt_staking.implementation_id,
     );
 
-    let fpt_staking_healthy_wallet2 = FPTStaking::new(
-        contracts.fpt_staking.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let fpt_staking_healthy_wallet2 = ContractInstance::new(
+        FPTStaking::new(
+            contracts.fpt_staking.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.fpt_staking.implementation_id,
     );
 
     let mock_token_asset_id = mock_token.contract_id().asset_id(&AssetId::zeroed().into());
@@ -176,9 +171,12 @@ async fn proper_staking_multiple_positions() {
 
     // println!("Asset balance user {}", asset_user_balance);
 
-    let borrow_operations_healthy_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let borrow_operations_healthy_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -208,7 +206,7 @@ async fn proper_staking_multiple_positions() {
     .unwrap();
 
     let usdf_in_staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), usdf_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), usdf_asset_id)
         .await
         .unwrap();
 
@@ -230,9 +228,12 @@ async fn proper_staking_multiple_positions() {
 
     let redeem_amount = 10_000 * PRECISION;
 
-    let protocol_manager_healthy_wallet3 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let protocol_manager_healthy_wallet3 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_healthy_wallet3,
@@ -253,7 +254,7 @@ async fn proper_staking_multiple_positions() {
 
     let asset_in_staking_balance = provider
         .get_contract_asset_balance(
-            &contracts.fpt_staking.contract_id(),
+            &contracts.fpt_staking.contract.contract_id(),
             contracts.asset_contracts[0].asset_id,
         )
         .await

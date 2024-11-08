@@ -17,9 +17,12 @@ async fn proper_hint_generations() {
 
     let hint_helper = deploy_hint_helper(&wallet).await;
 
-    hint_helper_abi::initialize(&hint_helper, contracts.sorted_troves.contract_id().into())
-        .await
-        .unwrap();
+    hint_helper_abi::initialize(
+        &hint_helper,
+        contracts.sorted_troves.contract.contract_id().into(),
+    )
+    .await
+    .unwrap();
 
     // create 15 troves each with 600 USDF debt and n * 1000 collateral
     let mut target_address = Identity::Address(wallet.address().into());

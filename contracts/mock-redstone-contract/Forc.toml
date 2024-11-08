@@ -6,3 +6,6 @@ name = "mock-redstone-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

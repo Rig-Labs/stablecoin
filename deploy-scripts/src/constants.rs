@@ -5,13 +5,20 @@
 pub const TESTNET_CONTRACTS_FILE: &str = "testnet.contracts.json";
 pub const MAINNET_CONTRACTS_FILE: &str = "mainnet.contracts.json";
 
+pub const TESTNET_RPC: &str = "https://testnet.fuel.network/v1/playground";
+pub const MAINNET_RPC: &str = "https://mainnet.fuel.network/v1/playground";
+
 pub const TESTNET_TREASURY_IDENTITY: &str =
-    "0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785";
+    "0xa5ac02c203dde9b52cb2ab29bdd0dfee1e7a17f97339ff2ead92de4eebb62305";
 pub const MAINNET_TREASURY_IDENTITY: &str =
-    "0x4761863a5b9a7ec3263964f694f453a5a67cf0d458ebc3e36eb618d43809c785";
-// Testnet
+    "0x8c365ce492a296a851c1a68dc2fcf667766396a47dc441d9cd0f9d26756525f7";
+
 pub const TESTNET_PYTH_CONTRACT_ID: &str =
     "0x25146735b29d4216639f7f8b1d7b921ff87a1d3051de62d6cceaacabeb33b8e7";
+pub const MAINNET_PYTH_CONTRACT_ID: &str =
+    "0x1c86fdd9e0e7bc0d2ae1bf6817ef4834ffa7247655701ee1b031b52a24c523da";
+
+// Testnet
 pub const TESTNET_ETH_ASSET_CONTRACT_ID: &str =
     "0x4ea6ccef1215d9479f1024dff70fc055ca538215d2c8c348beddffd54583d0e8";
 pub const TESTNET_ETH_ASSET_ID: &str =
@@ -19,9 +26,6 @@ pub const TESTNET_ETH_ASSET_ID: &str =
 
 // Mainnet
 // https://github.com/FuelLabs/verified-assets/blob/main/ASSETS.md
-pub const MAINNET_PYTH_CONTRACT_ID: &str =
-    "0x1c86fdd9e0e7bc0d2ae1bf6817ef4834ffa7247655701ee1b031b52a24c523da";
-
 pub const MAINNET_ASSET_CONTRACT_ID: &str =
     "0x4ea6ccef1215d9479f1024dff70fc055ca538215d2c8c348beddffd54583d0e8";
 pub const MAINNET_ETH_ASSET_ID: &str =

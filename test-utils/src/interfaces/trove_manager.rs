@@ -23,32 +23,39 @@ pub mod trove_manager_abi {
         types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
 
+    use crate::data_structures::ContractInstance;
+
     use super::*;
 
     pub async fn get_nominal_icr<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         trove_manager
+            .contract
             .methods()
             .get_nominal_icr(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .call()
             .await
             .unwrap()
     }
 
     pub async fn batch_liquidate_troves<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        community_issuance: &CommunityIssuance<T>,
-        stability_pool: &StabilityPool<T>,
-        oracle: &Oracle<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        sorted_troves: &SortedTroves<T>,
-        active_pool: &ActivePool<T>,
-        default_pool: &DefaultPool<T>,
-        coll_surplus_pool: &CollSurplusPool<T>,
-        usdf: &USDFToken<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
+        active_pool: &ContractInstance<ActivePool<T>>,
+        default_pool: &ContractInstance<DefaultPool<T>>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
+        usdf: &ContractInstance<USDFToken<T>>,
         ids: Vec<Identity>,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -56,20 +63,43 @@ pub mod trove_manager_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .batch_liquidate_troves(ids, upper_hint, lower_hint)
             .with_tx_policies(tx_params)
             .with_contracts(&[
-                stability_pool,
-                oracle,
+                &stability_pool.contract,
+                &oracle.contract,
                 pyth,
                 redstone,
-                sorted_troves,
-                active_pool,
-                default_pool,
-                coll_surplus_pool,
-                usdf,
-                community_issuance,
+                &sorted_troves.contract,
+                &active_pool.contract,
+                &default_pool.contract,
+                &coll_surplus_pool.contract,
+                &usdf.contract,
+                &community_issuance.contract,
+            ])
+            .with_contract_ids(&[
+                sorted_troves.contract.contract_id().into(),
+                sorted_troves.implementation_id.into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+                pyth.contract_id().into(),
+                redstone.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
+                default_pool.contract.contract_id().into(),
+                default_pool.implementation_id.into(),
+                coll_surplus_pool.contract.contract_id().into(),
+                coll_surplus_pool.implementation_id.into(),
+                usdf.contract.contract_id().into(),
+                usdf.implementation_id.into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
@@ -77,17 +107,17 @@ pub mod trove_manager_abi {
     }
 
     pub async fn liquidate<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        community_issuance: &CommunityIssuance<T>,
-        stability_pool: &StabilityPool<T>,
-        oracle: &Oracle<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        community_issuance: &ContractInstance<CommunityIssuance<T>>,
+        stability_pool: &ContractInstance<StabilityPool<T>>,
+        oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         redstone: &RedstoneCore<T>,
-        sorted_troves: &SortedTroves<T>,
-        active_pool: &ActivePool<T>,
-        default_pool: &DefaultPool<T>,
-        coll_surplus_pool: &CollSurplusPool<T>,
-        usdf: &USDFToken<T>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
+        active_pool: &ContractInstance<ActivePool<T>>,
+        default_pool: &ContractInstance<DefaultPool<T>>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
+        usdf: &ContractInstance<USDFToken<T>>,
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -95,20 +125,43 @@ pub mod trove_manager_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .liquidate(id, upper_hint, lower_hint)
             .with_tx_policies(tx_params)
             .with_contracts(&[
-                stability_pool,
-                oracle,
+                &stability_pool.contract,
+                &oracle.contract,
                 pyth,
                 redstone,
-                sorted_troves,
-                active_pool,
-                default_pool,
-                coll_surplus_pool,
-                usdf,
-                community_issuance,
+                &sorted_troves.contract,
+                &active_pool.contract,
+                &default_pool.contract,
+                &coll_surplus_pool.contract,
+                &usdf.contract,
+                &community_issuance.contract,
+            ])
+            .with_contract_ids(&[
+                sorted_troves.contract.contract_id().into(),
+                sorted_troves.implementation_id.into(),
+                stability_pool.contract.contract_id().into(),
+                stability_pool.implementation_id.into(),
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+                pyth.contract_id().into(),
+                redstone.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
+                default_pool.contract.contract_id().into(),
+                default_pool.implementation_id.into(),
+                coll_surplus_pool.contract.contract_id().into(),
+                coll_surplus_pool.implementation_id.into(),
+                usdf.contract.contract_id().into(),
+                usdf.implementation_id.into(),
+                community_issuance.contract.contract_id().into(),
+                community_issuance.implementation_id.into(),
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .call()
@@ -116,15 +169,20 @@ pub mod trove_manager_abi {
     }
 
     pub async fn increase_trove_coll<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         amount: u64,
     ) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .increase_trove_coll(id, amount)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -132,15 +190,20 @@ pub mod trove_manager_abi {
     }
 
     pub async fn increase_trove_debt<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         amount: u64,
     ) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .increase_trove_debt(id, amount)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -148,15 +211,20 @@ pub mod trove_manager_abi {
     }
 
     pub async fn set_trove_status<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         status: Status,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .set_trove_status(id, status)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -164,7 +232,7 @@ pub mod trove_manager_abi {
     }
 
     pub async fn initialize<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         borrow_operations: ContractId,
         sorted_troves_id: ContractId,
         oracle_id: ContractId,
@@ -179,6 +247,7 @@ pub mod trove_manager_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = trove_manager
+            .contract
             .methods()
             .initialize(
                 borrow_operations,
@@ -192,6 +261,10 @@ pub mod trove_manager_abi {
                 asset.into(),
                 protocol_manager,
             )
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await;
@@ -200,14 +273,19 @@ pub mod trove_manager_abi {
     }
 
     pub async fn get_trove_coll<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .get_trove_coll(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -215,14 +293,19 @@ pub mod trove_manager_abi {
     }
 
     pub async fn get_entire_debt_and_coll<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<(u64, u64, u64, u64)> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         trove_manager
+            .contract
             .methods()
             .get_entire_debt_and_coll(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -230,43 +313,67 @@ pub mod trove_manager_abi {
     }
 
     pub async fn get_trove_debt<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         trove_manager
+            .contract
             .methods()
             .get_trove_debt(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .call()
             .await
             .unwrap()
     }
 
     pub async fn get_trove_status<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> Result<CallResponse<Status>, Error> {
-        trove_manager.methods().get_trove_status(id).call().await
+        trove_manager
+            .contract
+            .methods()
+            .get_trove_status(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
+            .call()
+            .await
     }
 
     pub async fn get_pending_asset_reward<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         trove_manager
+            .contract
             .methods()
             .get_pending_asset_rewards(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .call()
             .await
             .unwrap()
     }
 
     pub async fn get_pending_usdf_reward<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         trove_manager
+            .contract
             .methods()
             .get_pending_usdf_rewards(id)
+            .with_contract_ids(&[
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
+            ])
             .call()
             .await
             .unwrap()
@@ -284,14 +391,15 @@ pub mod trove_manager_utils {
     };
 
     use crate::{
-        interfaces::sorted_troves::sorted_troves_abi, setup::common::assert_within_threshold,
+        data_structures::ContractInstance, interfaces::sorted_troves::sorted_troves_abi,
+        setup::common::assert_within_threshold,
     };
 
     use super::*;
 
     pub async fn set_coll_and_debt_insert<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
-        sorted_troves: &SortedTroves<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         coll: u64,
         debt: u64,
@@ -306,7 +414,7 @@ pub mod trove_manager_utils {
     }
 
     pub async fn assert_trove_coll<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_coll: u64,
     ) {
@@ -318,7 +426,7 @@ pub mod trove_manager_utils {
     }
 
     pub async fn assert_trove_debt<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_debt: u64,
     ) {
@@ -330,7 +438,7 @@ pub mod trove_manager_utils {
     }
 
     pub async fn assert_trove_status<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_status: Status,
     ) {
@@ -343,7 +451,7 @@ pub mod trove_manager_utils {
     }
 
     pub async fn assert_pending_asset_rewards<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_rewards: u64,
     ) {
@@ -362,7 +470,7 @@ pub mod trove_manager_utils {
     }
 
     pub async fn assert_pending_usdf_rewards<T: Account>(
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_rewards: u64,
     ) {

@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         borrow_operations::{borrow_operations_abi, BorrowOperations},
         oracle::oracle_abi,
@@ -152,9 +152,12 @@ async fn test_trove_events() {
     )
     .await;
 
-    let borrow_operations_second_wallet = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        second_wallet.clone(),
+    let borrow_operations_second_wallet = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            second_wallet.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(

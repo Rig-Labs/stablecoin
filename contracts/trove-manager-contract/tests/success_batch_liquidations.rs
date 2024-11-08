@@ -1,7 +1,7 @@
 use fuels::prelude::*;
 use fuels::types::Identity;
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         active_pool::active_pool_abi,
         borrow_operations::borrow_operations_utils,
@@ -76,9 +76,12 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     )
     .await;
 
-    let stability_pool_healthy_wallet1 = StabilityPool::new(
-        contracts.stability_pool.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let stability_pool_healthy_wallet1 = ContractInstance::new(
+        StabilityPool::new(
+            contracts.stability_pool.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.stability_pool.implementation_id,
     );
 
     stability_pool_abi::provide_to_stability_pool(

@@ -1,5 +1,6 @@
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
+    data_structures::ContractInstance,
     interfaces::{
         oracle::{oracle_abi, Oracle, RedstoneConfig},
         pyth_oracle::{pyth_oracle_abi, Price, PythCore, DEFAULT_PYTH_PRICE_ID},
@@ -8,7 +9,7 @@ use test_utils::{
 };
 
 async fn setup() -> (
-    Oracle<WalletUnlocked>,
+    ContractInstance<Oracle<WalletUnlocked>>,
     PythCore<WalletUnlocked>,
     WalletUnlocked,
     WalletUnlocked,
@@ -57,7 +58,14 @@ async fn test_set_redstone_config_authorization() {
     );
 
     // Test 2: Unauthorized set_redstone_config
-    let oracle_attacker = Oracle::new(oracle.contract_id().clone(), attacker_wallet.clone());
+    let oracle_attacker = ContractInstance::new(
+        Oracle::new(
+            oracle.contract.contract_id().clone(),
+            attacker_wallet.clone(),
+        ),
+        oracle.implementation_id,
+    );
+
     let result =
         oracle_abi::set_redstone_config(&oracle_attacker, &redstone, redstone_config.clone()).await;
 

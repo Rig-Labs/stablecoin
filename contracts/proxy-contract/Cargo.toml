@@ -1,0 +1,17 @@
+[package]
+name = "proxy-contract"
+version = "0.1.0"
+authors = ["hydrogen-labs"]
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+fuels = { workspace = true }
+tokio = { workspace = true }
+test-utils = { workspace = true }
+# Not the latest version because of indexer bug o.o 
+
+[[test]]
+harness = true
+name = "tests"
+path = "tests/harness.rs"

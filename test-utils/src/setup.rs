@@ -25,8 +25,8 @@ pub mod common {
     use super::*;
     use crate::{
         data_structures::{
-            AssetContracts, AssetContractsOptionalRedstone, ExistingAssetContracts,
-            ProtocolContracts, RedstoneConfig, PRECISION,
+            AssetContracts, AssetContractsOptionalRedstone, ContractInstance,
+            ExistingAssetContracts, ProtocolContracts, RedstoneConfig, PRECISION,
         },
         interfaces::{
             active_pool::active_pool_abi,
@@ -38,6 +38,7 @@ pub mod common {
             fpt_token::fpt_token_abi,
             oracle::oracle_abi,
             protocol_manager::protocol_manager_abi,
+            proxy::Proxy,
             pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
             redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id},
             sorted_troves::sorted_troves_abi,
@@ -52,12 +53,13 @@ pub mod common {
         // accounts::rand::{self, Rng},
         prelude::*,
         programs::responses::CallResponse,
-        types::{Bits256, ContractId, Identity, U256},
+        tx::StorageSlot,
+        types::{Bits256, Bytes32, ContractId, Identity, U256},
     };
     use pbr::ProgressBar;
     // use pbr::ProgressBar;
     use rand::Rng;
-    use std::env;
+    use std::{env, str::FromStr};
 
     pub async fn setup_protocol(
         num_wallets: u64,
@@ -119,6 +121,7 @@ pub mod common {
         let mut pb = ProgressBar::new(13);
 
         let borrow_operations = deploy_borrow_operations(wallet).await;
+
         if verbose {
             pb.inc();
         }
@@ -165,11 +168,17 @@ pub mod common {
         let sorted_troves = deploy_sorted_troves(wallet).await;
         let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
-        let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
+        let fpt_asset_id = fpt_token
+            .contract
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into());
         if verbose {
             pb.inc();
         }
-        let usdf_asset_id = usdf.contract_id().asset_id(&AssetId::zeroed().into());
+        let usdf_asset_id = usdf
+            .contract
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into());
         if verbose {
             pb.inc();
         }
@@ -201,11 +210,12 @@ pub mod common {
         verbose: bool,
     ) {
         println!("Initializing core contracts...");
+        // contracts.print_contract_ids();
         let mut pb = ProgressBar::new(11);
         if !use_test_fpt {
             fpt_token_abi::initialize(
                 &contracts.fpt_token,
-                &contracts.vesting_contract,
+                &contracts.vesting_contract.contract,
                 &contracts.community_issuance,
             )
             .await;
@@ -216,7 +226,7 @@ pub mod common {
 
         community_issuance_abi::initialize(
             &contracts.community_issuance,
-            contracts.stability_pool.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
             contracts.fpt_asset_id,
             &Identity::Address(wallet.address().into()),
             debug,
@@ -229,9 +239,9 @@ pub mod common {
 
         usdf_token_abi::initialize(
             &contracts.usdf,
-            contracts.protocol_manager.contract_id().into(),
-            Identity::ContractId(contracts.stability_pool.contract_id().into()),
-            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
+            contracts.protocol_manager.contract.contract_id().into(),
+            Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
+            Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -241,12 +251,12 @@ pub mod common {
 
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
-            contracts.usdf.contract_id().into(),
-            contracts.fpt_staking.contract_id().into(),
-            contracts.protocol_manager.contract_id().into(),
-            contracts.coll_surplus_pool.contract_id().into(),
-            contracts.active_pool.contract_id().into(),
-            contracts.sorted_troves.contract_id().into(),
+            contracts.usdf.contract.contract_id().into(),
+            contracts.fpt_staking.contract.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
+            contracts.coll_surplus_pool.contract.contract_id().into(),
+            contracts.active_pool.contract.contract_id().into(),
+            contracts.sorted_troves.contract.contract_id().into(),
         )
         .await;
         if verbose {
@@ -255,11 +265,11 @@ pub mod common {
 
         stability_pool_abi::initialize(
             &contracts.stability_pool,
-            contracts.usdf.contract_id().into(),
-            contracts.community_issuance.contract_id().into(),
-            contracts.protocol_manager.contract_id().into(),
-            contracts.active_pool.contract_id().into(),
-            contracts.sorted_troves.contract_id().into(),
+            contracts.usdf.contract.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
+            contracts.active_pool.contract.contract_id().into(),
+            contracts.sorted_troves.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -269,8 +279,8 @@ pub mod common {
 
         fpt_staking_abi::initialize(
             &contracts.fpt_staking,
-            contracts.protocol_manager.contract_id().into(),
-            contracts.borrow_operations.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
             contracts.fpt_asset_id,
             contracts.usdf_asset_id,
         )
@@ -281,14 +291,14 @@ pub mod common {
 
         protocol_manager_abi::initialize(
             &contracts.protocol_manager,
-            contracts.borrow_operations.contract_id().into(),
-            contracts.stability_pool.contract_id().into(),
-            contracts.fpt_staking.contract_id().into(),
-            contracts.usdf.contract_id().into(),
-            contracts.coll_surplus_pool.contract_id().into(),
-            contracts.default_pool.contract_id().into(),
-            contracts.active_pool.contract_id().into(),
-            contracts.sorted_troves.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
+            contracts.fpt_staking.contract.contract_id().into(),
+            contracts.usdf.contract.contract_id().into(),
+            contracts.coll_surplus_pool.contract.contract_id().into(),
+            contracts.default_pool.contract.contract_id().into(),
+            contracts.active_pool.contract.contract_id().into(),
+            contracts.sorted_troves.contract.contract_id().into(),
             Identity::Address(wallet.address().into()),
         )
         .await;
@@ -298,8 +308,8 @@ pub mod common {
 
         coll_surplus_pool_abi::initialize(
             &contracts.coll_surplus_pool,
-            contracts.borrow_operations.contract_id().into(),
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            contracts.borrow_operations.contract.contract_id().into(),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -309,8 +319,8 @@ pub mod common {
 
         default_pool_abi::initialize(
             &contracts.default_pool,
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
-            contracts.active_pool.contract_id().into(),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
+            contracts.active_pool.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -320,10 +330,10 @@ pub mod common {
 
         active_pool_abi::initialize(
             &contracts.active_pool,
-            Identity::ContractId(contracts.borrow_operations.contract_id().into()),
-            Identity::ContractId(contracts.stability_pool.contract_id().into()),
-            contracts.default_pool.contract_id().into(),
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
+            Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
+            contracts.default_pool.contract.contract_id().into(),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -334,8 +344,8 @@ pub mod common {
         sorted_troves_abi::initialize(
             &contracts.sorted_troves,
             100_000_000,
-            contracts.protocol_manager.contract_id().into(),
-            contracts.borrow_operations.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -344,7 +354,9 @@ pub mod common {
         }
     }
 
-    async fn deploy_test_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+    async fn deploy_test_fpt_token(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
         let mock_fpt_token = deploy_token(wallet).await;
 
         token_abi::initialize(
@@ -357,7 +369,10 @@ pub mod common {
         .await
         .unwrap();
 
-        FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
+        ContractInstance::new(
+            FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone()),
+            mock_fpt_token.contract_id().into(),
+        )
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
@@ -391,7 +406,9 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+    pub async fn deploy_fpt_token(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -409,29 +426,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(FPT_TOKEN_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return FPTToken::new(id, wallet.clone()),
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables.clone())
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return FPTToken::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            FPTToken::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
-    pub async fn deploy_sorted_troves(wallet: &WalletUnlocked) -> SortedTroves<WalletUnlocked> {
+    pub async fn deploy_sorted_troves(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<SortedTroves<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -449,31 +462,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(SORTED_TROVES_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return SortedTroves::new(id, wallet.clone()),
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(SORTED_TROVES_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return SortedTroves::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            SortedTroves::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_trove_manager_contract(
         wallet: &WalletUnlocked,
-    ) -> TroveManagerContract<WalletUnlocked> {
+    ) -> ContractInstance<TroveManagerContract<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -491,32 +498,26 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(TROVE_MANAGER_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return TroveManagerContract::new(id, wallet.clone()),
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return TroveManagerContract::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            TroveManagerContract::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_vesting_contract(
         wallet: &WalletUnlocked,
         total_amount: u64,
-    ) -> VestingContract<WalletUnlocked> {
+    ) -> ContractInstance<VestingContract<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -536,25 +537,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(VESTING_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return VestingContract::new(id, wallet.clone()),
-            Err(_) => {
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(VESTING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return VestingContract::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            VestingContract::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_mock_pyth_oracle(wallet: &WalletUnlocked) -> PythCore<WalletUnlocked> {
@@ -630,7 +626,7 @@ pub mod common {
         fuel_vm_decimals: u32,
         debug: bool,
         initializer: Identity,
-    ) -> Oracle<WalletUnlocked> {
+    ) -> ContractInstance<Oracle<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -655,32 +651,22 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(ORACLE_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return Oracle::new(id, wallet.clone());
-            }
-            Err(_) => {
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(ORACLE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return Oracle::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(Oracle::new(proxy.contract_id(), wallet.clone()), id.into())
     }
 
     pub async fn deploy_protocol_manager(
         wallet: &WalletUnlocked,
-    ) -> ProtocolManager<WalletUnlocked> {
+    ) -> ContractInstance<ProtocolManager<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -701,12 +687,22 @@ pub mod common {
         .await
         .unwrap();
 
-        ProtocolManager::new(id, wallet.clone())
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(PROTCOL_MANAGER_CONTRACT_STORAGE_PATH),
+        )
+        .await;
+
+        ContractInstance::new(
+            ProtocolManager::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_borrow_operations(
         wallet: &WalletUnlocked,
-    ) -> BorrowOperations<WalletUnlocked> {
+    ) -> ContractInstance<BorrowOperations<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -724,28 +720,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(BORROW_OPERATIONS_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return BorrowOperations::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(BORROW_OPERATIONS_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return BorrowOperations::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            BorrowOperations::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub fn get_absolute_path_from_relative(relative_path: &str) -> String {
@@ -891,10 +879,10 @@ pub mod common {
         }
 
         println!("Deploying asset contracts... Done");
-        println!("Oracle: {}", oracle.contract_id());
+        println!("Oracle: {}", oracle.contract.contract_id());
         println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
 
-        println!("Trove Manager: {}", trove_manager.contract_id());
+        println!("Trove Manager: {}", trove_manager.contract.contract_id());
         println!("Asset: {}", asset);
         println!("Asset ID: {}", asset_id);
         println!("Pyth Price ID: {:?}", pyth_price_id);
@@ -953,19 +941,19 @@ pub mod common {
 
         trove_manager_abi::initialize(
             &trove_manager,
-            contracts.borrow_operations.contract_id().into(),
-            contracts.sorted_troves.contract_id().into(),
-            oracle.contract_id().into(),
-            contracts.stability_pool.contract_id().into(),
-            contracts.default_pool.contract_id().into(),
-            contracts.active_pool.contract_id().into(),
-            contracts.coll_surplus_pool.contract_id().into(),
-            contracts.usdf.contract_id().into(),
+            contracts.borrow_operations.contract.contract_id().into(),
+            contracts.sorted_troves.contract.contract_id().into(),
+            oracle.contract.contract_id().into(),
+            contracts.stability_pool.contract.contract_id().into(),
+            contracts.default_pool.contract.contract_id().into(),
+            contracts.active_pool.contract.contract_id().into(),
+            contracts.coll_surplus_pool.contract.contract_id().into(),
+            contracts.usdf.contract.contract_id().into(),
             asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -978,8 +966,8 @@ pub mod common {
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
-            trove_manager.contract_id().into(),
-            oracle.contract_id().into(),
+            trove_manager.contract.contract_id().into(),
+            oracle.contract.contract_id().into(),
             &contracts.borrow_operations,
             &contracts.stability_pool,
             &contracts.usdf,
@@ -1022,21 +1010,40 @@ pub mod common {
             &asset_contracts.trove_manager,
             core_protocol_contracts
                 .borrow_operations
+                .contract
                 .contract_id()
                 .into(),
-            core_protocol_contracts.sorted_troves.contract_id().into(),
-            asset_contracts.oracle.contract_id().into(),
-            core_protocol_contracts.stability_pool.contract_id().into(),
-            core_protocol_contracts.default_pool.contract_id().into(),
-            core_protocol_contracts.active_pool.contract_id().into(),
+            core_protocol_contracts
+                .sorted_troves
+                .contract
+                .contract_id()
+                .into(),
+            asset_contracts.oracle.contract.contract_id().into(),
+            core_protocol_contracts
+                .stability_pool
+                .contract
+                .contract_id()
+                .into(),
+            core_protocol_contracts
+                .default_pool
+                .contract
+                .contract_id()
+                .into(),
+            core_protocol_contracts
+                .active_pool
+                .contract
+                .contract_id()
+                .into(),
             core_protocol_contracts
                 .coll_surplus_pool
+                .contract
                 .contract_id()
                 .into(),
-            core_protocol_contracts.usdf.contract_id().into(),
+            core_protocol_contracts.usdf.contract.contract_id().into(),
             asset_contracts.asset_id,
             core_protocol_contracts
                 .protocol_manager
+                .contract
                 .contract_id()
                 .into(),
         )
@@ -1047,8 +1054,8 @@ pub mod common {
         protocol_manager_abi::register_asset(
             &core_protocol_contracts.protocol_manager,
             asset_contracts.asset_id,
-            asset_contracts.trove_manager.contract_id().into(),
-            asset_contracts.oracle.contract_id().into(),
+            asset_contracts.trove_manager.contract.contract_id().into(),
+            asset_contracts.oracle.contract.contract_id().into(),
             &core_protocol_contracts.borrow_operations,
             &core_protocol_contracts.stability_pool,
             &core_protocol_contracts.usdf,
@@ -1061,7 +1068,9 @@ pub mod common {
         .await
     }
 
-    pub async fn deploy_active_pool(wallet: &WalletUnlocked) -> ActivePool<WalletUnlocked> {
+    pub async fn deploy_active_pool(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<ActivePool<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1079,31 +1088,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(ACTIVE_POOL_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return ActivePool::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(ACTIVE_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return ActivePool::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            ActivePool::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
-    pub async fn deploy_stability_pool(wallet: &WalletUnlocked) -> StabilityPool<WalletUnlocked> {
+    pub async fn deploy_stability_pool(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<StabilityPool<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1121,31 +1124,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(STABILITY_POOL_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return StabilityPool::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(STABILITY_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return StabilityPool::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            StabilityPool::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
-    pub async fn deploy_default_pool(wallet: &WalletUnlocked) -> DefaultPool<WalletUnlocked> {
+    pub async fn deploy_default_pool(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<DefaultPool<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1163,33 +1160,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(DEFAULT_POOL_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return DefaultPool::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(DEFAULT_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return DefaultPool::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            DefaultPool::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_coll_surplus_pool(
         wallet: &WalletUnlocked,
-    ) -> CollSurplusPool<WalletUnlocked> {
+    ) -> ContractInstance<CollSurplusPool<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1207,33 +1196,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return CollSurplusPool::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return CollSurplusPool::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            CollSurplusPool::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_community_issuance(
         wallet: &WalletUnlocked,
-    ) -> CommunityIssuance<WalletUnlocked> {
+    ) -> ContractInstance<CommunityIssuance<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1251,31 +1232,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(COMMUNITY_ISSUANCE_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return CommunityIssuance::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return CommunityIssuance::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            CommunityIssuance::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
-    pub async fn deploy_fpt_staking(wallet: &WalletUnlocked) -> FPTStaking<WalletUnlocked> {
+    pub async fn deploy_fpt_staking(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTStaking<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1293,31 +1268,25 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(FPT_STAKING_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return FPTStaking::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(FPT_STAKING_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return FPTStaking::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            FPTStaking::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
-    pub async fn deploy_usdf_token(wallet: &WalletUnlocked) -> USDFToken<WalletUnlocked> {
+    pub async fn deploy_usdf_token(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<USDFToken<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1335,28 +1304,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(USDF_TOKEN_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => {
-                return USDFToken::new(id, wallet.clone());
-            }
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_salt(salt)
-                        .with_configurables(configurables.clone()),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return USDFToken::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            USDFToken::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_hint_helper(wallet: &WalletUnlocked) -> HintHelper<WalletUnlocked> {
@@ -1421,5 +1382,95 @@ pub mod common {
 
     pub fn wait() {
         std::thread::sleep(std::time::Duration::from_secs(12));
+    }
+
+    pub async fn deploy_proxy(
+        target: ContractId,
+        owner: WalletUnlocked,
+        additional_storage_path: Option<&str>,
+    ) -> Proxy<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+
+        // Storage keys for the proxy target contract
+        // These match the storage slots defined in the proxy contract's storage layout
+        // See contracts/proxy-contract/src/main.sw storage section
+        let target_key0 =
+            Bytes32::from_str("0x7bb458adc1d118713319a5baa00a2d049dd64d2916477d2688d76970c898cd55")
+                .unwrap();
+        let target_key1 =
+            Bytes32::from_str("0x7bb458adc1d118713319a5baa00a2d049dd64d2916477d2688d76970c898cd56")
+                .unwrap();
+
+        // Convert target ContractId to storage value format
+        let target_value = Bytes32::new(target.into());
+        let mut target_value0 = Bytes32::new([0u8; 32]);
+        let mut target_value1 = Bytes32::new([0u8; 32]);
+
+        // Split target value across two storage slots
+        // First slot: Set flag byte and first part of target
+        target_value0[7] = 1; // Flag byte indicating initialized state
+        for n in 8..32 {
+            target_value0[n] = target_value[n - 8];
+        }
+        // Second slot: Remaining bytes of target
+        for n in 0..8 {
+            target_value1[n] = target_value[n + 24];
+        }
+
+        // Storage keys for the proxy owner
+        // These match the storage slots for the proxy owner state
+        let owner_key0 =
+            Bytes32::from_str("bb79927b15d9259ea316f2ecb2297d6cc8851888a98278c0a2e03e1a091ea754")
+                .unwrap();
+        let owner_key1 =
+            Bytes32::from_str("bb79927b15d9259ea316f2ecb2297d6cc8851888a98278c0a2e03e1a091ea755")
+                .unwrap();
+
+        // Convert owner address to storage value format
+        let owner_value = Bytes32::new(Address::from(owner.address()).into());
+        let mut owner_value0 = Bytes32::new([0u8; 32]);
+        let mut owner_value1 = Bytes32::new([0u8; 32]);
+
+        // Split owner value across two storage slots
+        // First slot: Set flag byte and first part of owner address
+        owner_value0[7] = 1; // Flag byte indicating initialized state
+        for n in 16..32 {
+            owner_value0[n] = owner_value[n - 16];
+        }
+        // Second slot: Remaining bytes of owner address
+        for n in 0..16 {
+            owner_value1[n] = owner_value[n + 16];
+        }
+
+        // Create storage configuration with the initialized slots
+        let storage_slots = [
+            StorageSlot::new(target_key0, target_value0),
+            StorageSlot::new(target_key1, target_value1),
+            StorageSlot::new(owner_key0, owner_value0),
+            StorageSlot::new(owner_key1, owner_value1),
+        ];
+        let storage_configuration = match additional_storage_path {
+            Some(path) => StorageConfiguration::default()
+                .add_slot_overrides(storage_slots)
+                .add_slot_overrides_from_file(get_absolute_path_from_relative(path))
+                .unwrap(),
+            None => StorageConfiguration::default().add_slot_overrides(storage_slots),
+        };
+        // Deploy the proxy contract with the initialized storage
+        let contract_configuration =
+            LoadConfiguration::default().with_storage_configuration(storage_configuration);
+
+        let contract_id = Contract::load_from(
+            &get_absolute_path_from_relative(PROXY_CONTRACT_BINARY_PATH),
+            contract_configuration,
+        )
+        .unwrap()
+        .with_salt(salt)
+        .deploy(&owner, TxPolicies::default())
+        .await
+        .unwrap();
+
+        Proxy::new(contract_id, owner)
     }
 }

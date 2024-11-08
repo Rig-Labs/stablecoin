@@ -1,12 +1,13 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
+    data_structures::ContractInstance,
     interfaces::usdf_token::{usdf_token_abi, USDFToken},
     setup::common::deploy_usdf_token,
 };
 
 async fn get_contract_instance() -> (
-    USDFToken<WalletUnlocked>,
+    ContractInstance<USDFToken<WalletUnlocked>>,
     WalletUnlocked,
     Vec<WalletUnlocked>,
 ) {
@@ -28,7 +29,7 @@ async fn get_contract_instance() -> (
 
     usdf_token_abi::initialize(
         &asset,
-        asset.contract_id().into(),
+        asset.contract.contract_id().into(),
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
     )
@@ -87,7 +88,10 @@ async fn fails_to_mint_unauthorized() {
 
     let wallet = wallets.pop().unwrap();
 
-    let unauthorized_usdf = USDFToken::new(usdf.contract_id().clone(), wallet.clone());
+    let unauthorized_usdf = ContractInstance::new(
+        USDFToken::new(usdf.contract.contract_id(), wallet.clone()),
+        usdf.implementation_id.clone(),
+    );
 
     usdf_token_abi::mint(
         &unauthorized_usdf,
@@ -108,7 +112,10 @@ async fn fails_to_burn_unauthorized() {
         .await
         .unwrap();
 
-    let unauthorized_usdf = USDFToken::new(usdf.contract_id().clone(), wallet.clone());
+    let unauthorized_usdf = ContractInstance::new(
+        USDFToken::new(usdf.contract.contract_id(), wallet.clone()),
+        usdf.implementation_id.clone(),
+    );
 
     usdf_token_abi::burn(&unauthorized_usdf, 100)
         .await
