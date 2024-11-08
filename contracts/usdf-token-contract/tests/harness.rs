@@ -12,7 +12,7 @@ use test_utils::{
 };
 
 async fn get_contract_instance() -> (
-    DefaultPool<WalletUnlocked>,
+    ContractInstance<DefaultPool<WalletUnlocked>>,
     Token<WalletUnlocked>,
     WalletUnlocked,
     ActivePool<WalletUnlocked>,
@@ -31,7 +31,7 @@ async fn get_contract_instance() -> (
     .unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let instance = deploy_default_pool(&wallet).await;
+    let default_pool = deploy_default_pool(&wallet).await;
     let active_pool = deploy_active_pool(&wallet).await;
 
     let asset = deploy_token(&wallet).await;
@@ -47,7 +47,7 @@ async fn get_contract_instance() -> (
     .unwrap();
 
     default_pool_abi::initialize(
-        &instance,
+        &default_pool,
         Identity::Address(wallet.address().into()),
         active_pool.contract_id().into(),
     )
@@ -58,7 +58,7 @@ async fn get_contract_instance() -> (
         &active_pool,
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
-        instance.contract_id().into(),
+        default_pool.contract.contract_id().into(),
         Identity::Address(wallet.address().into()),
     )
     .await
@@ -75,7 +75,7 @@ async fn get_contract_instance() -> (
     .await;
 
     default_pool_abi::add_asset(
-        &instance,
+        &default_pool,
         asset
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -84,7 +84,7 @@ async fn get_contract_instance() -> (
     )
     .await;
 
-    (instance, asset, wallet, active_pool)
+    (default_pool, asset, wallet, active_pool)
 }
 
 #[tokio::test]

@@ -8,6 +8,7 @@ abigen!(Contract(
 
 pub mod active_pool_abi {
     use super::*;
+    use crate::data_structures::ContractInstance;
     use crate::interfaces::default_pool::DefaultPool;
     use crate::interfaces::token::Token;
     use fuels::prelude::Account;
@@ -156,7 +157,7 @@ pub mod active_pool_abi {
 
     pub async fn send_asset_to_default_pool<T: Account>(
         active_pool: &ActivePool<T>,
-        default_pool: &DefaultPool<T>,
+        default_pool: &ContractInstance<DefaultPool<T>>,
         asset: &Token<T>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
@@ -169,7 +170,12 @@ pub mod active_pool_abi {
                     .asset_id(&AssetId::zeroed().into())
                     .into(),
             )
-            .with_contracts(&[default_pool, asset])
+            .with_contracts(&[&default_pool.contract, asset])
+            .with_contract_ids(&[
+                default_pool.contract.contract_id().into(),
+                default_pool.implementation_id.into(),
+                active_pool.contract_id().into(),
+            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await

@@ -126,7 +126,7 @@ pub mod deployment {
             "fpt_asset_id": format!("0x{}", contracts.fpt_asset_id.to_string()),
             "community_issuance": contracts.community_issuance.contract_id().to_string(),
             "coll_surplus_pool": contracts.coll_surplus_pool.contract.contract_id().to_string(),
-            "default_pool": contracts.default_pool.contract_id().to_string(),
+            "default_pool": contracts.default_pool.contract.contract_id().to_string(),
             "active_pool": contracts.active_pool.contract_id().to_string(),
             "sorted_troves": contracts.sorted_troves.contract.contract_id().to_string(),
             "vesting_contract": contracts.vesting_contract.contract.contract_id().to_string(),

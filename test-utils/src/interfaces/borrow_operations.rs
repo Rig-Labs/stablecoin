@@ -306,7 +306,7 @@ pub mod borrow_operations_abi {
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
         active_pool: &ActivePool<T>,
-        default_pool: &DefaultPool<T>,
+        default_pool: &ContractInstance<DefaultPool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -342,7 +342,7 @@ pub mod borrow_operations_abi {
                 trove_manager,
                 active_pool,
                 &usdf_token.contract,
-                default_pool,
+                &default_pool.contract,
             ])
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
@@ -357,7 +357,8 @@ pub mod borrow_operations_abi {
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
                 active_pool.contract_id().into(),
-                default_pool.contract_id().into(),
+                default_pool.contract.contract_id().into(),
+                default_pool.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)

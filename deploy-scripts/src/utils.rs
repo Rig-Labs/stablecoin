@@ -138,7 +138,10 @@ pub mod utils {
 
         let default_pool_contract_id: Bech32ContractId =
             contracts["default_pool"].as_str().unwrap().parse().unwrap();
-        let default_pool = DefaultPool::new(default_pool_contract_id, wallet.clone());
+        let default_pool = ContractInstance::new(
+            DefaultPool::new(default_pool_contract_id.clone(), wallet.clone()),
+            default_pool_contract_id.into(),
+        );
 
         let active_pool_contract_id: Bech32ContractId =
             contracts["active_pool"].as_str().unwrap().parse().unwrap();

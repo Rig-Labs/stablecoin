@@ -43,7 +43,7 @@ async fn get_contract_instance() -> (
         &instance,
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
-        default_pool.contract_id().into(),
+        default_pool.contract.contract_id().into(),
         Identity::Address(wallet.address().into()),
     )
     .await
