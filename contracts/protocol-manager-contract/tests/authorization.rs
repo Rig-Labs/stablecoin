@@ -97,7 +97,11 @@ async fn test_authorizations() {
     let result = protocol_manager_abi::register_asset(
         &protocol_manager_owner_contract,
         asset_contracts_owner.asset_id,
-        asset_contracts_owner.trove_manager.contract_id().into(),
+        asset_contracts_owner
+            .trove_manager
+            .contract
+            .contract_id()
+            .into(),
         asset_contracts_owner.oracle.contract_id().into(),
         &contracts.borrow_operations,
         &contracts.stability_pool,

@@ -154,7 +154,7 @@ pub mod protocol_manager_abi {
         let mut with_contracts: Vec<&dyn ContractDependency> = Vec::new();
 
         for contracts in aswith_contracts.iter() {
-            with_contracts.push(&contracts.trove_manager);
+            with_contracts.push(&contracts.trove_manager.contract);
             with_contracts.push(&contracts.oracle);
             with_contracts.push(&contracts.mock_pyth_oracle);
             with_contracts.push(&contracts.mock_redstone_oracle);
@@ -186,7 +186,8 @@ pub mod protocol_manager_abi {
         with_contract_ids.push(protocol_manager.implementation_id.into());
 
         for contracts in aswith_contracts.iter() {
-            with_contract_ids.push(contracts.trove_manager.contract_id().into());
+            with_contract_ids.push(contracts.trove_manager.contract.contract_id().into());
+            with_contract_ids.push(contracts.trove_manager.implementation_id.into());
             with_contract_ids.push(contracts.oracle.contract_id().into());
             with_contract_ids.push(contracts.mock_pyth_oracle.contract_id().into());
             with_contract_ids.push(contracts.mock_redstone_oracle.contract_id().into());

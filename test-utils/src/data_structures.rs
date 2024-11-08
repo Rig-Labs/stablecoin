@@ -59,7 +59,7 @@ pub struct AssetContracts<T: Account> {
     pub oracle: Oracle<T>,
     pub mock_pyth_oracle: PythCore<T>,
     pub mock_redstone_oracle: RedstoneCore<T>,
-    pub trove_manager: TroveManagerContract<T>,
+    pub trove_manager: ContractInstance<TroveManagerContract<T>>,
     pub asset_id: AssetId,
     pub pyth_price_id: Bits256,
     pub redstone_price_id: U256,
@@ -71,7 +71,7 @@ pub struct AssetContractsOptionalRedstone<T: Account> {
     pub asset: Token<T>,
     pub oracle: Oracle<T>,
     pub mock_pyth_oracle: PythCore<T>,
-    pub trove_manager: TroveManagerContract<T>,
+    pub trove_manager: ContractInstance<TroveManagerContract<T>>,
     pub asset_id: AssetId,
     pub pyth_price_id: Bits256,
     pub fuel_vm_decimals: u32,
@@ -147,7 +147,7 @@ impl<T: Account> ProtocolContracts<T> {
             );
             println!(
                 "Trove Manager Contract ID: {:?}",
-                asset_contract.trove_manager.contract_id()
+                asset_contract.trove_manager.contract.contract_id()
             );
         }
         println!(

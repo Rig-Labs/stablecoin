@@ -480,7 +480,7 @@ pub mod common {
 
     pub async fn deploy_trove_manager_contract(
         wallet: &WalletUnlocked,
-    ) -> TroveManagerContract<WalletUnlocked> {
+    ) -> ContractInstance<TroveManagerContract<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -498,26 +498,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(TROVE_MANAGER_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return TroveManagerContract::new(id, wallet.clone()),
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(TROVE_MANAGER_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables)
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return TroveManagerContract::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            TroveManagerContract::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_vesting_contract(
@@ -898,7 +892,7 @@ pub mod common {
         println!("Oracle: {}", oracle.contract_id());
         println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
 
-        println!("Trove Manager: {}", trove_manager.contract_id());
+        println!("Trove Manager: {}", trove_manager.contract.contract_id());
         println!("Asset: {}", asset);
         println!("Asset ID: {}", asset_id);
         println!("Pyth Price ID: {:?}", pyth_price_id);
@@ -982,7 +976,7 @@ pub mod common {
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
-            trove_manager.contract_id().into(),
+            trove_manager.contract.contract_id().into(),
             oracle.contract_id().into(),
             &contracts.borrow_operations,
             &contracts.stability_pool,
@@ -1070,7 +1064,7 @@ pub mod common {
         protocol_manager_abi::register_asset(
             &core_protocol_contracts.protocol_manager,
             asset_contracts.asset_id,
-            asset_contracts.trove_manager.contract_id().into(),
+            asset_contracts.trove_manager.contract.contract_id().into(),
             asset_contracts.oracle.contract_id().into(),
             &core_protocol_contracts.borrow_operations,
             &core_protocol_contracts.stability_pool,

@@ -15,7 +15,7 @@ pub mod multi_trove_getter_abi {
 
     pub async fn get_multiple_sorted_troves<T: Account>(
         multi_trove_getter: &MultiTroveGetter<T>,
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset_id: &AssetId,
         start_indx: u64,
@@ -24,16 +24,17 @@ pub mod multi_trove_getter_abi {
         multi_trove_getter
             .methods()
             .get_multiple_sorted_troves(
-                trove_manager.contract_id(),
+                trove_manager.contract.contract_id(),
                 asset_id.clone(),
                 start_indx,
                 count,
             )
-            .with_contracts(&[&sorted_troves.contract, trove_manager])
+            .with_contracts(&[&sorted_troves.contract, &trove_manager.contract])
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
                 sorted_troves.implementation_id.into(),
-                trove_manager.contract_id().into(),
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
             ])
             .call()
             .await
@@ -51,7 +52,7 @@ pub mod multi_trove_getter_utils {
 
     pub async fn print_troves_cr<T: Account>(
         multi_trove_getter: &MultiTroveGetter<T>,
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset_id: &AssetId,
     ) {
@@ -80,7 +81,7 @@ pub mod multi_trove_getter_utils {
 
     pub async fn assert_sorted_troves_by_cr<T: Account>(
         multi_trove_getter: &MultiTroveGetter<T>,
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset_id: &AssetId,
     ) {

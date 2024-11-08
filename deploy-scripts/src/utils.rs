@@ -215,9 +215,12 @@ pub mod utils {
                         oracle_contract_id,
                         wallet.clone(),
                     ),
-                    trove_manager: TroveManagerContract::new(
-                        trove_manager_contract_id,
-                        wallet.clone(),
+                    trove_manager: ContractInstance::new(
+                        TroveManagerContract::new(
+                            trove_manager_contract_id.clone(),
+                            wallet.clone(),
+                        ),
+                        trove_manager_contract_id.into(),
                     ),
                     fuel_vm_decimals: asset_contract["fuel_vm_decimals"].as_u64().unwrap() as u32,
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
@@ -293,7 +296,7 @@ pub mod utils {
             existing_asset_contracts.push(json!({
                 "symbol": asset_contract.symbol,
                 "oracle": asset_contract.oracle.contract_id().to_string(),
-                "trove_manager": asset_contract.trove_manager.contract_id().to_string(),
+                "trove_manager": asset_contract.trove_manager.contract.contract_id().to_string(),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
                 "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),

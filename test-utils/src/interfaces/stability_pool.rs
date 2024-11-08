@@ -208,7 +208,7 @@ pub mod stability_pool_abi {
         oracle: &Oracle<T>,
         pyth_oracle: &PythCore<T>,
         _redstone_oracle: &RedstoneCore<T>,
-        trove_manager: &TroveManagerContract<T>,
+        trove_manager: &ContractInstance<TroveManagerContract<T>>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -229,12 +229,13 @@ pub mod stability_pool_abi {
                 oracle,
                 pyth_oracle,
                 // redstone_oracle,
-                trove_manager,
+                &trove_manager.contract,
             ])
             .with_contract_ids(&[
                 sorted_troves.contract.contract_id().into(),
                 sorted_troves.implementation_id.into(),
-                trove_manager.contract_id().into(),
+                trove_manager.contract.contract_id().into(),
+                trove_manager.implementation_id.into(),
                 oracle.contract_id().into(),
                 pyth_oracle.contract_id().into(),
                 // redstone_oracle.contract_id().into(),
