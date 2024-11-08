@@ -47,14 +47,10 @@ async fn proper_staking_deposit() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         _wallets.pop().unwrap().clone(),
     );
     token_abi::mint_to_id(
@@ -84,11 +80,8 @@ async fn proper_staking_multiple_positions() {
 
     let provider = admin.provider().unwrap();
 
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
+
     let usdf_asset_id = contracts.usdf_asset_id;
 
     let healthy_wallet1 = wallets.pop().unwrap();
@@ -96,7 +89,7 @@ async fn proper_staking_multiple_positions() {
     let healthy_wallet3 = wallets.pop().unwrap();
 
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         healthy_wallet1.clone(),
     );
 

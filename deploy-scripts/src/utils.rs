@@ -116,7 +116,10 @@ pub mod utils {
 
         let fpt_token_contract_id: Bech32ContractId =
             contracts["fpt_token"].as_str().unwrap().parse().unwrap();
-        let fpt_token = FPTToken::new(fpt_token_contract_id.clone(), wallet.clone());
+        let fpt_token = ContractInstance::new(
+            FPTToken::new(fpt_token_contract_id.clone(), wallet.clone()),
+            fpt_token_contract_id.into(),
+        );
 
         let community_issuance_contract_id: Bech32ContractId = contracts["community_issuance"]
             .as_str()

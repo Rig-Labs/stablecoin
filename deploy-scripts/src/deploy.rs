@@ -122,7 +122,7 @@ pub mod deployment {
             "stability_pool": contracts.stability_pool.contract.contract_id().to_string(),
             "protocol_manager": contracts.protocol_manager.contract.contract_id().to_string(),
             "fpt_staking": contracts.fpt_staking.contract.contract_id().to_string(),
-            "fpt_token": contracts.fpt_token.contract_id().to_string(),
+            "fpt_token": contracts.fpt_token.contract.contract_id().to_string(),
             "fpt_asset_id": format!("0x{}", contracts.fpt_asset_id.to_string()),
             "community_issuance": contracts.community_issuance.contract.contract_id().to_string(),
             "coll_surplus_pool": contracts.coll_surplus_pool.contract.contract_id().to_string(),

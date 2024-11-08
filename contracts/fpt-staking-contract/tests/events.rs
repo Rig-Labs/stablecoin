@@ -15,7 +15,7 @@ async fn test_staking_events() {
 
     // Setup initial conditions
     let mock_token = Token::new(
-        contracts.fpt_token.contract_id().clone(),
+        contracts.fpt_token.contract.contract_id().clone(),
         wallets.pop().unwrap().clone(),
     );
 

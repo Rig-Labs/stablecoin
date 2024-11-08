@@ -168,7 +168,10 @@ pub mod common {
         let sorted_troves = deploy_sorted_troves(wallet).await;
         let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
-        let fpt_asset_id = fpt_token.contract_id().asset_id(&AssetId::zeroed().into());
+        let fpt_asset_id = fpt_token
+            .contract
+            .contract_id()
+            .asset_id(&AssetId::zeroed().into());
         if verbose {
             pb.inc();
         }
@@ -351,7 +354,9 @@ pub mod common {
         }
     }
 
-    async fn deploy_test_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+    async fn deploy_test_fpt_token(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
         let mock_fpt_token = deploy_token(wallet).await;
 
         token_abi::initialize(
@@ -364,7 +369,10 @@ pub mod common {
         .await
         .unwrap();
 
-        FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone())
+        ContractInstance::new(
+            FPTToken::new(mock_fpt_token.contract_id().clone(), wallet.clone()),
+            mock_fpt_token.contract_id().into(),
+        )
     }
 
     pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
@@ -398,7 +406,9 @@ pub mod common {
         }
     }
 
-    pub async fn deploy_fpt_token(wallet: &WalletUnlocked) -> FPTToken<WalletUnlocked> {
+    pub async fn deploy_fpt_token(
+        wallet: &WalletUnlocked,
+    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -416,26 +426,20 @@ pub mod common {
         )
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
+        .await
+        .unwrap();
+
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(FPT_TOKEN_CONTRACT_STORAGE_PATH),
+        )
         .await;
 
-        match id {
-            Ok(id) => return FPTToken::new(id, wallet.clone()),
-            Err(_) => {
-                wait();
-                let id = Contract::load_from(
-                    &get_absolute_path_from_relative(FPT_TOKEN_CONTRACT_BINARY_PATH),
-                    LoadConfiguration::default()
-                        .with_configurables(configurables.clone())
-                        .with_salt(salt),
-                )
-                .unwrap()
-                .deploy(&wallet.clone(), tx_policies)
-                .await
-                .unwrap();
-
-                return FPTToken::new(id, wallet.clone());
-            }
-        }
+        ContractInstance::new(
+            FPTToken::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_sorted_troves(
