@@ -120,7 +120,7 @@ pub mod deployment {
             "usdf": contracts.usdf.contract.contract_id().to_string(),
             "usdf_asset_id": format!("0x{}", contracts.usdf_asset_id.to_string()),
             "stability_pool": contracts.stability_pool.contract.contract_id().to_string(),
-            "protocol_manager": contracts.protocol_manager.contract_id().to_string(),
+            "protocol_manager": contracts.protocol_manager.contract.contract_id().to_string(),
             "fpt_staking": contracts.fpt_staking.contract_id().to_string(),
             "fpt_token": contracts.fpt_token.contract_id().to_string(),
             "fpt_asset_id": format!("0x{}", contracts.fpt_asset_id.to_string()),

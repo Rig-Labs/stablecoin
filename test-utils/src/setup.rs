@@ -236,7 +236,7 @@ pub mod common {
 
         usdf_token_abi::initialize(
             &contracts.usdf,
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
             Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
         )
@@ -250,7 +250,7 @@ pub mod common {
             &contracts.borrow_operations,
             contracts.usdf.contract.contract_id().into(),
             contracts.fpt_staking.contract_id().into(),
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract_id().into(),
             contracts.active_pool.contract_id().into(),
             contracts.sorted_troves.contract.contract_id().into(),
@@ -264,7 +264,7 @@ pub mod common {
             &contracts.stability_pool,
             contracts.usdf.contract.contract_id().into(),
             contracts.community_issuance.contract_id().into(),
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
             contracts.active_pool.contract_id().into(),
             contracts.sorted_troves.contract.contract_id().into(),
         )
@@ -276,7 +276,7 @@ pub mod common {
 
         fpt_staking_abi::initialize(
             &contracts.fpt_staking,
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.fpt_asset_id,
             contracts.usdf_asset_id,
@@ -306,7 +306,7 @@ pub mod common {
         coll_surplus_pool_abi::initialize(
             &contracts.coll_surplus_pool,
             contracts.borrow_operations.contract.contract_id().into(),
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -316,7 +316,7 @@ pub mod common {
 
         default_pool_abi::initialize(
             &contracts.default_pool,
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
             contracts.active_pool.contract_id().into(),
         )
         .await
@@ -330,7 +330,7 @@ pub mod common {
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
             Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             contracts.default_pool.contract_id().into(),
-            Identity::ContractId(contracts.protocol_manager.contract_id().into()),
+            Identity::ContractId(contracts.protocol_manager.contract.contract_id().into()),
         )
         .await
         .unwrap();
@@ -341,7 +341,7 @@ pub mod common {
         sorted_troves_abi::initialize(
             &contracts.sorted_troves,
             100_000_000,
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
             contracts.borrow_operations.contract.contract_id().into(),
         )
         .await
@@ -678,7 +678,7 @@ pub mod common {
 
     pub async fn deploy_protocol_manager(
         wallet: &WalletUnlocked,
-    ) -> ProtocolManager<WalletUnlocked> {
+    ) -> ContractInstance<ProtocolManager<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -699,7 +699,17 @@ pub mod common {
         .await
         .unwrap();
 
-        ProtocolManager::new(id, wallet.clone())
+        let proxy = deploy_proxy(
+            id.clone().into(),
+            wallet.clone(),
+            Some(PROTCOL_MANAGER_CONTRACT_STORAGE_PATH),
+        )
+        .await;
+
+        ContractInstance::new(
+            ProtocolManager::new(proxy.contract_id(), wallet.clone()),
+            id.into(),
+        )
     }
 
     pub async fn deploy_borrow_operations(
@@ -955,7 +965,7 @@ pub mod common {
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
-            contracts.protocol_manager.contract_id().into(),
+            contracts.protocol_manager.contract.contract_id().into(),
         )
         .await
         .unwrap();
@@ -1036,6 +1046,7 @@ pub mod common {
             asset_contracts.asset_id,
             core_protocol_contracts
                 .protocol_manager
+                .contract
                 .contract_id()
                 .into(),
         )

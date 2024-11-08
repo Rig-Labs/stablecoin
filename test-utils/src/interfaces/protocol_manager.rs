@@ -29,7 +29,7 @@ pub mod protocol_manager_abi {
     };
 
     pub async fn initialize<T: Account>(
-        protocol_manager: &ProtocolManager<T>,
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
         borrow_operations: ContractId,
         stability_pool: ContractId,
         fpt_staking: ContractId,
@@ -43,6 +43,7 @@ pub mod protocol_manager_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         let res = protocol_manager
+            .contract
             .methods()
             .initialize(
                 borrow_operations,
@@ -56,6 +57,10 @@ pub mod protocol_manager_abi {
                 admin,
             )
             .with_tx_policies(tx_params)
+            .with_contract_ids(&[
+                protocol_manager.contract.contract_id().into(),
+                protocol_manager.implementation_id.into(),
+            ])
             .call()
             .await
             .unwrap();
@@ -64,7 +69,7 @@ pub mod protocol_manager_abi {
     }
 
     pub async fn register_asset<T: Account>(
-        protocol_manager: &ProtocolManager<T>,
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
         asset: AssetId,
         trove_manager: ContractId,
         oracle: ContractId,
@@ -79,6 +84,7 @@ pub mod protocol_manager_abi {
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
         protocol_manager
+            .contract
             .methods()
             .register_asset(asset.into(), trove_manager, oracle)
             .with_tx_policies(tx_params)
@@ -93,6 +99,8 @@ pub mod protocol_manager_abi {
                 &sorted_troves.contract,
             ])
             .with_contract_ids(&[
+                protocol_manager.contract.contract_id().into(),
+                protocol_manager.implementation_id.into(),
                 borrow_operations.contract.contract_id().into(),
                 borrow_operations.implementation_id.into(),
                 sorted_troves.implementation_id.into(),
@@ -111,7 +119,7 @@ pub mod protocol_manager_abi {
     }
 
     pub async fn redeem_collateral<T: Account>(
-        protocol_manager: &ProtocolManager<T>,
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
         amount: u64,
         max_iterations: u64,
         partial_redemption_hint: u64,
@@ -165,6 +173,9 @@ pub mod protocol_manager_abi {
         with_contract_ids.push(usdf.contract.contract_id().into());
         with_contract_ids.push(usdf.implementation_id.into());
         with_contract_ids.push(sorted_troves.contract.contract_id().into());
+        with_contract_ids.push(sorted_troves.implementation_id.into());
+        with_contract_ids.push(protocol_manager.contract.contract_id().into());
+        with_contract_ids.push(protocol_manager.implementation_id.into());
 
         for contracts in aswith_contracts.iter() {
             with_contract_ids.push(contracts.trove_manager.contract_id().into());
@@ -174,6 +185,7 @@ pub mod protocol_manager_abi {
         }
 
         protocol_manager
+            .contract
             .methods()
             .redeem_collateral(
                 max_iterations,
@@ -192,15 +204,22 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn owner<T: Account>(protocol_manager: &ProtocolManager<T>) -> CallResponse<State> {
+    pub async fn owner<T: Account>(
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
+    ) -> CallResponse<State> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_witness_limit(2000000)
             .with_script_gas_limit(2000000);
 
         protocol_manager
+            .contract
             .methods()
             .owner()
+            .with_contract_ids(&[
+                protocol_manager.contract.contract_id().into(),
+                protocol_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
@@ -208,7 +227,7 @@ pub mod protocol_manager_abi {
     }
 
     pub async fn renounce_admin<T: Account>(
-        protocol_manager: &ProtocolManager<T>,
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
@@ -216,22 +235,32 @@ pub mod protocol_manager_abi {
             .with_script_gas_limit(2000000);
 
         protocol_manager
+            .contract
             .methods()
             .renounce_admin()
+            .with_contract_ids(&[
+                protocol_manager.contract.contract_id().into(),
+                protocol_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn transfer_owner<T: Account>(
-        protocol_manager: &ProtocolManager<T>,
+        protocol_manager: &ContractInstance<ProtocolManager<T>>,
         new_owner: Identity,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         protocol_manager
+            .contract
             .methods()
             .transfer_owner(new_owner)
+            .with_contract_ids(&[
+                protocol_manager.contract.contract_id().into(),
+                protocol_manager.implementation_id.into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await

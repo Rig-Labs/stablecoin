@@ -102,7 +102,10 @@ pub mod utils {
             .unwrap()
             .parse()
             .unwrap();
-        let protocol_manager = ProtocolManager::new(protocol_manager_contract_id, wallet.clone());
+        let protocol_manager = ContractInstance::new(
+            ProtocolManager::new(protocol_manager_contract_id.clone(), wallet.clone()),
+            protocol_manager_contract_id.into(),
+        );
 
         let fpt_staking_contract_id: Bech32ContractId =
             contracts["fpt_staking"].as_str().unwrap().parse().unwrap();

@@ -229,9 +229,12 @@ async fn proper_staking_multiple_positions() {
 
     let redeem_amount = 10_000 * PRECISION;
 
-    let protocol_manager_healthy_wallet3 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let protocol_manager_healthy_wallet3 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
     protocol_manager_abi::redeem_collateral(
         &protocol_manager_healthy_wallet3,

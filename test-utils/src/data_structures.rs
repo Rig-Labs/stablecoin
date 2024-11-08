@@ -18,7 +18,7 @@ pub struct ContractInstance<C> {
     pub implementation_id: ContractId,
 }
 
-impl<C> ContractInstance<C> {
+impl<C: Clone> ContractInstance<C> {
     pub fn new(contract: C, implementation_id: ContractId) -> Self {
         Self {
             contract,
@@ -27,11 +27,20 @@ impl<C> ContractInstance<C> {
     }
 }
 
+impl<C: Clone> Clone for ContractInstance<C> {
+    fn clone(&self) -> Self {
+        Self {
+            contract: self.contract.clone(),
+            implementation_id: self.implementation_id.clone(),
+        }
+    }
+}
+
 pub struct ProtocolContracts<T: Account> {
     pub borrow_operations: ContractInstance<BorrowOperations<T>>,
     pub usdf: ContractInstance<USDFToken<T>>,
     pub stability_pool: ContractInstance<StabilityPool<T>>,
-    pub protocol_manager: ProtocolManager<T>,
+    pub protocol_manager: ContractInstance<ProtocolManager<T>>,
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
     pub fpt_staking: FPTStaking<T>,
     pub coll_surplus_pool: CollSurplusPool<T>,
@@ -117,7 +126,7 @@ impl<T: Account> ProtocolContracts<T> {
         );
         println!(
             "Protocol Manager Contract ID: {:?}",
-            self.protocol_manager.contract_id()
+            self.protocol_manager.contract.contract_id()
         );
         for asset_contract in &self.asset_contracts {
             println!(

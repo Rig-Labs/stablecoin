@@ -1,5 +1,5 @@
 use fuels::types::Identity;
-use test_utils::data_structures::PRECISION;
+use test_utils::data_structures::{ContractInstance, PRECISION};
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
@@ -115,9 +115,12 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
 
     let redemption_amount: u64 = 8_000 * PRECISION;
 
-    let protocol_manager_health1 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let protocol_manager_health1 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(

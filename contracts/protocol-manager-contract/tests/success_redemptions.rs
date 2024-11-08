@@ -139,9 +139,12 @@ async fn proper_redemption_from_partially_closed() {
 
     let redemption_amount: u64 = 3_000 * PRECISION;
 
-    let protocol_manager_health1 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let protocol_manager_health1 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
@@ -389,9 +392,12 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let redemption_amount: u64 = 6_000 * PRECISION;
 
-    let protocol_manager_health1 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let protocol_manager_health1 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;

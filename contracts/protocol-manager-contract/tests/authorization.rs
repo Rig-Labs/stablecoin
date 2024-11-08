@@ -1,5 +1,5 @@
 use test_utils::{
-    data_structures::ExistingAssetContracts,
+    data_structures::{ContractInstance, ExistingAssetContracts},
     interfaces::protocol_manager::{protocol_manager_abi, ProtocolManager},
     setup::common::{deploy_asset_contracts, initialize_asset, setup_protocol},
 };
@@ -12,9 +12,12 @@ async fn test_authorizations() {
     let attacker = wallets.pop().unwrap();
 
     // Test 1: Unauthorized renounce_admin
-    let protocol_manager_attacker = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        attacker.clone(),
+    let protocol_manager_attacker = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            attacker.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     let result = protocol_manager_abi::renounce_admin(&protocol_manager_attacker).await;
@@ -59,9 +62,12 @@ async fn test_authorizations() {
         );
     }
 
-    let protocol_manager_owner_contract = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        protocol_manager_owner.clone(),
+    let protocol_manager_owner_contract = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            protocol_manager_owner.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
     // Test 3: Authorized register_asset
     contracts.protocol_manager = protocol_manager_owner_contract.clone();
@@ -163,9 +169,12 @@ async fn test_authorizations() {
         );
     }
 
-    let new_protocol_manager_owner = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        new_owner.clone(),
+    let new_protocol_manager_owner = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            new_owner.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
     // Test 5: Authorized renounce_admin
     let result = protocol_manager_abi::renounce_admin(&new_protocol_manager_owner).await;
