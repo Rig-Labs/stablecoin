@@ -164,7 +164,7 @@ pub mod default_pool_abi {
 
     pub async fn send_asset_to_active_pool<T: Account>(
         default_pool: &ContractInstance<DefaultPool<T>>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         asset_id: AssetId,
     ) -> CallResponse<()> {
@@ -172,11 +172,12 @@ pub mod default_pool_abi {
             .contract
             .methods()
             .send_asset_to_active_pool(amount, asset_id.into())
-            .with_contracts(&[active_pool])
+            .with_contracts(&[&active_pool.contract])
             .with_contract_ids(&[
                 default_pool.contract.contract_id().into(),
                 default_pool.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()

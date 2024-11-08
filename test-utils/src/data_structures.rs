@@ -46,7 +46,7 @@ pub struct ProtocolContracts<T: Account> {
     pub coll_surplus_pool: ContractInstance<CollSurplusPool<T>>,
     pub sorted_troves: ContractInstance<SortedTroves<T>>,
     pub default_pool: ContractInstance<DefaultPool<T>>,
-    pub active_pool: ActivePool<T>,
+    pub active_pool: ContractInstance<ActivePool<T>>,
     pub fpt_token: FPTToken<T>,
     pub community_issuance: CommunityIssuance<T>,
     pub vesting_contract: ContractInstance<VestingContract<T>>,
@@ -172,7 +172,7 @@ impl<T: Account> ProtocolContracts<T> {
         );
         println!(
             "Active Pool Contract ID: {:?}",
-            self.active_pool.contract_id()
+            self.active_pool.contract.contract_id()
         );
         println!("FPT Token Contract ID: {:?}", self.fpt_token.contract_id());
         println!(

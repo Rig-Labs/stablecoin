@@ -198,7 +198,7 @@ pub async fn setup(
         usdf_token.contract_id().into(),
         stability_pool.contract.contract_id().into(),
         mock_token.contract_id().into(),
-        active_pool.contract_id().into(),
+        active_pool.contract.contract_id().into(),
         sorted_troves.contract_id().into(),
     )
     .await

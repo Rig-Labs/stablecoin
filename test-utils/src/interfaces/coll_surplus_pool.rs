@@ -59,17 +59,19 @@ pub mod coll_surplus_pool_abi {
     pub async fn claim_coll<T: Account>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         acount: Identity,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         asset: AssetId,
     ) -> Result<CallResponse<()>, Error> {
         coll_surplus_pool
             .contract
             .methods()
             .claim_coll(acount, asset.into())
-            .with_contracts(&[active_pool])
+            .with_contracts(&[&active_pool.contract])
             .with_contract_ids(&[
                 coll_surplus_pool.contract.contract_id().into(),
                 coll_surplus_pool.implementation_id.into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()

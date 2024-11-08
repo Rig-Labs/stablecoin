@@ -66,7 +66,7 @@ pub mod borrow_operations_abi {
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         collateral_amount_deposit: u64,
         usdf_amount_withdrawn: u64,
         upper_hint: Identity,
@@ -93,7 +93,7 @@ pub mod borrow_operations_abi {
                 oracle,
                 mock_pyth,
                 //mock_redstone,
-                active_pool,
+                &active_pool.contract,
                 &usdf_token.contract,
                 &sorted_troves.contract,
                 trove_manager,
@@ -109,7 +109,8 @@ pub mod borrow_operations_abi {
                 fpt_staking.implementation_id.into(),
                 oracle.contract_id().into(),
                 mock_pyth.contract_id().into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
             ])
@@ -128,7 +129,7 @@ pub mod borrow_operations_abi {
         usdf_token: &ContractInstance<USDFToken<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -159,7 +160,7 @@ pub mod borrow_operations_abi {
                 mock_token,
                 &sorted_troves.contract,
                 trove_manager,
-                active_pool,
+                &active_pool.contract,
                 &usdf_token.contract,
             ])
             .with_contract_ids(&[
@@ -174,7 +175,8 @@ pub mod borrow_operations_abi {
                 mock_token.contract_id().into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
@@ -190,7 +192,7 @@ pub mod borrow_operations_abi {
         mock_token: &Token<T>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -215,7 +217,7 @@ pub mod borrow_operations_abi {
                 mock_token,
                 &sorted_troves.contract,
                 trove_manager,
-                active_pool,
+                &active_pool.contract,
             ])
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
@@ -227,7 +229,8 @@ pub mod borrow_operations_abi {
                 pyth.contract_id().into(),
                 redstone.contract_id().into(),
                 mock_token.contract_id().into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
@@ -245,7 +248,7 @@ pub mod borrow_operations_abi {
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -270,7 +273,7 @@ pub mod borrow_operations_abi {
                 mock_token,
                 &sorted_troves.contract,
                 trove_manager,
-                active_pool,
+                &active_pool.contract,
                 &usdf_token.contract,
                 &fpt_staking.contract,
             ])
@@ -286,7 +289,8 @@ pub mod borrow_operations_abi {
                 mock_token.contract_id().into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),
             ])
@@ -305,7 +309,7 @@ pub mod borrow_operations_abi {
         usdf_token: &ContractInstance<USDFToken<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         default_pool: &ContractInstance<DefaultPool<T>>,
         amount: u64,
         lower_hint: Identity,
@@ -340,7 +344,7 @@ pub mod borrow_operations_abi {
                 mock_token,
                 &sorted_troves.contract,
                 trove_manager,
-                active_pool,
+                &active_pool.contract,
                 &usdf_token.contract,
                 &default_pool.contract,
             ])
@@ -356,7 +360,8 @@ pub mod borrow_operations_abi {
                 mock_token.contract_id().into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
                 default_pool.contract.contract_id().into(),
                 default_pool.implementation_id.into(),
             ])
@@ -378,7 +383,7 @@ pub mod borrow_operations_abi {
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -412,7 +417,7 @@ pub mod borrow_operations_abi {
                 mock_token,
                 &sorted_troves.contract,
                 trove_manager,
-                active_pool,
+                &active_pool.contract,
                 &usdf_token.contract,
                 &fpt_staking.contract,
             ])
@@ -428,7 +433,8 @@ pub mod borrow_operations_abi {
                 mock_token.contract_id().into(),
                 usdf_token.contract.contract_id().into(),
                 usdf_token.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),
             ])
@@ -513,7 +519,7 @@ pub mod borrow_operations_abi {
 
     pub async fn claim_coll<T: Account>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        active_pool: &ActivePool<T>,
+        active_pool: &ContractInstance<ActivePool<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         asset: AssetId,
     ) -> CallResponse<()> {
@@ -521,12 +527,13 @@ pub mod borrow_operations_abi {
             .contract
             .methods()
             .claim_collateral(asset.into())
-            .with_contracts(&[active_pool, &coll_surplus_pool.contract])
+            .with_contracts(&[&active_pool.contract, &coll_surplus_pool.contract])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_contract_ids(&[
                 borrow_operations.contract.contract_id().into(),
                 borrow_operations.implementation_id.into(),
-                active_pool.contract_id().into(),
+                active_pool.contract.contract_id().into(),
+                active_pool.implementation_id.into(),
                 coll_surplus_pool.contract.contract_id().into(),
                 coll_surplus_pool.implementation_id.into(),
             ])
@@ -596,7 +603,7 @@ pub mod borrow_operations_utils {
 
     use super::*;
     use crate::data_structures::ContractInstance;
-    use crate::interfaces::active_pool;
+    use crate::interfaces::active_pool::ActivePool;
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::usdf_token::USDFToken;
@@ -608,7 +615,7 @@ pub mod borrow_operations_utils {
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         usdf: &ContractInstance<USDFToken<WalletUnlocked>>,
         fpt_staking: &ContractInstance<FPTStaking<WalletUnlocked>>,
-        active_pool: &active_pool::ActivePool<WalletUnlocked>,
+        active_pool: &ContractInstance<ActivePool<WalletUnlocked>>,
         sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         amount: u64,
         usdf_amount: u64,

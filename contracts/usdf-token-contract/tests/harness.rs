@@ -15,7 +15,7 @@ async fn get_contract_instance() -> (
     ContractInstance<DefaultPool<WalletUnlocked>>,
     Token<WalletUnlocked>,
     WalletUnlocked,
-    ActivePool<WalletUnlocked>,
+    ContractInstance<ActivePool<WalletUnlocked>>,
 ) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
@@ -49,7 +49,7 @@ async fn get_contract_instance() -> (
     default_pool_abi::initialize(
         &default_pool,
         Identity::Address(wallet.address().into()),
-        active_pool.contract_id().into(),
+        active_pool.contract.contract_id().into(),
     )
     .await
     .unwrap();
