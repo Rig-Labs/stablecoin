@@ -1,7 +1,7 @@
 use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
-    data_structures::PRECISION,
+    data_structures::{ContractInstance, PRECISION},
     interfaces::{
         active_pool::{active_pool_abi, ActivePool},
         default_pool::{default_pool_abi, DefaultPool},
@@ -12,10 +12,10 @@ use test_utils::{
 };
 
 async fn get_contract_instance() -> (
-    DefaultPool<WalletUnlocked>,
+    ContractInstance<DefaultPool<WalletUnlocked>>,
     Token<WalletUnlocked>,
     WalletUnlocked,
-    ActivePool<WalletUnlocked>,
+    ContractInstance<ActivePool<WalletUnlocked>>,
 ) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
@@ -31,7 +31,7 @@ async fn get_contract_instance() -> (
     .unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let instance = deploy_default_pool(&wallet).await;
+    let default_pool = deploy_default_pool(&wallet).await;
     let active_pool = deploy_active_pool(&wallet).await;
 
     let asset = deploy_token(&wallet).await;
@@ -47,9 +47,9 @@ async fn get_contract_instance() -> (
     .unwrap();
 
     default_pool_abi::initialize(
-        &instance,
+        &default_pool,
         Identity::Address(wallet.address().into()),
-        active_pool.contract_id().into(),
+        active_pool.contract.contract_id().into(),
     )
     .await
     .unwrap();
@@ -58,7 +58,7 @@ async fn get_contract_instance() -> (
         &active_pool,
         Identity::Address(wallet.address().into()),
         Identity::Address(wallet.address().into()),
-        instance.contract_id().into(),
+        default_pool.contract.contract_id().into(),
         Identity::Address(wallet.address().into()),
     )
     .await
@@ -75,7 +75,7 @@ async fn get_contract_instance() -> (
     .await;
 
     default_pool_abi::add_asset(
-        &instance,
+        &default_pool,
         asset
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -84,7 +84,7 @@ async fn get_contract_instance() -> (
     )
     .await;
 
-    (instance, asset, wallet, active_pool)
+    (default_pool, asset, wallet, active_pool)
 }
 
 #[tokio::test]
@@ -224,8 +224,10 @@ async fn fails_unauthorized_usdf_operations() {
     let attacker = wallets.pop().unwrap();
 
     // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker =
-        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+    let usdf_token_attacker = ContractInstance::new(
+        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
+        contracts.usdf.implementation_id,
+    );
 
     // Try to add a trove manager using the attacker's wallet
     let result =
@@ -247,8 +249,10 @@ async fn fails_unauthorized_usdf_operations() {
     }
 
     // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker =
-        USDFToken::new(contracts.usdf.contract_id().clone(), attacker.clone());
+    let usdf_token_attacker = ContractInstance::new(
+        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
+        contracts.usdf.implementation_id,
+    );
 
     // Test 1: Unauthorized add_trove_manager
     let result =

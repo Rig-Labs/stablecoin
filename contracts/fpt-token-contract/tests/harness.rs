@@ -8,11 +8,7 @@ use test_utils::{
 async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
     let provider = admin.provider().unwrap();
-    let fpt_asset_id = contracts
-        .fpt_token
-        .contract_id()
-        .asset_id(&AssetId::zeroed().into())
-        .into();
+    let fpt_asset_id = contracts.fpt_asset_id;
 
     let vesting_contract = fpt_token_abi::get_vesting_contract(&contracts.fpt_token)
         .await
@@ -20,12 +16,12 @@ async fn proper_intialize() {
 
     assert_eq!(
         vesting_contract,
-        contracts.vesting_contract.contract_id().into()
+        contracts.vesting_contract.contract.contract_id().into()
     );
 
     let fpt_balance_vesting = provider
         .get_contract_asset_balance(
-            contracts.vesting_contract.contract_id().into(),
+            contracts.vesting_contract.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await
@@ -39,7 +35,7 @@ async fn proper_intialize() {
 
     let fpt_balance_community_issuance = provider
         .get_contract_asset_balance(
-            contracts.community_issuance.contract_id().into(),
+            contracts.community_issuance.contract.contract_id().into(),
             fpt_asset_id,
         )
         .await

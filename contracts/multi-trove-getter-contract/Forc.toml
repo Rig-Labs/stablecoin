@@ -6,3 +6,6 @@ name = "multi-trove-getter-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

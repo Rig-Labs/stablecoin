@@ -3,7 +3,7 @@ include .env
 export $(shell sed 's/=.*//' .env)
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-.PHONY: help tests build-and-test generate-types deploy add-asset pause unpause sanity-check
+.PHONY: help tests build-and-test generate-types deploy add-asset pause unpause sanity-check transfer-owner
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -20,17 +20,20 @@ format: ## Format the code
 
 -------Deployer Scripts-------:
 
-deploy: ## Run the deployment script for core contracts
-	@forc build && cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run deploy
+deploy: ## Run the deployment script for core contracts (usage: make deploy NETWORK=<mainnet|testnet>)
+	@forc build && cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run deploy
 
-add-asset: ## Run the script to add assets to the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run add-asset
+add-asset: ## Run the script to add assets to the protocol (usage: make add-asset NETWORK=<mainnet|testnet> ASSET=ETH)
+	@forc build && cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run add-asset $(ASSET)
 
-pause: ## Pause the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run pause
+pause: ## Pause the protocol (usage: make pause NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run pause
 
-unpause: ## Unpause the protocol
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run unpause
+unpause: ## Unpause the protocol (usage: make unpause NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run unpause
 
-sanity-check: ## Run the sanity check script
-	@cd deploy-scripts && RPC=$(RPC) SECRET=$(SECRET) cargo run sanity-check
+sanity-check: ## Run the sanity check script (usage: make sanity-check NETWORK=<mainnet|testnet>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run sanity-check
+
+transfer-owner: ## Transfer ownership of the protocol (usage: make transfer-owner NETWORK=<mainnet|testnet> ADDRESS=<new_owner_address>)
+	@cd deploy-scripts && NETWORK=$(NETWORK) SECRET=$(SECRET) cargo run transfer-owner $(ADDRESS)

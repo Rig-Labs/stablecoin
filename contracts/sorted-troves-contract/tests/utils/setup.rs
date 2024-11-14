@@ -2,6 +2,7 @@ use fuels::prelude::*;
 use fuels::programs::responses::CallResponse;
 use fuels::types::Identity;
 use rand::{self, Rng};
+use test_utils::data_structures::ContractInstance;
 use test_utils::interfaces::sorted_troves::{sorted_troves_abi::initialize, SortedTroves};
 use test_utils::setup::common::{deploy_sorted_troves, get_absolute_path_from_relative};
 
@@ -34,7 +35,7 @@ pub async fn deploy_mock_trove_manager_contract(
 
 pub async fn set_nominal_icr_and_insert(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &SortedTroves<WalletUnlocked>,
+    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
     new_id: Identity,
     new_icr: u64,
     prev_id: Identity,
@@ -46,7 +47,11 @@ pub async fn set_nominal_icr_and_insert(
     trove_manager
         .methods()
         .set_nominal_icr_and_insert(new_id, new_icr, prev_id, next_id, asset.into())
-        .with_contracts(&[sorted_troves])
+        .with_contracts(&[&sorted_troves.contract])
+        .with_contract_ids(&[
+            sorted_troves.implementation_id.into(),
+            sorted_troves.contract.contract_id().into(),
+        ])
         .with_tx_policies(tx_params)
         .call()
         .await
@@ -67,7 +72,7 @@ pub async fn get_nominal_icr(
 
 pub async fn remove(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &SortedTroves<WalletUnlocked>,
+    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
     id: Identity,
     asset: AssetId,
 ) -> CallResponse<()> {
@@ -76,7 +81,11 @@ pub async fn remove(
     trove_manager
         .methods()
         .remove(id, asset.into())
-        .with_contracts(&[sorted_troves])
+        .with_contracts(&[&sorted_troves.contract])
+        .with_contract_ids(&[
+            sorted_troves.implementation_id.into(),
+            sorted_troves.contract.contract_id().into(),
+        ])
         .with_tx_policies(tx_params)
         .call()
         .await
@@ -86,7 +95,7 @@ pub async fn remove(
 pub async fn setup(
     num_wallets: Option<u64>,
 ) -> (
-    SortedTroves<WalletUnlocked>,
+    ContractInstance<SortedTroves<WalletUnlocked>>,
     MockTroveManagerContract<WalletUnlocked>,
     WalletUnlocked,
     WalletUnlocked,
@@ -122,7 +131,7 @@ pub async fn setup(
 }
 
 pub async fn initialize_st_and_tm(
-    sorted_troves: &SortedTroves<WalletUnlocked>,
+    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     max_size: u64,
     asset: AssetId,
@@ -139,14 +148,14 @@ pub async fn initialize_st_and_tm(
     trove_manager
         .methods()
         .initialize(
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
-            sorted_troves.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
+            sorted_troves.contract.contract_id(),
         )
         .call()
         .await
@@ -155,7 +164,11 @@ pub async fn initialize_st_and_tm(
     trove_manager
         .methods()
         .add_asset(asset.into(), trove_manager.contract_id())
-        .with_contracts(&[sorted_troves])
+        .with_contracts(&[&sorted_troves.contract])
+        .with_contract_ids(&[
+            sorted_troves.implementation_id.into(),
+            sorted_troves.contract.contract_id().into(),
+        ])
         .call()
         .await
         .unwrap();

@@ -84,6 +84,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
             admin.address().into(),
             contracts
                 .usdf
+                .contract
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
@@ -517,7 +518,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
 
     usdf_token_abi::initialize(
         &fake_usdf_token,
-        fake_usdf_token.contract_id().into(),
+        fake_usdf_token.contract.contract_id().into(),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )

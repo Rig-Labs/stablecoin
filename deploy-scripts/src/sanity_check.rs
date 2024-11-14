@@ -12,20 +12,21 @@ use test_utils::data_structures::PRECISION;
 
 pub async fn sanity_check() {
     dotenv().ok();
-    let collateral_amount = 4000 * PRECISION;
+    let collateral_amount = 4 * PRECISION;
     let debt = 1000 * PRECISION;
 
     let wallet = setup_wallet().await;
     let address = wallet.address();
     println!("🔑 Wallet address: {}", address);
 
-    let core_contracts = load_core_contracts(wallet.clone());
+    let is_testnet = is_testnet(wallet.clone()).await;
+    let core_contracts = load_core_contracts(wallet.clone(), is_testnet);
 
     let provider = wallet.provider().unwrap();
 
     let community_issuance_balance = provider
         .get_contract_asset_balance(
-            core_contracts.community_issuance.contract_id(),
+            core_contracts.community_issuance.contract.contract_id(),
             core_contracts.fpt_asset_id.into(),
         )
         .await
@@ -38,7 +39,7 @@ pub async fn sanity_check() {
 
     let vesting_contract_balance = provider
         .get_contract_asset_balance(
-            core_contracts.vesting_contract.contract_id(),
+            core_contracts.vesting_contract.contract.contract_id(),
             core_contracts.fpt_asset_id.into(),
         )
         .await
@@ -136,23 +137,6 @@ pub async fn sanity_check() {
     .await
     .unwrap();
 
-    println!("Waiting 30 seconds to accumulate rewards");
-    sleep(Duration::from_secs(30));
-    stability_pool_abi::withdraw_from_stability_pool(
-        &core_contracts.stability_pool,
-        &core_contracts.community_issuance,
-        &core_contracts.usdf,
-        &core_contracts.asset_contracts[0].asset,
-        &core_contracts.sorted_troves,
-        &core_contracts.asset_contracts[0].oracle,
-        &core_contracts.asset_contracts[0].mock_pyth_oracle,
-        &core_contracts.asset_contracts[0].mock_redstone_oracle,
-        &core_contracts.asset_contracts[0].trove_manager,
-        stability_pool_balance / 3,
-    )
-    .await
-    .unwrap();
-
     let fpt_balance = provider
         .get_asset_balance(wallet.address().into(), core_contracts.fpt_asset_id.into())
         .await
@@ -166,6 +150,7 @@ pub async fn sanity_check() {
         core_contracts.fpt_asset_id,
         fpt_balance,
     )
-    .await;
+    .await
+    .unwrap();
     println!("Staked FPT");
 }

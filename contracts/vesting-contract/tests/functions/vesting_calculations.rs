@@ -1,13 +1,19 @@
 use crate::utils::setup::setup;
 use fuels::prelude::*;
-use fuels::types::transaction_builders::VariableOutputPolicy;
 use fuels::types::Identity;
 
 mod success {
 
-    use test_utils::interfaces::vesting::{
-        get_vesting_schedule, instantiate_vesting_contract, load_vesting_schedules_from_json_file,
-        set_timestamp, VestingContract,
+    use test_utils::{
+        data_structures::ContractInstance,
+        interfaces::vesting::{
+            get_vesting_schedule, load_vesting_schedules_from_json_file,
+            vesting_abi::{
+                claim_vested_tokens, get_redeemable_amount, get_vesting_schedule_call,
+                instantiate_vesting_contract, set_timestamp,
+            },
+            VestingContract,
+        },
     };
 
     use crate::utils::setup::test_helpers::init_and_mint_to_vesting;
@@ -16,41 +22,33 @@ mod success {
 
     #[tokio::test]
     async fn create_vesting_contract() {
-        let (vest, admin, recipient, asset) = setup(10000).await;
+        let (vest, _admin, recipient, asset) = setup(10000).await;
 
+        let recipient_identity = Identity::Address(recipient.address().into());
         let vesting_schedule = [get_vesting_schedule(
             3000,
             1000,
             2000,
             0,
             10000,
-            Identity::Address(recipient.address().into()),
+            recipient_identity,
         )];
 
-        let _ = instantiate_vesting_contract(
+        instantiate_vesting_contract(
             &vest,
             &asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
-        .await;
+        .await
+        .unwrap();
 
-        let res = vest
-            .methods()
-            .get_vesting_schedule(Identity::Address(recipient.address().into()))
-            .call()
-            .await
-            .unwrap();
+        let res = get_vesting_schedule_call(&vest, recipient_identity).await;
 
-        assert_eq!(res.value, vesting_schedule[0]);
-
-        vest.methods()
-            .get_vesting_schedule(Identity::Address(admin.address().into()))
-            .call()
-            .await
-            .unwrap_err();
+        assert_eq!(res.unwrap().value, vesting_schedule[0]);
 
         // fails to initialize twice
         let res = instantiate_vesting_contract(
@@ -60,6 +58,7 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
@@ -73,6 +72,7 @@ mod success {
         let end_timestamp = 10000;
         let total_amount = 10000;
         let cliff_amount = 3000;
+        let recipient_identity = Identity::Address(recipient.address().into());
 
         let vesting_schedule = [get_vesting_schedule(
             cliff_amount,
@@ -80,7 +80,7 @@ mod success {
             end_timestamp,
             0,
             total_amount,
-            Identity::Address(recipient.address().into()),
+            recipient_identity,
         )];
 
         let _ = instantiate_vesting_contract(
@@ -90,10 +90,11 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
-        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest.contract, total_amount, &admin).await;
 
         let asset_id = asset
             .contract_id()
@@ -103,46 +104,32 @@ mod success {
         let provider = admin.provider().unwrap();
 
         let vest_balance = provider
-            .get_contract_asset_balance(&vest.id(), asset_id)
+            .get_contract_asset_balance(&vest.contract.id(), asset_id)
             .await
             .unwrap();
 
         assert_eq!(vest_balance, total_amount);
         // Time before cliff, no tokens should be redeemable
-        let res = vest
-            .methods()
-            .get_redeemable_amount(
-                cliff_timestamp - 1,
-                Identity::Address(recipient.address().into()),
-            )
-            .call()
+        let res = get_redeemable_amount(&vest, cliff_timestamp - 1, recipient_identity)
             .await
             .unwrap();
         assert_eq!(res.value, 0);
 
         // Time after end of vesting, all tokens should be redeemable
-        let res = vest
-            .methods()
-            .get_redeemable_amount(
-                end_timestamp + 1,
-                Identity::Address(recipient.address().into()),
-            )
-            .call()
+        let res = get_redeemable_amount(&vest, end_timestamp + 1, recipient_identity)
             .await
             .unwrap();
 
         assert_eq!(res.value, total_amount);
 
         // Midway through vesting, cliff + half of the remaining tokens should be redeemable
-        let res = vest
-            .methods()
-            .get_redeemable_amount(
-                cliff_timestamp + (end_timestamp - cliff_timestamp) / 2,
-                Identity::Address(recipient.address().into()),
-            )
-            .call()
-            .await
-            .unwrap();
+        let res = get_redeemable_amount(
+            &vest,
+            cliff_timestamp + (end_timestamp - cliff_timestamp) / 2,
+            recipient_identity,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(res.value, cliff_amount + (total_amount - cliff_amount) / 2);
     }
@@ -157,7 +144,10 @@ mod success {
         let total_amount = 10000;
         let cliff_amount = 3000;
 
-        let recpient_vesting = VestingContract::new(vest.contract_id().clone(), recipient.clone());
+        let recpient_vesting =
+            VestingContract::new(vest.contract.contract_id().clone(), recipient.clone());
+
+        let recpient_vesting = ContractInstance::new(recpient_vesting, vest.implementation_id);
 
         let vesting_schedule = [get_vesting_schedule(
             cliff_amount,
@@ -175,10 +165,11 @@ mod success {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 
-        let _ = init_and_mint_to_vesting(&asset, &vest, total_amount, &admin).await;
+        let _ = init_and_mint_to_vesting(&asset, &vest.contract, total_amount, &admin).await;
 
         let asset_id = asset
             .contract_id()
@@ -195,20 +186,17 @@ mod success {
         assert_eq!(starting_balance, 0);
 
         let vest_balance = provider
-            .get_contract_asset_balance(&vest.id(), asset_id)
+            .get_contract_asset_balance(&vest.contract.id(), asset_id)
             .await
             .unwrap();
 
         assert_eq!(vest_balance, total_amount);
 
-        let _ = set_timestamp(&vest, 20).await;
+        // Time before cliff, no tokens should be redeemable
+        let _ = set_timestamp(&vest, 20).await.unwrap();
 
-        let _res = recpient_vesting
-            .methods()
-            .claim_vested_tokens()
-            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
-            .call()
-            .await;
+        let res = claim_vested_tokens(&recpient_vesting).await;
+        assert!(res.is_err());
 
         let rec_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -217,15 +205,12 @@ mod success {
 
         assert_eq!(rec_balance, 0);
 
-        let _ = set_timestamp(&vest, cliff_timestamp).await;
+        let _ = set_timestamp(&recpient_vesting, cliff_timestamp)
+            .await
+            .unwrap();
         // Block produced then claim vested tokens happens in the next block
 
-        let _res = recpient_vesting
-            .methods()
-            .claim_vested_tokens()
-            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
-            .call()
-            .await;
+        let _res = claim_vested_tokens(&recpient_vesting).await.unwrap();
 
         let rec_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -237,12 +222,7 @@ mod success {
         let _ = set_timestamp(&vest, end_timestamp - (end_timestamp - cliff_timestamp) / 2).await;
 
         // Block produced then claim vested tokens happens in the next block
-        let _res = recpient_vesting
-            .methods()
-            .claim_vested_tokens()
-            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
-            .call()
-            .await;
+        let _res = claim_vested_tokens(&recpient_vesting).await.unwrap();
 
         let rec_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -257,12 +237,7 @@ mod success {
         let _ = set_timestamp(&vest, end_timestamp).await;
         // Block produced then claim vested tokens happens in the next block
 
-        let _res = recpient_vesting
-            .methods()
-            .claim_vested_tokens()
-            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
-            .call()
-            .await;
+        let _res = claim_vested_tokens(&recpient_vesting).await.unwrap();
 
         let rec_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -271,15 +246,11 @@ mod success {
 
         assert_eq!(total_amount, rec_balance);
 
-        set_timestamp(&vest, end_timestamp + 10).await;
+        let _ = set_timestamp(&vest, end_timestamp + 10).await.unwrap();
 
         // Tries to claim after all tokens have been claimed
-        let _res = recpient_vesting
-            .methods()
-            .claim_vested_tokens()
-            .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
-            .call()
-            .await;
+        let res = claim_vested_tokens(&recpient_vesting).await;
+        assert!(res.is_err());
 
         let rec_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)
@@ -312,7 +283,7 @@ mod success {
 
 mod failure {
     use test_utils::interfaces::vesting::{
-        get_vesting_schedule, instantiate_vesting_contract, VestingContract,
+        get_vesting_schedule, vesting_abi::instantiate_vesting_contract,
     };
 
     use super::*;
@@ -338,6 +309,7 @@ mod failure {
                 .asset_id(&AssetId::zeroed().into())
                 .into(),
             vesting_schedule.to_vec(),
+            true,
         )
         .await;
 

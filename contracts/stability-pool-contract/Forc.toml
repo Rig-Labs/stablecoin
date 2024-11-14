@@ -7,3 +7,6 @@ name = "stability-pool-contract"
 [dependencies]
 libraries = { path = "../../libraries" }
 standards = { git = "https://github.com/FuelLabs/sway-standards", tag = "v0.6.1" }
+
+[proxy]
+enabled = true

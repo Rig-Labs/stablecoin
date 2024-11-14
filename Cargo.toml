@@ -9,6 +9,7 @@ members = [
     "./contracts/borrow-operations-contract",
     "./contracts/protocol-manager-contract",
     "./contracts/token-contract",
+    "./contracts/proxy-contract",
     "./contracts/usdf-token-contract",
     "./contracts/active-pool-contract",
     "./contracts/coll-surplus-pool-contract",
@@ -25,13 +26,15 @@ members = [
 ]
 
 [workspace.dependencies]
+csv = "1.1.0"
 dotenv = "0.15.0"
-fuels = { version = "0.66.4", features = ["fuel-core-lib"] }
+fuels = { version = "0.66.9", features = ["fuel-core-lib"] }
 futures = "0.3.17"
 hex = "0.4.3"
 pbr = "1.1.1"
 rand = { version = "0.8.5", features = ["std_rng", "getrandom"] }
 serde = { version = "1.0.92", features = ["derive"] }
 serde_json = "1.0.92"
+tai64 = "4.0.0"
 tokio = { version = "1.21.0", features = ["rt", "macros"] }
 test-utils = { path = "./test-utils" }

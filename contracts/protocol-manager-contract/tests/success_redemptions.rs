@@ -1,5 +1,5 @@
 use fuels::{prelude::*, types::Identity};
-use test_utils::data_structures::PRECISION;
+use test_utils::data_structures::{ContractInstance, PRECISION};
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::protocol_manager::ProtocolManager;
 use test_utils::interfaces::pyth_oracle::PYTH_TIMESTAMP;
@@ -49,9 +49,12 @@ async fn proper_redemption_from_partially_closed() {
     )
     .await;
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -80,9 +83,12 @@ async fn proper_redemption_from_partially_closed() {
     .await
     .unwrap();
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -104,9 +110,12 @@ async fn proper_redemption_from_partially_closed() {
     .await
     .unwrap();
 
-    let borrow_operations_healthy_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let borrow_operations_healthy_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     borrow_operations_abi::open_trove(
@@ -130,9 +139,12 @@ async fn proper_redemption_from_partially_closed() {
 
     let redemption_amount: u64 = 3_000 * PRECISION;
 
-    let protocol_manager_health1 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let protocol_manager_health1 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
@@ -224,7 +236,7 @@ async fn proper_redemption_from_partially_closed() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(contracts.fpt_staking.contract_id(), mock_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), mock_asset_id)
         .await
         .unwrap();
 
@@ -280,9 +292,12 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     )
     .await;
 
-    let borrow_operations_healthy_wallet1 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let borrow_operations_healthy_wallet1 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let coll1 = 12_000 * PRECISION;
@@ -314,9 +329,12 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     .await
     .unwrap();
 
-    let borrow_operations_healthy_wallet2 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet2.clone(),
+    let borrow_operations_healthy_wallet2 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet2.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let coll2: u64 = 9_000 * PRECISION;
@@ -340,9 +358,12 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     .await
     .unwrap();
 
-    let borrow_operations_healthy_wallet3 = BorrowOperations::new(
-        contracts.borrow_operations.contract_id().clone(),
-        healthy_wallet3.clone(),
+    let borrow_operations_healthy_wallet3 = ContractInstance::new(
+        BorrowOperations::new(
+            contracts.borrow_operations.contract.contract_id().clone(),
+            healthy_wallet3.clone(),
+        ),
+        contracts.borrow_operations.implementation_id.clone(),
     );
 
     let coll3: u64 = 8_000 * PRECISION;
@@ -371,9 +392,12 @@ async fn proper_redemption_with_a_trove_closed_fully() {
 
     let redemption_amount: u64 = 6_000 * PRECISION;
 
-    let protocol_manager_health1 = ProtocolManager::new(
-        contracts.protocol_manager.contract_id().clone(),
-        healthy_wallet1.clone(),
+    let protocol_manager_health1 = ContractInstance::new(
+        ProtocolManager::new(
+            contracts.protocol_manager.contract.contract_id().clone(),
+            healthy_wallet1.clone(),
+        ),
+        contracts.protocol_manager.implementation_id,
     );
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP).await;
@@ -435,7 +459,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         .unwrap();
 
     let staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract_id(), mock_asset_id)
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), mock_asset_id)
         .await
         .unwrap();
 

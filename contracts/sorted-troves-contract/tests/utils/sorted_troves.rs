@@ -10,13 +10,14 @@ pub mod sorted_troves_utils {
         types::{Address, AssetId},
     };
     use rand::{self, Rng};
+    use test_utils::data_structures::ContractInstance;
 
     use crate::utils::setup::{get_nominal_icr, set_nominal_icr_and_insert};
 
     use super::*;
 
     pub async fn assert_neighbors(
-        sorted_troves: &SortedTroves<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         current: Identity,
         prev_id: Identity,
         next_id: Identity,
@@ -30,7 +31,7 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_head(
-        sorted_troves: &SortedTroves<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
         asset: AssetId,
     ) {
@@ -72,7 +73,7 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_tail(
-        sorted_troves: &SortedTroves<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
         asset: AssetId,
     ) {
@@ -109,7 +110,7 @@ pub mod sorted_troves_utils {
 
     pub async fn generate_random_nodes(
         trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-        sorted_troves: &SortedTroves<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
         max_size: u64,
         asset: AssetId,
     ) -> (Vec<(Identity, u64)>, u64) {

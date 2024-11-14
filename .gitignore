@@ -7,6 +7,5 @@ target
 *.env
 !*/.sample.env
 *types/*
-*/contracts.json
-contracts.json
-deploy-scripts/vesting/fluid_vesting_team_and_investors_test.csv
+*contracts.json
+deploy-scripts/vesting/**/*.csv

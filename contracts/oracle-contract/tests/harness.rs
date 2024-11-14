@@ -1,5 +1,6 @@
 use fuels::types::U256;
 use fuels::{prelude::*, types::Identity};
+use test_utils::data_structures::ContractInstance;
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
@@ -22,7 +23,7 @@ async fn setup(
     fuel_vm_decimals: u32,
     initialize_redstone: bool,
 ) -> (
-    Oracle<WalletUnlocked>,
+    ContractInstance<Oracle<WalletUnlocked>>,
     PythCore<WalletUnlocked>,
     Option<RedstoneCore<WalletUnlocked>>,
 ) {
@@ -66,7 +67,8 @@ async fn setup(
                 precision: redstone_precision,
             },
         )
-        .await;
+        .await
+        .unwrap();
 
         return (oracle, pyth, Some(redstone));
     }

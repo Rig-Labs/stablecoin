@@ -10,6 +10,8 @@ abigen!(Contract(
 ));
 
 pub mod usdf_token_abi {
+    use crate::data_structures::ContractInstance;
+
     use super::*;
     use fuels::{
         prelude::{Account, CallParameters, Error, TxPolicies},
@@ -17,7 +19,7 @@ pub mod usdf_token_abi {
     };
 
     pub async fn initialize<T: Account>(
-        instance: &USDFToken<T>,
+        instance: &ContractInstance<USDFToken<T>>,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
@@ -25,38 +27,49 @@ pub mod usdf_token_abi {
         let tx_params = TxPolicies::default().with_tip(1);
 
         instance
+            .contract
             .methods()
             .initialize(
                 protocol_manager,
                 stability_pool.clone(),
                 borrow_operations.clone(),
             )
+            .with_contract_ids(&[
+                instance.implementation_id.into(),
+                instance.contract.contract_id().into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await
     }
 
     pub async fn mint<T: Account>(
-        instance: &USDFToken<T>,
+        instance: &ContractInstance<USDFToken<T>>,
         amount: u64,
         address: Identity,
     ) -> Result<CallResponse<()>, Error> {
         instance
+            .contract
             .methods()
             .mint(address, None, amount)
+            .with_contract_ids(&[
+                instance.implementation_id.into(),
+                instance.contract.contract_id().into(),
+            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .call()
             .await
     }
 
     pub async fn burn<T: Account>(
-        usdf_token: &USDFToken<T>,
+        instance: &ContractInstance<USDFToken<T>>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(200000);
-        let usdf_asset_id = usdf_token
+        let usdf_asset_id = instance
+            .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
@@ -65,9 +78,14 @@ pub mod usdf_token_abi {
             .with_amount(amount)
             .with_asset_id(usdf_asset_id);
 
-        let call_handler = usdf_token
+        let call_handler = instance
+            .contract
             .methods()
             .burn(Bits256::zeroed(), amount)
+            .with_contract_ids(&[
+                instance.implementation_id.into(),
+                instance.contract.contract_id().into(),
+            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1));
 
         call_handler
@@ -78,29 +96,42 @@ pub mod usdf_token_abi {
             .await
     }
 
-    pub async fn total_supply<T: Account>(instance: &USDFToken<T>) -> CallResponse<Option<u64>> {
+    pub async fn total_supply<T: Account>(
+        instance: &ContractInstance<USDFToken<T>>,
+    ) -> CallResponse<Option<u64>> {
         let usdf_asset_id = instance
+            .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
             .into();
 
         instance
+            .contract
             .methods()
             .total_supply(usdf_asset_id)
+            .with_contract_ids(&[
+                instance.implementation_id.into(),
+                instance.contract.contract_id().into(),
+            ])
             .call()
             .await
             .unwrap()
     }
 
     pub async fn add_trove_manager<T: Account>(
-        instance: &USDFToken<T>,
+        instance: &ContractInstance<USDFToken<T>>,
         trove_manager: ContractId,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         instance
+            .contract
             .methods()
             .add_trove_manager(trove_manager)
+            .with_contract_ids(&[
+                instance.implementation_id.into(),
+                instance.contract.contract_id().into(),
+            ])
             .with_tx_policies(tx_params)
             .call()
             .await

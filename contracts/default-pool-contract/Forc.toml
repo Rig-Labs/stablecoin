@@ -6,3 +6,6 @@ name = "default-pool-contract"
 
 [dependencies]
 libraries = { path = "../../libraries" }
+
+[proxy]
+enabled = true

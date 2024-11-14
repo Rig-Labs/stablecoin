@@ -1,4 +1,4 @@
-use fuels::{prelude::*, types::Identity};
+use fuels::types::Identity;
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
 use test_utils::interfaces::oracle::oracle_abi;
 use test_utils::interfaces::pyth_oracle::{pyth_oracle_abi, pyth_price_feed, PYTH_TIMESTAMP};
@@ -17,9 +17,12 @@ async fn proper_hint_generations() {
 
     let hint_helper = deploy_hint_helper(&wallet).await;
 
-    hint_helper_abi::initialize(&hint_helper, contracts.sorted_troves.contract_id().into())
-        .await
-        .unwrap();
+    hint_helper_abi::initialize(
+        &hint_helper,
+        contracts.sorted_troves.contract.contract_id().into(),
+    )
+    .await
+    .unwrap();
 
     // create 15 troves each with 600 USDF debt and n * 1000 collateral
     let mut target_address = Identity::Address(wallet.address().into());
