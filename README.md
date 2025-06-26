@@ -46,7 +46,7 @@ directory.
 
 Make sure you have fuelup, fuel-core, cargo, and rust installed
 
-```
+```bash
 make build-and-test
 ```
 

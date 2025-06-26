@@ -741,7 +741,7 @@ pub mod common {
 
         let fluid_protocol_path = current_dir
             .ancestors()
-            .find(|p| p.ends_with("fluid-protocol"))
+            .find(|p| p.ends_with("stablecoin"))
             .unwrap_or(&current_dir)
             .to_path_buf();
 
