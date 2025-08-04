@@ -105,7 +105,7 @@ async fn test_authorizations() {
         asset_contracts_owner.oracle.contract.contract_id().into(),
         &contracts.borrow_operations,
         &contracts.stability_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,

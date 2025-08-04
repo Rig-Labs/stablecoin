@@ -14,15 +14,15 @@ async fn sanity_testing_setup() {
     // Try to upgrade each contract with unauthorized wallet
     let new_target = ContractId::from([3u8; 32]);
 
-    let attacker_proxy_usdf = Proxy::new(
-        contracts.usdf.contract.contract_id().clone(),
+    let attacker_proxy_usdm = Proxy::new(
+        contracts.usdm.contract.contract_id().clone(),
         attacker.clone(),
     );
-    // Test USDF token proxy
-    let res = proxy_abi::set_proxy_target(&attacker_proxy_usdf, new_target).await;
+    // Test USDM token proxy
+    let res = proxy_abi::set_proxy_target(&attacker_proxy_usdm, new_target).await;
     assert!(
         res.is_err(),
-        "Unauthorized wallet should not be able to upgrade USDF token"
+        "Unauthorized wallet should not be able to upgrade USDM token"
     );
     if let Err(error) = res {
         assert!(
@@ -32,9 +32,9 @@ async fn sanity_testing_setup() {
         );
     }
 
-    let admin_proxy_usdf = Proxy::new(contracts.usdf.contract.contract_id().clone(), admin.clone());
+    let admin_proxy_usdm = Proxy::new(contracts.usdm.contract.contract_id().clone(), admin.clone());
     // Verify admin can still upgrade (testing one contract as example)
-    let res = proxy_abi::set_proxy_target(&admin_proxy_usdf, new_target).await;
+    let res = proxy_abi::set_proxy_target(&admin_proxy_usdm, new_target).await;
     assert!(res.is_ok(), "Admin should be able to upgrade contracts");
 
     let attacker_proxy_borrow_operations = Proxy::new(

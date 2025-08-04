@@ -9,7 +9,7 @@ pub mod active_pool_interface;
 pub mod stability_pool_interface;
 pub mod default_pool_interface;
 pub mod coll_surplus_pool_interface;
-pub mod usdf_token_interface;
+pub mod usdm_token_interface;
 pub mod protocol_manager_interface;
 pub mod fpt_staking_interface;
 pub mod fpt_token_interface;

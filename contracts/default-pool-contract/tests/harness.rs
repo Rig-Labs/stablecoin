@@ -2,12 +2,12 @@ use fuels::{prelude::*, types::Identity};
 
 use test_utils::{
     data_structures::ContractInstance,
-    interfaces::usdf_token::{usdf_token_abi, USDFToken},
-    setup::common::deploy_usdf_token,
+    interfaces::usdm_token::{usdm_token_abi, USDMToken},
+    setup::common::deploy_usdm_token,
 };
 
 async fn get_contract_instance() -> (
-    ContractInstance<USDFToken<WalletUnlocked>>,
+    ContractInstance<USDMToken<WalletUnlocked>>,
     WalletUnlocked,
     Vec<WalletUnlocked>,
 ) {
@@ -25,9 +25,9 @@ async fn get_contract_instance() -> (
     .unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let asset = deploy_usdf_token(&wallet).await;
+    let asset = deploy_usdm_token(&wallet).await;
 
-    usdf_token_abi::initialize(
+    usdm_token_abi::initialize(
         &asset,
         asset.contract.contract_id().into(),
         Identity::Address(wallet.address().into()),
@@ -41,60 +41,60 @@ async fn get_contract_instance() -> (
 
 #[tokio::test]
 async fn proper_intialize() {
-    let (usdf, _admin, _) = get_contract_instance().await;
+    let (usdm, _admin, _) = get_contract_instance().await;
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
+    let total_supply = usdm_token_abi::total_supply(&usdm).await.value.unwrap();
 
     assert_eq!(total_supply, 0);
 }
 
 #[tokio::test]
 async fn proper_mint() {
-    let (usdf, _, mut wallets) = get_contract_instance().await;
+    let (usdm, _, mut wallets) = get_contract_instance().await;
 
     let wallet = wallets.pop().unwrap();
 
-    usdf_token_abi::mint(&usdf, 100, Identity::Address(wallet.address().into()))
+    usdm_token_abi::mint(&usdm, 100, Identity::Address(wallet.address().into()))
         .await
         .unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
+    let total_supply = usdm_token_abi::total_supply(&usdm).await.value.unwrap();
 
     assert_eq!(total_supply, 100);
 }
 
 #[tokio::test]
 async fn proper_burn() {
-    let (usdf, admin, _wallets) = get_contract_instance().await;
+    let (usdm, admin, _wallets) = get_contract_instance().await;
 
-    usdf_token_abi::mint(&usdf, 100, Identity::Address(admin.address().into()))
+    usdm_token_abi::mint(&usdm, 100, Identity::Address(admin.address().into()))
         .await
         .unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
+    let total_supply = usdm_token_abi::total_supply(&usdm).await.value.unwrap();
 
     assert_eq!(total_supply, 100);
 
-    usdf_token_abi::burn(&usdf, 50).await.unwrap();
+    usdm_token_abi::burn(&usdm, 50).await.unwrap();
 
-    let total_supply = usdf_token_abi::total_supply(&usdf).await.value.unwrap();
+    let total_supply = usdm_token_abi::total_supply(&usdm).await.value.unwrap();
 
     assert_eq!(total_supply, 50);
 }
 
 #[tokio::test]
 async fn fails_to_mint_unauthorized() {
-    let (usdf, _, mut wallets) = get_contract_instance().await;
+    let (usdm, _, mut wallets) = get_contract_instance().await;
 
     let wallet = wallets.pop().unwrap();
 
-    let unauthorized_usdf = ContractInstance::new(
-        USDFToken::new(usdf.contract.contract_id(), wallet.clone()),
-        usdf.implementation_id.clone(),
+    let unauthorized_usdm = ContractInstance::new(
+        USDMToken::new(usdm.contract.contract_id(), wallet.clone()),
+        usdm.implementation_id.clone(),
     );
 
-    usdf_token_abi::mint(
-        &unauthorized_usdf,
+    usdm_token_abi::mint(
+        &unauthorized_usdm,
         100,
         Identity::Address(wallet.address().into()),
     )
@@ -104,20 +104,20 @@ async fn fails_to_mint_unauthorized() {
 
 #[tokio::test]
 async fn fails_to_burn_unauthorized() {
-    let (usdf, _, mut wallets) = get_contract_instance().await;
+    let (usdm, _, mut wallets) = get_contract_instance().await;
 
     let wallet = wallets.pop().unwrap();
 
-    usdf_token_abi::mint(&usdf, 100, Identity::Address(wallet.address().into()))
+    usdm_token_abi::mint(&usdm, 100, Identity::Address(wallet.address().into()))
         .await
         .unwrap();
 
-    let unauthorized_usdf = ContractInstance::new(
-        USDFToken::new(usdf.contract.contract_id(), wallet.clone()),
-        usdf.implementation_id.clone(),
+    let unauthorized_usdm = ContractInstance::new(
+        USDMToken::new(usdm.contract.contract_id(), wallet.clone()),
+        usdm.implementation_id.clone(),
     );
 
-    usdf_token_abi::burn(&unauthorized_usdf, 100)
+    usdm_token_abi::burn(&unauthorized_usdm, 100)
         .await
         .expect_err("Should fail to burn");
 }

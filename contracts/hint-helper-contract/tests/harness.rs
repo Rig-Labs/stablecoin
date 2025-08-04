@@ -24,7 +24,7 @@ async fn proper_hint_generations() {
     .await
     .unwrap();
 
-    // create 15 troves each with 600 USDF debt and n * 1000 collateral
+    // create 15 troves each with 600 USDM debt and n * 1000 collateral
     let mut target_address = Identity::Address(wallet.address().into());
     let mut target_address2 = Identity::Address(wallet.address().into());
 
@@ -38,7 +38,7 @@ async fn proper_hint_generations() {
     for i in 1..=15 {
         let wallet = wallets.pop().unwrap();
         let amount = i * 1000 * PRECISION;
-        let usdf_amount = 600 * PRECISION;
+        let usdm_amount = 600 * PRECISION;
 
         if i == 5 {
             target_address = Identity::Address(wallet.address().into());
@@ -52,12 +52,12 @@ async fn proper_hint_generations() {
             wallet.clone(),
             &contracts.asset_contracts[0],
             &contracts.borrow_operations,
-            &contracts.usdf,
+            &contracts.usdm,
             &contracts.fpt_staking,
             &contracts.active_pool,
             &contracts.sorted_troves,
             amount,
-            usdf_amount,
+            usdm_amount,
         )
         .await;
     }

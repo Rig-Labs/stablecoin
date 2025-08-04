@@ -10,9 +10,9 @@ use test_utils::{
         sorted_troves::sorted_troves_abi,
         token::token_abi,
         trove_manager::trove_manager_abi,
-        usdf_token::usdf_token_abi,
+        usdm_token::usdm_token_abi,
     },
-    setup::common::{deploy_token, deploy_usdf_token, setup_protocol},
+    setup::common::{deploy_token, deploy_usdm_token, setup_protocol},
     utils::{calculate_icr, with_min_borrow_fee},
 };
 
@@ -45,7 +45,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -64,7 +64,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -79,11 +79,11 @@ async fn fails_open_two_troves_of_same_coll_type() {
 
     assert!(res);
 
-    let usdf_balance = provider
+    let usdm_balance = provider
         .get_asset_balance(
             admin.address().into(),
             contracts
-                .usdf
+                .usdm
                 .contract
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
@@ -120,7 +120,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, debt_amount);
+    assert_eq!(usdm_balance, debt_amount);
 
     let expected_debt = with_min_borrow_fee(debt_amount);
     let expected_icr = calculate_icr(col_amount, expected_debt);
@@ -144,7 +144,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
     assert_eq!(trove_col, col_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_debt, "Trove Debt is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -191,7 +191,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -218,7 +218,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -237,7 +237,7 @@ async fn fails_open_trove_under_minimum_collateral_ratio() {
 }
 
 #[tokio::test]
-async fn fails_open_trove_under_min_usdf_required() {
+async fn fails_open_trove_under_min_usdm_required() {
     let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
@@ -249,7 +249,7 @@ async fn fails_open_trove_under_min_usdf_required() {
 
     let coll_amount = 1_200 * PRECISION;
     let debt_amount = 400 * PRECISION;
-    // 100 USDF < 500 USDF
+    // 100 USDM < 500 USDM
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
@@ -263,7 +263,7 @@ async fn fails_open_trove_under_min_usdf_required() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -277,12 +277,12 @@ async fn fails_open_trove_under_min_usdf_required() {
 
     assert!(
         res.is_err(),
-        "Borrow operation: Should not be able to open trove with debt < 500 USDF"
+        "Borrow operation: Should not be able to open trove with debt < 500 USDM"
     );
 }
 
 #[tokio::test]
-async fn fails_reduce_debt_under_min_usdf_required() {
+async fn fails_reduce_debt_under_min_usdm_required() {
     let (contracts, admin, _) = setup_protocol(2, false, false).await;
 
     token_abi::mint_to_id(
@@ -308,7 +308,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -322,15 +322,15 @@ async fn fails_reduce_debt_under_min_usdf_required() {
     .unwrap();
     println!("Opened trove");
 
-    // 600 USDF - 300 USDF < 500 USDF
+    // 600 USDM - 300 USDM < 500 USDM
 
-    let res = borrow_operations_abi::repay_usdf(
+    let res = borrow_operations_abi::repay_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -345,7 +345,7 @@ async fn fails_reduce_debt_under_min_usdf_required() {
 
     assert!(
         res,
-        "Borrow operation: Should not be able to reduce debt to less than 500 USDF"
+        "Borrow operation: Should not be able to reduce debt to less than 500 USDM"
     );
 }
 
@@ -376,7 +376,7 @@ async fn fails_decrease_collateral_under_mcr() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -454,7 +454,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &mock_fake_token,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -479,7 +479,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -498,7 +498,7 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &mock_fake_token,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -514,32 +514,32 @@ async fn fails_incorrect_token_as_collateral_or_repayment() {
         "Borrow operation: Should not be able to add collateral with incorrect token as collateral"
     );
 
-    let fake_usdf_token = deploy_usdf_token(&admin).await;
+    let fake_usdm_token = deploy_usdm_token(&admin).await;
 
-    usdf_token_abi::initialize(
-        &fake_usdf_token,
-        fake_usdf_token.contract.contract_id().into(),
+    usdm_token_abi::initialize(
+        &fake_usdm_token,
+        fake_usdm_token.contract.contract_id().into(),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
     )
     .await
     .unwrap();
 
-    usdf_token_abi::mint(
-        &fake_usdf_token,
+    usdm_token_abi::mint(
+        &fake_usdm_token,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
     .await
     .unwrap();
 
-    let res = borrow_operations_abi::repay_usdf(
+    let res = borrow_operations_abi::repay_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &fake_usdf_token,
+        &fake_usdm_token,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,

@@ -53,7 +53,7 @@ pub fn calculate_liqudated_trove_values(
 pub fn get_offset_and_redistribution_vals(
     coll: u64,
     debt: u64,
-    usdf_in_stab_pool: u64,
+    usdm_in_stab_pool: u64,
     price: u64,
 ) -> LiquidationValues {
     let mut vars: LiquidationValues = LiquidationValues::default();
@@ -71,12 +71,12 @@ pub fn get_offset_and_redistribution_vals(
     // 0.5% of the liquidated collateral is used to compensate the liquidator for gas
     vars.coll_gas_compensation = liquidated_position_vals.trove_coll_liquidated / 200;
     let pending_liquidated_col = liquidated_position_vals.trove_coll_liquidated - vars.coll_gas_compensation;
-    if (usdf_in_stab_pool > 0) {
-        // If the Stability Pool doesnt have enough USDF to offset the entire debt, offset as much as possible
+    if (usdm_in_stab_pool > 0) {
+        // If the Stability Pool doesnt have enough USDM to offset the entire debt, offset as much as possible
         vars.debt_to_offset = fm_min(
             liquidated_position_vals
                 .trove_debt_to_repay,
-            usdf_in_stab_pool,
+            usdm_in_stab_pool,
         );
         // Send collateral to the Stability Pool proportional to the amount of debt offset
         vars.coll_to_send_to_sp = fm_multiply_ratio(
@@ -85,7 +85,7 @@ pub fn get_offset_and_redistribution_vals(
             liquidated_position_vals
                 .trove_debt_to_repay,
         );
-        // If stability pool doesn't have enough USDF to offset the entire debt, redistribute the remaining debt and collateral
+        // If stability pool doesn't have enough USDM to offset the entire debt, redistribute the remaining debt and collateral
         vars.debt_to_redistribute = liquidated_position_vals.trove_debt_to_repay - vars.debt_to_offset;
         vars.coll_to_redistribute = pending_liquidated_col - vars.coll_to_send_to_sp;
     } else {
@@ -167,7 +167,7 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_empty_pool() {
 }
 #[test]
 fn test_get_offset_and_redistribution_vals_full_liquidation_enough_pool() {
-    // Full liquidation, Stability Pool has enough USDF to offset the entire debt
+    // Full liquidation, Stability Pool has enough USDM to offset the entire debt
     let starting_coll = 1_100 * DECIMAL_PRECISION;
     let starting_debt = 1_000 * DECIMAL_PRECISION;
     let amount_in_pool = 2_000 * DECIMAL_PRECISION;
@@ -192,7 +192,7 @@ fn test_get_offset_and_redistribution_vals_full_liquidation_enough_pool() {
 }
 #[test]
 fn test_get_offset_and_redistribution_vals_full_liquidation_partial_pool() {
-    // Full liquidation, Stability Pool doesn't have enough USDF to offset the entire debt
+    // Full liquidation, Stability Pool doesn't have enough USDM to offset the entire debt
     let starting_coll = 1_100 * DECIMAL_PRECISION;
     let starting_debt = 1_000 * DECIMAL_PRECISION;
     let amount_in_pool = 500 * DECIMAL_PRECISION;
@@ -252,7 +252,7 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_empty_pool() {
 }
 #[test]
 fn test_get_offset_and_redistribution_vals_partial_liquidation_enough_pool() {
-    // Partial liquidation, Stability Pool has enough USDF to offset the entire debt
+    // Partial liquidation, Stability Pool has enough USDM to offset the entire debt
     let starting_coll = 12_000 * DECIMAL_PRECISION;
     let starting_debt = 10_000 * DECIMAL_PRECISION;
     let amount_in_pool = 20_000 * DECIMAL_PRECISION;
@@ -286,12 +286,12 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_enough_pool() {
 }
 #[test]
 fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
-    // Partial liquidation, Stability Pool doesn't have enough USDF to offset the entire debt
+    // Partial liquidation, Stability Pool doesn't have enough USDM to offset the entire debt
     let starting_coll = 12_000 * DECIMAL_PRECISION;
     let starting_debt = 10_000 * DECIMAL_PRECISION;
-    let total_usdf = 1_000 * DECIMAL_PRECISION;
+    let total_usdm = 1_000 * DECIMAL_PRECISION;
     let price = DECIMAL_PRECISION;
-    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, total_usdf, price);
+    let liquidation_vals = get_offset_and_redistribution_vals(starting_coll, starting_debt, total_usdm, price);
     let icr = fm_compute_cr(
         liquidation_vals
             .remaining_trove_coll,
@@ -300,12 +300,12 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
         price,
     );
     let coll_removed = starting_coll - liquidation_vals.remaining_trove_coll - liquidation_vals.coll_gas_compensation;
-    let expected_coll_to_send_to_sp = U128::from(total_usdf) * U128::from(coll_removed) / U128::from(starting_debt - liquidation_vals.remaining_trove_debt);
+    let expected_coll_to_send_to_sp = U128::from(total_usdm) * U128::from(coll_removed) / U128::from(starting_debt - liquidation_vals.remaining_trove_debt);
     assert(liquidation_vals.entire_trove_coll == starting_coll);
     assert(liquidation_vals.entire_trove_debt == starting_debt);
     assert(liquidation_vals.is_partial_liquidation == true);
     assert(liquidation_vals.coll_surplus == 0);
-    assert(liquidation_vals.debt_to_offset == total_usdf);
+    assert(liquidation_vals.debt_to_offset == total_usdm);
     assert(
         liquidation_vals
             .coll_to_send_to_sp == expected_coll_to_send_to_sp
@@ -315,7 +315,7 @@ fn test_get_offset_and_redistribution_vals_partial_liquidation_partial_pool() {
     assert(
         liquidation_vals
             .debt_to_redistribute == starting_debt - liquidation_vals
-            .remaining_trove_debt - total_usdf,
+            .remaining_trove_debt - total_usdm,
     );
     assert(
         liquidation_vals

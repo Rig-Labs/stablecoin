@@ -7,7 +7,7 @@ pub struct AssetContracts {
 
 pub struct LocalVariablesOpenTrove {
     pub price: u64,
-    pub usdf_fee: u64,
+    pub usdm_fee: u64,
     pub net_debt: u64,
     pub icr: u64,
     pub nicr: u64,
@@ -19,7 +19,7 @@ impl LocalVariablesOpenTrove {
     pub fn new() -> Self {
         LocalVariablesOpenTrove {
             price: 0,
-            usdf_fee: 0,
+            usdm_fee: 0,
             net_debt: 0,
             icr: 0,
             nicr: 0,
@@ -39,7 +39,7 @@ pub struct LocalVariablesAdjustTrove {
     pub old_icr: u64,
     pub new_icr: u64,
     pub new_tcr: u64,
-    pub usdf_fee: u64,
+    pub usdm_fee: u64,
     pub new_debt: u64,
     pub new_coll: u64,
     pub stake: u64,
@@ -57,7 +57,7 @@ impl LocalVariablesAdjustTrove {
             old_icr: 0,
             new_icr: 0,
             new_tcr: 0,
-            usdf_fee: 0,
+            usdm_fee: 0,
             new_debt: 0,
             new_coll: 0,
             stake: 0,

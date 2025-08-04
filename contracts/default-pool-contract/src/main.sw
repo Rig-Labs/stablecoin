@@ -1,8 +1,8 @@
 contract;
-// The Default Pool holds the Asset and USDF debt (but not USDF tokens) from liquidations that have been redistributed
+// The Default Pool holds the Asset and USDM debt (but not USDM tokens) from liquidations that have been redistributed
 // to active troves but not yet "applied", i.e. not yet recorded on a recipient active trove's struct.
 //
-// When a trove makes an operation that applies its pending Asset and USDF debt, its pending Asset and USDF debt is moved
+// When a trove makes an operation that applies its pending Asset and USDM debt, its pending Asset and USDM debt is moved
 // from the Default Pool to the Active Pool.
 
 use libraries::default_pool_interface::DefaultPool;
@@ -28,7 +28,7 @@ storage {
     protocol_manager: Identity = Identity::Address(Address::zero()),
     active_pool_contract: ContractId = ContractId::zero(),
     asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
-    usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
+    usdm_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {},
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {},
     is_initialized: bool = false,
@@ -74,7 +74,7 @@ impl DefaultPool for Contract {
         storage.valid_asset_ids.insert(asset, true);
         storage.valid_trove_managers.insert(trove_manager, true);
         storage.asset_amount.insert(asset, 0);
-        storage.usdf_debt_amount.insert(asset, 0);
+        storage.usdm_debt_amount.insert(asset, 0);
     }
 
     #[storage(read)]
@@ -83,22 +83,22 @@ impl DefaultPool for Contract {
     }
 
     #[storage(read)]
-    fn get_usdf_debt(asset_id: AssetId) -> u64 {
-        return storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0);
+    fn get_usdm_debt(asset_id: AssetId) -> u64 {
+        return storage.usdm_debt_amount.get(asset_id).try_read().unwrap_or(0);
     }
 
     #[storage(read, write)]
-    fn increase_usdf_debt(amount: u64, asset_id: AssetId) {
+    fn increase_usdm_debt(amount: u64, asset_id: AssetId) {
         require_is_trove_manager();
-        let new_debt = storage.usdf_debt_amount.get(asset_id).read() + amount;
-        storage.usdf_debt_amount.insert(asset_id, new_debt);
+        let new_debt = storage.usdm_debt_amount.get(asset_id).read() + amount;
+        storage.usdm_debt_amount.insert(asset_id, new_debt);
     }
 
     #[storage(read, write)]
-    fn decrease_usdf_debt(amount: u64, asset_id: AssetId) {
+    fn decrease_usdm_debt(amount: u64, asset_id: AssetId) {
         require_is_trove_manager();
-        let new_debt = storage.usdf_debt_amount.get(asset_id).read() - amount;
-        storage.usdf_debt_amount.insert(asset_id, new_debt);
+        let new_debt = storage.usdm_debt_amount.get(asset_id).read() - amount;
+        storage.usdm_debt_amount.insert(asset_id, new_debt);
     }
 
     #[storage(read, write), payable]

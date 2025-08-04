@@ -176,7 +176,7 @@ async fn test_paused_operations() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -201,7 +201,7 @@ async fn test_paused_operations() {
         &contracts.asset_contracts[1].mock_pyth_oracle,
         &contracts.asset_contracts[1].mock_redstone_oracle,
         &contracts.asset_contracts[1].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
@@ -218,15 +218,15 @@ async fn test_paused_operations() {
         "Should not be able to open trove while paused"
     );
 
-    // Try to withdraw USDF (increase debt) while paused
+    // Try to withdraw USDM (increase debt) while paused
     let withdraw_amount = 100 * PRECISION;
-    let res = borrow_operations_abi::withdraw_usdf(
+    let res = borrow_operations_abi::withdraw_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -239,18 +239,18 @@ async fn test_paused_operations() {
 
     assert!(
         res.is_err(),
-        "Should not be able to withdraw USDF while paused"
+        "Should not be able to withdraw USDM while paused"
     );
 
-    // Try to repay USDF (reduce debt) while paused
+    // Try to repay USDM (reduce debt) while paused
     let repay_amount = 100 * PRECISION;
-    let res = borrow_operations_abi::repay_usdf(
+    let res = borrow_operations_abi::repay_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -261,7 +261,7 @@ async fn test_paused_operations() {
     )
     .await;
 
-    assert!(res.is_ok(), "Should be able to repay USDF while paused");
+    assert!(res.is_ok(), "Should be able to repay USDM while paused");
 
     // Try to add collateral while paused
     let res = borrow_operations_abi::add_coll(
@@ -270,7 +270,7 @@ async fn test_paused_operations() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -308,14 +308,14 @@ async fn test_paused_operations() {
         .await
         .unwrap();
 
-    // Try to withdraw USDF while unpaused
-    let res = borrow_operations_abi::withdraw_usdf(
+    // Try to withdraw USDM while unpaused
+    let res = borrow_operations_abi::withdraw_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -328,6 +328,6 @@ async fn test_paused_operations() {
 
     assert!(
         res.is_ok(),
-        "Should be able to withdraw USDF while unpaused"
+        "Should be able to withdraw USDM while unpaused"
     );
 }

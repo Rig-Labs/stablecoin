@@ -19,7 +19,7 @@ use libraries::default_pool_interface::DefaultPool;
 use libraries::coll_surplus_pool_interface::CollSurplusPool;
 use libraries::oracle_interface::Oracle;
 use libraries::protocol_manager_interface::ProtocolManager;
-use libraries::usdf_token_interface::USDFToken;
+use libraries::usdm_token_interface::USDMToken;
 use libraries::fpt_staking_interface::FPTStaking;
 use libraries::fluid_math::*;
 use sway_libs::ownership::*;
@@ -43,7 +43,7 @@ configurable {
 storage {
     borrow_operations_contract: ContractId = ContractId::zero(),
     fpt_staking_contract: ContractId = ContractId::zero(),
-    usdf_token_contract: ContractId = ContractId::zero(),
+    usdm_token_contract: ContractId = ContractId::zero(),
     stability_pool_contract: ContractId = ContractId::zero(),
     coll_surplus_pool_contract: ContractId = ContractId::zero(),
     default_pool_contract: ContractId = ContractId::zero(),
@@ -60,7 +60,7 @@ impl ProtocolManager for Contract {
         borrow_operations: ContractId,
         stability_pool: ContractId,
         fpt_staking: ContractId,
-        usdf_token: ContractId,
+        usdm_token: ContractId,
         coll_surplus_pool: ContractId,
         default_pool: ContractId,
         active_pool: ContractId,
@@ -82,7 +82,7 @@ impl ProtocolManager for Contract {
         storage.borrow_operations_contract.write(borrow_operations);
         storage.fpt_staking_contract.write(fpt_staking);
         storage.stability_pool_contract.write(stability_pool);
-        storage.usdf_token_contract.write(usdf_token);
+        storage.usdm_token_contract.write(usdm_token);
         storage.coll_surplus_pool_contract.write(coll_surplus_pool);
         storage.default_pool_contract.write(default_pool);
         storage.active_pool_contract.write(active_pool);
@@ -99,7 +99,7 @@ impl ProtocolManager for Contract {
         require_asset_not_registered(asset_address);
         let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().bits());
         let borrow_operations = abi(BorrowOperations, storage.borrow_operations_contract.read().bits());
-        let usdf_token = abi(USDFToken, storage.usdf_token_contract.read().bits());
+        let usdm_token = abi(USDMToken, storage.usdm_token_contract.read().bits());
         let fpt_staking = abi(FPTStaking, storage.fpt_staking_contract.read().bits());
         let coll_surplus_pool = abi(CollSurplusPool, storage.coll_surplus_pool_contract.read().bits());
         let default_pool = abi(DefaultPool, storage.default_pool_contract.read().bits());
@@ -123,7 +123,7 @@ impl ProtocolManager for Contract {
         stability_pool.add_asset(trove_manager, asset_address, oracle);
         sorted_troves.add_asset(asset_address, trove_manager);
         fpt_staking.add_asset(asset_address);
-        usdf_token.add_trove_manager(trove_manager);
+        usdm_token.add_trove_manager(trove_manager);
     }
     #[storage(read, write)]
     fn renounce_admin() {
@@ -145,24 +145,24 @@ impl ProtocolManager for Contract {
         );
         storage.lock_redeem_collateral.write(true);
 
-        require_valid_usdf_id();
+        require_valid_usdm_id();
         require(
             msg_amount() > 0,
             "ProtocolManager: Redemption amount must be greater than 0",
         );
-        let usdf_contract_cache = storage.usdf_token_contract.read();
+        let usdm_contract_cache = storage.usdm_token_contract.read();
         let fpt_staking_contract_cache = storage.fpt_staking_contract.read();
-        let usdf = abi(SRC3, usdf_contract_cache.bits());
+        let usdm = abi(SRC3, usdm_contract_cache.bits());
         let sorted_troves = abi(SortedTroves, storage.sorted_troves_contract.read().bits());
         let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
         let fpt_staking = abi(FPTStaking, fpt_staking_contract_cache.bits());
         let mut assets_info = get_all_assets_info();
-        let mut remaining_usdf = msg_amount();
+        let mut remaining_usdm = msg_amount();
         let (mut current_borrower, mut index) = find_min_borrower(assets_info.current_borrowers, assets_info.current_crs);
         let mut remaining_iterations = max_iterations;
 
         // Iterate through troves, redeeming collateral until conditions are met
-        while (current_borrower != null_identity_address() && remaining_usdf > 0 && remaining_iterations > 0) {
+        while (current_borrower != null_identity_address() && remaining_usdm > 0 && remaining_iterations > 0) {
             let contracts_cache = assets_info.asset_contracts.get(index).unwrap();
             let trove_manager_contract = abi(TroveManager, contracts_cache.trove_manager.bits());
             let price = assets_info.prices.get(index).unwrap();
@@ -176,7 +176,7 @@ impl ProtocolManager for Contract {
             // Attempt to redeem collateral from the current trove
             let single_redemption = trove_manager_contract.redeem_collateral_from_trove(
                 current_borrower,
-                remaining_usdf,
+                remaining_usdm,
                 price,
                 partial_redemption_hint,
                 upper_partial_hint,
@@ -188,10 +188,10 @@ impl ProtocolManager for Contract {
                 break;
             }
 
-            // Update totals and remaining USDF
-            totals.total_usdf_to_redeem += single_redemption.usdf_lot;
+            // Update totals and remaining USDM
+            totals.total_usdm_to_redeem += single_redemption.usdm_lot;
             totals.total_asset_drawn += single_redemption.asset_lot;
-            remaining_usdf -= single_redemption.usdf_lot;
+            remaining_usdm -= single_redemption.usdm_lot;
 
             let mut next_cr = u64::max();
             if (next_user_to_check != null_identity_address()) {
@@ -205,7 +205,7 @@ impl ProtocolManager for Contract {
             index = next_borrower.1;
         }
 
-        let mut total_usdf_redeemed = 0;
+        let mut total_usdm_redeemed = 0;
         let mut ind = 0;
 
         // Process redemptions for each asset
@@ -214,7 +214,7 @@ impl ProtocolManager for Contract {
 
             let mut totals = assets_info.redemption_totals.get(ind).unwrap();
 
-            if (totals.total_usdf_to_redeem == 0) {
+            if (totals.total_usdm_to_redeem == 0) {
                 ind += 1;
                 continue;
             }
@@ -233,9 +233,9 @@ impl ProtocolManager for Contract {
             );
             fpt_staking.increase_f_asset(totals.asset_fee, assets_info.assets.get(ind).unwrap());
 
-            // Update total USDF redeemed and decrease USDF debt
-            total_usdf_redeemed += totals.total_usdf_to_redeem;
-            active_pool.decrease_usdf_debt(totals.total_usdf_to_redeem, contracts_cache.asset_address);
+            // Update total USDM redeemed and decrease USDM debt
+            total_usdm_redeemed += totals.total_usdm_to_redeem;
+            active_pool.decrease_usdm_debt(totals.total_usdm_to_redeem, contracts_cache.asset_address);
 
             // Send redeemed collateral to the user
             active_pool.send_asset(
@@ -250,20 +250,20 @@ impl ProtocolManager for Contract {
             ind += 1;
         }
 
-        // Burn the redeemed USDF
-        usdf
+        // Burn the redeemed USDM
+        usdm
             .burn {
-                coins: total_usdf_redeemed,
-                asset_id: AssetId::new(usdf_contract_cache, SubId::zero()).bits(),
-            }(SubId::zero(), total_usdf_redeemed);
+                coins: total_usdm_redeemed,
+                asset_id: AssetId::new(usdm_contract_cache, SubId::zero()).bits(),
+            }(SubId::zero(), total_usdm_redeemed);
 
-        // Return any remaining USDF to the redeemer
-        if (remaining_usdf > 0) {
+        // Return any remaining USDM to the redeemer
+        if (remaining_usdm > 0) {
             transfer(
                 msg_sender()
                     .unwrap(),
-                AssetId::new(usdf_contract_cache, SubId::zero()),
-                remaining_usdf,
+                AssetId::new(usdm_contract_cache, SubId::zero()),
+                remaining_usdm,
             );
         }
 
@@ -284,9 +284,9 @@ impl SRC5 for Contract {
 }
 // --- Helper functions ---
 #[storage(read)]
-fn require_valid_usdf_id() {
+fn require_valid_usdm_id() {
     require(
-        msg_asset_id() == AssetId::new(storage.usdf_token_contract.read(), SubId::zero()),
+        msg_asset_id() == AssetId::new(storage.usdm_token_contract.read(), SubId::zero()),
         "ProtocolManager: Invalid asset being transfered",
     );
 }

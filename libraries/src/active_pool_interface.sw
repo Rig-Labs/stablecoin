@@ -19,13 +19,13 @@ abi ActivePool {
     fn get_asset(asset_id: AssetId) -> u64;
 
     #[storage(read)]
-    fn get_usdf_debt(asset_id: AssetId) -> u64;
+    fn get_usdm_debt(asset_id: AssetId) -> u64;
 
     #[storage(read, write)]
-    fn increase_usdf_debt(amount: u64, asset_id: AssetId);
+    fn increase_usdm_debt(amount: u64, asset_id: AssetId);
 
     #[storage(read, write)]
-    fn decrease_usdf_debt(amount: u64, asset_id: AssetId);
+    fn decrease_usdm_debt(amount: u64, asset_id: AssetId);
 
     #[storage(read, write), payable]
     fn recieve();

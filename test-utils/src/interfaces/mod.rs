@@ -16,5 +16,5 @@ pub mod sorted_troves;
 pub mod stability_pool;
 pub mod token;
 pub mod trove_manager;
-pub mod usdf_token;
+pub mod usdm_token;
 pub mod vesting;

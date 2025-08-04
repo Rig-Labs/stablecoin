@@ -69,7 +69,7 @@ async fn get_contract_instance() -> (
 async fn proper_intialize() {
     let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
 
-    let debt = active_pool_abi::get_usdf_debt(
+    let debt = active_pool_abi::get_usdm_debt(
         &active_pool,
         mock_fuel
             .contract_id()
@@ -96,7 +96,7 @@ async fn proper_intialize() {
 async fn proper_adjust_debt() {
     let (active_pool, mock_fuel, _admin) = get_contract_instance().await;
 
-    active_pool_abi::increase_usdf_debt(
+    active_pool_abi::increase_usdm_debt(
         &active_pool,
         1000,
         mock_fuel
@@ -106,7 +106,7 @@ async fn proper_adjust_debt() {
     )
     .await;
 
-    let debt = active_pool_abi::get_usdf_debt(
+    let debt = active_pool_abi::get_usdm_debt(
         &active_pool,
         mock_fuel
             .contract_id()
@@ -117,7 +117,7 @@ async fn proper_adjust_debt() {
     .value;
     assert_eq!(debt, 1000);
 
-    active_pool_abi::decrease_usdf_debt(
+    active_pool_abi::decrease_usdm_debt(
         &active_pool,
         500,
         mock_fuel
@@ -127,7 +127,7 @@ async fn proper_adjust_debt() {
     )
     .await;
 
-    let debt = active_pool_abi::get_usdf_debt(
+    let debt = active_pool_abi::get_usdm_debt(
         &active_pool,
         mock_fuel
             .contract_id()

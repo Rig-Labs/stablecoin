@@ -81,7 +81,7 @@ pub async fn offset(
     trove_manager: &MockTroveManagerContract<WalletUnlocked>,
     stability_pool: &StabilityPool<WalletUnlocked>,
     mock_token: &Token<WalletUnlocked>,
-    usdf_token: &Token<WalletUnlocked>,
+    usdm_token: &Token<WalletUnlocked>,
     coll_to_offset: u64,
     debt_to_offset: u64,
 ) -> CallResponse<()> {
@@ -90,7 +90,7 @@ pub async fn offset(
     trove_manager
         .methods()
         .offset(coll_to_offset, debt_to_offset)
-        .with_contracts(&[stability_pool, mock_token, usdf_token])
+        .with_contracts(&[stability_pool, mock_token, usdm_token])
         .with_tx_policies(tx_params)
         .call()
         .await
@@ -169,7 +169,7 @@ pub async fn setup(
     let trove_instance = deploy_mock_trove_manager_contract(&wallet2).await;
 
     let mock_token = deploy_token(&wallet).await;
-    let usdf_token = deploy_token(&wallet).await;
+    let usdm_token = deploy_token(&wallet).await;
 
     let active_pool = deploy_active_pool(&wallet).await;
 
@@ -184,18 +184,18 @@ pub async fn setup(
     .unwrap();
 
     token_abi::initialize(
-        &usdf_token,
+        &usdm_token,
         0,
         &Identity::Address(wallet.address().into()),
-        "USDF".to_string(),
-        "USDF".to_string(),
+        "USDM".to_string(),
+        "USDM".to_string(),
     )
     .await
     .unwrap();
 
     stability_pool_abi::initialize(
         &stability_pool,
-        usdf_token.contract_id().into(),
+        usdm_token.contract_id().into(),
         stability_pool.contract.contract_id().into(),
         mock_token.contract_id().into(),
         active_pool.contract.contract_id().into(),

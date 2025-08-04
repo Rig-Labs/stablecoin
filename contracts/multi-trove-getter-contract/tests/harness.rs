@@ -18,7 +18,7 @@ async fn test_get_multiple_sorted_troves() {
     )
     .await;
 
-    // create 10 troves each with 600 USDF debt and n * 1000 collateral
+    // create 10 troves each with 600 USDM debt and n * 1000 collateral
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
         &contracts.asset_contracts[0].mock_pyth_oracle,
@@ -29,18 +29,18 @@ async fn test_get_multiple_sorted_troves() {
     for i in 1..=10 {
         let wallet = wallets.pop().unwrap();
         let amount = i * 1000 * PRECISION;
-        let usdf_amount = 600 * PRECISION;
+        let usdm_amount = 600 * PRECISION;
 
         borrow_operations_utils::mint_token_and_open_trove(
             wallet.clone(),
             &contracts.asset_contracts[0],
             &contracts.borrow_operations,
-            &contracts.usdf,
+            &contracts.usdm,
             &contracts.fpt_staking,
             &contracts.active_pool,
             &contracts.sorted_troves,
             amount,
-            usdf_amount,
+            usdm_amount,
         )
         .await;
     }

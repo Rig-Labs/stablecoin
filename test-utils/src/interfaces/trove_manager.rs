@@ -7,7 +7,7 @@ use crate::interfaces::pyth_oracle::PythCore;
 use crate::interfaces::redstone_oracle::RedstoneCore;
 use crate::interfaces::sorted_troves::SortedTroves;
 use crate::interfaces::stability_pool::StabilityPool;
-use crate::interfaces::usdf_token::USDFToken;
+use crate::interfaces::usdm_token::USDMToken;
 use fuels::prelude::abigen;
 use fuels::programs::responses::CallResponse;
 
@@ -55,7 +55,7 @@ pub mod trove_manager_abi {
         active_pool: &ContractInstance<ActivePool<T>>,
         default_pool: &ContractInstance<DefaultPool<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
-        usdf: &ContractInstance<USDFToken<T>>,
+        usdm: &ContractInstance<USDMToken<T>>,
         ids: Vec<Identity>,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -76,7 +76,7 @@ pub mod trove_manager_abi {
                 &active_pool.contract,
                 &default_pool.contract,
                 &coll_surplus_pool.contract,
-                &usdf.contract,
+                &usdm.contract,
                 &community_issuance.contract,
             ])
             .with_contract_ids(&[
@@ -94,8 +94,8 @@ pub mod trove_manager_abi {
                 default_pool.implementation_id.into(),
                 coll_surplus_pool.contract.contract_id().into(),
                 coll_surplus_pool.implementation_id.into(),
-                usdf.contract.contract_id().into(),
-                usdf.implementation_id.into(),
+                usdm.contract.contract_id().into(),
+                usdm.implementation_id.into(),
                 community_issuance.contract.contract_id().into(),
                 community_issuance.implementation_id.into(),
                 trove_manager.contract.contract_id().into(),
@@ -117,7 +117,7 @@ pub mod trove_manager_abi {
         active_pool: &ContractInstance<ActivePool<T>>,
         default_pool: &ContractInstance<DefaultPool<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
-        usdf: &ContractInstance<USDFToken<T>>,
+        usdm: &ContractInstance<USDMToken<T>>,
         id: Identity,
         upper_hint: Identity,
         lower_hint: Identity,
@@ -138,7 +138,7 @@ pub mod trove_manager_abi {
                 &active_pool.contract,
                 &default_pool.contract,
                 &coll_surplus_pool.contract,
-                &usdf.contract,
+                &usdm.contract,
                 &community_issuance.contract,
             ])
             .with_contract_ids(&[
@@ -156,8 +156,8 @@ pub mod trove_manager_abi {
                 default_pool.implementation_id.into(),
                 coll_surplus_pool.contract.contract_id().into(),
                 coll_surplus_pool.implementation_id.into(),
-                usdf.contract.contract_id().into(),
-                usdf.implementation_id.into(),
+                usdm.contract.contract_id().into(),
+                usdm.implementation_id.into(),
                 community_issuance.contract.contract_id().into(),
                 community_issuance.implementation_id.into(),
                 trove_manager.contract.contract_id().into(),
@@ -240,7 +240,7 @@ pub mod trove_manager_abi {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
-        usdf: ContractId,
+        usdm: ContractId,
         asset: AssetId,
         protocol_manager: ContractId,
     ) -> Result<CallResponse<()>, Error> {
@@ -257,7 +257,7 @@ pub mod trove_manager_abi {
                 default_pool,
                 active_pool,
                 coll_surplus_pool,
-                usdf,
+                usdm,
                 asset.into(),
                 protocol_manager,
             )
@@ -362,14 +362,14 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdf_reward<T: Account>(
+    pub async fn get_pending_usdm_reward<T: Account>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
         trove_manager
             .contract
             .methods()
-            .get_pending_usdf_rewards(id)
+            .get_pending_usdm_rewards(id)
             .with_contract_ids(&[
                 trove_manager.contract.contract_id().into(),
                 trove_manager.implementation_id.into(),
@@ -469,12 +469,12 @@ pub mod trove_manager_utils {
         );
     }
 
-    pub async fn assert_pending_usdf_rewards<T: Account>(
+    pub async fn assert_pending_usdm_rewards<T: Account>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_rewards: u64,
     ) {
-        let real_rewards = trove_manager_abi::get_pending_usdf_reward(&trove_manager, id)
+        let real_rewards = trove_manager_abi::get_pending_usdm_reward(&trove_manager, id)
             .await
             .value;
 
@@ -482,7 +482,7 @@ pub mod trove_manager_utils {
             real_rewards,
             expected_rewards,
             &format!(
-                "USDF Rewards are not within 0.001% threshold, expected: {}, real: {}",
+                "USDM Rewards are not within 0.001% threshold, expected: {}, real: {}",
                 expected_rewards, real_rewards
             ),
         );

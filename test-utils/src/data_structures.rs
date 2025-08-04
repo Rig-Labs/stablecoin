@@ -4,7 +4,7 @@ use super::interfaces::{
     default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
     protocol_manager::ProtocolManager, pyth_oracle::PythCore, redstone_oracle::RedstoneCore,
     sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdf_token::USDFToken, vesting::VestingContract,
+    trove_manager::TroveManagerContract, usdm_token::USDMToken, vesting::VestingContract,
 };
 use fuels::{
     accounts::Account,
@@ -38,7 +38,7 @@ impl<C: Clone> Clone for ContractInstance<C> {
 
 pub struct ProtocolContracts<T: Account> {
     pub borrow_operations: ContractInstance<BorrowOperations<T>>,
-    pub usdf: ContractInstance<USDFToken<T>>,
+    pub usdm: ContractInstance<USDMToken<T>>,
     pub stability_pool: ContractInstance<StabilityPool<T>>,
     pub protocol_manager: ContractInstance<ProtocolManager<T>>,
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
@@ -51,7 +51,7 @@ pub struct ProtocolContracts<T: Account> {
     pub community_issuance: ContractInstance<CommunityIssuance<T>>,
     pub vesting_contract: ContractInstance<VestingContract<T>>,
     pub fpt_asset_id: AssetId,
-    pub usdf_asset_id: AssetId,
+    pub usdm_asset_id: AssetId,
 }
 
 pub struct AssetContracts<T: Account> {
@@ -113,12 +113,12 @@ impl<T: Account> ProtocolContracts<T> {
             self.borrow_operations.implementation_id
         );
         println!(
-            "USDF Token Contract ID: {:?}",
-            self.usdf.contract.contract_id()
+            "USDM Token Contract ID: {:?}",
+            self.usdm.contract.contract_id()
         );
         println!(
-            "USDF Token Implementation ID: {:?}",
-            self.usdf.implementation_id
+            "USDM Token Implementation ID: {:?}",
+            self.usdm.implementation_id
         );
         println!(
             "Stability Pool Contract ID: {:?}",

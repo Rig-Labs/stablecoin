@@ -1,12 +1,12 @@
 library;
 
 pub struct ReadStorage {
-    pub f_usdf: u64,
+    pub f_usdm: u64,
     pub total_fpt_staked: u64,
     pub protocol_manager_address: ContractId,
     pub borrower_operations_address: ContractId,
     pub fpt_asset_id: AssetId,
-    pub usdf_asset_id: AssetId,
+    pub usdm_asset_id: AssetId,
     pub is_initialized: bool,
 }
 
@@ -25,7 +25,7 @@ abi FPTStaking {
         protocol_manager: ContractId,
         borrower_operations_address: ContractId,
         fpt_asset_id: AssetId,
-        usdf_asset_id: AssetId,
+        usdm_asset_id: AssetId,
     );
 
     #[storage(read)]
@@ -35,13 +35,13 @@ abi FPTStaking {
     fn get_pending_asset_gain(id: Identity, asset_id: AssetId) -> u64;
 
     #[storage(read)]
-    fn get_pending_usdf_gain(id: Identity) -> u64;
+    fn get_pending_usdm_gain(id: Identity) -> u64;
 
     #[storage(read)]
     fn get_staking_balance(id: Identity) -> u64;
 
     #[storage(read, write)]
-    fn increase_f_usdf(usdf_fee_amount: u64);
+    fn increase_f_usdm(usdm_fee_amount: u64);
 
     #[storage(read, write)]
     fn increase_f_asset(asset_fee_amount: u64, asset_id: AssetId);

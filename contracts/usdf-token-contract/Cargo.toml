@@ -1,5 +1,5 @@
 [package]
-name = "usdf-token-contract"
+name = "usdm-token-contract"
 version = "0.1.0"
 authors = ["hydrogen-labs"]
 edition = "2021"

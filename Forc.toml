@@ -11,7 +11,7 @@ members = [
   "./contracts/borrow-operations-contract",
   "./contracts/protocol-manager-contract",
   "./contracts/token-contract",
-  "./contracts/usdf-token-contract",
+  "./contracts/usdm-token-contract",
   "./contracts/active-pool-contract",
   "./contracts/coll-surplus-pool-contract",
   "./contracts/default-pool-contract",

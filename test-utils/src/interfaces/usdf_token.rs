@@ -5,11 +5,11 @@ use fuels::{
 };
 
 abigen!(Contract(
-    name = "USDFToken",
-    abi = "contracts/usdf-token-contract/out/debug/usdf-token-contract-abi.json"
+    name = "USDMToken",
+    abi = "contracts/usdm-token-contract/out/debug/usdm-token-contract-abi.json"
 ));
 
-pub mod usdf_token_abi {
+pub mod usdm_token_abi {
     use crate::data_structures::ContractInstance;
 
     use super::*;
@@ -19,7 +19,7 @@ pub mod usdf_token_abi {
     };
 
     pub async fn initialize<T: Account>(
-        instance: &ContractInstance<USDFToken<T>>,
+        instance: &ContractInstance<USDMToken<T>>,
         protocol_manager: ContractId,
         stability_pool: Identity,
         borrow_operations: Identity,
@@ -44,7 +44,7 @@ pub mod usdf_token_abi {
     }
 
     pub async fn mint<T: Account>(
-        instance: &ContractInstance<USDFToken<T>>,
+        instance: &ContractInstance<USDMToken<T>>,
         amount: u64,
         address: Identity,
     ) -> Result<CallResponse<()>, Error> {
@@ -62,13 +62,13 @@ pub mod usdf_token_abi {
     }
 
     pub async fn burn<T: Account>(
-        instance: &ContractInstance<USDFToken<T>>,
+        instance: &ContractInstance<USDMToken<T>>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
             .with_tip(1)
             .with_script_gas_limit(200000);
-        let usdf_asset_id = instance
+        let usdm_asset_id = instance
             .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -76,7 +76,7 @@ pub mod usdf_token_abi {
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
-            .with_asset_id(usdf_asset_id);
+            .with_asset_id(usdm_asset_id);
 
         let call_handler = instance
             .contract
@@ -97,9 +97,9 @@ pub mod usdf_token_abi {
     }
 
     pub async fn total_supply<T: Account>(
-        instance: &ContractInstance<USDFToken<T>>,
+        instance: &ContractInstance<USDMToken<T>>,
     ) -> CallResponse<Option<u64>> {
-        let usdf_asset_id = instance
+        let usdm_asset_id = instance
             .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -108,7 +108,7 @@ pub mod usdf_token_abi {
         instance
             .contract
             .methods()
-            .total_supply(usdf_asset_id)
+            .total_supply(usdm_asset_id)
             .with_contract_ids(&[
                 instance.implementation_id.into(),
                 instance.contract.contract_id().into(),
@@ -119,7 +119,7 @@ pub mod usdf_token_abi {
     }
 
     pub async fn add_trove_manager<T: Account>(
-        instance: &ContractInstance<USDFToken<T>>,
+        instance: &ContractInstance<USDMToken<T>>,
         trove_manager: ContractId,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);

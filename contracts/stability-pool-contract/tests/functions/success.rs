@@ -28,7 +28,7 @@ async fn proper_initialization() {
 
     stability_pool_utils::assert_pool_asset(&stability_pool, 0, mock_asset_id).await;
 
-    stability_pool_utils::assert_total_usdf_deposits(&stability_pool, 0).await;
+    stability_pool_utils::assert_total_usdm_deposits(&stability_pool, 0).await;
 }
 
 #[tokio::test]
@@ -55,7 +55,7 @@ async fn proper_stability_deposit() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -71,7 +71,7 @@ async fn proper_stability_deposit() {
     let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         deposit_amount,
     )
@@ -109,10 +109,10 @@ async fn proper_stability_deposit() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, 600 * PRECISION)
+    stability_pool_utils::assert_total_usdm_deposits(&contracts.stability_pool, 600 * PRECISION)
         .await;
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         600 * PRECISION,
@@ -152,7 +152,7 @@ async fn proper_stability_widthdrawl() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -168,7 +168,7 @@ async fn proper_stability_widthdrawl() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         600 * PRECISION,
     )
@@ -178,7 +178,7 @@ async fn proper_stability_widthdrawl() {
     let res = stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].oracle,
@@ -219,10 +219,10 @@ async fn proper_stability_widthdrawl() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(&contracts.stability_pool, withdraw_amount)
+    stability_pool_utils::assert_total_usdm_deposits(&contracts.stability_pool, withdraw_amount)
         .await;
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         withdraw_amount,
@@ -271,7 +271,7 @@ async fn proper_one_sp_depositor_position() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -298,7 +298,7 @@ async fn proper_one_sp_depositor_position() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -315,7 +315,7 @@ async fn proper_one_sp_depositor_position() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
     )
@@ -340,7 +340,7 @@ async fn proper_one_sp_depositor_position() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -362,7 +362,7 @@ async fn proper_one_sp_depositor_position() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(
+    stability_pool_utils::assert_total_usdm_deposits(
         &contracts.stability_pool,
         init_stability_deposit - debt_with_fee_adjustment,
     )
@@ -377,7 +377,7 @@ async fn proper_one_sp_depositor_position() {
     .await;
 
     // 500 - 0.5% fee
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - debt_with_fee_adjustment,
@@ -390,14 +390,14 @@ async fn proper_one_sp_depositor_position() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         second_deposit,
     )
     .await
     .unwrap();
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - debt_with_fee_adjustment + second_deposit,
@@ -470,7 +470,7 @@ async fn proper_many_depositors_distribution() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -497,7 +497,7 @@ async fn proper_many_depositors_distribution() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -513,21 +513,21 @@ async fn proper_many_depositors_distribution() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         2_000 * PRECISION,
     )
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
+    let usdm_asset_id: AssetId = contracts.usdm_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
 
     admin
         .transfer(
             depositor_2.address().into(),
             500 * PRECISION,
-            usdf_asset_id,
+            usdm_asset_id,
             tx_params,
         )
         .await
@@ -537,7 +537,7 @@ async fn proper_many_depositors_distribution() {
         .transfer(
             depositor_3.address().into(),
             500 * PRECISION,
-            usdf_asset_id,
+            usdm_asset_id,
             tx_params,
         )
         .await
@@ -562,7 +562,7 @@ async fn proper_many_depositors_distribution() {
     stability_pool_abi::provide_to_stability_pool(
         &depositor_2_sp,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
     )
@@ -572,7 +572,7 @@ async fn proper_many_depositors_distribution() {
     stability_pool_abi::provide_to_stability_pool(
         &depositor_3_sp,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
     )
@@ -597,7 +597,7 @@ async fn proper_many_depositors_distribution() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -619,7 +619,7 @@ async fn proper_many_depositors_distribution() {
     .await;
 
     // 3,000 initially deposited, 1000 used to pay off debt, 1,500 left in pool
-    stability_pool_utils::assert_total_usdf_deposits(
+    stability_pool_utils::assert_total_usdm_deposits(
         &contracts.stability_pool,
         3_000 * PRECISION - debt_paid_off,
     )
@@ -634,8 +634,8 @@ async fn proper_many_depositors_distribution() {
     )
     .await;
 
-    // Admin lost 2/3 of the usdf used to pay off debt
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    // Admin lost 2/3 of the usdm used to pay off debt
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         2_000 * PRECISION - debt_paid_off * 2 / 3,
@@ -650,7 +650,7 @@ async fn proper_many_depositors_distribution() {
     )
     .await;
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
         500 * PRECISION - debt_paid_off / 6,
@@ -698,7 +698,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -725,7 +725,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -741,14 +741,14 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         2_000 * PRECISION,
     )
     .await
     .unwrap();
 
-    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
+    let usdm_asset_id: AssetId = contracts.usdm_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
@@ -769,7 +769,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -781,7 +781,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         .transfer(
             depositor_2.address().into(),
             500 * PRECISION,
-            usdf_asset_id,
+            usdm_asset_id,
             tx_params,
         )
         .await
@@ -798,7 +798,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     stability_pool_abi::provide_to_stability_pool(
         &depositor_2_sp,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
     )
@@ -813,7 +813,7 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     )
     .await;
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(depositor_2.address().into()),
         500 * PRECISION,
@@ -845,7 +845,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         admin.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -858,7 +858,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         liquidated_wallet.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -871,7 +871,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         admin.clone(),
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -884,7 +884,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         liquidated_wallet.clone(),
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -897,7 +897,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
     )
@@ -930,7 +930,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -968,7 +968,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -990,7 +990,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(
+    stability_pool_utils::assert_total_usdm_deposits(
         &contracts.stability_pool,
         init_stability_deposit - 2 * debt_with_fee_adjustment,
     )
@@ -1013,7 +1013,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     .await;
 
     // 500 - 0.5% fee
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - 2 * debt_with_fee_adjustment,
@@ -1026,14 +1026,14 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         second_deposit,
     )
     .await
     .unwrap();
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - 2 * debt_with_fee_adjustment + second_deposit,
@@ -1105,7 +1105,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         admin.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -1118,7 +1118,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         liquidated_wallet.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -1131,7 +1131,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
     )
@@ -1156,7 +1156,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -1187,7 +1187,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         admin.clone(),
         &new_asset_contracts,
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -1200,7 +1200,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         liquidated_wallet.clone(),
         &new_asset_contracts,
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -1227,7 +1227,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -1248,7 +1248,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     )
     .await;
 
-    stability_pool_utils::assert_total_usdf_deposits(
+    stability_pool_utils::assert_total_usdm_deposits(
         &contracts.stability_pool,
         init_stability_deposit - 2 * debt_with_fee_adjustment,
     )
@@ -1271,7 +1271,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     .await;
 
     // 500 - 0.5% fee
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - 2 * debt_with_fee_adjustment,
@@ -1284,14 +1284,14 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         second_deposit,
     )
     .await
     .unwrap();
 
-    stability_pool_utils::assert_compounded_usdf_deposit(
+    stability_pool_utils::assert_compounded_usdm_deposit(
         &contracts.stability_pool,
         Identity::Address(admin.address().into()),
         init_stability_deposit - 2 * debt_with_fee_adjustment + second_deposit,

@@ -30,7 +30,7 @@ async fn fails_unstake_wrong_amount() {
 
     fpt_staking_abi::unstake(
         &contracts.fpt_staking,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &mock_token,
         1_000 * PRECISION,

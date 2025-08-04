@@ -21,7 +21,7 @@ impl Trove {
 }
 pub struct LocalVariablesOuterLiquidationFunction {
     pub price: u64,
-    pub usdf_in_stability_pool: u64,
+    pub usdm_in_stability_pool: u64,
     pub liquidated_debt: u64,
     pub liquidated_coll: u64,
 }
@@ -29,14 +29,14 @@ impl LocalVariablesOuterLiquidationFunction {
     pub fn default() -> Self {
         LocalVariablesOuterLiquidationFunction {
             price: 0,
-            usdf_in_stability_pool: 0,
+            usdm_in_stability_pool: 0,
             liquidated_debt: 0,
             liquidated_coll: 0,
         }
     }
 }
 pub struct LocalVariablesLiquidationSequence {
-    pub remaining_usdf_in_stability_pool: u64,
+    pub remaining_usdm_in_stability_pool: u64,
     pub i: u64,
     pub icr: u64,
     pub borrower: Identity,
@@ -44,7 +44,7 @@ pub struct LocalVariablesLiquidationSequence {
 impl LocalVariablesLiquidationSequence {
     pub fn default() -> Self {
         LocalVariablesLiquidationSequence {
-            remaining_usdf_in_stability_pool: 0,
+            remaining_usdm_in_stability_pool: 0,
             i: 0,
             icr: 0,
             borrower: Identity::Address(Address::zero()),
@@ -117,24 +117,24 @@ pub struct EntireTroveDebtAndColl {
     pub pending_coll_rewards: u64,
 }
 pub struct RedemptionTotals {
-    pub remaining_usdf: u64,
-    pub total_usdf_to_redeem: u64,
+    pub remaining_usdm: u64,
+    pub total_usdm_to_redeem: u64,
     pub total_asset_drawn: u64,
     pub asset_fee: u64,
     pub asset_to_send_to_redeemer: u64,
     pub price: u64,
-    pub total_usdf_supply_at_start: u64,
+    pub total_usdm_supply_at_start: u64,
 }
 impl RedemptionTotals {
     pub fn default() -> Self {
         RedemptionTotals {
-            remaining_usdf: 0,
-            total_usdf_to_redeem: 0,
+            remaining_usdm: 0,
+            total_usdm_to_redeem: 0,
             total_asset_drawn: 0,
             asset_fee: 0,
             asset_to_send_to_redeemer: 0,
             price: 0,
-            total_usdf_supply_at_start: 0,
+            total_usdm_supply_at_start: 0,
         }
     }
 }

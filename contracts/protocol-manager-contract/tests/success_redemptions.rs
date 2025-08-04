@@ -70,7 +70,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -97,7 +97,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -124,7 +124,7 @@ async fn proper_redemption_from_partially_closed() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -147,7 +147,7 @@ async fn proper_redemption_from_partially_closed() {
         contracts.protocol_manager.implementation_id,
     );
 
-    let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
+    let pre_redemption_active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id,
     )
@@ -168,7 +168,7 @@ async fn proper_redemption_from_partially_closed() {
         0,
         None,
         None,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
@@ -204,7 +204,7 @@ async fn proper_redemption_from_partially_closed() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id,
     )
@@ -316,7 +316,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -345,7 +345,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -374,7 +374,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -414,7 +414,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
         0,
         None,
         None,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
@@ -431,7 +431,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id,
     )

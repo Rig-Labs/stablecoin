@@ -86,16 +86,16 @@ pub mod utils {
             BorrowOperations::new(borrow_operations_contract_id.clone(), wallet.clone()),
             borrow_operations_implementation_id.into(),
         );
-        let usdf_contract_id: Bech32ContractId =
-            contracts["usdf"].as_str().unwrap().parse().unwrap();
-        let usdf_implementation_id: ContractId = contracts["usdf_implementation_id"]
+        let usdm_contract_id: Bech32ContractId =
+            contracts["usdm"].as_str().unwrap().parse().unwrap();
+        let usdm_implementation_id: ContractId = contracts["usdm_implementation_id"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let usdf = ContractInstance::new(
-            test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone()),
-            usdf_implementation_id.into(),
+        let usdm = ContractInstance::new(
+            test_utils::interfaces::usdm_token::USDMToken::new(usdm_contract_id, wallet.clone()),
+            usdm_implementation_id.into(),
         );
 
         let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
@@ -246,8 +246,8 @@ pub mod utils {
         let fpt_asset_id: AssetId =
             AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();
 
-        let usdf_asset_id: AssetId =
-            AssetId::from_str(contracts["usdf_asset_id"].as_str().unwrap()).unwrap();
+        let usdm_asset_id: AssetId =
+            AssetId::from_str(contracts["usdm_asset_id"].as_str().unwrap()).unwrap();
 
         let asset_contracts = contracts["asset_contracts"]
             .as_array()
@@ -327,14 +327,14 @@ pub mod utils {
 
         let protocol_contracts = ProtocolContracts {
             borrow_operations,
-            usdf,
+            usdm,
             stability_pool,
             protocol_manager,
             asset_contracts,
             fpt_staking,
             fpt_token,
             fpt_asset_id,
-            usdf_asset_id,
+            usdm_asset_id,
             community_issuance,
             vesting_contract,
             coll_surplus_pool,

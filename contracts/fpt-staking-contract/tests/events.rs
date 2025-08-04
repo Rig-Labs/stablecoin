@@ -57,7 +57,7 @@ async fn test_staking_events() {
     let unstake_amount = 2 * PRECISION;
     let response = fpt_staking_abi::unstake(
         &contracts.fpt_staking,
-        &contracts.usdf,
+        &contracts.usdm,
         &mock_token,
         &mock_token,
         unstake_amount,

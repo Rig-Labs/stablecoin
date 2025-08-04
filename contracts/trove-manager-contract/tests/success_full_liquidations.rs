@@ -24,7 +24,7 @@ use test_utils::{
 };
 
 #[tokio::test]
-async fn proper_full_liquidation_enough_usdf_in_sp() {
+async fn proper_full_liquidation_enough_usdm_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -68,7 +68,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         contracts.borrow_operations.implementation_id.clone(),
     );
 
-    let usdf_deposit_to_be_liquidated = 1_000 * PRECISION;
+    let usdm_deposit_to_be_liquidated = 1_000 * PRECISION;
     let asset_deposit_to_be_liquidated = 1_100 * PRECISION;
     borrow_operations_abi::open_trove(
         &borrow_operations_liquidated_wallet,
@@ -76,13 +76,13 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
         asset_deposit_to_be_liquidated,
-        usdf_deposit_to_be_liquidated,
+        usdm_deposit_to_be_liquidated,
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
     )
@@ -96,7 +96,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -120,7 +120,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
     )
@@ -147,7 +147,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -200,12 +200,12 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 
     assert_eq!(debt, 0);
 
-    let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
+    let deposits = stability_pool_abi::get_total_usdm_deposits(&contracts.stability_pool)
         .await
         .unwrap()
         .value;
 
-    let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
+    let liquidated_net_debt = with_min_borrow_fee(usdm_deposit_to_be_liquidated);
     assert_eq!(deposits, 5_000 * PRECISION - liquidated_net_debt);
 
     let asset = stability_pool_abi::get_asset(
@@ -235,7 +235,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -254,7 +254,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
     .await
     .value;
 
-    let default_pool_debt = default_pool_abi::get_usdf_debt(
+    let default_pool_debt = default_pool_abi::get_usdm_debt(
         &contracts.default_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -281,7 +281,7 @@ async fn proper_full_liquidation_enough_usdf_in_sp() {
 }
 
 #[tokio::test]
-async fn proper_full_liquidation_partial_usdf_in_sp() {
+async fn proper_full_liquidation_partial_usdm_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -347,7 +347,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -367,7 +367,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -387,7 +387,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -411,7 +411,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         500 * PRECISION,
     )
@@ -438,7 +438,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -467,7 +467,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     )
     .await;
 
-    let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
+    let deposits = stability_pool_abi::get_total_usdm_deposits(&contracts.stability_pool)
         .await
         .unwrap()
         .value;
@@ -499,7 +499,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -516,7 +516,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     .await
     .value;
 
-    let default_pool_debt = default_pool_abi::get_usdf_debt(
+    let default_pool_debt = default_pool_abi::get_usdm_debt(
         &contracts.default_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -552,7 +552,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     )
     .await;
 
-    trove_manager_utils::assert_pending_usdf_rewards(
+    trove_manager_utils::assert_pending_usdm_rewards(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
         debt_being_redistributed / 4,
@@ -566,7 +566,7 @@ async fn proper_full_liquidation_partial_usdf_in_sp() {
     )
     .await;
 
-    trove_manager_utils::assert_pending_usdf_rewards(
+    trove_manager_utils::assert_pending_usdm_rewards(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
         debt_being_redistributed * 3 / 4,
@@ -655,7 +655,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -675,7 +675,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -695,7 +695,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -727,7 +727,7 @@ async fn proper_full_liquidation_empty_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(liquidated_wallet.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -756,7 +756,7 @@ async fn proper_full_liquidation_empty_sp() {
     )
     .await;
 
-    let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
+    let deposits = stability_pool_abi::get_total_usdm_deposits(&contracts.stability_pool)
         .await
         .unwrap()
         .value;
@@ -780,7 +780,7 @@ async fn proper_full_liquidation_empty_sp() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -797,7 +797,7 @@ async fn proper_full_liquidation_empty_sp() {
     .await
     .value;
 
-    let default_pool_debt = default_pool_abi::get_usdf_debt(
+    let default_pool_debt = default_pool_abi::get_usdm_debt(
         &contracts.default_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -833,7 +833,7 @@ async fn proper_full_liquidation_empty_sp() {
     )
     .await;
 
-    trove_manager_utils::assert_pending_usdf_rewards(
+    trove_manager_utils::assert_pending_usdm_rewards(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet1.address().into()),
         expected_default_pool_debt / 4,
@@ -847,7 +847,7 @@ async fn proper_full_liquidation_empty_sp() {
     )
     .await;
 
-    trove_manager_utils::assert_pending_usdf_rewards(
+    trove_manager_utils::assert_pending_usdm_rewards(
         &contracts.asset_contracts[0].trove_manager,
         Identity::Address(healthy_wallet2.address().into()),
         expected_default_pool_debt * 3 / 4,
@@ -930,7 +930,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -950,7 +950,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -998,7 +998,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         Identity::Address(wallet_b.address().into()),
         Identity::Address(Address::zeroed()),
         Identity::Address(Address::zeroed()),
@@ -1029,7 +1029,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -1060,14 +1060,14 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
     )
     .await;
 
-    // pay off 1 USDF debt of trove A
-    borrow_operations_abi::repay_usdf(
+    // pay off 1 USDM debt of trove A
+    borrow_operations_abi::repay_usdm(
         &borrow_operations_a,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -1079,7 +1079,7 @@ async fn test_trove_sorting_after_liquidation_and_rewards() {
     .await
     .unwrap();
 
-    println!("repaid 1 USDF debt of trove A to trigger reward application");
+    println!("repaid 1 USDM debt of trove A to trigger reward application");
 
     multi_trove_getter_utils::assert_sorted_troves_by_cr(
         &multi_trove_getter,

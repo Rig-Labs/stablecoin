@@ -16,7 +16,7 @@ use super::interfaces::{
     stability_pool::{StabilityPool, StabilityPoolConfigurables},
     token::Token,
     trove_manager::{TroveManagerContract, TroveManagerContractConfigurables},
-    usdf_token::{USDFToken, USDFTokenConfigurables},
+    usdm_token::{USDMToken, USDMTokenConfigurables},
     vesting::{VestingContract, VestingContractConfigurables},
 };
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
@@ -45,7 +45,7 @@ pub mod common {
             stability_pool::stability_pool_abi,
             token::token_abi,
             trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
+            usdm_token::usdm_token_abi,
         },
         paths::*,
     };
@@ -125,7 +125,7 @@ pub mod common {
         if verbose {
             pb.inc();
         }
-        let usdf = deploy_usdf_token(wallet).await;
+        let usdm = deploy_usdm_token(wallet).await;
         if verbose {
             pb.inc();
         }
@@ -175,7 +175,7 @@ pub mod common {
         if verbose {
             pb.inc();
         }
-        let usdf_asset_id = usdf
+        let usdm_asset_id = usdm
             .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into());
@@ -185,14 +185,14 @@ pub mod common {
 
         ProtocolContracts {
             borrow_operations,
-            usdf,
+            usdm,
             stability_pool,
             asset_contracts: vec![],
             protocol_manager,
             fpt_staking,
             fpt_token,
             fpt_asset_id,
-            usdf_asset_id,
+            usdm_asset_id,
             coll_surplus_pool,
             default_pool,
             active_pool,
@@ -237,8 +237,8 @@ pub mod common {
             pb.inc();
         }
 
-        usdf_token_abi::initialize(
-            &contracts.usdf,
+        usdm_token_abi::initialize(
+            &contracts.usdm,
             contracts.protocol_manager.contract.contract_id().into(),
             Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
@@ -251,7 +251,7 @@ pub mod common {
 
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.fpt_staking.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
@@ -265,7 +265,7 @@ pub mod common {
 
         stability_pool_abi::initialize(
             &contracts.stability_pool,
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.community_issuance.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -282,7 +282,7 @@ pub mod common {
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.fpt_asset_id,
-            contracts.usdf_asset_id,
+            contracts.usdm_asset_id,
         )
         .await;
         if verbose {
@@ -294,7 +294,7 @@ pub mod common {
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.stability_pool.contract.contract_id().into(),
             contracts.fpt_staking.contract.contract_id().into(),
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
             contracts.default_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -948,7 +948,7 @@ pub mod common {
             contracts.default_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
@@ -970,7 +970,7 @@ pub mod common {
             oracle.contract.contract_id().into(),
             &contracts.borrow_operations,
             &contracts.stability_pool,
-            &contracts.usdf,
+            &contracts.usdm,
             &contracts.fpt_staking,
             &contracts.coll_surplus_pool,
             &contracts.default_pool,
@@ -1039,7 +1039,7 @@ pub mod common {
                 .contract
                 .contract_id()
                 .into(),
-            core_protocol_contracts.usdf.contract.contract_id().into(),
+            core_protocol_contracts.usdm.contract.contract_id().into(),
             asset_contracts.asset_id,
             core_protocol_contracts
                 .protocol_manager
@@ -1058,7 +1058,7 @@ pub mod common {
             asset_contracts.oracle.contract.contract_id().into(),
             &core_protocol_contracts.borrow_operations,
             &core_protocol_contracts.stability_pool,
-            &core_protocol_contracts.usdf,
+            &core_protocol_contracts.usdm,
             &core_protocol_contracts.fpt_staking,
             &core_protocol_contracts.coll_surplus_pool,
             &core_protocol_contracts.default_pool,
@@ -1284,20 +1284,20 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_usdf_token(
+    pub async fn deploy_usdm_token(
         wallet: &WalletUnlocked,
-    ) -> ContractInstance<USDFToken<WalletUnlocked>> {
+    ) -> ContractInstance<USDMToken<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
         let initializer = Identity::Address(wallet.address().into());
-        let configurables = USDFTokenConfigurables::default()
+        let configurables = USDMTokenConfigurables::default()
             .with_INITIALIZER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
-            &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
+            &get_absolute_path_from_relative(USDM_TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default()
                 .with_salt(salt)
                 .with_configurables(configurables.clone()),
@@ -1310,12 +1310,12 @@ pub mod common {
         let proxy = deploy_proxy(
             id.clone().into(),
             wallet.clone(),
-            Some(USDF_TOKEN_CONTRACT_STORAGE_PATH),
+            Some(USDM_TOKEN_CONTRACT_STORAGE_PATH),
         )
         .await;
 
         ContractInstance::new(
-            USDFToken::new(proxy.contract_id(), wallet.clone()),
+            USDMToken::new(proxy.contract_id(), wallet.clone()),
             id.into(),
         )
     }
