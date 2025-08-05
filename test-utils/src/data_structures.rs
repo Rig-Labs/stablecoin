@@ -42,16 +42,12 @@ pub struct ProtocolContracts<T: Account> {
     pub stability_pool: ContractInstance<StabilityPool<T>>,
     pub protocol_manager: ContractInstance<ProtocolManager<T>>,
     pub asset_contracts: Vec<AssetContracts<T>>, // TODO: Change to AssetContractsOptionalRedstone but it's a big refactor
-    pub fpt_staking: ContractInstance<FPTStaking<T>>,
     pub coll_surplus_pool: ContractInstance<CollSurplusPool<T>>,
     pub sorted_troves: ContractInstance<SortedTroves<T>>,
     pub default_pool: ContractInstance<DefaultPool<T>>,
     pub active_pool: ContractInstance<ActivePool<T>>,
-    pub fpt_token: ContractInstance<FPTToken<T>>,
-    pub community_issuance: ContractInstance<CommunityIssuance<T>>,
-    pub vesting_contract: ContractInstance<VestingContract<T>>,
-    pub fpt_asset_id: AssetId,
     pub usdm_asset_id: AssetId,
+    pub treasury_identity: ContractId,
 }
 
 pub struct AssetContracts<T: Account> {

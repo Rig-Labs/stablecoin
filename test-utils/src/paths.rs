@@ -69,9 +69,9 @@ pub const FPT_STAKING_CONTRACT_BINARY_PATH: &str =
 pub const FPT_STAKING_CONTRACT_STORAGE_PATH: &str =
     "contracts/fpt-staking-contract/out/debug/fpt-staking-contract-storage_slots.json";
 
-pub const PROTCOL_MANAGER_CONTRACT_BINARY_PATH: &str =
+pub const PROTOCOL_MANAGER_CONTRACT_BINARY_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract.bin";
-pub const PROTCOL_MANAGER_CONTRACT_STORAGE_PATH: &str =
+pub const PROTOCOL_MANAGER_CONTRACT_STORAGE_PATH: &str =
     "contracts/protocol-manager-contract/out/debug/protocol-manager-contract-storage_slots.json";
 
 pub const COMMUNITY_ISSUANCE_CONTRACT_BINARY_PATH: &str =

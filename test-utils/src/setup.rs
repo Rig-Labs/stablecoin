@@ -114,7 +114,7 @@ pub mod common {
 
     pub async fn deploy_core_contracts(
         wallet: &WalletUnlocked,
-        use_test_fpt: bool,
+        treasury_identity: ContractId,
         verbose: bool,
     ) -> ProtocolContracts<WalletUnlocked> {
         println!("Deploying core contracts...");
@@ -130,22 +130,6 @@ pub mod common {
             pb.inc();
         }
         let stability_pool = deploy_stability_pool(wallet).await;
-        if verbose {
-            pb.inc();
-        }
-        let fpt_staking = deploy_fpt_staking(wallet).await;
-        if verbose {
-            pb.inc();
-        }
-        let community_issuance = deploy_community_issuance(wallet).await;
-        if verbose {
-            pb.inc();
-        }
-        let fpt_token = if use_test_fpt {
-            deploy_test_fpt_token(wallet).await
-        } else {
-            deploy_fpt_token(wallet).await
-        };
         if verbose {
             pb.inc();
         }
@@ -166,15 +150,7 @@ pub mod common {
             pb.inc();
         }
         let sorted_troves = deploy_sorted_troves(wallet).await;
-        let vesting_contract = deploy_vesting_contract(wallet, 68_000_000 * PRECISION).await;
 
-        let fpt_asset_id = fpt_token
-            .contract
-            .contract_id()
-            .asset_id(&AssetId::zeroed().into());
-        if verbose {
-            pb.inc();
-        }
         let usdm_asset_id = usdm
             .contract
             .contract_id()
@@ -189,53 +165,24 @@ pub mod common {
             stability_pool,
             asset_contracts: vec![],
             protocol_manager,
-            fpt_staking,
-            fpt_token,
-            fpt_asset_id,
             usdm_asset_id,
             coll_surplus_pool,
             default_pool,
             active_pool,
             sorted_troves,
-            community_issuance,
-            vesting_contract,
+            treasury_identity,
         }
     }
 
     pub async fn initialize_core_contracts(
         contracts: &mut ProtocolContracts<WalletUnlocked>,
         wallet: &WalletUnlocked,
-        use_test_fpt: bool,
         debug: bool,
         verbose: bool,
     ) {
         println!("Initializing core contracts...");
         // contracts.print_contract_ids();
         let mut pb = ProgressBar::new(11);
-        if !use_test_fpt {
-            fpt_token_abi::initialize(
-                &contracts.fpt_token,
-                &contracts.vesting_contract.contract,
-                &contracts.community_issuance,
-            )
-            .await;
-        }
-        if verbose {
-            pb.inc();
-        }
-
-        community_issuance_abi::initialize(
-            &contracts.community_issuance,
-            contracts.stability_pool.contract.contract_id().into(),
-            contracts.fpt_asset_id,
-            &Identity::Address(wallet.address().into()),
-            debug,
-        )
-        .await
-        .unwrap();
-        if verbose {
-            pb.inc();
-        }
 
         usdm_token_abi::initialize(
             &contracts.usdm,
@@ -252,7 +199,7 @@ pub mod common {
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
             contracts.usdm.contract.contract_id().into(),
-            contracts.fpt_staking.contract.contract_id().into(),
+            contracts.treasury_identity.into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -273,18 +220,6 @@ pub mod common {
         )
         .await
         .unwrap();
-        if verbose {
-            pb.inc();
-        }
-
-        fpt_staking_abi::initialize(
-            &contracts.fpt_staking,
-            contracts.protocol_manager.contract.contract_id().into(),
-            contracts.borrow_operations.contract.contract_id().into(),
-            contracts.fpt_asset_id,
-            contracts.usdm_asset_id,
-        )
-        .await;
         if verbose {
             pb.inc();
         }
@@ -677,7 +612,7 @@ pub mod common {
             .unwrap();
 
         let id = Contract::load_from(
-            &get_absolute_path_from_relative(PROTCOL_MANAGER_CONTRACT_BINARY_PATH),
+            &get_absolute_path_from_relative(PROTOCOL_MANAGER_CONTRACT_BINARY_PATH),
             LoadConfiguration::default()
                 .with_salt(salt)
                 .with_configurables(configurables.clone()),
@@ -690,7 +625,7 @@ pub mod common {
         let proxy = deploy_proxy(
             id.clone().into(),
             wallet.clone(),
-            Some(PROTCOL_MANAGER_CONTRACT_STORAGE_PATH),
+            Some(PROTOCOL_MANAGER_CONTRACT_STORAGE_PATH),
         )
         .await;
 
