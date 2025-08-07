@@ -1,16 +1,5 @@
 contract;
-// This contract, FPTToken, implements the Fluid Protocol Token (FPT) functionality.
-// FPT is the native token of the Fluid Protocol
-//
-// Key functionalities include:
-// - Minting and distributing the initial supply of FPT tokens
-// - Interfacing with the Vesting and Community Issuance contracts
-//
-// The contract follows the SRC-20 standard for native assets on the Fuel network,
-// ensuring compatibility with the broader ecosystem. It manages a fixed total supply
-// of 100 million FPT tokens, distributed between the Vesting contract and the
-// Community Issuance contract upon initialization.
-
+// Mints a single token to gets all the rewards associated with the protocol
 use libraries::fpt_token_interface::FPTToken;
 use libraries::fluid_math::{DECIMAL_PRECISION,};
 use standards::src20::{SetDecimalsEvent, SetNameEvent, SetSymbolEvent, SRC20, TotalSupplyEvent,};
@@ -41,8 +30,7 @@ storage {
     is_initialized: bool = false,
 }
 // Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
-// import fluid math decimals here
-pub const TOTAL_SUPPLY: u64 = 100_000_000;
+pub const TOTAL_SUPPLY: u64 = 1;
 pub const DECIMALS: u8 = 9;
 pub const SYMBOL: str[3] = __to_str_array("FPT");
 pub const NAME: str[20] = __to_str_array("Fluid Protocol Token");
@@ -70,18 +58,15 @@ impl FPTToken for Contract {
         storage
             .community_issuance_contract
             .write(community_issuance_contract);
-        mint_to(
-            Identity::ContractId(vesting_contract),
-            SubId::zero(),
-            TOTAL_SUPPLY * 68 / 100 * DECIMAL_PRECISION,
-        );
-        mint_to(
-            Identity::ContractId(community_issuance_contract),
-            SubId::zero(),
-            TOTAL_SUPPLY * 32 / 100 * DECIMAL_PRECISION,
-        );
 
+        // Mint total supply to deployer
         let sender = msg_sender().unwrap();
+        mint_to(
+            sender,
+            SubId::zero(),
+            TOTAL_SUPPLY * DECIMAL_PRECISION,
+        );
+        
         SetSymbolEvent::new(
             AssetId::default(),
             Some(String::from_ascii_str(from_str_array(SYMBOL))),
