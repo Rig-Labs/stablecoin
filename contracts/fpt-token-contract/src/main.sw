@@ -61,12 +61,8 @@ impl FPTToken for Contract {
 
         // Mint total supply to deployer
         let sender = msg_sender().unwrap();
-        mint_to(
-            sender,
-            SubId::zero(),
-            TOTAL_SUPPLY * DECIMAL_PRECISION,
-        );
-        
+        mint_to(sender, SubId::zero(), TOTAL_SUPPLY * DECIMAL_PRECISION);
+
         SetSymbolEvent::new(
             AssetId::default(),
             Some(String::from_ascii_str(from_str_array(SYMBOL))),
