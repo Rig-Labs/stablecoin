@@ -29,7 +29,7 @@ async fn proper_intialize() {
 
     assert_eq!(
         fpt_balance_vesting,
-        68_000_000 * PRECISION,
+        0,
         "invalid vesting balance initialized"
     );
 
@@ -43,15 +43,24 @@ async fn proper_intialize() {
 
     assert_eq!(
         fpt_balance_community_issuance,
-        32_000_000 * PRECISION,
+        0,
         "invalid community issuance balance initialized"
+    );
+
+    let admin_balance = provider
+        .get_asset_balance(admin.address().into(), fpt_asset_id)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        admin_balance,
+        1 * PRECISION,
+        "invalid admin balance after initialized"
     );
 
     let total_supply = fpt_token_abi::total_supply(&contracts.fpt_token)
         .await
         .value;
 
-    // println!("supply {}", total_supply);
-
-    assert_eq!(total_supply, Some(100_000_000 * PRECISION));
+    assert_eq!(total_supply, Some(1 * PRECISION));
 }
