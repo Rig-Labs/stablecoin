@@ -1,5 +1,5 @@
 contract;
-// This contract, Oracle, serves as an interface to query asset prices from either Pyth or Redstone oracles.
+// This contract, Oracle, serves as an interface to query asset prices from Pyth or Redstone oracles. stFuel is taken solely from Stork oracle.
 //
 // Key functionalities include:
 // - Providing a unified interface to fetch price data from different oracle sources
@@ -8,8 +8,9 @@ contract;
 // - Prioritizing price sources based on availability and recency
 //
 // Price Priority:
-// 1. Pyth Oracle: The contract first attempts to fetch the price from the Pyth oracle.
-// 2. Redstone Oracle: If the Pyth price is unavailable or outdated, the contract falls back to the Redstone oracle.
+// 1. Snork Orcale: Used only for stFuel price only.
+// 2. Pyth Oracle: The contract first attempts to fetch the price from the Pyth oracle.
+// 3. Redstone Oracle: If the Pyth price is unavailable or outdated, the contract falls back to the Redstone oracle.
 //
 // This prioritization ensures that the most reliable and recent price data is used,
 // enhancing the overall stability and accuracy of the Fluid Protocol.
@@ -30,9 +31,12 @@ use libraries::{
         Oracle,
         RedstoneConfig,
     },
+    stork_interface::Stork,
 };
 use std::{block::timestamp, constants::ZERO_B256,};
+use std::u128::U128;
 use pyth_interface::{data_structures::price::{Price, PriceFeedId}, PythCore};
+use sway_libs::signed_integers::i128::I128;
 
 // // Hack: Sway does not provide a downcast to u64
 // // If redstone provides a strangely high u256 which shouldn't be cast down
@@ -49,9 +53,15 @@ configurable {
     DEBUG: bool = false,
     /// Initializer
     INITIALIZER: Identity = Identity::Address(Address::zero()),
+    /// Stork contract address
+    STORK: ContractId = ContractId::zero(),
+    /// Stork feed ID for price queries
+    STORK_FEED_ID: b256 = ZERO_B256,
 }
 // Timeout period for considering oracle data as stale (10 minutes in seconds)
 const TIMEOUT: u64 = 600;
+// Nanoseconds to seconds conversion factor
+const NS_TO_SECONDS: u64 = 1_000_000_000;
 
 storage {
     /// The last valid price from either Pyth or Redstone
@@ -69,7 +79,30 @@ storage {
 impl Oracle for Contract {
     #[storage(read, write)]
     fn get_price() -> u64 {
-        // Step 1: Query the Pyth oracle (primary source)
+        // Determine the current timestamp based on debug mode
+        let current_time = match DEBUG {
+            true => storage.debug_timestamp.read(),
+            false => timestamp(),
+        };
+
+        // Step 1: Query the Stork oracle (highest priority source)
+        if STORK != ContractId::zero() {
+            let stork_contract = abi(Stork, STORK.bits());
+            let stork_price_result = stork_contract.get_temporal_numeric_value_unchecked_v1(STORK_FEED_ID);
+            
+            let stork_timestamp_ns = stork_price_result.get_timestamp_ns();
+            let stork_timestamp = stork_timestamp_ns / NS_TO_SECONDS;
+            let stork_quantized_value = stork_price_result.get_quantized_value();
+            
+            // Convert to formatted price, throws an error if cannot convert
+            let stork_price_u64 = convert_to_fuel_price(stork_quantized_value, FUEL_DECIMAL_REPRESENTATION);
+            
+            // Check if Stork data is fresh
+            require(current_time <= stork_timestamp + TIMEOUT, "ORACLE: Price is not fresh");
+            return stork_price_u64;
+        }
+
+        // Step 2: Query the Pyth oracle (primary source)
         let mut pyth_price = abi(PythCore, PYTH.bits()).price_unsafe(PYTH_PRICE_ID);
         pyth_price = pyth_price_with_fuel_vm_precision_adjustment(pyth_price, FUEL_DECIMAL_REPRESENTATION);
         let redstone_config = storage.redstone_config.read();
@@ -77,11 +110,7 @@ impl Oracle for Contract {
         if redstone_config.is_none() {
             return pyth_price.price;
         }
-        // Determine the current timestamp based on debug mode
-        let current_time = match DEBUG {
-            true => storage.debug_timestamp.read(),
-            false => timestamp(),
-        };
+
         // Read the last stored valid price
         let last_price = storage.last_good_price.read();
         // Check if Pyth data is stale or outside confidence
@@ -199,6 +228,40 @@ fn is_pyth_price_stale_or_outside_confidence(pyth_price: Price, current_time: u6
     // confidence within 4% is considered safe 
     let confidence_threshold = pyth_price.price / 25;
     return current_time > pyth_price.publish_time + TIMEOUT || pyth_price.confidence > confidence_threshold;
+}
+
+// Convert I128 to u64 with decimal place conversion and rounding up
+fn convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
+    // Check if value is negative
+    require(value >= I128::zero(), "ORACLE: Cannot convert negative I128 to u64");
+    
+    let underlying = value.underlying();
+    
+    // Convert from 18 decimals to fuel_decimal_representation
+    let adjusted_value = if fuel_decimal_representation < 18 {
+        let precision = 18u32 - fuel_decimal_representation;
+        let magnitude = U128::from(10u32).pow(precision);
+        
+        underlying / magnitude
+    } else if fuel_decimal_representation > 18 {
+        let decimal_diff = fuel_decimal_representation - 18u32;
+        let multiplier = U128::from(10u32).pow(decimal_diff);
+        
+        require(
+            underlying <= U128::from(u64::max()) / multiplier,
+            "ORACLE: Multiplication would exceed u64 maximum"
+        );
+        
+        underlying * multiplier
+    } else {
+        // Same decimal places, no conversion needed
+        underlying
+    };
+    
+    // Ensure the final value fits within u64 range
+    require(adjusted_value <= U128::from(u64::max()), "ORACLE: Price value exceeds u64 maximum");
+    
+    adjusted_value.as_u64().unwrap()
 }
 
 #[test]

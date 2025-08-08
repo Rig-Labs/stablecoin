@@ -9,14 +9,17 @@ pub const TESTNET_RPC: &str = "https://testnet.fuel.network/v1/playground";
 pub const MAINNET_RPC: &str = "https://mainnet.fuel.network/v1/playground";
 
 pub const TESTNET_TREASURY_IDENTITY: &str =
-    "0xa5ac02c203dde9b52cb2ab29bdd0dfee1e7a17f97339ff2ead92de4eebb62305";
+    "";
 pub const MAINNET_TREASURY_IDENTITY: &str =
-    "0x83953cdfeac61219ceb336684cc194d37d1fabfb8acbd530ba301ea241354280";
+    "";
 
 pub const TESTNET_PYTH_CONTRACT_ID: &str =
     "0x25146735b29d4216639f7f8b1d7b921ff87a1d3051de62d6cceaacabeb33b8e7";
 pub const MAINNET_PYTH_CONTRACT_ID: &str =
     "0x1c86fdd9e0e7bc0d2ae1bf6817ef4834ffa7247655701ee1b031b52a24c523da";
+
+pub const TESTNET_STORK_CONTRACT_ID: &str = "0x09c88f50d535ac5ce8945e34c418233b1e3834be9a88effb57cb137321fbae0c";
+pub const MAINNET_STORK_CONTRACT_ID: &str = "0x9c118ae13927dd51ba59c0370dc8c272a3b64ccd675950750c8840a649c81149";
 
 // Testnet
 pub const TESTNET_ETH_ASSET_CONTRACT_ID: &str =
@@ -52,6 +55,7 @@ pub const MAINNET_METH_DECIMALS: u32 = 9;
 pub const MAINNET_FUEL_ASSET_ID: &str =
     "0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82";
 pub const MAINNET_FUEL_DECIMALS: u32 = 9;
+pub const MAINNET_STFUEL_
 
 // pyth price ids
 // https://www.pyth.network/developers/price-feed-ids#pyth-evm-stable
@@ -84,6 +88,15 @@ pub struct AssetConstants {
 
 pub const TESTNET_FUEL_CONSTANTS: AssetConstants = AssetConstants {
     symbol: "FUEL",
+    asset_contract_id: None,
+    asset_id: None,
+    pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,
+    pyth_price_id: PYTH_FUEL_PRICE_ID,
+    decimals: 9,
+};
+
+pub const TESTNET_STFUEL_CONSTANTS: AssetConstants = AssetConstants {
+    symbol: "stFUEL",
     asset_contract_id: None,
     asset_id: None,
     pyth_contract_id: TESTNET_PYTH_CONTRACT_ID,

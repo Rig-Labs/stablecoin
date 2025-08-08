@@ -28,8 +28,7 @@ async fn proper_intialize() {
         .unwrap();
 
     assert_eq!(
-        fpt_balance_vesting,
-        0,
+        fpt_balance_vesting, 0,
         "invalid vesting balance initialized"
     );
 
@@ -42,8 +41,7 @@ async fn proper_intialize() {
         .unwrap();
 
     assert_eq!(
-        fpt_balance_community_issuance,
-        0,
+        fpt_balance_community_issuance, 0,
         "invalid community issuance balance initialized"
     );
 

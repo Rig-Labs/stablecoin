@@ -15,3 +15,5 @@ pub mod fpt_staking_interface;
 pub mod fpt_token_interface;
 pub mod community_issuance_interface;
 pub mod oracle_interface;
+pub mod temporal_numeric_value;
+pub mod stork_interface;
