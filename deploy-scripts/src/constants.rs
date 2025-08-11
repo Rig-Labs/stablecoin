@@ -55,7 +55,7 @@ pub const MAINNET_METH_DECIMALS: u32 = 9;
 pub const MAINNET_FUEL_ASSET_ID: &str =
     "0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82";
 pub const MAINNET_FUEL_DECIMALS: u32 = 9;
-pub const MAINNET_STFUEL_
+pub const MAINNET_STFUEL_DECIMALS: u32 = 9;
 
 // pyth price ids
 // https://www.pyth.network/developers/price-feed-ids#pyth-evm-stable
