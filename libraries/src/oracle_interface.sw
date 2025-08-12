@@ -2,30 +2,80 @@ library;
 
 use std::bytes::Bytes;
 
-abi Oracle {
-    #[storage(read, write)]
-    fn get_price() -> u64;
-
-    // Testing workaround
-    #[storage(write)]
-    fn set_debug_timestamp(timestamp: u64);
-
-    #[storage(read, write)]
-    fn set_redstone_config(config: RedstoneConfig);
-}
-
 pub struct Price {
     pub value: u64,
     pub time: u64,
+}
+
+/// Oracle configuration for Stork, Pyth, and Redstone
+/// They're separate as Stork/Pyth use b256 for feeds while Redstone uses u256.
+pub struct StorkConfig {
+    /// Contract address
+    pub contract_id: ContractId,
+    /// Price feed ID
+    pub feed_id: b256,
+    /// Precision
+    pub precision: u32,
+}
+
+pub struct PythConfig {
+    /// Contract address
+    pub contract_id: ContractId,
+    /// Price feed ID
+    pub feed_id: b256,
+    /// Precision
+    pub precision: u32,
 }
 
 pub struct RedstoneConfig {
     /// Contract address
     pub contract_id: ContractId,
     /// Price feed ID
-    pub price_id: u256,
+    pub feed_id: u256,
     /// Precision
     pub precision: u32,
+}
+
+
+// Oracle interface
+abi Oracle {
+    /// ------------------------ MAIN FUNCTIONS ------------------------ ///
+
+    // Get the price from the configured oracles.
+    #[storage(read, write)]
+    fn get_price() -> u64;
+
+    /// ------------------------ PUBLIC SETTERS ------------------------ ///
+
+    // Testing workaround
+    #[storage(write)]
+    fn set_debug_timestamp(timestamp: u64);
+
+    // Set the stork config.
+    #[storage(read, write)]
+    fn set_stork_config(config: StorkConfig);
+
+    // Set the pyth config.
+    #[storage(read, write)]
+    fn set_pyth_config(config: PythConfig);
+
+    // Set the redstone config.
+    #[storage(read, write)]
+    fn set_redstone_config(config: RedstoneConfig);
+
+    /// ------------------------ PUBLIC GETTERS ------------------------ ///
+
+    // Get the stork config.
+    #[storage(read)]
+    fn get_stork_config() -> StorkConfig;
+
+    // Get the pyth config.
+    #[storage(read)]
+    fn get_pyth_config() -> PythConfig;
+
+    // Get the redstone config.
+    #[storage(read)]
+    fn get_redstone_config() -> RedstoneConfig;
 }
 
 impl Price {

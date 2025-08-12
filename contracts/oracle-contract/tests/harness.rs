@@ -10,6 +10,7 @@ use test_utils::{
             PYTH_TIMESTAMP,
         },
         redstone_oracle::{redstone_oracle_abi, RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
+        stork_oracle::{stork_oracle_abi, StorkCore, StorkConfig, DEFAULT_STORK_FEED_ID, NS_TO_SECONDS},
     },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
 };
@@ -21,11 +22,14 @@ const DEFAULT_FUEL_VM_DECIMALS: u32 = 9;
 async fn setup(
     redstone_precision: u32,
     fuel_vm_decimals: u32,
+    initialize_pyth: bool,
     initialize_redstone: bool,
+    initialize_stork: bool,
 ) -> (
     ContractInstance<Oracle<WalletUnlocked>>,
-    PythCore<WalletUnlocked>,
+    Option<PythCore<WalletUnlocked>>,
     Option<RedstoneCore<WalletUnlocked>>,
+    Option<StorkCore<WalletUnlocked>>,
 ) {
     let block_time = 1u32; // seconds
     let config = NodeConfig {
@@ -44,17 +48,22 @@ async fn setup(
     .unwrap();
     let wallet = wallets.pop().unwrap();
 
-    let pyth = deploy_mock_pyth_oracle(&wallet).await;
+    if initialize_pyth {
+        let pyth = deploy_mock_pyth_oracle(&wallet).await;
 
-    let oracle = deploy_oracle(
-        &wallet,
-        pyth.contract_id().into(),
-        DEFAULT_PYTH_PRICE_ID,
-        fuel_vm_decimals,
-        true,
-        Identity::Address(wallet.address().into()),
-    )
-    .await;
+        let oracle = deploy_oracle(
+            &wallet,
+            pyth.contract_id().into(),
+            DEFAULT_PYTH_PRICE_ID,
+            fuel_vm_decimals,
+            true,
+            Identity::Address(wallet.address().into()),
+        )
+        .await;
+
+        return (oracle, Some(pyth), None, None);
+    }
+
     if initialize_redstone {
         let redstone = deploy_mock_redstone_oracle(&wallet).await;
 
@@ -73,7 +82,25 @@ async fn setup(
         return (oracle, pyth, Some(redstone));
     }
 
-    (oracle, pyth, None)
+    if initialize_stork {
+        let stork = deploy_mock_stork_oracle(&wallet).await;
+
+        oracle_abi::set_stork_config(
+            &oracle,
+            &stork,
+            StorkConfig {
+                contract_id: stork.contract_id().into(),
+                price_id: DEFAULT_STORK_FEED_ID,
+                precision: fuel_vm_decimals,
+            },
+        )
+        .await
+        .unwrap();
+
+        return (oracle, pyth, None, Some(stork));
+    }
+
+    (oracle, pyth, None, None)
 }
 
 fn redstone_feed(price: u64) -> Vec<(U256, U256)> {
@@ -564,4 +591,149 @@ mod tests {
             assert_eq!(price_exp_6, price_exp_12);
         }
     }
+
+    mod stork_oracle {
+        use super::*;
+        use test_utils::interfaces::stork_oracle::{stork_oracle_abi, StorkCore};
+
+        async fn setup_with_stork(fuel_vm_decimals: u32) -> (
+            ContractInstance<Oracle<WalletUnlocked>>,
+            PythCore<WalletUnlocked>,
+            Option<RedstoneCore<WalletUnlocked>>,
+            StorkCore<WalletUnlocked>,
+        ) {
+            let (oracle, pyth, redstone) = setup(REDSTONE_PRECISION, fuel_vm_decimals, true).await;
+            let wallet = oracle.wallet();
+            let stork = deploy_mock_stork_oracle(&wallet).await;
+
+            // Configure oracle to use Stork
+            oracle_abi::set_stork_config(
+                &oracle,
+                &stork,
+                StorkConfig {
+                    contract_id: stork.contract_id().into(),
+                    feed_id: DEFAULT_STORK_FEED_ID,
+                },
+            )
+            .await
+            .unwrap();
+
+            (oracle, pyth, redstone, stork)
+        }
+    }
+
+    //     #[tokio::test]
+    //     async fn test_stork_price_basic() {
+    //         let (oracle, _pyth, _redstone, stork) = setup_with_stork(DEFAULT_FUEL_VM_DECIMALS).await;
+    //         let price = 1000; // $1000
+    //         let timestamp = PYTH_TIMESTAMP;
+
+    //         // Set Stork price
+    //         stork_oracle_abi::set_temporal_value(
+    //             &stork,
+    //             DEFAULT_STORK_FEED_ID,
+    //             (price * PRECISION) as u64,
+    //             timestamp * NS_TO_SECONDS,
+    //         )
+    //         .await;
+
+    //         oracle_abi::set_debug_timestamp(&oracle, timestamp).await;
+            
+    //         let result = oracle_abi::get_price(&oracle, &_pyth, &_redstone).await.value;
+    //         assert_eq!(price * PRECISION, result);
+    //     }
+
+    //     #[tokio::test]
+    //     async fn test_stork_price_stale() {
+    //         let (oracle, _pyth, _redstone, stork) = setup_with_stork(DEFAULT_FUEL_VM_DECIMALS).await;
+    //         let price = 1000;
+    //         let timestamp = PYTH_TIMESTAMP;
+
+    //         // Set stale Stork price
+    //         stork_oracle_abi::set_temporal_value(
+    //             &stork,
+    //             DEFAULT_STORK_FEED_ID,
+    //             (price * PRECISION) as u64,
+    //             timestamp * NS_TO_SECONDS,
+    //         )
+    //         .await;
+
+    //         // Set current time to after timeout
+    //         oracle_abi::set_debug_timestamp(&oracle, timestamp + ORACLE_TIMEOUT + 1).await;
+            
+    //         // Should revert with "ORACLE: Price is not fresh"
+    //         let result = oracle_abi::get_price(&oracle, &_pyth, &_redstone).await;
+    //         assert!(result.transaction_status.unwrap().is_failure());
+    //     }
+
+    //     #[tokio::test]
+    //     async fn test_stork_price_negative() {
+    //         let (oracle, _pyth, _redstone, stork) = setup_with_stork(DEFAULT_FUEL_VM_DECIMALS).await;
+    //         let price = -1000;
+    //         let timestamp = PYTH_TIMESTAMP;
+
+    //         // Set negative Stork price
+    //         stork_oracle_abi::set_temporal_value(
+    //             &stork,
+    //             DEFAULT_STORK_FEED_ID,
+    //             I128::from(price * PRECISION),
+    //             timestamp * NS_TO_SECONDS,
+    //         )
+    //         .await;
+
+    //         oracle_abi::set_debug_timestamp(&oracle, timestamp).await;
+            
+    //         // Should revert with "ORACLE: Cannot convert negative I128 to u64"
+    //         let result = oracle_abi::get_price(&oracle, &_pyth, &_redstone).await;
+    //         assert!(result.is_err());
+    //     }
+
+    //     #[tokio::test]
+    //     async fn test_stork_price_decimal_conversion() {
+    //         let fuel_vm_decimals = 8;
+    //         let (oracle, _pyth, _redstone, stork) = setup_with_stork(fuel_vm_decimals).await;
+    //         let price = 5000; // $5000
+    //         let timestamp = PYTH_TIMESTAMP;
+
+    //         // Stork uses 18 decimals internally
+    //         stork_oracle_abi::set_temporal_value(
+    //             &stork,
+    //             DEFAULT_STORK_FEED_ID,
+    //             (price * 10u64.pow(18)) as u64,
+    //             timestamp * NS_TO_SECONDS,
+    //         )
+    //         .await;
+
+    //         oracle_abi::set_debug_timestamp(&oracle, timestamp).await;
+            
+    //         let result = oracle_abi::get_price(&oracle, &_pyth, &_redstone).await.value;
+            
+    //         // Expected: For 8 decimals, 1_000_000_000 units = 10 units of asset
+    //         // So price should be 10 * $5000 = $50000 with 8 decimals
+    //         let expected_price = 50000 * 10u64.pow(8);
+    //         assert_eq!(expected_price, result);
+    //     }
+
+    //     #[tokio::test]
+    //     async fn test_stork_price_overflow() {
+    //         let (oracle, _pyth, _redstone, stork) = setup_with_stork(DEFAULT_FUEL_VM_DECIMALS).await;
+    //         let price = u64::MAX as u128;
+    //         let timestamp = PYTH_TIMESTAMP;
+
+    //         // Set maximum possible price
+    //         stork_oracle_abi::set_temporal_value(
+    //             &stork,
+    //             DEFAULT_STORK_FEED_ID,
+    //             price,
+    //             timestamp * NS_TO_SECONDS,
+    //         )
+    //         .await;
+
+    //         oracle_abi::set_debug_timestamp(&oracle, timestamp).await;
+            
+    //         // Should revert with overflow error
+    //         let result = oracle_abi::get_price(&oracle, &_pyth, &_redstone).await;
+    //         assert!(result.transaction_status.unwrap().is_failure());
+    //     }
+    // }
 }

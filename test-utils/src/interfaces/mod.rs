@@ -12,6 +12,7 @@ pub mod protocol_manager;
 pub mod proxy;
 pub mod pyth_oracle;
 pub mod redstone_oracle;
+pub mod stork_oracle;
 pub mod sorted_troves;
 pub mod stability_pool;
 pub mod token;

@@ -621,8 +621,10 @@ pub mod common {
 
     pub async fn deploy_oracle(
         wallet: &WalletUnlocked,
-        pyth: ContractId,
-        pyth_price_id: Bits256,
+        pyth: Option<ContractId>,
+        pyth_price_id: Option<Bits256>,
+        stork: Option<ContractId>,
+        stork_price_id: Option<Bits256>,
         fuel_vm_decimals: u32,
         debug: bool,
         initializer: Identity,
@@ -632,9 +634,9 @@ pub mod common {
         let tx_policies = TxPolicies::default().with_tip(1);
 
         let configurables = OracleConfigurables::default()
-            .with_PYTH(pyth)
+            .with_PYTH(pyth.into())
             .unwrap()
-            .with_PYTH_PRICE_ID(pyth_price_id)
+            .with_PYTH_PRICE_ID(pyth_price_id.into())
             .unwrap()
             .with_DEBUG(debug)
             .unwrap()

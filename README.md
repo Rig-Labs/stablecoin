@@ -1,15 +1,8 @@
-# Fluid Protocol
+# Moor Protocol
 
-Fluid is a decentralized protocol that allows holders of certain Assets to obtain maximum liquidity against
-their collateral without paying interest. After locking up their assets as collateral in a smart contract and
-creating an individual position called a "trove", the user can get instant liquidity by minting USDM,
-a USD-pegged stablecoin. Each trove is required to be collateralized at a minimum of 135%. Any
-owner of USDM can redeem their stablecoins for the underlying collateral at any time.
+Moor is a decentralized protocol that allows holders of certain Assets to obtain maximum liquidity against their collateral without paying interest. After locking up their assets as collateral in a smart contract and creating an individual position called a "trove", the user can get instant liquidity by minting USDM, a USD-pegged stablecoin. Each trove is required to be collateralized at a minimum of 135%. Any owner of USDM can redeem their stablecoins for the underlying collateral at any time.
 
-An unprecedented liquidation mechanism based on incentivized stability deposits and a redistribution
-cycle from riskier to safer troves provides stability at a much lower collateral ratio than current
-systems. Stability is maintained via economically-driven user interactions and arbitrage, rather
-than by active governance or monetary interventions.
+An unprecedented liquidation mechanism based on incentivized stability deposits and a redistribution cycle from riskier to safer troves provides stability at a much lower collateral ratio than current systems. Stability is maintained via economically-driven user interactions and arbitrage, rather than by active governance or monetary interventions.
 
 ## Contracts
 
@@ -18,7 +11,7 @@ directory.
 
 | Name                                                          | Description                                                                                                                 |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| [`protocol-manager`](contracts/protocol-manager-contract)     | Proxy for adding new assets as collateral, and manages USDM redemptions, ownership to be renounced after milestones reached |
+| [`protocol-manager`](contracts/protocol-manager-contract)     | Proxy for adding new assets as collateral, and manages USDM redemptions. ~~ownership to be renounced after milestones reached~~ |
 | [`borrow-operations`](contracts/borrow-operations-contract)   | Interface with which users manager their troves                                                                             |
 | [`stability-pool`](contracts/stability-pool-contract)         | Manages $USDM desposits to liquidate user troves                                                                            |
 | [`USDM-token`](contracts/usdm-token-contract)                 | Token Contract for authorizing minting,burning of $USDM                                                                     |
@@ -71,7 +64,7 @@ MIT License (see `/LICENSE`)
 
 ## More information
 
-Visit [Fluid.org](https://www.Fluid.org) to find out more and join the discussion.
+Visit [moor.money](https://www.moor.money) to find out more and join the discussion.
 
 ## Disclaimer
 

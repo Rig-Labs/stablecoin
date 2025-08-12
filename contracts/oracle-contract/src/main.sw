@@ -8,8 +8,8 @@ contract;
 // - Prioritizing price sources based on availability and recency
 //
 // Price Priority:
-// 1. Snork Orcale: Used only for stFuel price only.
-// 2. Pyth Oracle: The contract first attempts to fetch the price from the Pyth oracle.
+// 1. Snork Orcale: Used only for stFuel price.
+// 2. Pyth Oracle: used initially for all other assets.
 // 3. Redstone Oracle: If the Pyth price is unavailable or outdated, the contract falls back to the Redstone oracle.
 //
 // This prioritization ensures that the most reliable and recent price data is used,
@@ -21,6 +21,29 @@ contract;
 // But 1_000_000_000 units of BTC in the fuelvm with 8 decimal precision is 10 BTC, so the price returned by this contract should be 600_000_000_000_000 for 10 BTC.
 // Refer to https://github.com/FuelLabs/verified-assets/blob/main/assets.json for the number of units that 1_000_000_000 units of an asset is in the fuelvm.
 
+use standards::{
+    src5::{SRC5, STATE},
+};
+use std::{
+    block::timestamp,
+    constants::ZERO_B256,
+    u128::U128,
+};
+use pyth_interface::{
+    data_structures::price::{
+        Price, PriceFeedId,
+    },
+    PythCore,
+};
+use sway_libs::{
+    signed_integers::i128::I128,
+    ownership::{
+        _owner,
+        initialize_ownership,
+        transfer_ownership,
+        only_owner,
+    },
+};
 use libraries::{
     fluid_math::{
         convert_precision,
@@ -33,38 +56,24 @@ use libraries::{
     },
     stork_interface::Stork,
 };
-use std::{block::timestamp, constants::ZERO_B256,};
-use std::u128::U128;
-use pyth_interface::{data_structures::price::{Price, PriceFeedId}, PythCore};
-use sway_libs::signed_integers::i128::I128;
-
 // // Hack: Sway does not provide a downcast to u64
 // // If redstone provides a strangely high u256 which shouldn't be cast down
 // // then other parts of the code must be adjusted to use u256
 
 configurable {
-    /// Contract Address
-    PYTH: ContractId = ContractId::zero(),
-    /// Price feed to query
-    PYTH_PRICE_ID: PriceFeedId = ZERO_B256,
-    /// Decimal representation of the asset in the Fuel network
     FUEL_DECIMAL_REPRESENTATION: u32 = 9,
-    /// Timeout in seconds
     DEBUG: bool = false,
-    /// Initializer
-    INITIALIZER: Identity = Identity::Address(Address::zero()),
-    /// Stork contract address
-    STORK: ContractId = ContractId::zero(),
-    /// Stork feed ID for price queries
-    STORK_FEED_ID: b256 = ZERO_B256,
+    INITIAL_OWNER: Identity = Identity::Address(Address::zero()),
 }
+
 // Timeout period for considering oracle data as stale (10 minutes in seconds)
 const TIMEOUT: u64 = 600;
+
 // Nanoseconds to seconds conversion factor
 const NS_TO_SECONDS: u64 = 1_000_000_000;
 
 storage {
-    /// The last valid price from either Pyth or Redstone
+    /// The last valid price from Stork/Pyth/Redstone.
     last_good_price: Price = Price {
         confidence: 0,
         exponent: 0,
@@ -73,65 +82,120 @@ storage {
     },
     // Used for simulating different timestamps during testing
     debug_timestamp: u64 = 0,
-    redstone_config: Option<RedstoneConfig> = None,
+    /// Oracle config for Stork oracle.
+    stork_config: Option<OracleConfig> = None,
+    /// Oracle config for Pyth oracle.
+    pyth_config: Option<OracleConfig> = None,
+    /// Oracle config for Redstone oracle.
+    redstone_config: Option<OracleConfig> = None,
 }
 
+// Oracle contract, that reads from Stork, Pyth, and Redstone.
 impl Oracle for Contract {
+
+    /// ------------------------ ORACLE FUNCTIONS ------------------------
+
+    // Initialize the oracle contract with owners and configs.
+    #[storage(read, write)]
+    fn initialize(
+        stork_config: Option<StorkConfig>,
+        pyth_config: Option<PythConfig>,
+        redstone_config: Option<RedstoneConfig>,
+    ) {
+        initialize_ownership(INITIAL_OWNER);
+
+        // Set the configs for Stork, Pyth, and Redstone.
+        _set_stork_config(stork_config);
+        _set_pyth_config(pyth_config);
+        _set_redstone_config(redstone_config);
+    }
+
+    // Get the price of the asset.
     #[storage(read, write)]
     fn get_price() -> u64 {
+
         // Determine the current timestamp based on debug mode
         let current_time = match DEBUG {
             true => storage.debug_timestamp.read(),
             false => timestamp(),
         };
 
-        // Step 1: Query the Stork oracle (highest priority source)
-        if STORK != ContractId::zero() {
-            let stork_contract = abi(Stork, STORK.bits());
-            let stork_price_result = stork_contract.get_temporal_numeric_value_unchecked_v1(STORK_FEED_ID);
-            
-            let stork_timestamp_ns = stork_price_result.get_timestamp_ns();
-            let stork_timestamp = stork_timestamp_ns / NS_TO_SECONDS;
-            let stork_quantized_value = stork_price_result.get_quantized_value();
-            
-            // Convert to formatted price, throws an error if cannot convert
-            let stork_price_u64 = convert_to_fuel_price(stork_quantized_value, FUEL_DECIMAL_REPRESENTATION);
-            
-            // Check if Stork data is fresh
-            require(current_time <= stork_timestamp + TIMEOUT, "ORACLE: Price is not fresh");
-            return stork_price_u64;
+        // Get the configs for Stork, Pyth, and Redstone.
+        let stork_config = _get_stork_config();
+        let pyth_config = _get_pyth_config();
+        let redstone_config = _get_redstone_config();
+
+        // Step 1: Attempt to get the price from Stork if configured.
+        if stork_config.is_some() {
+            // Get the price from Stork.
+            let (stork_price, stork_timestamp) = _get_stork_price(stork_config.unwrap());
+        
+            // Check if we have alternative oracles configured.
+            if pyth_config.is_none() && redstone_config.is_none() {
+                // If Pyth and Redstone are not configured, return the Stork price
+                // regardless of staleness and confidence.
+                return stork_price;
+            }
+
+            // Do a staleness check on the Stork price if we have alternative oracles configured.
+            let timeout = stork_timestamp + TIMEOUT;
+            if current_time <= timeout {
+                // If the Stork price is not stale, return it.
+                return stork_price;
+            }
+
+            // Otherwise keep going by checking alternative oracles.
         }
 
-        // Step 2: Query the Pyth oracle (primary source)
-        let mut pyth_price = abi(PythCore, PYTH.bits()).price_unsafe(PYTH_PRICE_ID);
-        pyth_price = pyth_price_with_fuel_vm_precision_adjustment(pyth_price, FUEL_DECIMAL_REPRESENTATION);
-        let redstone_config = storage.redstone_config.read();
-        // If Redstone is not configured, return the latest Pyth price regardless of staleness and confidence
-        if redstone_config.is_none() {
-            return pyth_price.price;
+        // Step 2: Attempt to get the price from Pyth if configured.
+        if pyth_config.is_some() {
+
+            // Get the price from Pyth.
+            let pyth_price = _get_pyth_price(pyth_config.unwrap());
+
+            // Check if we have alternative oracles configured.
+            if redstone_config.is_none() {
+                // If Redstone is not configured, return the Pyth price regardless of staleness and confidence.
+                return pyth_price.price;
+            }
+            
+            // Do a staleness check on the Pyth price if we have alternative oracles configured.
+            if !is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
+                // If the Pyth price is not stale or outside confidence, return it.
+                return pyth_price.price;
+            }
+
+            // Otherwise keep going by checking Redstone.
         }
+
+        // Step 3: Attempt to get the price from Redstone, which should be configured.
+        if redstone_config.is_some() {
+            // Get the price from Redstone.
+            let (redstone_price, redstone_timestamp) = _get_redstone_price(redstone_config.unwrap());
+
+            // Check if Redstone is not stale.
+            if current_time <= redstone_timestamp + TIMEOUT {
+                // Redstone is not stale, return the price.
+                return redstone_price;
+            }
+
+            // Otherwise keep going by comparing the timestamps of Stork, Pyth, and Redstone.
+            // We'll now compare the timestamps of Stork, Pyth, and Redstone and return the most recent price.
+
+            if redstone_timestamp <= pyth_price.publish_time {
+                // Redstone is more recent than Pyth, return the price.
+                return redstone_price;
+            }
+
+        
+        } else {
+            // Error we've run out of oracles to try.
+        }
+
 
         // Read the last stored valid price
         let last_price = storage.last_good_price.read();
-        // Check if Pyth data is stale or outside confidence
-        if is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
-            // Step 2: Pyth is stale or outside confidence, query Redstone oracle (fallback source)
-            let config = redstone_config.unwrap();
-
-            let mut feed = Vec::with_capacity(1);
-            feed.push(config.price_id);
-
-            // Fuel Bug workaround: trait coherence
-            let id = config.contract_id.bits();
-            let redstone = abi(RedstoneCore, id);
-            let redstone_prices = redstone.read_prices(feed);
-            let redstone_timestamp = redstone.read_timestamp();
-            let redstone_price_u64 = redstone_prices.get(0).unwrap();
-            // By default redstone uses 8 decimal precision so it is generally safe to cast down
-            let redstone_price = convert_precision_u256_and_downcast(
-                redstone_price_u64,
-                adjust_exponent(config.precision, FUEL_DECIMAL_REPRESENTATION),
-            );
+  
             // Check if Redstone data is also stale
             if current_time > redstone_timestamp + TIMEOUT {
                 // Both oracles are stale, use the most recent data available
@@ -175,30 +239,159 @@ impl Oracle for Contract {
         return last_price.price;
     }
 
+   /// ------------------------ PUBLIC SETTERS ------------------------ ///
+
+    // Set the config for the oracle type, can be set to None.
+    #[storage(read, write)]
+    fn set_oracle_config(oracle_type: OracleType, config: Option<OracleConfig>) {
+        only_owner();
+
+        // Set the config for the oracle type.
+        match oracle_type {
+            OracleType::Stork => _set_stork_config(Some(config)),
+            OracleType::Pyth => _set_pyth_config(Some(config)),
+            OracleType::Redstone => _set_redstone_config(Some(config)),
+        }
+    }
+
+    // Set the debug timestamp, only in debug mode.
     #[storage(write)]
     fn set_debug_timestamp(timestamp: u64) {
+        only_owner();
+
         // Allow setting a custom timestamp for testing, but only in debug mode
         require(DEBUG, "ORACLE: Debug is not enabled");
         storage.debug_timestamp.write(timestamp);
     }
 
-    #[storage(read, write)]
-    fn set_redstone_config(config: RedstoneConfig) {
-        require(
-            msg_sender()
-                .unwrap() == INITIALIZER,
-            "ORACLE: Only initializer can set Redstone config",
-        );
-        require(
-            storage
-                .redstone_config
-                .read()
-                .is_none(),
-            "ORACLE: Redstone config already set",
-        );
-        storage.redstone_config.write(Some(config));
+   /// ------------------------ PUBLIC GETTERS ------------------------ ///
+
+    #[storage(read)]
+    fn get_stork_config() -> Option<StorkConfig> {
+        _get_stork_config()
+    }
+    
+    #[storage(read)]
+    fn get_pyth_config() -> Option<PythConfig> {
+        _get_pyth_config()
+    }
+    
+    #[storage(read)]
+    fn get_redstone_config() -> Option<RedstoneConfig> {
+        _get_redstone_config()
     }
 }
+
+/// ------------------------ PRIVATE SETTERS ------------------------ ///
+
+/// Set the stork config, can be set to None.
+#[storage(read, write)]
+fn _set_stork_config(config: Option<StorkConfig>) {
+    storage.stork_config.write(config);
+}
+
+/// Set the python config, can be set to None.
+#[storage(read, write)]
+fn _set_pyth_config(config: Option<PythConfig>) {
+    storage.pyth_config.write(config);
+}
+
+/// Set the redstone config, can be set to None.
+#[storage(read, write)]
+fn _set_redstone_config(config: Option<RedstoneConfig>) {
+    storage.redstone_config.write(config);
+}
+
+/// ------------------------ PRIVATE GETTERS ------------------------ ///
+
+#[storage(read)]
+fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
+
+    // Get the stork contract.
+    let stork_contract = abi(Stork, stork_config.contract_id.bits());
+
+    // Get the stork price.
+    let stork_price_result = stork_contract.get_temporal_numeric_value_unchecked_v1(
+        stork_config.feed_id.bits(),
+    );
+    let stork_timestamp_ns = stork_price_result.get_timestamp_ns();
+    let stork_timestamp = stork_timestamp_ns / NS_TO_SECONDS;
+    let stork_quantized_value = stork_price_result.get_quantized_value();
+
+    // Convert to formatted price, throws an error if cannot convert
+    let stork_price_u64 = convert_to_fuel_price(
+        stork_quantized_value,
+        FUEL_DECIMAL_REPRESENTATION,
+    );
+
+    return Some((stork_price_u64, stork_timestamp));
+}
+
+/// Get the pyth price, if set otherwise return None.
+#[storage(read)]
+fn _get_pyth_price(pyth_config: PythConfig) -> Price {
+
+    // Get the pyth contract.
+    let pyth_contract = abi(PythCore, pyth_config.contract_id.bits());
+    let mut pyth_price = pyth_contract.price_unsafe(pyth_config.feed_id);
+
+    // Adjust the price to the fuel VM precision.
+    pyth_price = pyth_price_with_fuel_vm_precision_adjustment(
+        pyth_price,
+        FUEL_DECIMAL_REPRESENTATION,
+    );
+
+    // Return the price.
+    return pyth_price;
+}
+
+/// Get the redstone price, if set otherwise return None.
+#[storage(read)]
+fn _get_redstone_price(redstone_config: RedstoneConfig) -> (u64, u64) {
+
+    // Get the redstone contract.
+    let redstone_contract = abi(RedstoneCore, redstone_config.contract_id.bits());
+
+    // Get the redstone price.
+    let feed = Vec::from([redstone_config.feed_id]);
+    let redstone_prices = redstone_contract.read_prices(feed);
+    let redstone_timestamp = redstone_contract.read_timestamp();
+    let redstone_price_u64 = redstone_prices.get(0).unwrap();
+
+    // By default redstone uses 8 decimal precision so it is generally safe to cast down
+    let redstone_price = convert_precision_u256_and_downcast(
+        redstone_price_u64,
+        adjust_exponent(redstone_config.precision, FUEL_DECIMAL_REPRESENTATION),
+    );
+
+    return redstone_price, redstone_timestamp;
+}
+
+    let redstone_contract = abi(RedstoneCore, REDSTONE.bits());
+    let redstone_price = redstone_contract.read_prices(feed);
+    let redstone_timestamp = redstone_contract.read_timestamp();
+    let redstone_price_u64 = redstone_prices.get(0).unwrap();
+    return redstone_price_u64;
+}
+
+/// Get the stork config, if set otherwise return None.
+#[storage(read)]
+fn _get_stork_config() -> Option<StorkConfig> {
+    storage.stork_config.try_read().unwrap_or(None);
+}
+
+/// Get the python config, if set otherwise return None.
+#[storage(read)]
+fn _get_pyth_config() -> Option<PythConfig> {
+    storage.pyth_config.try_read().unwrap_or(None);
+}
+
+/// Get the redstone config, if set otherwise return None.
+#[storage(read)]
+fn _get_redstone_config() -> Option<RedstoneConfig> {
+    storage.redstone_config.try_read().unwrap_or(None);
+}
+
 // Assets in the fuel VM can have a different decimal representation
 // This function adjusts the price to align with the decimal representation of the Fuel VM
 fn pyth_price_with_fuel_vm_precision_adjustment(pyth_price: Price, fuel_vm_decimals: u32) -> Price {
