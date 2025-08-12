@@ -21,8 +21,10 @@ contract;
 // But 1_000_000_000 units of BTC in the fuelvm with 8 decimal precision is 10 BTC, so the price returned by this contract should be 600_000_000_000_000 for 10 BTC.
 // Refer to https://github.com/FuelLabs/verified-assets/blob/main/assets.json for the number of units that 1_000_000_000 units of an asset is in the fuelvm.
 
+mod errors;
+
 use standards::{
-    src5::{SRC5, STATE},
+    src5::{SRC5, State},
 };
 use std::{
     block::timestamp,
@@ -52,10 +54,16 @@ use libraries::{
     oracle_interface::RedstoneCore,
     oracle_interface::{
         Oracle,
+        StorkConfig,
+        PythConfig,
         RedstoneConfig,
     },
     stork_interface::Stork,
 };
+
+use errors::*;
+
+
 // // Hack: Sway does not provide a downcast to u64
 // // If redstone provides a strangely high u256 which shouldn't be cast down
 // // then other parts of the code must be adjusted to use u256
@@ -83,11 +91,11 @@ storage {
     // Used for simulating different timestamps during testing
     debug_timestamp: u64 = 0,
     /// Oracle config for Stork oracle.
-    stork_config: Option<OracleConfig> = None,
+    stork_config: Option<StorkConfig> = None,
     /// Oracle config for Pyth oracle.
-    pyth_config: Option<OracleConfig> = None,
+    pyth_config: Option<PythConfig> = None,
     /// Oracle config for Redstone oracle.
-    redstone_config: Option<OracleConfig> = None,
+    redstone_config: Option<RedstoneConfig> = None,
 }
 
 // Oracle contract, that reads from Stork, Pyth, and Redstone.
@@ -124,6 +132,19 @@ impl Oracle for Contract {
         let stork_config = _get_stork_config();
         let pyth_config = _get_pyth_config();
         let redstone_config = _get_redstone_config();
+        let last_good_price = _get_last_good_price();
+
+        let mut stork_price: u64 = 0;
+        let mut pyth_price: Price = Price {
+            confidence: 0,
+            exponent: 0,
+            price: 0,
+            publish_time: 0,
+        };
+        let mut redstone_price: u64 = 0;
+        let mut stork_timestamp: u64 = 0;
+        let mut pyth_timestamp: u64 = 0;
+        let mut redstone_timestamp: u64 = 0;
 
         // Step 1: Attempt to get the price from Stork if configured.
         if stork_config.is_some() {
@@ -132,6 +153,10 @@ impl Oracle for Contract {
         
             // Check if we have alternative oracles configured.
             if pyth_config.is_none() && redstone_config.is_none() {
+
+                // Set the last good price to the Stork price, fn will check if its more recent.
+                _set_last_good_price(last_good_price, stork_price, stork_timestamp);
+
                 // If Pyth and Redstone are not configured, return the Stork price
                 // regardless of staleness and confidence.
                 return stork_price;
@@ -140,6 +165,10 @@ impl Oracle for Contract {
             // Do a staleness check on the Stork price if we have alternative oracles configured.
             let timeout = stork_timestamp + TIMEOUT;
             if current_time <= timeout {
+
+                // Set the last good price and it's not stale, fn will check if its more recent.
+                _set_last_good_price(last_good_price, stork_price, stork_timestamp);
+
                 // If the Stork price is not stale, return it.
                 return stork_price;
             }
@@ -155,12 +184,19 @@ impl Oracle for Contract {
 
             // Check if we have alternative oracles configured.
             if redstone_config.is_none() {
+                // Set the last good price to the Pyth price, fn will check if its more recent.
+                _set_last_good_price(last_good_price, pyth_price.price, pyth_price.publish_time);
+
                 // If Redstone is not configured, return the Pyth price regardless of staleness and confidence.
                 return pyth_price.price;
             }
             
             // Do a staleness check on the Pyth price if we have alternative oracles configured.
-            if !is_pyth_price_stale_or_outside_confidence(pyth_price, current_time) {
+            if current_time <= pyth_price.publish_time + TIMEOUT {
+
+                // Set the last good price to the Pyth price, fn will check if its more recent.
+                _set_last_good_price(last_good_price, pyth_price.price, pyth_price.publish_time);
+
                 // If the Pyth price is not stale or outside confidence, return it.
                 return pyth_price.price;
             }
@@ -175,83 +211,70 @@ impl Oracle for Contract {
 
             // Check if Redstone is not stale.
             if current_time <= redstone_timestamp + TIMEOUT {
+
+                // Set the last good price to the Redstone price, fn will check if its more recent.
+                _set_last_good_price(last_good_price, redstone_price, redstone_timestamp);
+
                 // Redstone is not stale, return the price.
                 return redstone_price;
             }
+        } 
 
-            // Otherwise keep going by comparing the timestamps of Stork, Pyth, and Redstone.
-            // We'll now compare the timestamps of Stork, Pyth, and Redstone and return the most recent price.
+        // If we get here, all oracle prices are stale or we've run out of oracles to try.
+        // Compare timestamps to find the most recent price
+        let last_price = _get_last_good_price();
+        let mut most_recent_timestamp = last_price.publish_time;
+        let mut most_recent_price = last_price.price;
 
-            if redstone_timestamp <= pyth_price.publish_time {
-                // Redstone is more recent than Pyth, return the price.
-                return redstone_price;
-            }
-
-        
-        } else {
-            // Error we've run out of oracles to try.
+        // Compare with Stork if it was queried.
+        if stork_config.is_some() && stork_timestamp > most_recent_timestamp {
+            most_recent_timestamp = stork_timestamp;
+            most_recent_price = stork_price;
         }
 
-
-        // Read the last stored valid price
-        let last_price = storage.last_good_price.read();
-  
-            // Check if Redstone data is also stale
-            if current_time > redstone_timestamp + TIMEOUT {
-                // Both oracles are stale, use the most recent data available
-                if redstone_timestamp <= pyth_price.publish_time {
-                    // Pyth data is more recent
-                    if last_price.publish_time < pyth_price.publish_time {
-                        let price: Price = pyth_price;
-                        storage.last_good_price.write(price);
-                        return price.price;
-                    }
-                } else {
-                    // Redstone data is more recent
-                    if last_price.publish_time < redstone_timestamp {
-                        let price = Price::new(0, 0, redstone_price, redstone_timestamp);
-                        storage.last_good_price.write(price);
-                        return price.price;
-                    }
-                }
-                // If both new prices are older than the last stored price, return the last price
-                return last_price.price;
-            }
-
-            // Redstone data is fresh, update if it's newer than the last stored price
-            if last_price.publish_time < redstone_timestamp {
-                let price = Price::new(0, 0, redstone_price, redstone_timestamp);
-                storage.last_good_price.write(price);
-                return price.price;
-            }
-
-            // Otherwise, return the last stored price
-            return last_price.price;
-        }
-        // Pyth data is fresh, update if it's newer than the last stored price
-        if last_price.publish_time < pyth_price.publish_time {
-            let price: Price = pyth_price;
-            storage.last_good_price.write(price);
-            return price.price;
+        // Compare with Pyth if it was queried.
+        if pyth_config.is_some() && pyth_price.publish_time > most_recent_timestamp {
+            most_recent_timestamp = pyth_price.publish_time;
+            most_recent_price = pyth_price.price;
         }
 
-        // If the new Pyth price is older than the last stored price, return the last price
-        return last_price.price;
+        // Compare with Redstone if it was queried.
+        if redstone_config.is_some() && redstone_timestamp > most_recent_timestamp {
+            most_recent_timestamp = redstone_timestamp;
+            most_recent_price = redstone_price;
+        }
+
+        // Update storage with the most recent price.
+        _set_last_good_price(last_good_price, most_recent_price, most_recent_timestamp);
+
+        // Return the most recent price.
+        return most_recent_price;
     }
 
    /// ------------------------ PUBLIC SETTERS ------------------------ ///
 
-    // Set the config for the oracle type, can be set to None.
+    // Set the config for the Stork oracle, can be set to None.
     #[storage(read, write)]
-    fn set_oracle_config(oracle_type: OracleType, config: Option<OracleConfig>) {
+    fn set_stork_config(config: Option<StorkConfig>) {
         only_owner();
 
-        // Set the config for the oracle type.
-        match oracle_type {
-            OracleType::Stork => _set_stork_config(Some(config)),
-            OracleType::Pyth => _set_pyth_config(Some(config)),
-            OracleType::Redstone => _set_redstone_config(Some(config)),
-        }
+        _set_stork_config(config);
+    }
+
+    // Set the config for the Pyth oracle, can be set to None.
+    #[storage(read, write)]
+    fn set_pyth_config(config: Option<PythConfig>) {
+        only_owner();
+
+        _set_pyth_config(config);
+    }
+
+    // Set the config for the Redstone oracle, can be set to None.
+    #[storage(read, write)]
+    fn set_redstone_config(config: Option<RedstoneConfig>) {
+        only_owner();
+
+        _set_redstone_config(config);
     }
 
     // Set the debug timestamp, only in debug mode.
@@ -260,8 +283,14 @@ impl Oracle for Contract {
         only_owner();
 
         // Allow setting a custom timestamp for testing, but only in debug mode
-        require(DEBUG, "ORACLE: Debug is not enabled");
+        require(DEBUG, OracleError::DebugNotEnabled);
         storage.debug_timestamp.write(timestamp);
+    }
+
+    // Transfer ownership of the contract.
+    #[storage(read, write)]
+    fn transfer_ownership(new_owner: Identity) {
+        transfer_ownership(new_owner);
     }
 
    /// ------------------------ PUBLIC GETTERS ------------------------ ///
@@ -280,12 +309,36 @@ impl Oracle for Contract {
     fn get_redstone_config() -> Option<RedstoneConfig> {
         _get_redstone_config()
     }
+
+    #[storage(read)]
+    fn get_last_good_price() -> Price {
+        _get_last_good_price()
+    }
+}
+
+// --------------- SRC5 IMPLEMENTATION --------------- ///
+
+impl SRC5 for Contract {
+    #[storage(read)]
+    fn owner() -> State {
+        _owner()
+    }
 }
 
 /// ------------------------ PRIVATE SETTERS ------------------------ ///
 
+/// Set the last good price, to be used if all oracles are stale.
+#[storage(write)]
+fn _set_last_good_price(last_good_price: Price, price: u64, timestamp: u64) {
+    // Only set the last good price if the new price is more recent.
+    if timestamp > last_good_price.publish_time {
+        let new_price = Price::new(0, 0, price, timestamp);
+        storage.last_good_price.write(new_price);
+    }
+}
+
 /// Set the stork config, can be set to None.
-#[storage(read, write)]
+#[storage(write)]
 fn _set_stork_config(config: Option<StorkConfig>) {
     storage.stork_config.write(config);
 }
@@ -304,6 +357,12 @@ fn _set_redstone_config(config: Option<RedstoneConfig>) {
 
 /// ------------------------ PRIVATE GETTERS ------------------------ ///
 
+/// Get the last good price, to be used if all oracles are stale.
+#[storage(read)]
+fn _get_last_good_price() -> Price {
+    storage.last_good_price.read()
+}
+
 #[storage(read)]
 fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
 
@@ -312,19 +371,19 @@ fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
 
     // Get the stork price.
     let stork_price_result = stork_contract.get_temporal_numeric_value_unchecked_v1(
-        stork_config.feed_id.bits(),
+        stork_config.feed_id,
     );
     let stork_timestamp_ns = stork_price_result.get_timestamp_ns();
     let stork_timestamp = stork_timestamp_ns / NS_TO_SECONDS;
     let stork_quantized_value = stork_price_result.get_quantized_value();
 
     // Convert to formatted price, throws an error if cannot convert
-    let stork_price_u64 = convert_to_fuel_price(
+    let stork_price_u64 = _convert_to_fuel_price(
         stork_quantized_value,
         FUEL_DECIMAL_REPRESENTATION,
     );
 
-    return Some((stork_price_u64, stork_timestamp));
+    return (stork_price_u64, stork_timestamp);
 }
 
 /// Get the pyth price, if set otherwise return None.
@@ -336,7 +395,7 @@ fn _get_pyth_price(pyth_config: PythConfig) -> Price {
     let mut pyth_price = pyth_contract.price_unsafe(pyth_config.feed_id);
 
     // Adjust the price to the fuel VM precision.
-    pyth_price = pyth_price_with_fuel_vm_precision_adjustment(
+    pyth_price = _pyth_price_with_fuel_vm_precision_adjustment(
         pyth_price,
         FUEL_DECIMAL_REPRESENTATION,
     );
@@ -353,7 +412,9 @@ fn _get_redstone_price(redstone_config: RedstoneConfig) -> (u64, u64) {
     let redstone_contract = abi(RedstoneCore, redstone_config.contract_id.bits());
 
     // Get the redstone price.
-    let feed = Vec::from([redstone_config.feed_id]);
+    let mut feed = Vec::with_capacity(1);
+    feed.push(redstone_config.feed_id);
+
     let redstone_prices = redstone_contract.read_prices(feed);
     let redstone_timestamp = redstone_contract.read_timestamp();
     let redstone_price_u64 = redstone_prices.get(0).unwrap();
@@ -361,41 +422,37 @@ fn _get_redstone_price(redstone_config: RedstoneConfig) -> (u64, u64) {
     // By default redstone uses 8 decimal precision so it is generally safe to cast down
     let redstone_price = convert_precision_u256_and_downcast(
         redstone_price_u64,
-        adjust_exponent(redstone_config.precision, FUEL_DECIMAL_REPRESENTATION),
+        _adjust_exponent(redstone_config.precision, FUEL_DECIMAL_REPRESENTATION),
     );
 
-    return redstone_price, redstone_timestamp;
-}
-
-    let redstone_contract = abi(RedstoneCore, REDSTONE.bits());
-    let redstone_price = redstone_contract.read_prices(feed);
-    let redstone_timestamp = redstone_contract.read_timestamp();
-    let redstone_price_u64 = redstone_prices.get(0).unwrap();
-    return redstone_price_u64;
+    return (redstone_price, redstone_timestamp);
 }
 
 /// Get the stork config, if set otherwise return None.
 #[storage(read)]
 fn _get_stork_config() -> Option<StorkConfig> {
-    storage.stork_config.try_read().unwrap_or(None);
+    storage.stork_config.try_read().unwrap_or(None)
 }
 
 /// Get the python config, if set otherwise return None.
 #[storage(read)]
 fn _get_pyth_config() -> Option<PythConfig> {
-    storage.pyth_config.try_read().unwrap_or(None);
+    storage.pyth_config.try_read().unwrap_or(None)
 }
 
 /// Get the redstone config, if set otherwise return None.
 #[storage(read)]
 fn _get_redstone_config() -> Option<RedstoneConfig> {
-    storage.redstone_config.try_read().unwrap_or(None);
+    storage.redstone_config.try_read().unwrap_or(None)
 }
 
 // Assets in the fuel VM can have a different decimal representation
 // This function adjusts the price to align with the decimal representation of the Fuel VM
-fn pyth_price_with_fuel_vm_precision_adjustment(pyth_price: Price, fuel_vm_decimals: u32) -> Price {
-    let adjusted_exponent = adjust_exponent(pyth_price.exponent, fuel_vm_decimals);
+fn _pyth_price_with_fuel_vm_precision_adjustment(
+    pyth_price: Price,
+    fuel_vm_decimals: u32,
+) -> Price {
+    let adjusted_exponent = _adjust_exponent(pyth_price.exponent, fuel_vm_decimals);
     return Price {
         confidence: convert_precision(pyth_price.confidence, adjusted_exponent),
         price: convert_precision(pyth_price.price, adjusted_exponent),
@@ -404,10 +461,15 @@ fn pyth_price_with_fuel_vm_precision_adjustment(pyth_price: Price, fuel_vm_decim
     };
 }
 
-fn adjust_exponent(current_exponent: u32, fuel_vm_decimals: u32) -> u32 {
+/// Adjust the exponent of the price to the fuel VM precision.
+fn _adjust_exponent(
+    current_exponent: u32,
+    fuel_vm_decimals: u32,
+) -> u32 {
     if fuel_vm_decimals > 9u32 {
         // If the Fuel VM has more decimals than 9 we need to remove the extra precision
-        // For example, if the Fuel VM has 10 decimals then we need to divide the price by 10^1 to get the correct price for 1_000_000_000 units
+        // For example, if the Fuel VM has 10 decimals then we need to divide the price by 10^1
+        // to get the correct price for 1_000_000_000 units
         return current_exponent + (fuel_vm_decimals - 9u32);
     } else if fuel_vm_decimals < 9u32 {
         // If the Fuel VM has less decimals than 9 we need to add the missing precision
@@ -417,16 +479,10 @@ fn adjust_exponent(current_exponent: u32, fuel_vm_decimals: u32) -> u32 {
     return current_exponent;
 }
 
-fn is_pyth_price_stale_or_outside_confidence(pyth_price: Price, current_time: u64) -> bool {
-    // confidence within 4% is considered safe 
-    let confidence_threshold = pyth_price.price / 25;
-    return current_time > pyth_price.publish_time + TIMEOUT || pyth_price.confidence > confidence_threshold;
-}
-
 // Convert I128 to u64 with decimal place conversion and rounding up
-fn convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
+fn _convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
     // Check if value is negative
-    require(value >= I128::zero(), "ORACLE: Cannot convert negative I128 to u64");
+    require(value >= I128::zero(), OracleError::NegativeValue);
     
     let underlying = value.underlying();
     
@@ -442,7 +498,7 @@ fn convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
         
         require(
             underlying <= U128::from(u64::max()) / multiplier,
-            "ORACLE: Multiplication would exceed u64 maximum"
+            OracleError::MultiplicationWouldExceedU64Maximum
         );
         
         underlying * multiplier
@@ -452,7 +508,7 @@ fn convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
     };
     
     // Ensure the final value fits within u64 range
-    require(adjusted_value <= U128::from(u64::max()), "ORACLE: Price value exceeds u64 maximum");
+    require(adjusted_value <= U128::from(u64::max()), OracleError::PriceValueExceedsU64Maximum);
     
     adjusted_value.as_u64().unwrap()
 }

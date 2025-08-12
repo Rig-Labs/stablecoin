@@ -1,11 +1,6 @@
 library;
 
-use std::bytes::Bytes;
-
-pub struct Price {
-    pub value: u64,
-    pub time: u64,
-}
+use pyth_interface::data_structures::price::{Price, PriceFeedId};
 
 /// Oracle configuration for Stork, Pyth, and Redstone
 /// They're separate as Stork/Pyth use b256 for feeds while Redstone uses u256.
@@ -22,7 +17,7 @@ pub struct PythConfig {
     /// Contract address
     pub contract_id: ContractId,
     /// Price feed ID
-    pub feed_id: b256,
+    pub feed_id: PriceFeedId,
     /// Precision
     pub precision: u32,
 }
@@ -41,6 +36,14 @@ pub struct RedstoneConfig {
 abi Oracle {
     /// ------------------------ MAIN FUNCTIONS ------------------------ ///
 
+    // Initialize the oracle.
+    #[storage(read, write)]
+    fn initialize(
+        stork_config: Option<StorkConfig>,
+        pyth_config: Option<PythConfig>,
+        redstone_config: Option<RedstoneConfig>,
+    );
+
     // Get the price from the configured oracles.
     #[storage(read, write)]
     fn get_price() -> u64;
@@ -53,38 +56,37 @@ abi Oracle {
 
     // Set the stork config.
     #[storage(read, write)]
-    fn set_stork_config(config: StorkConfig);
+    fn set_stork_config(config: Option<StorkConfig>);
 
     // Set the pyth config.
     #[storage(read, write)]
-    fn set_pyth_config(config: PythConfig);
+    fn set_pyth_config(config: Option<PythConfig>);
 
     // Set the redstone config.
     #[storage(read, write)]
-    fn set_redstone_config(config: RedstoneConfig);
+    fn set_redstone_config(config: Option<RedstoneConfig>);
+
+    // Transfer ownership of the contract.
+    #[storage(read, write)]
+    fn transfer_ownership(new_owner: Identity);
 
     /// ------------------------ PUBLIC GETTERS ------------------------ ///
 
     // Get the stork config.
     #[storage(read)]
-    fn get_stork_config() -> StorkConfig;
+    fn get_stork_config() -> Option<StorkConfig>;
 
     // Get the pyth config.
     #[storage(read)]
-    fn get_pyth_config() -> PythConfig;
+    fn get_pyth_config() -> Option<PythConfig>;
 
     // Get the redstone config.
     #[storage(read)]
-    fn get_redstone_config() -> RedstoneConfig;
-}
+    fn get_redstone_config() -> Option<RedstoneConfig>;
 
-impl Price {
-    pub fn new(price: u64, time: u64) -> Self {
-        Self {
-            value: price,
-            time,
-        }
-    }
+    // Get the last good price.
+    #[storage(read)]
+    fn get_last_good_price() -> Price;
 }
 
 // Mocked Redstone structures
