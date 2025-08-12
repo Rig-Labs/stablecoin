@@ -363,7 +363,6 @@ fn _get_last_good_price() -> Price {
     storage.last_good_price.read()
 }
 
-#[storage(read)]
 fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
 
     // Get the stork contract.
@@ -387,7 +386,6 @@ fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
 }
 
 /// Get the pyth price, if set otherwise return None.
-#[storage(read)]
 fn _get_pyth_price(pyth_config: PythConfig) -> Price {
 
     // Get the pyth contract.
@@ -405,7 +403,6 @@ fn _get_pyth_price(pyth_config: PythConfig) -> Price {
 }
 
 /// Get the redstone price, if set otherwise return None.
-#[storage(read)]
 fn _get_redstone_price(redstone_config: RedstoneConfig) -> (u64, u64) {
 
     // Get the redstone contract.
