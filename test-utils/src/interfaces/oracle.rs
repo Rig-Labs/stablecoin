@@ -25,11 +25,50 @@ pub mod oracle_abi {
         types::{bech32::Bech32ContractId, errors::Error},
     };
 
+    pub async fn initialize<T: Account>(
+        oracle: &ContractInstance<Oracle<T>>,
+        stork: Option<StorkConfig>,
+        pyth: Option<PythConfig>,
+        redstone: Option<RedstoneConfig>,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .contract
+            .methods()
+            .initialize(stork, pyth, redstone)
+            .with_contract_ids(&[
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+            ])
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn get_last_good_price<T: Account>(
+        oracle: &ContractInstance<Oracle<T>>,
+    ) -> Result<CallResponse<Price>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .contract
+            .methods()
+            .get_last_good_price()
+            .with_contract_ids(&[
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+            ])
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
     pub async fn get_price<T: Account>(
         oracle: &ContractInstance<Oracle<T>>,
-        pyth: &Option<PythCore<T>>,
-        stork: &Option<StorkCore<T>>,
-        redstone: &Option<RedstoneCore<T>>,
+        stork: Option<&StorkCore<T>>,
+        pyth: Option<&PythCore<T>>,
+        redstone: Option<&RedstoneCore<T>>,
     ) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
 
@@ -99,6 +138,48 @@ pub mod oracle_abi {
             .unwrap();
     }
 
+    pub async fn set_stork_config<T: Account>(
+        oracle: &ContractInstance<Oracle<T>>,
+        stork: &StorkCore<T>,
+        config: StorkConfig,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .contract
+            .methods()
+            .set_stork_config(Some(config))
+            .with_contracts(&[stork])
+            .with_contract_ids(&[
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+            ])
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
+    pub async fn set_pyth_config<T: Account>(
+        oracle: &ContractInstance<Oracle<T>>,
+        pyth: &PythCore<T>,
+        config: PythConfig,
+    ) -> Result<CallResponse<()>, Error> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .contract
+            .methods()
+            .set_pyth_config(Some(config))
+            .with_contracts(&[pyth])
+            .with_contract_ids(&[
+                oracle.contract.contract_id().into(),
+                oracle.implementation_id.into(),
+            ])
+            .with_tx_policies(tx_params)
+            .call()
+            .await
+    }
+
     pub async fn set_redstone_config<T: Account>(
         oracle: &ContractInstance<Oracle<T>>,
         redstone: &RedstoneCore<T>,
@@ -109,7 +190,7 @@ pub mod oracle_abi {
         oracle
             .contract
             .methods()
-            .set_redstone_config(config)
+            .set_redstone_config(Some(config))
             .with_contracts(&[redstone])
             .with_contract_ids(&[
                 oracle.contract.contract_id().into(),

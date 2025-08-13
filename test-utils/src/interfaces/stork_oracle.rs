@@ -27,10 +27,15 @@ pub mod stork_oracle_abi {
         value: u64,
         timestamp_ns: u64,
     ) {
+        // construct quantized value - exactly matching the contract test
+        let quantized_value_u128 = value as u128;
+        let indent = 1u128 << 127;
+        let value_with_indent = indent + quantized_value_u128;
+
         let temporal_value = TemporalNumericValue {
             timestamp_ns,
             quantized_value: I128 { 
-                underlying: value as u128,
+                underlying: value_with_indent,
             },
         };
 

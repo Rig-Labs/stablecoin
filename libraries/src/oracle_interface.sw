@@ -9,8 +9,6 @@ pub struct StorkConfig {
     pub contract_id: ContractId,
     /// Price feed ID
     pub feed_id: b256,
-    /// Precision
-    pub precision: u32,
 }
 
 pub struct PythConfig {
@@ -87,6 +85,15 @@ abi Oracle {
     // Get the last good price.
     #[storage(read)]
     fn get_last_good_price() -> Price;
+
+    #[storage(read)]
+    fn get_stork_price() -> Option<(u64, u64)>;
+
+    #[storage(read)]
+    fn get_pyth_price() -> Option<Price>;
+
+    #[storage(read)]
+    fn get_redstone_price() -> Option<(u64, u64)>;
 }
 
 // Mocked Redstone structures

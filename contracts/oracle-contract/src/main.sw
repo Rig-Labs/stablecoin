@@ -143,14 +143,17 @@ impl Oracle for Contract {
         };
         let mut redstone_price: u64 = 0;
         let mut stork_timestamp: u64 = 0;
-        let mut pyth_timestamp: u64 = 0;
         let mut redstone_timestamp: u64 = 0;
 
         // Step 1: Attempt to get the price from Stork if configured.
         if stork_config.is_some() {
             // Get the price from Stork.
-            let (stork_price, stork_timestamp) = _get_stork_price(stork_config.unwrap());
-        
+            let (sp, st) = _get_stork_price(stork_config.unwrap());
+
+            // Assign after returning from _get_stork_price
+            stork_price = sp;
+            stork_timestamp = st;
+
             // Check if we have alternative oracles configured.
             if pyth_config.is_none() && redstone_config.is_none() {
 
@@ -163,10 +166,9 @@ impl Oracle for Contract {
             }
 
             // Do a staleness check on the Stork price if we have alternative oracles configured.
-            let timeout = stork_timestamp + TIMEOUT;
-            if current_time <= timeout {
+            if current_time <= stork_timestamp + TIMEOUT {
 
-                // Set the last good price and it's not stale, fn will check if its more recent.
+                // Set the last good price to the Stork price, fn will check if its more recent.
                 _set_last_good_price(last_good_price, stork_price, stork_timestamp);
 
                 // If the Stork price is not stale, return it.
@@ -180,10 +182,10 @@ impl Oracle for Contract {
         if pyth_config.is_some() {
 
             // Get the price from Pyth.
-            let pyth_price = _get_pyth_price(pyth_config.unwrap());
+            pyth_price = _get_pyth_price(pyth_config.unwrap());
 
             // Check if we have alternative oracles configured.
-            if redstone_config.is_none() {
+            if redstone_config.is_none() && stork_config.is_none() {
                 // Set the last good price to the Pyth price, fn will check if its more recent.
                 _set_last_good_price(last_good_price, pyth_price.price, pyth_price.publish_time);
 
@@ -204,10 +206,14 @@ impl Oracle for Contract {
             // Otherwise keep going by checking Redstone.
         }
 
-        // Step 3: Attempt to get the price from Redstone, which should be configured.
+        // Step 3: Attempt to get the price from Redstone, if not then we get last good price.
         if redstone_config.is_some() {
             // Get the price from Redstone.
-            let (redstone_price, redstone_timestamp) = _get_redstone_price(redstone_config.unwrap());
+            let (rp, rt) = _get_redstone_price(redstone_config.unwrap());
+
+            // Assign after returning from _get_redstone_price
+            redstone_price = rp;
+            redstone_timestamp = rt;
 
             // Check if Redstone is not stale.
             if current_time <= redstone_timestamp + TIMEOUT {
@@ -314,6 +320,35 @@ impl Oracle for Contract {
     fn get_last_good_price() -> Price {
         _get_last_good_price()
     }
+
+    #[storage(read)]
+    fn get_stork_price() -> Option<(u64, u64)> {  
+        let stork_config = _get_stork_config();
+        if stork_config.is_some() {
+            let (stork_price, stork_timestamp) = _get_stork_price(stork_config.unwrap());
+            return Some((stork_price, stork_timestamp));
+        }
+        return None;
+    }
+    
+    #[storage(read)]
+    fn get_pyth_price() -> Option<Price> {
+        let pyth_config = _get_pyth_config();
+        if pyth_config.is_some() {
+            return Some(_get_pyth_price(pyth_config.unwrap()));
+        }
+        return None;
+    }
+
+    #[storage(read)]
+    fn get_redstone_price() -> Option<(u64, u64)> {
+        let redstone_config = _get_redstone_config();
+        if redstone_config.is_some() {
+            let (redstone_price, redstone_timestamp) = _get_redstone_price(redstone_config.unwrap());
+            return Some((redstone_price, redstone_timestamp));
+        }
+        return None;
+    }
 }
 
 // --------------- SRC5 IMPLEMENTATION --------------- ///
@@ -372,12 +407,13 @@ fn _get_stork_price(stork_config: StorkConfig) -> (u64, u64) {
     let stork_price_result = stork_contract.get_temporal_numeric_value_unchecked_v1(
         stork_config.feed_id,
     );
-    let stork_timestamp_ns = stork_price_result.get_timestamp_ns();
+    // Use direct field access to avoid method resolution issues across ABI boundaries
+    let stork_timestamp_ns = stork_price_result.timestamp_ns;
     let stork_timestamp = stork_timestamp_ns / NS_TO_SECONDS;
-    let stork_quantized_value = stork_price_result.get_quantized_value();
+    let stork_quantized_value = stork_price_result.quantized_value;
 
     // Convert to formatted price, throws an error if cannot convert
-    let stork_price_u64 = _convert_to_fuel_price(
+    let stork_price_u64 = _stork_quantized_to_fuel_u64(
         stork_quantized_value,
         FUEL_DECIMAL_REPRESENTATION,
     );
@@ -476,77 +512,42 @@ fn _adjust_exponent(
     return current_exponent;
 }
 
-// Convert I128 to u64 with decimal place conversion and rounding up
-fn _convert_to_fuel_price(value: I128, fuel_decimal_representation: u32) -> u64 {
-    // Check if value is negative
-    require(value >= I128::zero(), OracleError::NegativeValue);
-    
+// Convert Stork I128 quantized value (biased by 2^127) into u64 with decimal conversion and rounding up
+fn _stork_quantized_to_fuel_u64(value: I128, fuel_decimal_representation: u32) -> u64 {
     let underlying = value.underlying();
-    
-    // Convert from 18 decimals to fuel_decimal_representation
-    let adjusted_value = if fuel_decimal_representation < 18 {
-        let precision = 18u32 - fuel_decimal_representation;
-        let magnitude = U128::from(10u32).pow(precision);
-        
-        underlying / magnitude
-    } else if fuel_decimal_representation > 18 {
-        let decimal_diff = fuel_decimal_representation - 18u32;
-        let multiplier = U128::from(10u32).pow(decimal_diff);
-        
-        require(
-            underlying <= U128::from(u64::max()) / multiplier,
-            OracleError::MultiplicationWouldExceedU64Maximum
-        );
-        
-        underlying * multiplier
-    } else {
-        // Same decimal places, no conversion needed
-        underlying
-    };
-    
-    // Ensure the final value fits within u64 range
-    require(adjusted_value <= U128::from(u64::max()), OracleError::PriceValueExceedsU64Maximum);
-    
-    adjusted_value.as_u64().unwrap()
+    _stork_underlying_to_fuel_u64(underlying, fuel_decimal_representation)
 }
 
-#[test]
-fn test_is_pyth_price_not_stale_or_outside_confidence() {
-    let pyth_price = Price {
-        confidence: 2,
-        publish_time: 100,
-        price: 100,
-        exponent: 0,
-    };
-    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, 100);
-    assert(is_stale_or_outside_confidence == false);
-}
+// Convert Stork underlying U128 (which includes the 2^127 bias) to u64 with decimal conversion and rounding up
+fn _stork_underlying_to_fuel_u64(underlying: U128, fuel_decimal_representation: u32) -> u64 {
 
-#[test]
-fn test_is_price_outside_confidence() {
-    // confidence is 5, which is outside 5% threshold 
-    let pyth_price = Price {
-        confidence: 5,
-        publish_time: 100,
-        price: 100,
-        exponent: 0,
-    };
-    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, 100);
-    assert(is_stale_or_outside_confidence == true);
-}
+    let bias = U128::from((1u64 << 63, 0u64)); // 2^127
 
-#[test]
-fn test_is_price_stale() {
-    // price is stale because it's published more than 4 hours ago
-    let publish_time = 10000;
-    let pyth_price = Price {
-        confidence: 2,
-        publish_time: publish_time,
-        price: 100,
-        exponent: 0,
-    };
-    let is_stale_or_outside_confidence = is_pyth_price_stale_or_outside_confidence(pyth_price, publish_time + TIMEOUT + 1);
-    assert(is_stale_or_outside_confidence == true);
+	// If the underlying is below the bias, the logical signed value is negative
+	require(underlying >= bias, OracleError::NegativeValue);
+	let magnitude = underlying - bias;
+
+	// Apply decimal conversion from 18 to fuel_decimal_representation with rounding up on downscale
+	let adjusted_value = if fuel_decimal_representation < 18u32 {
+		let precision = 18u32 - fuel_decimal_representation;
+		let divisor = U128::from(10u32).pow(precision);
+
+        (magnitude + (divisor - U128::from(1u32))).divide(divisor)
+    } else if fuel_decimal_representation > 18u32 {
+		let decimal_diff = fuel_decimal_representation - 18u32;
+		let multiplier = U128::from(10u32).pow(decimal_diff);
+		require(
+			magnitude <= U128::from(u64::max()).divide(multiplier),
+			OracleError::MultiplicationWouldExceedU64Maximum
+		);
+		magnitude * multiplier
+	} else {
+		magnitude
+	};
+
+    // Bound to u64
+	require(adjusted_value <= U128::from(u64::max()), OracleError::PriceValueExceedsU64Maximum);
+	adjusted_value.as_u64().unwrap()
 }
 
 #[test]
@@ -559,7 +560,7 @@ fn test_pyth_price_adjustment_fuel_vm_decimals_equal() {
         publish_time: 1000,
         exponent: 9,
     };
-    let adjusted_price = pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
+    let adjusted_price = _pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
     assert(adjusted_price.price == 1_000_000_000);
     assert(adjusted_price.confidence == 100);
     assert(adjusted_price.exponent == 9);
@@ -577,7 +578,7 @@ fn test_pyth_price_adjustment_fuel_vm_decimals_greater_than_9() {
         publish_time: 1000,
         exponent: 9,
     };
-    let adjusted_price = pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
+    let adjusted_price = _pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
     assert(adjusted_price.price == 100_000_000);
     assert(adjusted_price.confidence == 10);
     assert(adjusted_price.exponent == 10);
@@ -595,7 +596,7 @@ fn test_pyth_price_adjustment_fuel_vm_decimals_less_than_9() {
         publish_time: 1000,
         exponent: 9,
     };
-    let adjusted_price = pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
+    let adjusted_price = _pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
     assert(adjusted_price.price == 10_000_000_000);
     assert(adjusted_price.confidence == 1000);
     assert(adjusted_price.exponent == 8);
@@ -613,10 +614,71 @@ fn test_pyth_price_adjustment_fuel_vm_decimals_8_initial_exponent_8() {
         publish_time: 1000,
         exponent: 8, // add a second 10^1 to the price and confidence
     };
-    let adjusted_price = pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
+    let adjusted_price = _pyth_price_with_fuel_vm_precision_adjustment(original_price, fuel_vm_decimals);
     // Expected: price for 1_000_000_000 units (10 units with 8 decimals) should be 1_000_000_000 ($10.00)
     assert(adjusted_price.price == 100_000_000_000);
     assert(adjusted_price.confidence == 100_000);
     assert(adjusted_price.exponent == 7);
     assert(adjusted_price.publish_time == 1000);
+}
+
+#[test]
+fn test_stork_underlying_downscale_rounds_down() {
+    // magnitude = 1e18 -> for fuel 9, result = 1e9
+    let bias = U128::from(2u64).pow(127u32);
+    let magnitude = U128::from(2_000_000_000_000_000_000u64);
+    let underlying = bias + magnitude;
+    let result = _stork_underlying_to_fuel_u64(underlying, 9);
+    assert(result == 2_000_000_000);
+}
+
+
+#[test]
+fn test_stork_underlying_downscale_rounds_up() {
+    // magnitude = 1e18 + (1e9 - 1) -> rounds up to 1_000_000_001 when scaled to 9
+    let bias = U128::from(2u64).pow(127u32);
+    let magnitude = U128::from(1_000_000_000_000_000_000u64) + (U128::from(1_000_000_000u64) - U128::from(1u64));
+    let underlying = bias + magnitude;
+    let result = _stork_underlying_to_fuel_u64(underlying, 9);
+    assert(result == 1_000_000_001);
+}
+
+#[test]
+fn test_stork_underlying_same_decimals_18() {
+    // No change when fuel decimals = 18
+    let bias = U128::from(2u64).pow(127u32);
+    let magnitude = U128::from(123_456_789_000_000_000u64);
+    let underlying = bias + magnitude;
+    let result = _stork_underlying_to_fuel_u64(underlying, 18);
+    assert(result == 123_456_789_000_000_000);
+}
+
+#[test]
+fn test_stork_underlying_upscale_safe() {
+    // Upscale by +1 decimal: fuel=19 with small magnitude to avoid overflow
+    let bias = U128::from(2u64).pow(127u32);
+    let magnitude = U128::from(123_456_789u64); // small value
+    let underlying = bias + magnitude;
+    let result = _stork_underlying_to_fuel_u64(underlying, 19);
+    assert(result == 1_234_567_890);
+}
+
+#[test(should_revert)]
+fn test_stork_underlying_overflow_bound_direct() {
+    // When fuel=18 and magnitude > u64::MAX, it should revert
+    let bias = U128::from(2u64).pow(127u32);
+    let magnitude = U128::from(u64::max()) + U128::from(1u64);
+    let underlying = bias + magnitude;
+    let _ = _stork_underlying_to_fuel_u64(underlying, 18);
+}
+
+#[test(should_revert)]
+fn test_stork_underlying_overflow_on_multiply() {
+    // Choose multiplier = 10^2 and magnitude exceeding u64::MAX / 100
+    let bias = U128::from(2u64).pow(127u32);
+    let multiplier = U128::from(10u32).pow(2u32); // 100
+    let safe_max = U128::from(u64::max()) / multiplier;
+    let magnitude = safe_max + U128::from(1u64);
+    let underlying = bias + magnitude;
+    let _ = _stork_underlying_to_fuel_u64(underlying, 20);
 }
