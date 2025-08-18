@@ -2,7 +2,7 @@ use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::ContractInstance,
     interfaces::{
-        oracle::{oracle_abi, Oracle, RedstoneConfig},
+        oracle::{oracle_abi, Oracle, PythConfig, RedstoneConfig},
         pyth_oracle::{pyth_oracle_abi, Price, PythCore, DEFAULT_PYTH_PRICE_ID},
     },
     setup::common::{deploy_mock_pyth_oracle, deploy_mock_redstone_oracle, deploy_oracle},
@@ -29,11 +29,21 @@ async fn setup() -> (
 
     let oracle = deploy_oracle(
         &deployer_wallet,
-        pyth.contract_id().into(),
-        DEFAULT_PYTH_PRICE_ID,
         9, // Default Fuel VM decimals
         true,
         Identity::Address(deployer_wallet.address().into()),
+    )
+    .await;
+
+    let _ = oracle_abi::initialize(
+        &oracle,
+        None,
+        Some(PythConfig {
+            contract_id: pyth.contract_id().into(),
+            feed_id: DEFAULT_PYTH_PRICE_ID,
+            precision: 8,
+        }),
+        None,
     )
     .await;
 
@@ -42,12 +52,18 @@ async fn setup() -> (
 
 #[tokio::test]
 async fn test_set_redstone_config_authorization() {
-    let (oracle, _, deployer_wallet, attacker_wallet) = setup().await;
+    let (
+        oracle,
+        _,
+        deployer_wallet,
+        attacker_wallet,
+    ) = setup().await;
     let redstone = deploy_mock_redstone_oracle(&deployer_wallet).await;
+
     // Test 1: Authorized set_redstone_config
     let redstone_config = RedstoneConfig {
         contract_id: ContractId::from([1u8; 32]),
-        price_id: [2u8; 32].into(),
+        feed_id: [2u8; 32].into(),
         precision: 6,
     };
 
@@ -77,18 +93,7 @@ async fn test_set_redstone_config_authorization() {
         assert!(
             error
                 .to_string()
-                .contains("Only initializer can set Redstone config"),
-            "Unexpected error message: {}",
-            error
-        );
-    }
-
-    // Test 3: Attempt to set Redstone config again (should fail)
-    let result = oracle_abi::set_redstone_config(&oracle, &redstone, redstone_config.clone()).await;
-    assert!(result.is_err(), "Setting Redstone config twice should fail");
-    if let Err(error) = result {
-        assert!(
-            error.to_string().contains("Redstone config already set"),
+                .contains("NotOwner"),
             "Unexpected error message: {}",
             error
         );
@@ -119,7 +124,7 @@ async fn test_get_price_pyth_only() {
     .await;
 
     // Get price from Oracle (should return Pyth price)
-    let price = oracle_abi::get_price(&oracle, &pyth, &None).await.value;
+    let price = oracle_abi::get_price(&oracle, None, Some(&pyth), None).await.value;
     assert_eq!(price, pyth_price, "Oracle should return Pyth price");
 
     // Set Pyth price as stale
@@ -127,7 +132,7 @@ async fn test_get_price_pyth_only() {
     oracle_abi::set_debug_timestamp(&oracle, stale_timestamp).await;
 
     // Get price from Oracle (should return last good price)
-    let price = oracle_abi::get_price(&oracle, &pyth, &None).await.value;
+    let price = oracle_abi::get_price(&oracle, None, Some(&pyth), None).await.value;
     assert_eq!(
         price, pyth_price,
         "Oracle should return last good price when Pyth is stale"

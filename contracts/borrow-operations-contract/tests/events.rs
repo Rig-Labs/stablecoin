@@ -14,7 +14,11 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_trove_events() {
-    let (contracts, admin, wallets) = setup_protocol(4, false, false).await;
+    let (
+        contracts,
+        admin,
+        wallets,
+    ) = setup_protocol(4, false, false).await;
 
     // Setup initial conditions
     token_abi::mint_to_id(

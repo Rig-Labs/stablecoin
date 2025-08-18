@@ -8,7 +8,7 @@ use super::interfaces::{
     fpt_token::{FPTToken, FPTTokenConfigurables},
     hint_helper::HintHelper,
     multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
-    oracle::{Oracle, OracleConfigurables},
+    oracle::{Oracle, OracleConfigurables, PythConfig, RedstoneConfig},
     protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
     pyth_oracle::{Price, PythCore, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
     stork_oracle::{StorkCore, DEFAULT_STORK_FEED_ID},
@@ -86,8 +86,18 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt, false).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true, false).await;
+        let mut contracts = deploy_core_contracts(
+            &wallet,
+            use_test_fpt,
+            false,
+        ).await;
+        initialize_core_contracts(
+            &mut contracts,
+            &wallet,
+            use_test_fpt,
+            true,
+            false,
+        ).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -933,6 +943,14 @@ pub mod common {
         .await;
         pb.inc();
 
+        let _ = oracle_abi::initialize(
+            &oracle,
+            None,
+            None,
+            None,
+        )
+        .await;
+
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
 
@@ -1008,6 +1026,19 @@ pub mod common {
             Identity::Address(wallet.address().into()),
         )
         .await;
+
+        let _ = oracle_abi::initialize(
+            &oracle,
+            None,
+            Some(PythConfig {
+                contract_id: pyth.contract_id().into(),
+                feed_id: DEFAULT_PYTH_PRICE_ID,
+                precision: 8,
+            }),
+            None,
+        )
+        .await;
+
         let trove_manager = deploy_trove_manager_contract(wallet).await;
         let asset = deploy_token(wallet).await;
 

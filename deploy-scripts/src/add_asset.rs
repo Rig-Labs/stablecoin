@@ -51,6 +51,7 @@ pub async fn add_asset(symbol: &str) {
                 fuel_vm_decimals: asset_constants.decimals,
             }),
         },
+        stork_oracle: None,
         pyth_oracle: Some(PythConfig {
             contract: ContractId::from_str(asset_constants.pyth_contract_id).unwrap(),
             price_id: Bits256::from_hex_str(asset_constants.pyth_price_id).unwrap(),
@@ -74,7 +75,14 @@ pub async fn add_asset(symbol: &str) {
 
     // Deploy the asset contracts
     let asset_contracts =
-        deploy_asset_contracts(&wallet, &existing_asset_to_initialize, false, false).await;
+        deploy_asset_contracts(
+            &wallet,
+             &existing_asset_to_initialize,
+              false,
+               false,
+               false,
+               false,
+        ).await;
 
     query_oracles(&asset_contracts, wallet.clone()).await;
 
