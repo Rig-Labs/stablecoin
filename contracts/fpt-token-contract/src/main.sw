@@ -30,10 +30,11 @@ storage {
     is_initialized: bool = false,
 }
 // Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
-pub const TOTAL_SUPPLY: u64 = 1;
+pub const TOTAL_SUPPLY: u64 = 100;
 pub const DECIMALS: u8 = 9;
-pub const SYMBOL: str[3] = __to_str_array("FPT");
-pub const NAME: str[20] = __to_str_array("Fluid Protocol Token");
+pub const SYMBOL: str[3] = __to_str_array("MFT");
+pub const NAME: str[14] = __to_str_array("Moor Fee Token");
+
 impl FPTToken for Contract {
     //////////////////////////////////////
     // Initialization method
