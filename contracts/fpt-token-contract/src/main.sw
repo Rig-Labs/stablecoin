@@ -30,7 +30,7 @@ storage {
     is_initialized: bool = false,
 }
 // Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
-pub const TOTAL_SUPPLY: u64 = 100_000_000_000;
+pub const TOTAL_SUPPLY: u64 = 100;
 pub const DECIMALS: u8 = 9;
 pub const SYMBOL: str[3] = __to_str_array("MFT");
 pub const NAME: str[14] = __to_str_array("Moor Fee Token");
@@ -62,7 +62,7 @@ impl FPTToken for Contract {
 
         // Mint total supply to deployer
         let sender = msg_sender().unwrap();
-        mint_to(sender, SubId::zero(), TOTAL_SUPPLY);
+        mint_to(sender, SubId::zero(), TOTAL_SUPPLY * DECIMAL_PRECISION);
 
         SetSymbolEvent::new(
             AssetId::default(),
@@ -78,7 +78,7 @@ impl FPTToken for Contract {
             sender,
         )
             .log();
-        TotalSupplyEvent::new(AssetId::default(), TOTAL_SUPPLY, sender)
+        TotalSupplyEvent::new(AssetId::default(), TOTAL_SUPPLY * DECIMAL_PRECISION, sender)
             .log();
         storage.is_initialized.write(true);
     }
@@ -100,7 +100,7 @@ impl SRC20 for Contract {
     #[storage(read)]
     fn total_supply(asset: AssetId) -> Option<u64> {
         if asset == AssetId::default() {
-            return Some(TOTAL_SUPPLY);
+            return Some(TOTAL_SUPPLY * DECIMAL_PRECISION);
         }
         return None;
     }
