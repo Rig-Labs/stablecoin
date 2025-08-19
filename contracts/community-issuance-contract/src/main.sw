@@ -115,33 +115,15 @@ impl CommunityIssuance for Contract {
         initialize_ownership(admin);
     }
 
-    /// @notice Issues FPT tokens based on the current issuance schedule
+    /// @notice No longer issues any FPT tokens
     /// @dev Can only be called by the Stability Pool contract
     /// @custom:access-control Stability Pool only
     /// @return The amount of FPT tokens issued in this call
     #[storage(read, write)]
     fn issue_fpt() -> u64 {
         internal_require_caller_is_stability_pool();
-
-        let latest_total_fpt_issued = fm_multiply_ratio(
-            internal_get_fpt_supply_cap(
-                storage
-                    .time_transition_started
-                    .read(),
-                storage
-                    .total_transition_time_seconds
-                    .read(),
-                internal_get_current_time(),
-                storage
-                    .has_transitioned_rewards
-                    .read(),
-            ),
-            internal_get_cumulative_issuance_fraction(internal_get_current_time(), storage.deployment_time.read()),
-            DECIMAL_PRECISION,
-        );
-        let issuance = latest_total_fpt_issued - storage.total_fpt_issued.read();
-        storage.total_fpt_issued.write(latest_total_fpt_issued);
-        return issuance
+        storage.total_fpt_issued.write(0);
+        return 0
     }
 
     /// @notice Sends FPT tokens to a specified account

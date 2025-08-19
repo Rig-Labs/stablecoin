@@ -7,6 +7,8 @@ name = "oracle-contract"
 [dependencies]
 libraries = { path = "../../libraries" }
 pyth_interface = { git = "https://github.com/pyth-network/pyth-crosschain", rev = "04280eae6822b6d52d9f3502f1038b638381b37f" }
+sway_libs = { git = "https://github.com/FuelLabs/sway-libs", tag = "v0.24.0" }
+standards = { git = "https://github.com/FuelLabs/sway-standards", tag = "v0.6.3" }
 
 [proxy]
 enabled = true

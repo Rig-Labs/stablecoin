@@ -9,7 +9,7 @@ pub mod utils {
     use std::io::Write;
     use std::str::FromStr;
     use test_utils::data_structures::{
-        AssetContracts, AssetContractsOptionalRedstone, ContractInstance, PRECISION,
+        AssetContracts, AssetContractsOptionalOracles, ContractInstance, PRECISION,
     };
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
@@ -22,10 +22,10 @@ pub mod utils {
             active_pool::ActivePool, borrow_operations::BorrowOperations,
             coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
             default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
-            protocol_manager::ProtocolManager, pyth_oracle::PythCore,
+            protocol_manager::ProtocolManager, pyth_oracle::PythCore, stork_oracle::StorkCore,
             redstone_oracle::RedstoneCore, sorted_troves::SortedTroves,
             stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
-            vesting::VestingContract,
+            vesting::VestingContract, oracle::{StorkConfig, PythConfig, RedstoneConfig},
         },
     };
 
@@ -86,16 +86,16 @@ pub mod utils {
             BorrowOperations::new(borrow_operations_contract_id.clone(), wallet.clone()),
             borrow_operations_implementation_id.into(),
         );
-        let usdf_contract_id: Bech32ContractId =
-            contracts["usdf"].as_str().unwrap().parse().unwrap();
-        let usdf_implementation_id: ContractId = contracts["usdf_implementation_id"]
+        let usdm_contract_id: Bech32ContractId =
+            contracts["usdm"].as_str().unwrap().parse().unwrap();
+        let usdm_implementation_id: ContractId = contracts["usdm_implementation_id"]
             .as_str()
             .unwrap()
             .parse()
             .unwrap();
-        let usdf = ContractInstance::new(
-            test_utils::interfaces::usdf_token::USDFToken::new(usdf_contract_id, wallet.clone()),
-            usdf_implementation_id.into(),
+        let usdm = ContractInstance::new(
+            test_utils::interfaces::usdm_token::USDMToken::new(usdm_contract_id, wallet.clone()),
+            usdm_implementation_id.into(),
         );
 
         let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
@@ -246,8 +246,8 @@ pub mod utils {
         let fpt_asset_id: AssetId =
             AssetId::from_str(contracts["fpt_asset_id"].as_str().unwrap()).unwrap();
 
-        let usdf_asset_id: AssetId =
-            AssetId::from_str(contracts["usdf_asset_id"].as_str().unwrap()).unwrap();
+        let usdm_asset_id: AssetId =
+            AssetId::from_str(contracts["usdm_asset_id"].as_str().unwrap()).unwrap();
 
         let asset_contracts = contracts["asset_contracts"]
             .as_array()
@@ -276,6 +276,11 @@ pub mod utils {
                     .unwrap();
                 let trove_manager_implementation_id: ContractId = asset_contract
                     ["trove_manager_implementation_id"]
+                    .as_str()
+                    .unwrap()
+                    .parse()
+                    .unwrap();
+                let stork_contract_id: Bech32ContractId = asset_contract["stork_contract"]
                     .as_str()
                     .unwrap()
                     .parse()
@@ -309,8 +314,13 @@ pub mod utils {
                         trove_manager_implementation_id.into(),
                     ),
                     fuel_vm_decimals: asset_contract["fuel_vm_decimals"].as_u64().unwrap() as u32,
+                    mock_stork_oracle: StorkCore::new(stork_contract_id, wallet.clone()),
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
                     mock_redstone_oracle: RedstoneCore::new(redstone_contract_id, wallet.clone()),
+                    stork_feed_id: Bits256::from_hex_str(
+                        asset_contract["stork_feed_id"].as_str().unwrap(),
+                    )
+                    .unwrap(),
                     pyth_price_id: Bits256::from_hex_str(
                         asset_contract["pyth_price_id"].as_str().unwrap(),
                     )
@@ -327,14 +337,14 @@ pub mod utils {
 
         let protocol_contracts = ProtocolContracts {
             borrow_operations,
-            usdf,
+            usdm,
             stability_pool,
             protocol_manager,
             asset_contracts,
             fpt_staking,
             fpt_token,
             fpt_asset_id,
-            usdf_asset_id,
+            usdm_asset_id,
             community_issuance,
             vesting_contract,
             coll_surplus_pool,
@@ -352,7 +362,7 @@ pub mod utils {
     }
 
     pub fn write_asset_contracts_to_file(
-        asset_contracts: Vec<AssetContractsOptionalRedstone<WalletUnlocked>>,
+        asset_contracts: Vec<AssetContractsOptionalOracles<WalletUnlocked>>,
         is_testnet: bool,
     ) {
         // Read existing contracts.json
@@ -381,8 +391,10 @@ pub mod utils {
                 "trove_manager_implementation_id": format!("0x{}", asset_contract.trove_manager.implementation_id.to_string()),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
-                "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id),
-                "pyth_contract": asset_contract.mock_pyth_oracle.contract_id().to_string(),
+                "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id.unwrap()),
+                "pyth_contract": asset_contract.mock_pyth_oracle.unwrap().contract_id().to_string(),
+                "stork_feed_id": to_hex_str(&asset_contract.stork_feed_id.unwrap()),
+                "stork_contract": asset_contract.mock_stork_oracle.unwrap().contract_id().to_string(),
                 "redstone": match &asset_contract.redstone_config {
                     Some(redstone_config) => {
                         json!({
@@ -411,12 +423,12 @@ pub mod utils {
     }
 
     pub async fn query_oracles(
-        asset_contracts: &AssetContractsOptionalRedstone<WalletUnlocked>,
+        asset_contracts: &AssetContractsOptionalOracles<WalletUnlocked>,
         wallet: WalletUnlocked,
     ) {
         let current_pyth_price = pyth_oracle_abi::price_unsafe(
-            &asset_contracts.mock_pyth_oracle,
-            &asset_contracts.pyth_price_id,
+            &asset_contracts.mock_pyth_oracle.as_ref().unwrap(),
+            &asset_contracts.pyth_price_id.unwrap(),
         )
         .await
         .value;
@@ -428,18 +440,40 @@ pub mod utils {
             precision = pyth_precision
         );
         let mut redstone_contract: Option<RedstoneCore<WalletUnlocked>> = None;
+        let mut redstone_config = None;
         match &asset_contracts.redstone_config {
-            Some(redstone_config) => {
-                redstone_contract =
-                    Some(RedstoneCore::new(redstone_config.contract, wallet.clone()));
+            Some(config) => {
+                redstone_contract = Some(RedstoneCore::new(config.contract, wallet.clone()));
+                redstone_config = Some(RedstoneConfig {
+                    contract_id: config.contract,
+                    feed_id: config.price_id,
+                    precision: config.precision,
+                });
             }
             None => {}
         }
 
+        // Initialize oracle with all available price feeds
+        let _ = oracle_abi::initialize(
+            &asset_contracts.oracle,
+            Some(StorkConfig {
+                contract_id: ContractId::from(asset_contracts.mock_stork_oracle.as_ref().unwrap().contract_id()),
+                feed_id: asset_contracts.stork_feed_id.unwrap(),
+            }),
+            Some(PythConfig {
+                contract_id: ContractId::from(asset_contracts.mock_pyth_oracle.as_ref().unwrap().contract_id()),
+                feed_id: asset_contracts.pyth_price_id.unwrap(),
+                precision: 8, // Pyth uses 8 decimals by default
+            }),
+            redstone_config,
+        )
+        .await;
+
         let current_price = oracle_abi::get_price(
             &asset_contracts.oracle,
-            &asset_contracts.mock_pyth_oracle,
-            &redstone_contract,
+            asset_contracts.mock_stork_oracle.as_ref(),
+            asset_contracts.mock_pyth_oracle.as_ref(),
+            redstone_contract.as_ref(),
         )
         .await
         .value;

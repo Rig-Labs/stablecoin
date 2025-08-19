@@ -3,7 +3,7 @@ library;
 abi StabilityPool {
     #[storage(read, write)]
     fn initialize(
-        usdf_address: ContractId,
+        usdm_address: ContractId,
         community_issuance_address: ContractId,
         protocol_manager: ContractId,
         active_pool: ContractId,
@@ -34,13 +34,13 @@ abi StabilityPool {
     fn get_asset(asset_address: AssetId) -> u64;
 
     #[storage(read)]
-    fn get_total_usdf_deposits() -> u64;
+    fn get_total_usdm_deposits() -> u64;
 
     #[storage(read)]
     fn get_depositor_asset_gain(depositor: Identity, asset_address: AssetId) -> u64;
 
     #[storage(read)]
-    fn get_compounded_usdf_deposit(depositor: Identity) -> u64;
+    fn get_compounded_usdm_deposit(depositor: Identity) -> u64;
 
     #[storage(read)]
     fn get_depositor_fpt_gain(depositor: Identity) -> u64;

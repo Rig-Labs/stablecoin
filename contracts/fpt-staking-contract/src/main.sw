@@ -32,22 +32,22 @@ configurable {
 storage {
     valid_assets: StorageVec<AssetId> = StorageVec {},
     stakes: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
-    usdf_snapshot: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
+    usdm_snapshot: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
     asset_snapshot: StorageMap<(Identity, AssetId), u64> = StorageMap::<(Identity, AssetId), u64> {},
     f_asset: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
-    f_usdf: u64 = 0,
+    f_usdm: u64 = 0,
     total_fpt_staked: u64 = 0,
     protocol_manager_address: ContractId = ContractId::zero(),
     borrower_operations_address: ContractId = ContractId::zero(),
     fpt_asset_id: AssetId = AssetId::zero(),
-    usdf_asset_id: AssetId = AssetId::zero(),
+    usdm_asset_id: AssetId = AssetId::zero(),
     is_initialized: bool = false,
     lock_stake: bool = false,
     lock_unstake: bool = false,
 }
 /// @title FPT Staking Contract
 /// @author Fluid Protocol
-/// @notice This contract allows users to stake FPT tokens and earn rewards in USDF and other assets
+/// @notice This contract allows users to stake FPT tokens and earn rewards in USDM and other assets
 /// @dev Implements the FPTStaking interface for staking, unstaking, and reward distribution
 impl FPTStaking for Contract {
     /// @notice Initializes the FPT Staking contract with essential addresses and tokens
@@ -55,13 +55,13 @@ impl FPTStaking for Contract {
     /// @param protocol_manager_address The address of the protocol manager contract
     /// @param borrower_operations_address The address of the borrower operations contract
     /// @param fpt_asset_id The asset ID of the FPT token
-    /// @param usdf_asset_id The asset ID of the USDF token
+    /// @param usdm_asset_id The asset ID of the USDM token
     #[storage(read, write)]
     fn initialize(
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
         fpt_asset_id: AssetId,
-        usdf_asset_id: AssetId,
+        usdm_asset_id: AssetId,
     ) {
         require(
             msg_sender()
@@ -81,7 +81,7 @@ impl FPTStaking for Contract {
             .borrower_operations_address
             .write(borrower_operations_address);
         storage.fpt_asset_id.write(fpt_asset_id);
-        storage.usdf_asset_id.write(usdf_asset_id);
+        storage.usdm_asset_id.write(usdm_asset_id);
         storage.is_initialized.write(true);
     }
 
@@ -107,8 +107,8 @@ impl FPTStaking for Contract {
         let current_stake = storage.stakes.get(id).try_read().unwrap_or(0);
 
         if (current_stake != 0) {
-            let usdf_gain = internal_get_pending_usdf_gain(id);
-            internal_send_usdf_gain_to_user(usdf_gain);
+            let usdm_gain = internal_get_pending_usdm_gain(id);
+            internal_send_usdm_gain_to_user(usdm_gain);
 
             internal_send_pending_asset_gain_to_user(id);
         }
@@ -146,8 +146,8 @@ impl FPTStaking for Contract {
         let current_stake = storage.stakes.get(id).try_read().unwrap_or(0);
         require_user_has_stake(current_stake, amount);
 
-        let usdf_gain = internal_get_pending_usdf_gain(id);
-        internal_send_usdf_gain_to_user(usdf_gain);
+        let usdm_gain = internal_get_pending_usdm_gain(id);
+        internal_send_usdm_gain_to_user(usdm_gain);
         internal_send_pending_asset_gain_to_user(id);
 
         internal_update_user_snapshots(id);
@@ -202,13 +202,13 @@ impl FPTStaking for Contract {
         internal_get_pending_asset_gain(id, asset_address)
     }
 
-    /// @notice Retrieves the pending USDF gain for a specific user
-    /// @dev Calculates the unrealized USDF rewards for the given user
+    /// @notice Retrieves the pending USDM gain for a specific user
+    /// @dev Calculates the unrealized USDM rewards for the given user
     /// @param id The Identity of the user
-    /// @return The amount of pending USDF gain for the user
+    /// @return The amount of pending USDM gain for the user
     #[storage(read)]
-    fn get_pending_usdf_gain(id: Identity) -> u64 {
-        internal_get_pending_usdf_gain(id)
+    fn get_pending_usdm_gain(id: Identity) -> u64 {
+        internal_get_pending_usdm_gain(id)
     }
 
     /// @notice Retrieves the staking balance for a specific user
@@ -220,24 +220,24 @@ impl FPTStaking for Contract {
         storage.stakes.get(id).try_read().unwrap_or(0)
     }
 
-    /// @notice Increases the F_USDF value based on USDF fee amount
+    /// @notice Increases the F_USDM value based on USDM fee amount
     /// @dev Can only be called by the Borrower Operations contract
-    /// @dev If total FPT staked is greater than 0, calculates and adds USDF fee per FPT staked
-    /// @param usdf_fee_amount The amount of USDF fee to be distributed
+    /// @dev If total FPT staked is greater than 0, calculates and adds USDM fee per FPT staked
+    /// @param usdm_fee_amount The amount of USDM fee to be distributed
     #[storage(read, write)]
-    fn increase_f_usdf(usdf_fee_amount: u64) {
+    fn increase_f_usdm(usdm_fee_amount: u64) {
         require_is_borrower_operations();
         if (storage.total_fpt_staked.read() > 0) {
-            let usdf_fee_per_fpt_staked = fm_multiply_ratio(
-                usdf_fee_amount,
+            let usdm_fee_per_fpt_staked = fm_multiply_ratio(
+                usdm_fee_amount,
                 DECIMAL_PRECISION,
                 storage
                     .total_fpt_staked
                     .read(),
             );
             storage
-                .f_usdf
-                .write(storage.f_usdf.read() + usdf_fee_per_fpt_staked);
+                .f_usdm
+                .write(storage.f_usdm.read() + usdm_fee_per_fpt_staked);
         }
     }
 
@@ -264,17 +264,17 @@ impl FPTStaking for Contract {
 
     /// @notice Retrieves the current storage state of the FPT Staking contract
     /// @dev Returns a ReadStorage struct containing key contract parameters and state variables
-    /// @return ReadStorage A struct containing f_usdf, total_fpt_staked, protocol_manager_address,
-    ///         borrower_operations_address, fpt_asset_id, usdf_asset_id, and is_initialized
+    /// @return ReadStorage A struct containing f_usdm, total_fpt_staked, protocol_manager_address,
+    ///         borrower_operations_address, fpt_asset_id, usdm_asset_id, and is_initialized
     #[storage(read)]
     fn get_storage() -> ReadStorage {
         return ReadStorage {
-            f_usdf: storage.f_usdf.read(),
+            f_usdm: storage.f_usdm.read(),
             total_fpt_staked: storage.total_fpt_staked.read(),
             protocol_manager_address: storage.protocol_manager_address.read(),
             borrower_operations_address: storage.borrower_operations_address.read(),
             fpt_asset_id: storage.fpt_asset_id.read(),
-            usdf_asset_id: storage.usdf_asset_id.read(),
+            usdm_asset_id: storage.usdm_asset_id.read(),
             is_initialized: storage.is_initialized.read(),
         }
     }
@@ -304,33 +304,33 @@ fn internal_get_pending_asset_gain(id: Identity, asset_address: AssetId) -> u64 
     return asset_gain
 }
 
-/// @notice Calculates the pending USDF gain for a specific user
-/// @dev This function is internal and used to compute unrealized USDF gains
+/// @notice Calculates the pending USDM gain for a specific user
+/// @dev This function is internal and used to compute unrealized USDM gains
 /// @param id The Identity of the user
-/// @return The pending USDF gain for the user
+/// @return The pending USDM gain for the user
 #[storage(read)]
-fn internal_get_pending_usdf_gain(id: Identity) -> u64 {
-    let f_usdf_snapshot = storage.usdf_snapshot.get(id).try_read().unwrap_or(0);
-    let usdf_gain = fm_multiply_ratio(
+fn internal_get_pending_usdm_gain(id: Identity) -> u64 {
+    let f_usdm_snapshot = storage.usdm_snapshot.get(id).try_read().unwrap_or(0);
+    let usdm_gain = fm_multiply_ratio(
         storage
             .stakes
             .get(id)
             .try_read()
             .unwrap_or(0),
         storage
-            .f_usdf
-            .read() - f_usdf_snapshot,
+            .f_usdm
+            .read() - f_usdm_snapshot,
         DECIMAL_PRECISION,
     );
-    return usdf_gain
+    return usdm_gain
 }
 
-/// @notice Updates the snapshots of USDF and asset gains for a user
-/// @dev This function updates the user's snapshots for USDF and all valid assets
+/// @notice Updates the snapshots of USDM and asset gains for a user
+/// @dev This function updates the user's snapshots for USDM and all valid assets
 /// @param id The Identity of the user whose snapshots are being updated
 #[storage(read, write)]
 fn internal_update_user_snapshots(id: Identity) {
-    storage.usdf_snapshot.insert(id, storage.f_usdf.read());
+    storage.usdm_snapshot.insert(id, storage.f_usdm.read());
 
     let mut ind = 0;
     while ind < storage.valid_assets.len() {
@@ -422,13 +422,13 @@ fn internal_send_pending_asset_gain_to_user(id: Identity) {
     }
 }
 
-/// @notice Sends accumulated USDF gains to a user
-/// @dev Transfers USDF tokens to the user if the amount is greater than zero
-/// @param amount The amount of USDF to send to the user
+/// @notice Sends accumulated USDM gains to a user
+/// @dev Transfers USDM tokens to the user if the amount is greater than zero
+/// @param amount The amount of USDM to send to the user
 /// @custom:internal This function is intended for internal use within the contract
 #[storage(read)]
-fn internal_send_usdf_gain_to_user(amount: u64) {
+fn internal_send_usdm_gain_to_user(amount: u64) {
     if (amount > 0) {
-        transfer(msg_sender().unwrap(), storage.usdf_asset_id.read(), amount);
+        transfer(msg_sender().unwrap(), storage.usdm_asset_id.read(), amount);
     }
 }

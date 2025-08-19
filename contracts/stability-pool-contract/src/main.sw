@@ -1,10 +1,10 @@
 contract;
 
 // This contract, StabilityPool, manages the Stability Pool in the Fluid Protocol.
-// The Stability Pool holds USDF deposits from users and plays a crucial role in the liquidation process.
+// The Stability Pool holds USDM deposits from users and plays a crucial role in the liquidation process.
 //
 // Key functionalities include:
-// - Managing user deposits and withdrawals of USDF
+// - Managing user deposits and withdrawals of USDM
 // - Handling the offset of debt during trove liquidations
 // - Distributing gains (collateral assets and FPT tokens) to depositors
 // - Maintaining internal accounting of deposits, gains, and scale factors
@@ -26,7 +26,7 @@ use ::events::{
 use standards::src3::SRC3;
 use libraries::trove_manager_interface::data_structures::Status;
 use libraries::stability_pool_interface::StabilityPool;
-use libraries::usdf_token_interface::USDFToken;
+use libraries::usdm_token_interface::USDMToken;
 use libraries::oracle_interface::Oracle;
 use libraries::active_pool_interface::ActivePool;
 use libraries::trove_manager_interface::TroveManager;
@@ -57,17 +57,17 @@ storage {
     asset_contracts: StorageMap<AssetId, AssetContracts> = StorageMap::<AssetId, AssetContracts> {},
     active_pool_contract: ContractId = ContractId::zero(),
     protocol_manager_address: ContractId = ContractId::zero(),
-    usdf_contract: ContractId = ContractId::zero(),
-    usdf_asset_id: AssetId = AssetId::zero(),
+    usdm_contract: ContractId = ContractId::zero(),
+    usdm_asset_id: AssetId = AssetId::zero(),
     community_issuance_contract: ContractId = ContractId::zero(),
     sorted_troves_contract: ContractId = ContractId::zero(),
     // List of assets tracked by the Stability Pool
     valid_assets: StorageVec<AssetId> = StorageVec {},
     // Asset amounts held by the Stability Pool to be claimed
     asset: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {},
-    // Total amount of USDF held by the Stability Pool
-    total_usdf_deposits: u64 = 0,
-    // Amount of USDF deposited by each user
+    // Total amount of USDM held by the Stability Pool
+    total_usdm_deposits: u64 = 0,
+    // Amount of USDM deposited by each user
     deposits: StorageMap<Identity, u64> = StorageMap::<Identity, u64> {},
     // Starting S for each asset when deposited by each user
     deposit_snapshot_s_per_asset: StorageMap<(Identity, AssetId), U128> = StorageMap::<(Identity, AssetId), U128> {},
@@ -104,7 +104,7 @@ storage {
     p: U128 = U128::from(DECIMAL_PRECISION),
     last_fpt_error: U128 = U128::zero(),
     last_asset_error_offset: StorageMap<AssetId, U128> = StorageMap::<AssetId, U128> {},
-    last_usdf_error_offset: U128 = U128::zero(),
+    last_usdm_error_offset: U128 = U128::zero(),
     is_initialized: bool = false,
     // Locks to prevent reentrancy for functions not using Checks-Effects-Interactions pattern
     lock_provide_to_stability_pool: bool = false,
@@ -114,7 +114,7 @@ storage {
 impl StabilityPool for Contract {
     #[storage(read, write)]
     fn initialize(
-        usdf_contract: ContractId,
+        usdm_contract: ContractId,
         community_issuance_contract: ContractId,
         protocol_manager: ContractId,
         active_pool_contract: ContractId,
@@ -131,7 +131,7 @@ impl StabilityPool for Contract {
                 .read() == false,
             "StabilityPool: Contract is already initialized",
         );
-        storage.usdf_contract.write(usdf_contract);
+        storage.usdm_contract.write(usdm_contract);
         storage
             .community_issuance_contract
             .write(community_issuance_contract);
@@ -140,8 +140,8 @@ impl StabilityPool for Contract {
         storage.sorted_troves_contract.write(sorted_troves_contract);
         storage.is_initialized.write(true);
         storage
-            .usdf_asset_id
-            .write(AssetId::new(usdf_contract, SubId::zero()));
+            .usdm_asset_id
+            .write(AssetId::new(usdm_contract, SubId::zero()));
     }
     #[storage(read, write)]
     fn add_asset(
@@ -179,22 +179,22 @@ impl StabilityPool for Contract {
             "StabilityPool: Contract is locked",
         );
         storage.lock_provide_to_stability_pool.write(true);
-        require_usdf_is_valid_and_non_zero();
+        require_usdm_is_valid_and_non_zero();
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         internal_trigger_fpt_issuance();
-        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
+        let compounded_usdm_deposit = internal_get_compounded_usdm_deposit(msg_sender().unwrap());
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap());
-        let new_position = compounded_usdf_deposit + msg_amount();
+        let new_position = compounded_usdm_deposit + msg_amount();
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
         storage
-            .total_usdf_deposits
-            .write(storage.total_usdf_deposits.read() + msg_amount());
+            .total_usdm_deposits
+            .write(storage.total_usdm_deposits.read() + msg_amount());
         log(ProvideToStabilityPoolEvent {
             user: msg_sender().unwrap(),
             amount_to_deposit: msg_amount(),
             initial_amount: initial_deposit,
-            compounded_amount: compounded_usdf_deposit,
+            compounded_amount: compounded_usdm_deposit,
         });
         storage.lock_provide_to_stability_pool.write(false);
     }
@@ -218,23 +218,23 @@ impl StabilityPool for Contract {
         let initial_deposit = storage.deposits.get(msg_sender().unwrap()).try_read().unwrap_or(0);
         require_user_has_initial_deposit(initial_deposit);
         internal_trigger_fpt_issuance();
-        let compounded_usdf_deposit = internal_get_compounded_usdf_deposit(msg_sender().unwrap());
-        let usdf_to_withdraw = fm_min(amount, compounded_usdf_deposit);
-        let new_position = compounded_usdf_deposit - usdf_to_withdraw;
+        let compounded_usdm_deposit = internal_get_compounded_usdm_deposit(msg_sender().unwrap());
+        let usdm_to_withdraw = fm_min(amount, compounded_usdm_deposit);
+        let new_position = compounded_usdm_deposit - usdm_to_withdraw;
         internal_pay_out_asset_gains(msg_sender().unwrap()); // pay out asset gains
         internal_pay_out_fpt_gains(msg_sender().unwrap()); // pay out FPT
         internal_update_deposits_and_snapshots(msg_sender().unwrap(), new_position);
-        send_usdf_to_depositor(msg_sender().unwrap(), usdf_to_withdraw);
+        send_usdm_to_depositor(msg_sender().unwrap(), usdm_to_withdraw);
         log(WithdrawFromStabilityPoolEvent {
             user: msg_sender().unwrap(),
-            amount_to_withdraw: usdf_to_withdraw,
+            amount_to_withdraw: usdm_to_withdraw,
             initial_amount: initial_deposit,
-            compounded_amount: compounded_usdf_deposit,
+            compounded_amount: compounded_usdm_deposit,
         });
         storage.lock_withdraw_from_stability_pool.write(false);
     }
     /*
-    * Cancels out the specified debt against the USDF contained in the Stability Pool (as far as possible)
+    * Cancels out the specified debt against the USDM contained in the Stability Pool (as far as possible)
     * and transfers the Trove's asset collateral from ActivePool to StabilityPool.
     * Only called by liquidation functions in the TroveManager.
     */
@@ -252,13 +252,13 @@ impl StabilityPool for Contract {
         );
         storage.lock_offset.write(true);
         require_caller_is_trove_manager();
-        let total_usdf = storage.total_usdf_deposits.read();
-        if total_usdf == 0 || debt_to_offset == 0 {
+        let total_usdm = storage.total_usdm_deposits.read();
+        if total_usdm == 0 || debt_to_offset == 0 {
             storage.lock_offset.write(false);
             return;
         }
         internal_trigger_fpt_issuance();
-        let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdf, asset_contract);
+        let per_unit_staked_changes = compute_rewards_per_unit_staked(coll_to_offset, debt_to_offset, total_usdm, asset_contract);
         update_reward_sum_and_product(
             per_unit_staked_changes.0,
             per_unit_staked_changes.1,
@@ -277,16 +277,16 @@ impl StabilityPool for Contract {
         return storage.asset.get(asset_contract).try_read().unwrap_or(0);
     }
     #[storage(read)]
-    fn get_total_usdf_deposits() -> u64 {
-        return storage.total_usdf_deposits.try_read().unwrap_or(0);
+    fn get_total_usdm_deposits() -> u64 {
+        return storage.total_usdm_deposits.try_read().unwrap_or(0);
     }
     #[storage(read)]
     fn get_depositor_asset_gain(depositor: Identity, asset_contract: AssetId) -> u64 {
         return internal_get_depositor_asset_gain(depositor, asset_contract);
     }
     #[storage(read)]
-    fn get_compounded_usdf_deposit(depositor: Identity) -> u64 {
-        return internal_get_compounded_usdf_deposit(depositor);
+    fn get_compounded_usdm_deposit(depositor: Identity) -> u64 {
+        return internal_get_compounded_usdm_deposit(depositor);
     }
     #[storage(read)]
     fn get_depositor_fpt_gain(depositor: Identity) -> u64 {
@@ -312,12 +312,12 @@ fn internal_trigger_fpt_issuance() {
 }
 #[storage(read, write)]
 fn internal_update_g(fpt_issuance: u64) {
-    if (storage.total_usdf_deposits.read() == 0
+    if (storage.total_usdm_deposits.read() == 0
         || fpt_issuance == 0)
     {
         return;
     }
-    let fpt_per_unit_staked = internal_compute_fpt_per_unit_staked(fpt_issuance, storage.total_usdf_deposits.read());
+    let fpt_per_unit_staked = internal_compute_fpt_per_unit_staked(fpt_issuance, storage.total_usdm_deposits.read());
     let marginal_fpt_gain = U128::from(fpt_per_unit_staked) * storage.p.read();
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
@@ -327,12 +327,12 @@ fn internal_update_g(fpt_issuance: u64) {
         .insert((current_epoch, current_scale), new_epoch_to_scale_to_gain);
 }
 #[storage(read, write)]
-fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdf_deposits: u64) -> u64 {
+fn internal_compute_fpt_per_unit_staked(fpt_issuance: u64, total_usdm_deposits: u64) -> u64 {
     let fpt_numerator = U128::from(fpt_issuance) * U128::from(DECIMAL_PRECISION) + storage.last_fpt_error.read();
-    let fpt_per_unit_staked = fpt_numerator / U128::from(total_usdf_deposits);
+    let fpt_per_unit_staked = fpt_numerator / U128::from(total_usdm_deposits);
     storage
         .last_fpt_error
-        .write(fpt_numerator - (fpt_per_unit_staked * U128::from(total_usdf_deposits)));
+        .write(fpt_numerator - (fpt_per_unit_staked * U128::from(total_usdm_deposits)));
     fpt_per_unit_staked.as_u64().unwrap()
 }
 #[storage(read)]
@@ -374,16 +374,16 @@ fn require_is_protocol_manager() {
     );
 }
 #[storage(read)]
-fn require_usdf_is_valid_and_non_zero() {
+fn require_usdm_is_valid_and_non_zero() {
     require(
         storage
-            .usdf_asset_id
+            .usdm_asset_id
             .read() == msg_asset_id(),
-        "StabilityPool: USDF address is invalid",
+        "StabilityPool: USDM address is invalid",
     );
     require(
         msg_amount() > 0,
-        "StabilityPool: USDF amount must be greater than 0",
+        "StabilityPool: USDM amount must be greater than 0",
     );
 }
 #[storage(read)]
@@ -422,7 +422,7 @@ fn internal_get_asset_gain_from_snapshots(
     return gain.as_u64().unwrap();
 }
 #[storage(read)]
-fn internal_get_compounded_usdf_deposit(depositor: Identity) -> u64 {
+fn internal_get_compounded_usdm_deposit(depositor: Identity) -> u64 {
     let initial_deposit = storage.deposits.get(depositor).try_read().unwrap_or(0);
     if initial_deposit == 0 {
         return 0;
@@ -454,10 +454,10 @@ fn get_compounded_stake_from_snapshots(initial_stake: u64, snapshots: Snapshots)
     return compounded_stake.as_u64().unwrap();
 }
 #[storage(read, write)]
-fn internal_decrease_usdf(total_usdf_to_decrease: u64) {
+fn internal_decrease_usdm(total_usdm_to_decrease: u64) {
     storage
-        .total_usdf_deposits
-        .write(storage.total_usdf_deposits.read() - total_usdf_to_decrease);
+        .total_usdm_deposits
+        .write(storage.total_usdm_deposits.read() - total_usdm_to_decrease);
 }
 #[storage(read, write)]
 fn internal_increase_asset(total_asset_to_increase: u64, asset_contract: AssetId) {
@@ -503,15 +503,15 @@ fn send_asset_gain_to_depositor(depositor: Identity, gain: u64, asset_contract: 
     transfer(depositor, asset_contract, gain);
 }
 #[storage(read, write)]
-fn send_usdf_to_depositor(depositor: Identity, amount: u64) {
+fn send_usdm_to_depositor(depositor: Identity, amount: u64) {
     if (amount == 0) {
         return;
     }
     storage
-        .total_usdf_deposits
-        .write(storage.total_usdf_deposits.read() - amount);
-    let usdf_asset_id = storage.usdf_asset_id.read();
-    transfer(depositor, usdf_asset_id, amount);
+        .total_usdm_deposits
+        .write(storage.total_usdm_deposits.read() - amount);
+    let usdm_asset_id = storage.usdm_asset_id.read();
+    transfer(depositor, usdm_asset_id, amount);
 }
 #[storage(read)]
 fn require_caller_is_trove_manager() {
@@ -552,45 +552,45 @@ fn require_user_has_initial_deposit(deposit: u64) {
 fn compute_rewards_per_unit_staked(
     coll_to_add: u64,
     debt_to_offset: u64,
-    total_usdf_deposits: u64,
+    total_usdm_deposits: u64,
     asset_contract: AssetId,
 ) -> (U128, U128) {
     let asset_numerator: U128 = U128::from(coll_to_add) * U128::from(DECIMAL_PRECISION) + storage.last_asset_error_offset.get(asset_contract).try_read().unwrap_or(U128::zero());
     require(
-        debt_to_offset <= total_usdf_deposits,
-        "StabilityPool: Debt offset exceeds total USDF deposits",
+        debt_to_offset <= total_usdm_deposits,
+        "StabilityPool: Debt offset exceeds total USDM deposits",
     );
-    let mut usdf_loss_per_unit_staked: U128 = U128::zero();
-    if (debt_to_offset == total_usdf_deposits) {
-        usdf_loss_per_unit_staked = U128::from(DECIMAL_PRECISION);
-        storage.last_usdf_error_offset.write(U128::zero());
+    let mut usdm_loss_per_unit_staked: U128 = U128::zero();
+    if (debt_to_offset == total_usdm_deposits) {
+        usdm_loss_per_unit_staked = U128::from(DECIMAL_PRECISION);
+        storage.last_usdm_error_offset.write(U128::zero());
     } else {
-        let usdf_loss_per_unit_staked_numerator: U128 = U128::from(debt_to_offset) * U128::from(DECIMAL_PRECISION) - storage.last_usdf_error_offset.read();
-        usdf_loss_per_unit_staked = usdf_loss_per_unit_staked_numerator / U128::from(total_usdf_deposits) + U128::from(1u64);
+        let usdm_loss_per_unit_staked_numerator: U128 = U128::from(debt_to_offset) * U128::from(DECIMAL_PRECISION) - storage.last_usdm_error_offset.read();
+        usdm_loss_per_unit_staked = usdm_loss_per_unit_staked_numerator / U128::from(total_usdm_deposits) + U128::from(1u64);
         storage
-            .last_usdf_error_offset
+            .last_usdm_error_offset
             .write(
-                usdf_loss_per_unit_staked * U128::from(total_usdf_deposits) - usdf_loss_per_unit_staked_numerator,
+                usdm_loss_per_unit_staked * U128::from(total_usdm_deposits) - usdm_loss_per_unit_staked_numerator,
             );
     }
-    let asset_gain_per_unit_staked = asset_numerator / U128::from(total_usdf_deposits);
+    let asset_gain_per_unit_staked = asset_numerator / U128::from(total_usdm_deposits);
     storage
         .last_asset_error_offset
         .insert(
             asset_contract,
-            asset_numerator - (asset_gain_per_unit_staked * U128::from(total_usdf_deposits)),
+            asset_numerator - (asset_gain_per_unit_staked * U128::from(total_usdm_deposits)),
         );
-    return (asset_gain_per_unit_staked, usdf_loss_per_unit_staked);
+    return (asset_gain_per_unit_staked, usdm_loss_per_unit_staked);
 }
 #[storage(read, write)]
 fn update_reward_sum_and_product(
     asset_gain_per_unit_staked: U128,
-    usdf_loss_per_unit_staked: U128,
+    usdm_loss_per_unit_staked: U128,
     asset: AssetId,
 ) {
     let current_p = storage.p.read();
     let mut new_p: U128 = U128::zero();
-    let new_product_factor = U128::from(DECIMAL_PRECISION) - usdf_loss_per_unit_staked;
+    let new_product_factor = U128::from(DECIMAL_PRECISION) - usdm_loss_per_unit_staked;
     let current_epoch = storage.current_epoch.read();
     let current_scale = storage.current_scale.read();
     let current_s = storage.epoch_to_scale_to_sum.get((current_epoch, current_scale, asset)).try_read().unwrap_or(U128::zero());
@@ -624,14 +624,14 @@ fn internal_move_offset_coll_and_debt(
     asset_contract: AssetId,
 ) {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().bits());
-    let usdf_contract = abi(SRC3, storage.usdf_contract.read().bits());
-    internal_decrease_usdf(debt_to_offset);
+    let usdm_contract = abi(SRC3, storage.usdm_contract.read().bits());
+    internal_decrease_usdm(debt_to_offset);
     internal_increase_asset(coll_to_add, asset_contract);
-    active_pool.decrease_usdf_debt(debt_to_offset, asset_contract);
-    usdf_contract
+    active_pool.decrease_usdm_debt(debt_to_offset, asset_contract);
+    usdm_contract
         .burn {
             coins: debt_to_offset,
-            asset_id: storage.usdf_asset_id.read().bits(),
+            asset_id: storage.usdm_asset_id.read().bits(),
         }(SubId::zero(), debt_to_offset);
     active_pool.send_asset(
         Identity::ContractId(ContractId::this()),

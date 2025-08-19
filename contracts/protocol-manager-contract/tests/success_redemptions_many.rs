@@ -41,7 +41,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet1.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -54,7 +54,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet2.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -67,7 +67,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet3.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -80,7 +80,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet2.clone(),
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -93,7 +93,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         healthy_wallet3.clone(),
         &contracts.asset_contracts[1],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -105,13 +105,13 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     // 2 Collateral types
     // 1st collateral
     // 20k FUEL > 9k FUEL > 8k FUEL
-    // 10k USDF > 5k USDF > 5k USDF + (fees)
+    // 10k USDM > 5k USDM > 5k USDM + (fees)
 
     // 2nd collateral
     // 7k mock2 > 15k mock2
-    // 5k USDF   > 5k USDF + (fees)
+    // 5k USDM   > 5k USDM + (fees)
 
-    // Redeeming 10k USDF, so 1,3 and 2,2 should be closed
+    // Redeeming 10k USDM, so 1,3 and 2,2 should be closed
 
     let redemption_amount: u64 = 8_000 * PRECISION;
 
@@ -123,7 +123,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         contracts.protocol_manager.implementation_id,
     );
 
-    let pre_redemption_active_pool_debt = active_pool_abi::get_usdf_debt(
+    let pre_redemption_active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -137,7 +137,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
         0,
         None,
         None,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
@@ -154,7 +154,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )

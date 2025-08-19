@@ -18,6 +18,9 @@ pub const ORACLE_CONTRACT_BINARY_PATH: &str =
 pub const ORACLE_CONTRACT_STORAGE_PATH: &str =
     "contracts/oracle-contract/out/debug/oracle-contract-storage_slots.json";
 
+pub const STORK_ORACLE_CONTRACT_BINARY_PATH: &str =
+    "contracts/mock-stork-contract/out/debug/mock-stork-contract.bin";
+
 pub const REDSTONE_ORACLE_CONTRACT_BINARY_PATH: &str =
     "contracts/mock-redstone-contract/out/debug/mock-redstone-contract.bin";
 
@@ -54,10 +57,10 @@ pub const COLL_SURPLUS_POOL_CONTRACT_BINARY_PATH: &str =
 pub const COLL_SURPLUS_POOL_CONTRACT_STORAGE_PATH: &str =
     "contracts/coll-surplus-pool-contract/out/debug/coll-surplus-pool-contract-storage_slots.json";
 
-pub const USDF_TOKEN_CONTRACT_BINARY_PATH: &str =
-    "contracts/usdf-token-contract/out/debug/usdf-token-contract.bin";
-pub const USDF_TOKEN_CONTRACT_STORAGE_PATH: &str =
-    "contracts/usdf-token-contract/out/debug/usdf-token-contract-storage_slots.json";
+pub const USDM_TOKEN_CONTRACT_BINARY_PATH: &str =
+    "contracts/usdm-token-contract/out/debug/usdm-token-contract.bin";
+pub const USDM_TOKEN_CONTRACT_STORAGE_PATH: &str =
+    "contracts/usdm-token-contract/out/debug/usdm-token-contract-storage_slots.json";
 
 pub const FPT_TOKEN_CONTRACT_BINARY_PATH: &str =
     "contracts/fpt-token-contract/out/debug/fpt-token-contract.bin";

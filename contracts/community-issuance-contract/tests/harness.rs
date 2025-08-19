@@ -64,7 +64,7 @@ async fn test_emissions() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -80,7 +80,7 @@ async fn test_emissions() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -93,7 +93,7 @@ async fn test_emissions() {
     let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         100 * PRECISION,
     )
@@ -131,7 +131,7 @@ async fn test_emissions() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         100 * PRECISION,
     )
@@ -190,7 +190,7 @@ async fn test_admin_start_rewards_increase_transition() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -206,7 +206,7 @@ async fn test_admin_start_rewards_increase_transition() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -231,7 +231,7 @@ async fn test_admin_start_rewards_increase_transition() {
     let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         100 * PRECISION,
     )
@@ -307,7 +307,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -323,7 +323,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -354,7 +354,7 @@ async fn test_public_start_rewards_increase_transition_after_deadline() {
     let res = stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         100 * PRECISION,
     )
@@ -466,7 +466,7 @@ async fn test_emissions_multiple_deposits() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -485,7 +485,7 @@ async fn test_emissions_multiple_deposits() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -504,7 +504,7 @@ async fn test_emissions_multiple_deposits() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -541,7 +541,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet1,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -550,7 +550,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet2,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -559,7 +559,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet3,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -572,7 +572,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet1,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -581,7 +581,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet2,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )
@@ -591,7 +591,7 @@ async fn test_emissions_multiple_deposits() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_wallet3,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         300 * PRECISION,
     )

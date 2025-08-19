@@ -13,7 +13,7 @@ abi TroveManager {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
-        usdf_contract: ContractId,
+        usdm_contract: ContractId,
         asset_contract: AssetId,
         protocol_manager: ContractId,
     );
@@ -21,7 +21,7 @@ abi TroveManager {
     #[storage(read, write)]
     fn redeem_collateral_from_trove(
         borrower: Identity,
-        max_usdf_amount: u64,
+        max_usdm_amount: u64,
         price: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
@@ -76,7 +76,7 @@ abi TroveManager {
     fn get_pending_asset_rewards(id: Identity) -> u64;
 
     #[storage(read)]
-    fn get_pending_usdf_rewards(id: Identity) -> u64;
+    fn get_pending_usdm_rewards(id: Identity) -> u64;
 
     #[storage(read)]
     fn has_pending_rewards(id: Identity) -> bool;

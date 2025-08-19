@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "./contracts/mock-pyth-contract",
+  "./contracts/mock-stork-contract",
   "./contracts/mock-redstone-contract",
   "./contracts/oracle-contract",
   "./contracts/multi-trove-getter-contract",
@@ -11,7 +12,7 @@ members = [
   "./contracts/borrow-operations-contract",
   "./contracts/protocol-manager-contract",
   "./contracts/token-contract",
-  "./contracts/usdf-token-contract",
+  "./contracts/usdm-token-contract",
   "./contracts/active-pool-contract",
   "./contracts/coll-surplus-pool-contract",
   "./contracts/default-pool-contract",

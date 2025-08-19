@@ -6,7 +6,7 @@ use test_utils::{
         active_pool::{active_pool_abi, ActivePool},
         default_pool::{default_pool_abi, DefaultPool},
         token::{token_abi, Token},
-        usdf_token::{usdf_token_abi, USDFToken},
+        usdm_token::{usdm_token_abi, USDMToken},
     },
     setup::common::{deploy_active_pool, deploy_default_pool, deploy_token, setup_protocol},
 };
@@ -91,7 +91,7 @@ async fn get_contract_instance() -> (
 async fn proper_intialize() {
     let (default_pool, mock_fuel, _admin, _) = get_contract_instance().await;
 
-    let debt = default_pool_abi::get_usdf_debt(
+    let debt = default_pool_abi::get_usdm_debt(
         &default_pool,
         mock_fuel
             .contract_id()
@@ -118,7 +118,7 @@ async fn proper_intialize() {
 async fn proper_adjust_debt() {
     let (default_pool, mock_fuel, _admin, _) = get_contract_instance().await;
 
-    default_pool_abi::increase_usdf_debt(
+    default_pool_abi::increase_usdm_debt(
         &default_pool,
         1000,
         mock_fuel
@@ -128,7 +128,7 @@ async fn proper_adjust_debt() {
     )
     .await;
 
-    let debt = default_pool_abi::get_usdf_debt(
+    let debt = default_pool_abi::get_usdm_debt(
         &default_pool,
         mock_fuel
             .contract_id()
@@ -139,7 +139,7 @@ async fn proper_adjust_debt() {
     .value;
     assert_eq!(debt, 1000);
 
-    default_pool_abi::decrease_usdf_debt(
+    default_pool_abi::decrease_usdm_debt(
         &default_pool,
         500,
         mock_fuel
@@ -149,7 +149,7 @@ async fn proper_adjust_debt() {
     )
     .await;
 
-    let debt = default_pool_abi::get_usdf_debt(
+    let debt = default_pool_abi::get_usdm_debt(
         &default_pool,
         mock_fuel
             .contract_id()
@@ -218,20 +218,20 @@ async fn proper_adjust_asset_col() {
 }
 
 #[tokio::test]
-async fn fails_unauthorized_usdf_operations() {
+async fn fails_unauthorized_usdm_operations() {
     let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     let attacker = wallets.pop().unwrap();
 
-    // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker = ContractInstance::new(
-        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
-        contracts.usdf.implementation_id,
+    // Create a new instance of the USDM token contract with the attacker's wallet
+    let usdm_token_attacker = ContractInstance::new(
+        USDMToken::new(contracts.usdm.contract.contract_id(), attacker.clone()),
+        contracts.usdm.implementation_id,
     );
 
     // Try to add a trove manager using the attacker's wallet
     let result =
-        usdf_token_abi::add_trove_manager(&usdf_token_attacker, ContractId::from([1u8; 32])).await;
+        usdm_token_abi::add_trove_manager(&usdm_token_attacker, ContractId::from([1u8; 32])).await;
 
     // Assert that the operation fails
     assert!(
@@ -242,21 +242,21 @@ async fn fails_unauthorized_usdf_operations() {
     // Optionally, you can check for a specific error message
     if let Err(error) = result {
         assert!(
-            error.to_string().contains("USDFToken: NotAuthorized"),
+            error.to_string().contains("USDMToken: NotAuthorized"),
             "Unexpected error message: {}",
             error
         );
     }
 
-    // Create a new instance of the USDF token contract with the attacker's wallet
-    let usdf_token_attacker = ContractInstance::new(
-        USDFToken::new(contracts.usdf.contract.contract_id(), attacker.clone()),
-        contracts.usdf.implementation_id,
+    // Create a new instance of the USDM token contract with the attacker's wallet
+    let usdm_token_attacker = ContractInstance::new(
+        USDMToken::new(contracts.usdm.contract.contract_id(), attacker.clone()),
+        contracts.usdm.implementation_id,
     );
 
     // Test 1: Unauthorized add_trove_manager
     let result =
-        usdf_token_abi::add_trove_manager(&usdf_token_attacker, ContractId::from([1u8; 32])).await;
+        usdm_token_abi::add_trove_manager(&usdm_token_attacker, ContractId::from([1u8; 32])).await;
 
     assert!(
         result.is_err(),
@@ -264,15 +264,15 @@ async fn fails_unauthorized_usdf_operations() {
     );
     if let Err(error) = result {
         assert!(
-            error.to_string().contains("USDFToken: NotAuthorized"),
+            error.to_string().contains("USDMToken: NotAuthorized"),
             "Unexpected error message: {}",
             error
         );
     }
 
     // Test 2: Unauthorized mint
-    let result = usdf_token_abi::mint(
-        &usdf_token_attacker,
+    let result = usdm_token_abi::mint(
+        &usdm_token_attacker,
         1_000 * PRECISION,
         Identity::Address(attacker.address().into()),
     )
@@ -280,11 +280,11 @@ async fn fails_unauthorized_usdf_operations() {
 
     assert!(
         result.is_err(),
-        "Unauthorized user should not be able to mint USDF tokens"
+        "Unauthorized user should not be able to mint USDM tokens"
     );
     if let Err(error) = result {
         assert!(
-            error.to_string().contains("USDFToken: NotAuthorized"),
+            error.to_string().contains("USDMToken: NotAuthorized"),
             "Unexpected error message: {}",
             error
         );

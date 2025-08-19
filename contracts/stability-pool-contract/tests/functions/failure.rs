@@ -8,19 +8,19 @@ use test_utils::{
             pyth_oracle_abi, pyth_price_feed, pyth_price_no_precision_with_time, PYTH_TIMESTAMP,
         },
         stability_pool::{stability_pool_abi, StabilityPool},
-        usdf_token::usdf_token_abi,
+        usdm_token::usdm_token_abi,
     },
-    setup::common::{deploy_usdf_token, setup_protocol},
+    setup::common::{deploy_usdm_token, setup_protocol},
 };
 
 #[tokio::test]
-async fn fails_fake_usdf_deposit() {
+async fn fails_fake_usdm_deposit() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
 
-    let fake_usdf = deploy_usdf_token(&admin).await;
+    let fake_usdm = deploy_usdm_token(&admin).await;
 
-    usdf_token_abi::initialize(
-        &fake_usdf,
+    usdm_token_abi::initialize(
+        &fake_usdm,
         ContractId::zeroed(),
         Identity::Address(admin.address().into()),
         Identity::Address(admin.address().into()),
@@ -28,8 +28,8 @@ async fn fails_fake_usdf_deposit() {
     .await
     .unwrap();
 
-    usdf_token_abi::mint(
-        &fake_usdf,
+    usdm_token_abi::mint(
+        &fake_usdm,
         5_000 * PRECISION,
         Identity::Address(admin.address().into()),
     )
@@ -39,12 +39,12 @@ async fn fails_fake_usdf_deposit() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &fake_usdf,
+        &fake_usdm,
         &contracts.asset_contracts[0].asset,
         600 * PRECISION,
     )
     .await
-    .expect_err("Able to deposit fake USDF into stability pool");
+    .expect_err("Able to deposit fake USDM into stability pool");
 }
 
 #[tokio::test]
@@ -100,7 +100,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
         healthy_wallet.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -114,7 +114,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
         admin.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -127,7 +127,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
     stability_pool_abi::provide_to_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         init_stability_deposit,
     )
@@ -139,7 +139,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
         liquidated_wallet.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -160,7 +160,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
     let withdraw_result = stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].oracle,
@@ -189,7 +189,7 @@ async fn fails_withdraw_with_undercollateralized_trove() {
     let withdraw_result = stability_pool_abi::withdraw_from_stability_pool(
         &contracts.stability_pool,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].oracle,

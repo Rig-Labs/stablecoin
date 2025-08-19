@@ -37,12 +37,15 @@ async fn test_authorizations() {
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
         symbol: "".to_string(),
         asset: None,
+        stork_oracle: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
     let asset_contracts = deploy_asset_contracts(
         &protocol_manager_owner,
         &existing_asset_to_initialize,
+        true,
+        true,
         true,
         true,
     )
@@ -75,6 +78,7 @@ async fn test_authorizations() {
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
         symbol: "".to_string(),
         asset: None,
+        stork_oracle: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
@@ -82,6 +86,8 @@ async fn test_authorizations() {
     let asset_contracts_owner = deploy_asset_contracts(
         &protocol_manager_owner,
         &existing_asset_to_initialize,
+        true,
+        true,
         true,
         true,
     )
@@ -105,7 +111,7 @@ async fn test_authorizations() {
         asset_contracts_owner.oracle.contract.contract_id().into(),
         &contracts.borrow_operations,
         &contracts.stability_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
@@ -150,12 +156,15 @@ async fn test_authorizations() {
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
         symbol: "".to_string(),
         asset: None,
+        stork_oracle: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
     let asset_contracts = deploy_asset_contracts(
         &protocol_manager_owner,
         &existing_asset_to_initialize,
+        true,
+        true,
         true,
         true,
     )
@@ -192,12 +201,15 @@ async fn test_authorizations() {
     let existing_asset_to_initialize: ExistingAssetContracts = ExistingAssetContracts {
         symbol: "".to_string(),
         asset: None,
+        stork_oracle: None,
         pyth_oracle: None,
         redstone_oracle: None,
     };
     let unauthorized_asset_contracts = deploy_asset_contracts(
         &protocol_manager_owner,
         &existing_asset_to_initialize,
+        true,
+        true,
         true,
         true,
     )

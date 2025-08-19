@@ -23,7 +23,7 @@ async fn proper_intialize() {
     )
     .await;
 
-    let pending_rewards_fpt = fpt_staking_abi::get_pending_usdf_gain(
+    let pending_rewards_fpt = fpt_staking_abi::get_pending_usdm_gain(
         &contracts.fpt_staking,
         Identity::Address(admin.address().into()),
     )
@@ -82,7 +82,7 @@ async fn proper_staking_multiple_positions() {
 
     let fpt_asset_id = contracts.fpt_asset_id;
 
-    let usdf_asset_id = contracts.usdf_asset_id;
+    let usdm_asset_id = contracts.usdm_asset_id;
 
     let healthy_wallet1 = wallets.pop().unwrap();
     let healthy_wallet2 = wallets.pop().unwrap();
@@ -192,7 +192,7 @@ async fn proper_staking_multiple_positions() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -205,19 +205,19 @@ async fn proper_staking_multiple_positions() {
     .await
     .unwrap();
 
-    let usdf_in_staking_balance = provider
-        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), usdf_asset_id)
+    let usdm_in_staking_balance = provider
+        .get_contract_asset_balance(&contracts.fpt_staking.contract.contract_id(), usdm_asset_id)
         .await
         .unwrap();
 
-    // println!("USDF balance in staking contract {}", usdf_in_staking_balance);
+    // println!("USDM balance in staking contract {}", usdm_in_staking_balance);
 
-    // let initial_usdf_user_balance = provider
-    // .get_asset_balance(healthy_wallet3.address().into(), usdf_asset_id)
+    // let initial_usdm_user_balance = provider
+    // .get_asset_balance(healthy_wallet3.address().into(), usdm_asset_id)
     // .await
     // .unwrap();
 
-    // println!("USDF balance user {}", initial_usdf_user_balance);
+    // println!("USDM balance user {}", initial_usdm_user_balance);
 
     // let asset_user_balance = provider
     // .get_asset_balance(healthy_wallet3.address().into(), asset_id)
@@ -242,7 +242,7 @@ async fn proper_staking_multiple_positions() {
         0,
         None,
         None,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.coll_surplus_pool,
         &contracts.default_pool,
@@ -264,7 +264,7 @@ async fn proper_staking_multiple_positions() {
 
     let _res1 = fpt_staking_abi::unstake(
         &fpt_staking_healthy_wallet1,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &mock_token,
         500_000_000,
@@ -273,7 +273,7 @@ async fn proper_staking_multiple_positions() {
 
     let _res2 = fpt_staking_abi::unstake(
         &fpt_staking_healthy_wallet2,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         &mock_token,
         500_000_000,
@@ -298,31 +298,31 @@ async fn proper_staking_multiple_positions() {
 
     assert_eq!(fpt_balance_user2, 4_500_000_000, "FPT Balance is wrong");
 
-    let usdf_user1_balance = provider
-        .get_asset_balance(healthy_wallet1.address().into(), usdf_asset_id)
+    let usdm_user1_balance = provider
+        .get_asset_balance(healthy_wallet1.address().into(), usdm_asset_id)
         .await
         .unwrap();
 
-    // println!("USDF balance user {}", usdf_user1_balance);
+    // println!("USDM balance user {}", usdm_user1_balance);
 
-    let usdf_user2_balance = provider
-        .get_asset_balance(healthy_wallet2.address().into(), usdf_asset_id)
+    let usdm_user2_balance = provider
+        .get_asset_balance(healthy_wallet2.address().into(), usdm_asset_id)
         .await
         .unwrap();
 
-    // println!("USDF balance user {}", usdf_user2_balance);
+    // println!("USDM balance user {}", usdm_user2_balance);
 
     assert_eq!(
-        usdf_user1_balance, usdf_user2_balance,
-        "users usdf rewards don't match"
+        usdm_user1_balance, usdm_user2_balance,
+        "users usdm rewards don't match"
     );
 
-    // println!("Should receive (together) usdf {}", usdf_in_staking_balance);
+    // println!("Should receive (together) usdm {}", usdm_in_staking_balance);
 
     assert_eq!(
-        usdf_user1_balance + usdf_user2_balance,
-        usdf_in_staking_balance,
-        "Users did not receive exactly all the usdf staking rewards"
+        usdm_user1_balance + usdm_user2_balance,
+        usdm_in_staking_balance,
+        "Users did not receive exactly all the usdm staking rewards"
     );
 
     let asset_user1_balance = provider

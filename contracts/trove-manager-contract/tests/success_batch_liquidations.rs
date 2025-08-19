@@ -20,7 +20,7 @@ use test_utils::{
 };
 
 #[tokio::test]
-async fn proper_batch_liquidations_enough_usdf_in_sp() {
+async fn proper_batch_liquidations_enough_usdm_in_sp() {
     let (contracts, _admin, mut wallets) = setup_protocol(5, false, false).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
@@ -34,19 +34,19 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     let liquidated_wallet2 = wallets.pop().unwrap();
     let healthy_wallet1 = wallets.pop().unwrap();
 
-    let usdf_deposit_to_be_liquidated = 1_000 * PRECISION;
+    let usdm_deposit_to_be_liquidated = 1_000 * PRECISION;
     let asset_deposit_to_be_liquidated = 1_100 * PRECISION;
 
     borrow_operations_utils::mint_token_and_open_trove(
         liquidated_wallet.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
         asset_deposit_to_be_liquidated,
-        usdf_deposit_to_be_liquidated,
+        usdm_deposit_to_be_liquidated,
     )
     .await;
 
@@ -54,12 +54,12 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         liquidated_wallet2.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
         asset_deposit_to_be_liquidated,
-        usdf_deposit_to_be_liquidated,
+        usdm_deposit_to_be_liquidated,
     )
     .await;
 
@@ -67,7 +67,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         healthy_wallet1.clone(),
         &contracts.asset_contracts[0],
         &contracts.borrow_operations,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.active_pool,
         &contracts.sorted_troves,
@@ -87,7 +87,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     stability_pool_abi::provide_to_stability_pool(
         &stability_pool_healthy_wallet1,
         &contracts.community_issuance,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.asset_contracts[0].asset,
         5_000 * PRECISION,
     )
@@ -113,7 +113,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
         &contracts.active_pool,
         &contracts.default_pool,
         &contracts.coll_surplus_pool,
-        &contracts.usdf,
+        &contracts.usdm,
         vec![
             Identity::Address(liquidated_wallet.address().into()),
             Identity::Address(liquidated_wallet2.address().into()),
@@ -166,12 +166,12 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     )
     .await;
 
-    let deposits = stability_pool_abi::get_total_usdf_deposits(&contracts.stability_pool)
+    let deposits = stability_pool_abi::get_total_usdm_deposits(&contracts.stability_pool)
         .await
         .unwrap()
         .value;
 
-    let liquidated_net_debt = with_min_borrow_fee(usdf_deposit_to_be_liquidated);
+    let liquidated_net_debt = with_min_borrow_fee(usdm_deposit_to_be_liquidated);
     assert_eq!(deposits, 5_000 * PRECISION - 2 * liquidated_net_debt);
 
     let asset = stability_pool_abi::get_asset(
@@ -195,7 +195,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .await
     .value;
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -214,7 +214,7 @@ async fn proper_batch_liquidations_enough_usdf_in_sp() {
     .await
     .value;
 
-    let default_pool_debt = default_pool_abi::get_usdf_debt(
+    let default_pool_debt = default_pool_abi::get_usdm_debt(
         &contracts.default_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )

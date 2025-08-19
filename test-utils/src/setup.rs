@@ -8,15 +8,16 @@ use super::interfaces::{
     fpt_token::{FPTToken, FPTTokenConfigurables},
     hint_helper::HintHelper,
     multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
-    oracle::{Oracle, OracleConfigurables},
+    oracle::{Oracle, OracleConfigurables, PythConfig, RedstoneConfig},
     protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
     pyth_oracle::{Price, PythCore, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
+    stork_oracle::{StorkCore, DEFAULT_STORK_FEED_ID},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::{SortedTroves, SortedTrovesConfigurables},
     stability_pool::{StabilityPool, StabilityPoolConfigurables},
     token::Token,
     trove_manager::{TroveManagerContract, TroveManagerContractConfigurables},
-    usdf_token::{USDFToken, USDFTokenConfigurables},
+    usdm_token::{USDMToken, USDMTokenConfigurables},
     vesting::{VestingContract, VestingContractConfigurables},
 };
 use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
@@ -25,7 +26,7 @@ pub mod common {
     use super::*;
     use crate::{
         data_structures::{
-            AssetContracts, AssetContractsOptionalRedstone, ContractInstance,
+            AssetContracts, AssetContractsOptionalOracles, ContractInstance,
             ExistingAssetContracts, ProtocolContracts, RedstoneConfig, PRECISION,
         },
         interfaces::{
@@ -43,9 +44,10 @@ pub mod common {
             redstone_oracle::{redstone_oracle_abi, redstone_price_feed_with_id},
             sorted_troves::sorted_troves_abi,
             stability_pool::stability_pool_abi,
+            stork_oracle::stork_oracle_abi,
             token::token_abi,
             trove_manager::trove_manager_abi,
-            usdf_token::usdf_token_abi,
+            usdm_token::usdm_token_abi,
         },
         paths::*,
     };
@@ -84,8 +86,18 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt, false).await;
-        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true, false).await;
+        let mut contracts = deploy_core_contracts(
+            &wallet,
+            use_test_fpt,
+            false,
+        ).await;
+        initialize_core_contracts(
+            &mut contracts,
+            &wallet,
+            use_test_fpt,
+            true,
+            false,
+        ).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -125,7 +137,7 @@ pub mod common {
         if verbose {
             pb.inc();
         }
-        let usdf = deploy_usdf_token(wallet).await;
+        let usdm = deploy_usdm_token(wallet).await;
         if verbose {
             pb.inc();
         }
@@ -175,7 +187,7 @@ pub mod common {
         if verbose {
             pb.inc();
         }
-        let usdf_asset_id = usdf
+        let usdm_asset_id = usdm
             .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into());
@@ -185,14 +197,14 @@ pub mod common {
 
         ProtocolContracts {
             borrow_operations,
-            usdf,
+            usdm,
             stability_pool,
             asset_contracts: vec![],
             protocol_manager,
             fpt_staking,
             fpt_token,
             fpt_asset_id,
-            usdf_asset_id,
+            usdm_asset_id,
             coll_surplus_pool,
             default_pool,
             active_pool,
@@ -237,8 +249,8 @@ pub mod common {
             pb.inc();
         }
 
-        usdf_token_abi::initialize(
-            &contracts.usdf,
+        usdm_token_abi::initialize(
+            &contracts.usdm,
             contracts.protocol_manager.contract.contract_id().into(),
             Identity::ContractId(contracts.stability_pool.contract.contract_id().into()),
             Identity::ContractId(contracts.borrow_operations.contract.contract_id().into()),
@@ -251,7 +263,7 @@ pub mod common {
 
         borrow_operations_abi::initialize(
             &contracts.borrow_operations,
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.fpt_staking.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
@@ -265,7 +277,7 @@ pub mod common {
 
         stability_pool_abi::initialize(
             &contracts.stability_pool,
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.community_issuance.contract.contract_id().into(),
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -282,7 +294,7 @@ pub mod common {
             contracts.protocol_manager.contract.contract_id().into(),
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.fpt_asset_id,
-            contracts.usdf_asset_id,
+            contracts.usdm_asset_id,
         )
         .await;
         if verbose {
@@ -294,7 +306,7 @@ pub mod common {
             contracts.borrow_operations.contract.contract_id().into(),
             contracts.stability_pool.contract.contract_id().into(),
             contracts.fpt_staking.contract.contract_id().into(),
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
             contracts.default_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
@@ -553,6 +565,38 @@ pub mod common {
         )
     }
 
+    pub async fn deploy_mock_stork_oracle(wallet: &WalletUnlocked) -> StorkCore<WalletUnlocked> {
+        let mut rng = rand::thread_rng();
+        let salt = rng.gen::<[u8; 32]>();
+        let tx_policies = TxPolicies::default().with_tip(1);
+        
+        let id = Contract::load_from(
+            &get_absolute_path_from_relative(STORK_ORACLE_CONTRACT_BINARY_PATH),
+            LoadConfiguration::default().with_salt(salt),
+        )
+        .unwrap()
+        .deploy(&wallet.clone(), tx_policies)
+        .await;
+
+        match id {
+            Ok(id) => {
+                return StorkCore::new(id, wallet.clone());
+            }
+            Err(_) => {
+                let id = Contract::load_from(
+                    &get_absolute_path_from_relative(STORK_ORACLE_CONTRACT_BINARY_PATH),
+                    LoadConfiguration::default().with_salt(salt),
+                )
+                .unwrap()
+                .deploy(&wallet.clone(), tx_policies)
+                .await
+                .unwrap();
+
+                return StorkCore::new(id, wallet.clone());
+            }
+        }
+    }
+
     pub async fn deploy_mock_pyth_oracle(wallet: &WalletUnlocked) -> PythCore<WalletUnlocked> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
@@ -621,8 +665,6 @@ pub mod common {
 
     pub async fn deploy_oracle(
         wallet: &WalletUnlocked,
-        pyth: ContractId,
-        pyth_price_id: Bits256,
         fuel_vm_decimals: u32,
         debug: bool,
         initializer: Identity,
@@ -632,15 +674,11 @@ pub mod common {
         let tx_policies = TxPolicies::default().with_tip(1);
 
         let configurables = OracleConfigurables::default()
-            .with_PYTH(pyth)
-            .unwrap()
-            .with_PYTH_PRICE_ID(pyth_price_id)
-            .unwrap()
             .with_DEBUG(debug)
             .unwrap()
             .with_FUEL_DECIMAL_REPRESENTATION(fuel_vm_decimals)
             .unwrap()
-            .with_INITIALIZER(initializer)
+            .with_INITIAL_OWNER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
@@ -756,14 +794,20 @@ pub mod common {
         wallet: &WalletUnlocked,
         existing_contracts: &ExistingAssetContracts,
         debug: bool,
+        deploy_stork: bool,
+        deploy_pyth: bool,
         deploy_redstone: bool,
-    ) -> AssetContractsOptionalRedstone<WalletUnlocked> {
+    ) -> AssetContractsOptionalOracles<WalletUnlocked> {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(6);
 
         pb.inc();
 
-        let (asset, asset_id, fuel_vm_decimals) = match &existing_contracts.asset {
+        let (
+            asset,
+            asset_id,
+            fuel_vm_decimals,
+        ) = match &existing_contracts.asset {
             Some(asset_contract) => {
                 pb.inc();
                 (
@@ -801,31 +845,62 @@ pub mod common {
                 (asset.contract_id().into(), asset_id, 9) // Default fuel_vm_decimals to 9
             }
         };
-
-        // Deploy or use existing Pyth oracle
-        let (mock_pyth_oracle, pyth_price_id) = match &existing_contracts.pyth_oracle {
-            Some(pyth_config) => {
+        // Deploy or use existing Stork oracle
+        let (
+            mock_stork_oracle,
+            stork_feed_id,
+        ) = match &existing_contracts.stork_oracle {
+            Some(stork_config) => {
                 pb.inc();
                 (
-                    PythCore::new(pyth_config.contract, wallet.clone()),
-                    pyth_config.price_id,
+                    Some(StorkCore::new(stork_config.contract, wallet.clone())),
+                    Some(stork_config.feed_id),
                 )
             }
             None => {
-                let pyth = deploy_mock_pyth_oracle(&wallet).await;
-                let pyth_price_id = Bits256::from(asset_id);
+                if deploy_stork {
+                    let stork = deploy_mock_stork_oracle(&wallet).await;
+                    let stork_feed_id = Bits256::from(asset_id);
+                    pb.inc();
+                    stork_oracle_abi::set_temporal_value(&stork, stork_feed_id, 1 * PRECISION, PYTH_TIMESTAMP).await;
+                    (Some(stork), Some(stork_feed_id))
+                } else {
+                    (None, None)
+                }
+            }
+        };
+
+        // Deploy or use existing Pyth oracle
+        let (
+            mock_pyth_oracle,
+            pyth_price_id,
+        ) = match &existing_contracts.pyth_oracle {
+            Some(pyth_config) => {
                 pb.inc();
-                let pyth_feed = vec![(
-                    pyth_price_id,
-                    Price {
-                        confidence: 0,
-                        exponent: 9,
-                        price: 1 * PRECISION,
-                        publish_time: PYTH_TIMESTAMP,
-                    },
-                )];
-                pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
-                (pyth, pyth_price_id)
+                (
+                    Some(PythCore::new(pyth_config.contract, wallet.clone())),
+                    Some(pyth_config.price_id),
+                )
+            }
+            None => {
+                if deploy_pyth {
+                    let pyth = deploy_mock_pyth_oracle(&wallet).await;
+                    let pyth_price_id = Bits256::from(asset_id);
+                    pb.inc();
+                    let pyth_feed = vec![(
+                        pyth_price_id,
+                        Price {
+                            confidence: 0,
+                            exponent: 9,
+                            price: 1 * PRECISION,
+                            publish_time: PYTH_TIMESTAMP,
+                        },
+                    )];
+                    pyth_oracle_abi::update_price_feeds(&pyth, pyth_feed).await;
+                    (Some(pyth), Some(pyth_price_id))
+                } else {
+                    (None, None)
+                }
             }
         };
 
@@ -861,14 +936,20 @@ pub mod common {
         // Always deploy a new oracle and trove manager
         let oracle = deploy_oracle(
             &wallet,
-            mock_pyth_oracle.contract_id().into(),
-            pyth_price_id,
             fuel_vm_decimals,
             debug,
             Identity::Address(wallet.address().into()),
         )
         .await;
         pb.inc();
+
+        let _ = oracle_abi::initialize(
+            &oracle,
+            None,
+            None,
+            None,
+        )
+        .await;
 
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
@@ -880,12 +961,27 @@ pub mod common {
 
         println!("Deploying asset contracts... Done");
         println!("Oracle: {}", oracle.contract.contract_id());
-        println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
 
         println!("Trove Manager: {}", trove_manager.contract.contract_id());
         println!("Asset: {}", asset);
         println!("Asset ID: {}", asset_id);
-        println!("Pyth Price ID: {:?}", pyth_price_id);
+
+        match &mock_stork_oracle {
+            Some(mock_stork_oracle) => {
+                println!("Mock Stork Oracle: {}", mock_stork_oracle.contract_id());
+                println!("Stork Feed ID: {:?}", stork_feed_id);
+            }
+            None => println!("No Stork Oracle"),
+        }
+
+        match &mock_pyth_oracle {
+            Some(mock_pyth_oracle) => {
+                println!("Mock Pyth Oracle: {}", mock_pyth_oracle.contract_id());
+                println!("Pyth Price ID: {:?}", pyth_price_id);
+            }
+            None => println!("No Pyth Oracle"),
+        }
+
         match &redstone_config {
             Some(redstone_config) => {
                 println!("Redstone Oracle: {}", redstone_config.contract);
@@ -896,15 +992,17 @@ pub mod common {
         }
         println!("Fuel VM Decimals: {}", fuel_vm_decimals);
 
-        AssetContractsOptionalRedstone {
+        AssetContractsOptionalOracles {
             symbol: existing_contracts.symbol.clone(),
             oracle,
+            mock_stork_oracle,
             mock_pyth_oracle,
             redstone_config,
             trove_manager,
             asset: Token::new(asset, wallet.clone()),
             asset_id,
             pyth_price_id,
+            stork_feed_id,
             fuel_vm_decimals,
         }
     }
@@ -915,17 +1013,32 @@ pub mod common {
         name: String,
         symbol: String,
     ) -> AssetContracts<WalletUnlocked> {
+
+        // Deploy oracle contracts
+        let stork = deploy_mock_stork_oracle(wallet).await;
         let pyth = deploy_mock_pyth_oracle(wallet).await;
         let redstone = deploy_mock_redstone_oracle(wallet).await;
+
         let oracle = deploy_oracle(
             wallet,
-            pyth.contract_id().into(),
-            DEFAULT_PYTH_PRICE_ID,
             9,
             true,
             Identity::Address(wallet.address().into()),
         )
         .await;
+
+        let _ = oracle_abi::initialize(
+            &oracle,
+            None,
+            Some(PythConfig {
+                contract_id: pyth.contract_id().into(),
+                feed_id: DEFAULT_PYTH_PRICE_ID,
+                precision: 8,
+            }),
+            None,
+        )
+        .await;
+
         let trove_manager = deploy_trove_manager_contract(wallet).await;
         let asset = deploy_token(wallet).await;
 
@@ -948,7 +1061,7 @@ pub mod common {
             contracts.default_pool.contract.contract_id().into(),
             contracts.active_pool.contract.contract_id().into(),
             contracts.coll_surplus_pool.contract.contract_id().into(),
-            contracts.usdf.contract.contract_id().into(),
+            contracts.usdm.contract.contract_id().into(),
             asset
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
@@ -970,7 +1083,7 @@ pub mod common {
             oracle.contract.contract_id().into(),
             &contracts.borrow_operations,
             &contracts.stability_pool,
-            &contracts.usdf,
+            &contracts.usdm,
             &contracts.fpt_staking,
             &contracts.coll_surplus_pool,
             &contracts.default_pool,
@@ -987,11 +1100,13 @@ pub mod common {
 
         AssetContracts {
             oracle,
+            mock_stork_oracle: stork,
             mock_pyth_oracle: pyth,
             mock_redstone_oracle: redstone,
             trove_manager,
             asset,
             asset_id,
+            stork_feed_id: DEFAULT_STORK_FEED_ID,
             pyth_price_id: DEFAULT_PYTH_PRICE_ID,
             redstone_price_id: DEFAULT_REDSTONE_PRICE_ID,
             redstone_precision: 9,
@@ -1001,7 +1116,7 @@ pub mod common {
 
     pub async fn initialize_asset<T: Account>(
         core_protocol_contracts: &ProtocolContracts<T>,
-        asset_contracts: &AssetContractsOptionalRedstone<T>,
+        asset_contracts: &AssetContractsOptionalOracles<T>,
     ) -> Result<CallResponse<()>> {
         println!("Initializing asset contracts...");
         let mut pb = ProgressBar::new(2);
@@ -1039,7 +1154,7 @@ pub mod common {
                 .contract
                 .contract_id()
                 .into(),
-            core_protocol_contracts.usdf.contract.contract_id().into(),
+            core_protocol_contracts.usdm.contract.contract_id().into(),
             asset_contracts.asset_id,
             core_protocol_contracts
                 .protocol_manager
@@ -1058,7 +1173,7 @@ pub mod common {
             asset_contracts.oracle.contract.contract_id().into(),
             &core_protocol_contracts.borrow_operations,
             &core_protocol_contracts.stability_pool,
-            &core_protocol_contracts.usdf,
+            &core_protocol_contracts.usdm,
             &core_protocol_contracts.fpt_staking,
             &core_protocol_contracts.coll_surplus_pool,
             &core_protocol_contracts.default_pool,
@@ -1284,20 +1399,20 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_usdf_token(
+    pub async fn deploy_usdm_token(
         wallet: &WalletUnlocked,
-    ) -> ContractInstance<USDFToken<WalletUnlocked>> {
+    ) -> ContractInstance<USDMToken<WalletUnlocked>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
         let initializer = Identity::Address(wallet.address().into());
-        let configurables = USDFTokenConfigurables::default()
+        let configurables = USDMTokenConfigurables::default()
             .with_INITIALIZER(initializer)
             .unwrap();
 
         let id = Contract::load_from(
-            &get_absolute_path_from_relative(USDF_TOKEN_CONTRACT_BINARY_PATH),
+            &get_absolute_path_from_relative(USDM_TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default()
                 .with_salt(salt)
                 .with_configurables(configurables.clone()),
@@ -1310,12 +1425,12 @@ pub mod common {
         let proxy = deploy_proxy(
             id.clone().into(),
             wallet.clone(),
-            Some(USDF_TOKEN_CONTRACT_STORAGE_PATH),
+            Some(USDM_TOKEN_CONTRACT_STORAGE_PATH),
         )
         .await;
 
         ContractInstance::new(
-            USDFToken::new(proxy.contract_id(), wallet.clone()),
+            USDMToken::new(proxy.contract_id(), wallet.clone()),
             id.into(),
         )
     }

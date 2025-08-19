@@ -18,7 +18,7 @@ use ::data_structures::{
 use ::events::{RedemptionEvent, TroveFullLiquidationEvent, TrovePartialLiquidationEvent,};
 use standards::src3::SRC3;
 use libraries::trove_manager_interface::TroveManager;
-use libraries::usdf_token_interface::USDFToken;
+use libraries::usdm_token_interface::USDMToken;
 use libraries::sorted_troves_interface::SortedTroves;
 use libraries::stability_pool_interface::StabilityPool;
 use libraries::default_pool_interface::DefaultPool;
@@ -61,15 +61,15 @@ storage {
     active_pool_contract: ContractId = ContractId::zero(),
     default_pool_contract: ContractId = ContractId::zero(),
     coll_surplus_pool_contract: ContractId = ContractId::zero(),
-    usdf_contract: ContractId = ContractId::zero(),
+    usdm_contract: ContractId = ContractId::zero(),
     asset_contract: AssetId = AssetId::zero(),
     total_stakes: u64 = 0,
     total_stakes_snapshot: u64 = 0,
     total_collateral_snapshot: u64 = 0,
     l_asset: u64 = 0,
-    l_usdf: u64 = 0,
+    l_usdm: u64 = 0,
     last_asset_error_redistribution: u64 = 0,
-    last_usdf_error_redistribution: u64 = 0,
+    last_usdm_error_redistribution: u64 = 0,
     troves: StorageMap<Identity, Trove> = StorageMap::<Identity, Trove> {},
     trove_owners: StorageVec<Identity> = StorageVec {},
     reward_snapshots: StorageMap<Identity, RewardSnapshot> = StorageMap::<Identity, RewardSnapshot> {},
@@ -88,7 +88,7 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
-        usdf_contract: ContractId,
+        usdm_contract: ContractId,
         asset_contract: AssetId,
         protocol_manager: ContractId,
     ) {
@@ -110,7 +110,7 @@ impl TroveManager for Contract {
         storage.default_pool_contract.write(default_pool);
         storage.active_pool_contract.write(active_pool);
         storage.coll_surplus_pool_contract.write(coll_surplus_pool);
-        storage.usdf_contract.write(usdf_contract);
+        storage.usdm_contract.write(usdm_contract);
         storage.asset_contract.write(asset_contract);
         storage.protocol_manager_contract.write(protocol_manager);
         storage.is_initialized.write(true);
@@ -143,7 +143,7 @@ impl TroveManager for Contract {
     #[storage(read, write)]
     fn redeem_collateral_from_trove(
         borrower: Identity,
-        max_usdf_amount: u64,
+        max_usdm_amount: u64,
         price: u64,
         partial_redemption_hint: u64,
         upper_partial_hint: Identity,
@@ -152,7 +152,7 @@ impl TroveManager for Contract {
         require_caller_is_protocol_manager_contract();
         internal_redeem_collateral_from_trove(
             borrower,
-            max_usdf_amount,
+            max_usdm_amount,
             price,
             partial_redemption_hint,
             upper_partial_hint,
@@ -284,8 +284,8 @@ impl TroveManager for Contract {
         internal_update_trove_reward_snapshots(id);
     }
     #[storage(read)]
-    fn get_pending_usdf_rewards(address: Identity) -> u64 {
-        internal_get_pending_usdf_reward(address)
+    fn get_pending_usdm_rewards(address: Identity) -> u64 {
+        internal_get_pending_usdm_reward(address)
     }
     #[storage(read)]
     fn get_pending_asset_rewards(id: Identity) -> u64 {
@@ -296,7 +296,7 @@ impl TroveManager for Contract {
 fn internal_update_trove_reward_snapshots(id: Identity) {
     let reward_snapshot = RewardSnapshot {
         asset: storage.l_asset.read(),
-        usdf_debt: storage.l_usdf.read(),
+        usdm_debt: storage.l_usdm.read(),
     };
     storage.reward_snapshots.insert(id, reward_snapshot);
 }
@@ -305,13 +305,13 @@ fn internal_apply_pending_rewards(borrower: Identity) {
     if (internal_has_pending_rewards(borrower)) {
         require_trove_is_active(borrower);
         let pending_asset = internal_get_pending_asset_reward(borrower);
-        let pending_usdf = internal_get_pending_usdf_reward(borrower);
+        let pending_usdm = internal_get_pending_usdm_reward(borrower);
         let mut trove = storage.troves.get(borrower).read();
         trove.coll += pending_asset;
-        trove.debt += pending_usdf;
+        trove.debt += pending_usdm;
         storage.troves.insert(borrower, trove);
         internal_update_trove_reward_snapshots(borrower);
-        internal_move_pending_trove_rewards_to_active_pool(pending_asset, pending_usdf);
+        internal_move_pending_trove_rewards_to_active_pool(pending_asset, pending_usdm);
     }
 }
 #[storage(read, write)]
@@ -343,7 +343,7 @@ fn internal_close_trove(id: Identity, close_status: Status) {
     storage.troves.insert(id, trove);
     let mut rewards_snapshot = storage.reward_snapshots.get(id).read();
     rewards_snapshot.asset = 0;
-    rewards_snapshot.usdf_debt = 0;
+    rewards_snapshot.usdm_debt = 0;
     storage.reward_snapshots.insert(id, rewards_snapshot);
     internal_remove_trove_owner(id, trove_owner_array_length);
     sorted_troves.remove(id, asset_contract_cache);
@@ -404,11 +404,11 @@ fn internal_batch_liquidate_troves(
     let asset_contract_cache = storage.asset_contract.read();
     vars.price = oracle.get_price();
     let stability_pool = abi(StabilityPool, storage.stability_pool_contract.read().into());
-    let total_usdf_in_sp = stability_pool.get_total_usdf_deposits();
+    let total_usdm_in_sp = stability_pool.get_total_usdm_deposits();
     // Calculate totals for the batch liquidation
     let totals = internal_get_totals_from_batch_liquidate(
         vars.price,
-        total_usdf_in_sp,
+        total_usdm_in_sp,
         borrowers,
         upper_partial_hint,
         lower_partial_hint,
@@ -519,14 +519,14 @@ fn internal_decrease_trove_debt(id: Identity, debt: u64) -> u64 {
 #[storage(read, write)]
 fn internal_get_totals_from_batch_liquidate(
     price: u64,
-    usdf_in_stability_pool: u64,
+    usdm_in_stability_pool: u64,
     borrowers: Vec<Identity>,
     upper_partial_hint: Identity,
     lower_partial_hint: Identity,
 ) -> LiquidationTotals {
     // Initialize variables for the liquidation sequence
     let mut vars = LocalVariablesLiquidationSequence::default();
-    vars.remaining_usdf_in_stability_pool = usdf_in_stability_pool;
+    vars.remaining_usdm_in_stability_pool = usdm_in_stability_pool;
     let mut single_liquidation = LiquidationValues::default();
     let mut i = 0;
     let mut totals = LiquidationTotals::default();
@@ -547,7 +547,7 @@ fn internal_get_totals_from_batch_liquidate(
                     .entire_trove_coll,
                 position
                     .entire_trove_debt,
-                vars.remaining_usdf_in_stability_pool,
+                vars.remaining_usdm_in_stability_pool,
                 price,
             );
             // Apply the liquidation to the trove
@@ -557,8 +557,8 @@ fn internal_get_totals_from_batch_liquidate(
                 upper_partial_hint,
                 lower_partial_hint,
             );
-            // Update the remaining USDF in the stability pool
-            vars.remaining_usdf_in_stability_pool -= single_liquidation.debt_to_offset;
+            // Update the remaining USDM in the stability pool
+            vars.remaining_usdm_in_stability_pool -= single_liquidation.debt_to_offset;
             // Add the results of this liquidation to the running totals
             totals = add_liquidation_vals_to_totals(totals, single_liquidation);
         } else {
@@ -614,7 +614,7 @@ fn internal_get_entire_debt_and_coll(borrower: Identity) -> EntireTroveDebtAndCo
     let coll = trove.coll;
     let debt = trove.debt;
     let pending_coll_rewards = internal_get_pending_asset_reward(borrower);
-    let pending_debt_rewards = internal_get_pending_usdf_reward(borrower);
+    let pending_debt_rewards = internal_get_pending_usdm_reward(borrower);
     return EntireTroveDebtAndColl {
         entire_trove_debt: debt + pending_debt_rewards,
         entire_trove_coll: coll + pending_coll_rewards,
@@ -681,9 +681,9 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
         return;
     }
     let asset_numerator: U128 = U128::from(coll) * U128::from(DECIMAL_PRECISION) + U128::from(storage.last_asset_error_redistribution.read());
-    let usdf_numerator: U128 = U128::from(debt) * U128::from(DECIMAL_PRECISION) + U128::from(storage.last_usdf_error_redistribution.read());
+    let usdm_numerator: U128 = U128::from(debt) * U128::from(DECIMAL_PRECISION) + U128::from(storage.last_usdm_error_redistribution.read());
     let asset_reward_per_unit_staked = asset_numerator / U128::from(storage.total_stakes.read());
-    let usdf_reward_per_unit_staked = usdf_numerator / U128::from(storage.total_stakes.read());
+    let usdm_reward_per_unit_staked = usdm_numerator / U128::from(storage.total_stakes.read());
     storage
         .last_asset_error_redistribution
         .write(
@@ -692,9 +692,9 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
                 .unwrap(),
         );
     storage
-        .last_usdf_error_redistribution
+        .last_usdm_error_redistribution
         .write(
-            (usdf_numerator - (usdf_reward_per_unit_staked * U128::from(storage.total_stakes.read())))
+            (usdm_numerator - (usdm_reward_per_unit_staked * U128::from(storage.total_stakes.read())))
                 .as_u64()
                 .unwrap(),
         );
@@ -702,12 +702,12 @@ fn internal_redistribute_debt_and_coll(debt: u64, coll: u64) {
         .l_asset
         .write(storage.l_asset.read() + asset_reward_per_unit_staked.as_u64().unwrap());
     storage
-        .l_usdf
-        .write(storage.l_usdf.read() + usdf_reward_per_unit_staked.as_u64().unwrap());
+        .l_usdm
+        .write(storage.l_usdm.read() + usdm_reward_per_unit_staked.as_u64().unwrap());
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.read().into());
-    active_pool.decrease_usdf_debt(debt, asset_contract_cache);
-    default_pool.increase_usdf_debt(debt, asset_contract_cache);
+    active_pool.decrease_usdm_debt(debt, asset_contract_cache);
+    default_pool.increase_usdm_debt(debt, asset_contract_cache);
     active_pool.send_asset_to_default_pool(coll, asset_contract_cache);
 }
 #[storage(read, write)]
@@ -737,17 +737,17 @@ fn internal_get_pending_asset_reward(address: Identity) -> u64 {
     return pending_asset_reward;
 }
 #[storage(read)]
-fn internal_get_pending_usdf_reward(address: Identity) -> u64 {
-    let snapshot_usdf = storage.reward_snapshots.get(address).read().usdf_debt;
-    let reward_per_unit_staked = storage.l_usdf.read() - snapshot_usdf;
+fn internal_get_pending_usdm_reward(address: Identity) -> u64 {
+    let snapshot_usdm = storage.reward_snapshots.get(address).read().usdm_debt;
+    let reward_per_unit_staked = storage.l_usdm.read() - snapshot_usdm;
     if (reward_per_unit_staked == 0
         || storage.troves.get(address).read().status != Status::Active)
     {
         return 0;
     }
     let stake = storage.troves.get(address).read().stake;
-    let pending_usdf_reward = fm_multiply_ratio(reward_per_unit_staked, stake, DECIMAL_PRECISION);
-    return pending_usdf_reward;
+    let pending_usdm_reward = fm_multiply_ratio(reward_per_unit_staked, stake, DECIMAL_PRECISION);
+    return pending_usdm_reward;
 }
 #[storage(read)]
 fn internal_has_pending_rewards(address: Identity) -> bool {
@@ -765,8 +765,8 @@ fn internal_move_pending_trove_rewards_to_active_pool(coll: u64, debt: u64) {
     let asset_contract_cache = storage.asset_contract.read();
     let default_pool = abi(DefaultPool, storage.default_pool_contract.read().into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
-    default_pool.decrease_usdf_debt(debt, asset_contract_cache);
-    active_pool.increase_usdf_debt(debt, asset_contract_cache);
+    default_pool.decrease_usdm_debt(debt, asset_contract_cache);
+    active_pool.increase_usdm_debt(debt, asset_contract_cache);
     default_pool.send_asset_to_active_pool(coll, asset_contract_cache);
 }
 #[storage(read)]
@@ -774,12 +774,12 @@ fn internal_get_entire_system_debt() -> u64 {
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
     let default_pool = abi(DefaultPool, storage.default_pool_contract.read().into());
     let asset_contract_cache = storage.asset_contract.read();
-    return active_pool.get_usdf_debt(asset_contract_cache) + default_pool.get_usdf_debt(asset_contract_cache);
+    return active_pool.get_usdm_debt(asset_contract_cache) + default_pool.get_usdm_debt(asset_contract_cache);
 }
 #[storage(read, write)]
 fn internal_redeem_collateral_from_trove(
     borrower: Identity,
-    max_usdf_amount: u64,
+    max_usdm_amount: u64,
     price: u64,
     partial_redemption_hint: u64,
     upper_partial_hint: Identity,
@@ -800,12 +800,12 @@ fn internal_redeem_collateral_from_trove(
     let asset_contract_cache = storage.asset_contract.read();
     // Get the trove details for the borrower
     let trove = storage.troves.get(borrower).read();
-    // Calculate the amount of USDF to redeem (capped by max_usdf_amount or trove's debt)
-    single_redemption_values.usdf_lot = fm_min(max_usdf_amount, trove.debt);
+    // Calculate the amount of USDM to redeem (capped by max_usdm_amount or trove's debt)
+    single_redemption_values.usdm_lot = fm_min(max_usdm_amount, trove.debt);
     // Calculate the corresponding amount of asset to redeem based on the current price
-    single_redemption_values.asset_lot = fm_multiply_ratio(single_redemption_values.usdf_lot, DECIMAL_PRECISION, price);
+    single_redemption_values.asset_lot = fm_multiply_ratio(single_redemption_values.usdm_lot, DECIMAL_PRECISION, price);
     // Calculate the new debt and collateral amounts after redemption
-    let new_debt = trove.debt - single_redemption_values.usdf_lot;
+    let new_debt = trove.debt - single_redemption_values.usdm_lot;
     let new_coll = trove.coll - single_redemption_values.asset_lot;
     // If the trove's debt is fully redeemed, close the trove
     if (new_debt == 0) {
@@ -839,7 +839,7 @@ fn internal_redeem_collateral_from_trove(
     // Add RedemptionEvent before returning
     log(RedemptionEvent {
         borrower: borrower,
-        usdf_amount: single_redemption_values.usdf_lot,
+        usdm_amount: single_redemption_values.usdm_lot,
         collateral_amount: single_redemption_values.asset_lot,
         collateral_price: price,
     });
@@ -849,18 +849,18 @@ fn internal_redeem_collateral_from_trove(
     return single_redemption_values;
 }
 #[storage(read, write)]
-fn internal_redeem_close_trove(borrower: Identity, usdf_amount: u64, asset_amount: u64) {
+fn internal_redeem_close_trove(borrower: Identity, usdm_amount: u64, asset_amount: u64) {
     let asset_contract = storage.asset_contract.read();
     let coll_surplus_pool_contract = storage.coll_surplus_pool_contract.read();
-    let usdf_contract = abi(SRC3, storage.usdf_contract.read().into());
+    let usdm_contract = abi(SRC3, storage.usdm_contract.read().into());
     let active_pool = abi(ActivePool, storage.active_pool_contract.read().into());
     let coll_surplus_pool = abi(CollSurplusPool, coll_surplus_pool_contract.into());
-    usdf_contract
+    usdm_contract
         .burn {
-            coins: usdf_amount,
-            asset_id: storage.usdf_contract.read().bits(),
-        }(SubId::zero(), usdf_amount);
-    active_pool.decrease_usdf_debt(usdf_amount, asset_contract);
+            coins: usdm_amount,
+            asset_id: storage.usdm_contract.read().bits(),
+        }(SubId::zero(), usdm_amount);
+    active_pool.decrease_usdm_debt(usdm_amount, asset_contract);
     coll_surplus_pool.account_surplus(borrower, asset_amount, asset_contract);
     active_pool.send_asset(
         Identity::ContractId(coll_surplus_pool_contract),

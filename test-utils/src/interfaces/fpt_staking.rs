@@ -11,7 +11,7 @@ pub mod fpt_staking_abi {
     use super::*;
     use crate::data_structures::ContractInstance;
     use crate::interfaces::token::Token;
-    use crate::interfaces::usdf_token::USDFToken;
+    use crate::interfaces::usdm_token::USDMToken;
     use fuels::prelude::{Account, AssetId, CallParameters, Error};
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::{prelude::ContractId, types::Identity};
@@ -21,7 +21,7 @@ pub mod fpt_staking_abi {
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
         fpt_asset_id: AssetId,
-        usdf_asset_id: AssetId,
+        usdm_asset_id: AssetId,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
 
@@ -32,7 +32,7 @@ pub mod fpt_staking_abi {
                 protocol_manager_address,
                 borrower_operations_address,
                 fpt_asset_id.into(),
-                usdf_asset_id.into(),
+                usdm_asset_id.into(),
             )
             .with_contract_ids(&[
                 fpt_staking.contract.contract_id().into(),
@@ -93,7 +93,7 @@ pub mod fpt_staking_abi {
 
     pub async fn unstake<T: Account>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
-        usdf_token: &ContractInstance<USDFToken<T>>,
+        usdm_token: &ContractInstance<USDMToken<T>>,
         mock_token: &Token<T>,
         fpt_token: &Token<T>,
         amount: u64,
@@ -108,10 +108,10 @@ pub mod fpt_staking_abi {
             .methods()
             .unstake(amount)
             .with_tx_policies(tx_params)
-            .with_contracts(&[&usdf_token.contract, mock_token, fpt_token])
+            .with_contracts(&[&usdm_token.contract, mock_token, fpt_token])
             .with_contract_ids(&[
-                usdf_token.contract.contract_id().into(),
-                usdf_token.implementation_id.into(),
+                usdm_token.contract.contract_id().into(),
+                usdm_token.implementation_id.into(),
                 mock_token.contract_id().into(),
                 fpt_token.contract_id().into(),
                 fpt_staking.contract.contract_id().into(),
@@ -161,7 +161,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdf_gain<T: Account>(
+    pub async fn get_pending_usdm_gain<T: Account>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -170,7 +170,7 @@ pub mod fpt_staking_abi {
         fpt_staking
             .contract
             .methods()
-            .get_pending_usdf_gain(id)
+            .get_pending_usdm_gain(id)
             .with_contract_ids(&[
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),
@@ -180,16 +180,16 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn increase_f_usdf<T: Account>(
+    pub async fn increase_f_usdm<T: Account>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
-        usdf_fee_amount: u64,
+        usdm_fee_amount: u64,
     ) -> CallResponse<()> {
         // let tx_params = TxPolicies::default().with_tip(1);
 
         fpt_staking
             .contract
             .methods()
-            .increase_f_usdf(usdf_fee_amount)
+            .increase_f_usdm(usdm_fee_amount)
             .with_contract_ids(&[
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),

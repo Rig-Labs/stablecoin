@@ -14,7 +14,11 @@ use test_utils::{
 
 #[tokio::test]
 async fn test_trove_events() {
-    let (contracts, admin, wallets) = setup_protocol(4, false, false).await;
+    let (
+        contracts,
+        admin,
+        wallets,
+    ) = setup_protocol(4, false, false).await;
 
     // Setup initial conditions
     token_abi::mint_to_id(
@@ -43,7 +47,7 @@ async fn test_trove_events() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -89,7 +93,7 @@ async fn test_trove_events() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -166,7 +170,7 @@ async fn test_trove_events() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -183,7 +187,7 @@ async fn test_trove_events() {
         .transfer(
             &admin.address(),
             borrow_amount,
-            contracts.usdf_asset_id,
+            contracts.usdm_asset_id,
             TxPolicies::default(),
         )
         .await
@@ -196,7 +200,7 @@ async fn test_trove_events() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,

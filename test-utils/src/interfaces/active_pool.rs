@@ -47,14 +47,14 @@ pub mod active_pool_abi {
         return res;
     }
 
-    pub async fn get_usdf_debt<T: Account>(
+    pub async fn get_usdm_debt<T: Account>(
         active_pool: &ContractInstance<ActivePool<T>>,
         asset_id: AssetId,
     ) -> CallResponse<u64> {
         active_pool
             .contract
             .methods()
-            .get_usdf_debt(asset_id.into())
+            .get_usdm_debt(asset_id.into())
             .with_contract_ids(&[
                 active_pool.contract.contract_id().into(),
                 active_pool.implementation_id.into(),
@@ -81,7 +81,7 @@ pub mod active_pool_abi {
             .unwrap()
     }
 
-    pub async fn increase_usdf_debt<T: Account>(
+    pub async fn increase_usdm_debt<T: Account>(
         active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         asset_id: AssetId,
@@ -91,7 +91,7 @@ pub mod active_pool_abi {
         active_pool
             .contract
             .methods()
-            .increase_usdf_debt(amount, asset_id.into())
+            .increase_usdm_debt(amount, asset_id.into())
             .with_contract_ids(&[
                 active_pool.contract.contract_id().into(),
                 active_pool.implementation_id.into(),
@@ -102,7 +102,7 @@ pub mod active_pool_abi {
             .unwrap()
     }
 
-    pub async fn decrease_usdf_debt<T: Account>(
+    pub async fn decrease_usdm_debt<T: Account>(
         active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         asset_id: AssetId,
@@ -112,7 +112,7 @@ pub mod active_pool_abi {
         active_pool
             .contract
             .methods()
-            .decrease_usdf_debt(amount, asset_id.into())
+            .decrease_usdm_debt(amount, asset_id.into())
             .with_contract_ids(&[
                 active_pool.contract.contract_id().into(),
                 active_pool.implementation_id.into(),

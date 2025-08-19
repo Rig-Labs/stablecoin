@@ -7,7 +7,7 @@ abi ProtocolManager {
         borrow_operations: ContractId,
         stability_pool: ContractId,
         fpt_staking: ContractId,
-        usdf: ContractId,
+        usdm: ContractId,
         coll_surplus_pool: ContractId,
         default_pool: ContractId,
         active_pool: ContractId,

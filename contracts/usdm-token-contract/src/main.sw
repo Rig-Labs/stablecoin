@@ -1,11 +1,11 @@
 contract;
-// The USDFToken contract is responsible for managing the issuance and transfer of USDF tokens in the system.
+// The USDMToken contract is responsible for managing the issuance and transfer of USDM tokens in the system.
 // It is used by the Stability Pool, Borrower Operations, and Trove Managers.
-use libraries::usdf_token_interface::USDFToken;
+use libraries::usdm_token_interface::USDMToken;
 
 pub const DECIMALS: u8 = 9;
-pub const SYMBOL: str[4] = __to_str_array("USDF");
-pub const NAME: str[4] = __to_str_array("USDF");
+pub const SYMBOL: str[4] = __to_str_array("USDM");
+pub const NAME: str[4] = __to_str_array("USDM");
 use standards::{
     src20::{
         SetDecimalsEvent,
@@ -51,7 +51,7 @@ storage {
     is_initialized: bool = false,
 }
 // Using https://docs.fuel.network/docs/sway-standards/src-20-native-asset/ as reference
-impl USDFToken for Contract {
+impl USDMToken for Contract {
     //////////////////////////////////////
     // Initialization method
     //////////////////////////////////////
@@ -64,13 +64,13 @@ impl USDFToken for Contract {
         require(
             msg_sender()
                 .unwrap() == INITIALIZER,
-            "USDFToken: Caller is not initializer",
+            "USDMToken: Caller is not initializer",
         );
         require(
             storage
                 .is_initialized
                 .read() == false,
-            "USDFToken: Contract is already initialized",
+            "USDMToken: Contract is already initialized",
         );
         storage.stability_pool.write(stability_pool);
         storage.protocol_manager.write(protocol_manager);
@@ -160,7 +160,7 @@ fn require_caller_is_protocol_manager() {
     require(
         msg_sender()
             .unwrap() == Identity::ContractId(storage.protocol_manager.read()),
-        "USDFToken: NotAuthorized",
+        "USDMToken: NotAuthorized",
     );
 }
 #[storage(read)]
@@ -170,7 +170,7 @@ fn require_caller_is_borrower_operations() {
             .unwrap() == storage
             .borrower_operations
             .read(),
-        "USDFToken: NotAuthorized",
+        "USDMToken: NotAuthorized",
     );
 }
 #[storage(read)]
@@ -185,6 +185,6 @@ fn require_caller_is_bo_or_tm_or_sp_or_pm() {
             .read() || sender == storage
             .stability_pool
             .read() || sender == protocol_manager_id || is_valid_trove_manager,
-        "USDFToken: NotAuthorized",
+        "USDMToken: NotAuthorized",
     );
 }

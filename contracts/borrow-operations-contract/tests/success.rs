@@ -43,7 +43,7 @@ async fn proper_creating_trove() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -58,11 +58,11 @@ async fn proper_creating_trove() {
 
     println!("borrow_operations_abi::open_trove done");
 
-    let usdf_balance = provider
+    let usdm_balance = provider
         .get_asset_balance(
             admin.address().into(),
             contracts
-                .usdf
+                .usdm
                 .contract
                 .contract_id()
                 .asset_id(&AssetId::zeroed().into())
@@ -102,9 +102,9 @@ async fn proper_creating_trove() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, borrow_amount);
+    assert_eq!(usdm_balance, borrow_amount);
 
-    let expected_net_debt: u64 = with_min_borrow_fee(usdf_balance);
+    let expected_net_debt: u64 = with_min_borrow_fee(usdm_balance);
     let expected_icr = calculate_icr(deposit_amount, expected_net_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
@@ -126,7 +126,7 @@ async fn proper_creating_trove() {
     assert_eq!(trove_col, deposit_amount, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -176,7 +176,7 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -195,7 +195,7 @@ async fn proper_increase_collateral() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -258,7 +258,7 @@ async fn proper_increase_collateral() {
 
     assert_eq!(icr, expected_nicr, "ICR is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -309,7 +309,7 @@ async fn proper_decrease_collateral() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -405,7 +405,7 @@ async fn proper_decrease_collateral() {
 
     assert_eq!(admin_balance, 4100 * PRECISION, "Balance is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -440,7 +440,7 @@ async fn proper_increase_debt() {
 
     let provider = admin.provider().unwrap();
 
-    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
+    let usdm_asset_id: AssetId = contracts.usdm_asset_id;
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -458,7 +458,7 @@ async fn proper_increase_debt() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -471,13 +471,13 @@ async fn proper_increase_debt() {
     .await
     .unwrap();
 
-    borrow_operations_abi::withdraw_usdf(
+    borrow_operations_abi::withdraw_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -551,14 +551,14 @@ async fn proper_increase_debt() {
 
     assert_eq!(admin_balance, 3800 * PRECISION, "Balance is wrong");
 
-    let usdf_balance = provider
-        .get_asset_balance(admin.address().into(), usdf_asset_id)
+    let usdm_balance = provider
+        .get_asset_balance(admin.address().into(), usdm_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(usdf_balance, 800 * PRECISION, "USDF Balance is wrong");
+    assert_eq!(usdm_balance, 800 * PRECISION, "USDM Balance is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id,
     )
@@ -593,7 +593,7 @@ async fn proper_decrease_debt() {
 
     let provider = admin.provider().unwrap();
 
-    let usdf_asset_id = contracts.usdf_asset_id;
+    let usdm_asset_id = contracts.usdm_asset_id;
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 800 * PRECISION;
@@ -611,7 +611,7 @@ async fn proper_decrease_debt() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -625,13 +625,13 @@ async fn proper_decrease_debt() {
     .unwrap();
 
     let repay_amount = 200 * PRECISION;
-    borrow_operations_abi::repay_usdf(
+    borrow_operations_abi::repay_usdm(
         &contracts.borrow_operations,
         &contracts.asset_contracts[0].oracle,
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
         &contracts.active_pool,
@@ -707,14 +707,14 @@ async fn proper_decrease_debt() {
 
     assert_eq!(admin_balance, 3800 * PRECISION, "Balance is wrong");
 
-    let usdf_balance = provider
-        .get_asset_balance(admin.address().into(), usdf_asset_id)
+    let usdm_balance = provider
+        .get_asset_balance(admin.address().into(), usdm_asset_id)
         .await
         .unwrap();
 
-    assert_eq!(usdf_balance, 600 * PRECISION, "USDF Balance is wrong");
+    assert_eq!(usdm_balance, 600 * PRECISION, "USDM Balance is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -789,7 +789,7 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -810,7 +810,7 @@ async fn proper_open_multiple_troves() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -846,7 +846,7 @@ async fn proper_open_multiple_troves() {
     assert_eq!(first, Identity::Address(wallet1.address().into()));
     assert_eq!(last, Identity::Address(wallet2.address().into()));
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -924,7 +924,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -938,14 +938,14 @@ async fn proper_close_trove() {
     .unwrap();
 
     // Transfering to cover the fee
-    let usdf_asset_id: AssetId = contracts.usdf_asset_id;
+    let usdm_asset_id: AssetId = contracts.usdm_asset_id;
     let amount = borrow_amount1 / 200;
     let tx_parms = TxPolicies::default()
         .with_tip(1)
         .with_script_gas_limit(2000000);
 
     wallet1
-        .transfer(wallet2.address(), amount, usdf_asset_id, tx_parms)
+        .transfer(wallet2.address(), amount, usdm_asset_id, tx_parms)
         .await
         .unwrap();
 
@@ -957,7 +957,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -978,7 +978,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -1025,7 +1025,7 @@ async fn proper_close_trove() {
     assert_eq!(first, Identity::Address(wallet1.address().into()));
     assert_eq!(last, Identity::Address(wallet1.address().into()));
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id,
     )
@@ -1052,7 +1052,7 @@ async fn proper_close_trove() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -1098,7 +1098,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[0].mock_pyth_oracle,
         &contracts.asset_contracts[0].mock_redstone_oracle,
         &contracts.asset_contracts[0].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[0].trove_manager,
@@ -1111,8 +1111,8 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .unwrap();
 
-    let usdf_balance = provider
-        .get_asset_balance(admin.address().into(), contracts.usdf_asset_id)
+    let usdm_balance = provider
+        .get_asset_balance(admin.address().into(), contracts.usdm_asset_id)
         .await
         .unwrap();
 
@@ -1146,9 +1146,9 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(size, 1);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, borrow_amount1);
+    assert_eq!(usdm_balance, borrow_amount1);
 
-    let expected_net_debt: u64 = with_min_borrow_fee(usdf_balance);
+    let expected_net_debt: u64 = with_min_borrow_fee(usdm_balance);
     let expected_icr = calculate_icr(deposit_amount1, expected_net_debt);
 
     assert_eq!(icr, expected_icr, "ICR is wrong");
@@ -1170,7 +1170,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(trove_col, deposit_amount1, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[0].asset_id.into(),
     )
@@ -1232,7 +1232,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].mock_pyth_oracle,
         &contracts.asset_contracts[1].mock_redstone_oracle,
         &contracts.asset_contracts[1].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
@@ -1253,7 +1253,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].mock_pyth_oracle,
         &contracts.asset_contracts[1].mock_redstone_oracle,
         &contracts.asset_contracts[1].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,
@@ -1266,8 +1266,8 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .unwrap();
 
-    let usdf_balance = provider
-        .get_asset_balance(admin.address().into(), contracts.usdf_asset_id)
+    let usdm_balance = provider
+        .get_asset_balance(admin.address().into(), contracts.usdm_asset_id)
         .await
         .unwrap();
 
@@ -1287,7 +1287,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(size, 2);
     assert_eq!(first, Identity::Address(admin.address().into()));
     assert_eq!(last, Identity::Address(admin.address().into()));
-    assert_eq!(usdf_balance, 2 * borrow_amount1);
+    assert_eq!(usdm_balance, 2 * borrow_amount1);
 
     let expected_net_debt: u64 = with_min_borrow_fee(borrow_amount1);
     let expected_icr = calculate_icr(deposit_amount1, expected_net_debt);
@@ -1311,7 +1311,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     assert_eq!(trove_col, deposit_amount1, "Trove Collateral is wrong");
     assert_eq!(trove_debt, expected_net_debt, "Trove Debt is wrong");
 
-    let active_pool_debt = active_pool_abi::get_usdf_debt(
+    let active_pool_debt = active_pool_abi::get_usdm_debt(
         &contracts.active_pool,
         contracts.asset_contracts[1].asset_id,
     )
@@ -1335,16 +1335,16 @@ async fn proper_creating_trove_with_2nd_asset() {
         "Active Pool Collateral is wrong"
     );
 
-    // let usdf_asset_id =
-    //     borrow_operations_abi::get_usdf_asset_id(&contracts.borrow_operations).await;
+    // let usdm_asset_id =
+    //     borrow_operations_abi::get_usdm_asset_id(&contracts.borrow_operations).await;
 
-    // println!("USDF Asset ID: {:?}", usdf_asset_id);
+    // println!("USDM Asset ID: {:?}", usdm_asset_id);
 
-    // let hex_string = usdf_asset_id.to_hex();
+    // let hex_string = usdm_asset_id.to_hex();
 
     // println!("{:?}", hex_string);
 
-    println!("Expected: {:?}", contracts.usdf_asset_id);
+    println!("Expected: {:?}", contracts.usdm_asset_id);
 
     let _res = borrow_operations_abi::close_trove(
         &contracts.borrow_operations,
@@ -1352,7 +1352,7 @@ async fn proper_creating_trove_with_2nd_asset() {
         &contracts.asset_contracts[1].mock_pyth_oracle,
         &contracts.asset_contracts[1].mock_redstone_oracle,
         &contracts.asset_contracts[1].asset,
-        &contracts.usdf,
+        &contracts.usdm,
         &contracts.fpt_staking,
         &contracts.sorted_troves,
         &contracts.asset_contracts[1].trove_manager,

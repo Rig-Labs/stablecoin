@@ -76,7 +76,7 @@ pub async fn sanity_check() {
         &core_contracts.asset_contracts[0].mock_pyth_oracle,
         &core_contracts.asset_contracts[0].mock_redstone_oracle,
         &core_contracts.asset_contracts[0].asset,
-        &core_contracts.usdf,
+        &core_contracts.usdm,
         &core_contracts.fpt_staking,
         &core_contracts.sorted_troves,
         &core_contracts.asset_contracts[0].trove_manager,
@@ -91,19 +91,19 @@ pub async fn sanity_check() {
 
     // println!("Open trove res: {:?}", res.decode_logs());
 
-    let usdf_balance = provider
-        .get_asset_balance(wallet.address().into(), core_contracts.usdf_asset_id.into())
+    let usdm_balance = provider
+        .get_asset_balance(wallet.address().into(), core_contracts.usdm_asset_id.into())
         .await
         .unwrap();
 
-    println!("USDF balance: {}", usdf_balance);
+    println!("USDM balance: {}", usdm_balance);
 
     stability_pool_abi::provide_to_stability_pool(
         &core_contracts.stability_pool,
         &core_contracts.community_issuance,
-        &core_contracts.usdf,
+        &core_contracts.usdm,
         &core_contracts.asset_contracts[0].asset,
-        usdf_balance,
+        usdm_balance,
     )
     .await
     .unwrap();
@@ -125,7 +125,7 @@ pub async fn sanity_check() {
     stability_pool_abi::withdraw_from_stability_pool(
         &core_contracts.stability_pool,
         &core_contracts.community_issuance,
-        &core_contracts.usdf,
+        &core_contracts.usdm,
         &core_contracts.asset_contracts[0].asset,
         &core_contracts.sorted_troves,
         &core_contracts.asset_contracts[0].oracle,

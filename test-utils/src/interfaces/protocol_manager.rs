@@ -16,7 +16,7 @@ pub mod protocol_manager_abi {
     use crate::interfaces::fpt_staking::FPTStaking;
     use crate::interfaces::sorted_troves::SortedTroves;
     use crate::interfaces::stability_pool::StabilityPool;
-    use crate::interfaces::usdf_token::USDFToken;
+    use crate::interfaces::usdm_token::USDMToken;
     use data_structures::AssetContracts;
     use fuels::prelude::{Account, CallParameters, ContractDependency};
     use fuels::types::bech32::Bech32ContractId;
@@ -33,7 +33,7 @@ pub mod protocol_manager_abi {
         borrow_operations: ContractId,
         stability_pool: ContractId,
         fpt_staking: ContractId,
-        usdf: ContractId,
+        usdm: ContractId,
         coll_surplus_pool: ContractId,
         default_pool: ContractId,
         active_pool: ContractId,
@@ -49,7 +49,7 @@ pub mod protocol_manager_abi {
                 borrow_operations,
                 stability_pool,
                 fpt_staking,
-                usdf,
+                usdm,
                 coll_surplus_pool,
                 default_pool,
                 active_pool,
@@ -75,7 +75,7 @@ pub mod protocol_manager_abi {
         oracle: ContractId,
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
-        usdf: &ContractInstance<USDFToken<T>>,
+        usdm: &ContractInstance<USDMToken<T>>,
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         default_pool: &ContractInstance<DefaultPool<T>>,
@@ -91,7 +91,7 @@ pub mod protocol_manager_abi {
             .with_contracts(&[
                 &borrow_operations.contract,
                 &stability_pool.contract,
-                &usdf.contract,
+                &usdm.contract,
                 &fpt_staking.contract,
                 &coll_surplus_pool.contract,
                 &default_pool.contract,
@@ -113,8 +113,8 @@ pub mod protocol_manager_abi {
                 active_pool.implementation_id.into(),
                 fpt_staking.contract.contract_id().into(),
                 fpt_staking.implementation_id.into(),
-                usdf.contract.contract_id().into(),
-                usdf.implementation_id.into(),
+                usdm.contract.contract_id().into(),
+                usdm.implementation_id.into(),
                 stability_pool.contract.contract_id().into(),
                 stability_pool.implementation_id.into(),
             ])
@@ -129,7 +129,7 @@ pub mod protocol_manager_abi {
         partial_redemption_hint: u64,
         upper_partial_hint: Option<Identity>,
         lower_partial_hint: Option<Identity>,
-        usdf: &ContractInstance<USDFToken<T>>,
+        usdm: &ContractInstance<USDMToken<T>>,
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         default_pool: &ContractInstance<DefaultPool<T>>,
@@ -141,7 +141,7 @@ pub mod protocol_manager_abi {
             .with_tip(1)
             .with_witness_limit(2000000)
             .with_script_gas_limit(2000000);
-        let usdf_asset_id = usdf
+        let usdm_asset_id = usdm
             .contract
             .contract_id()
             .asset_id(&AssetId::zeroed().into())
@@ -149,7 +149,7 @@ pub mod protocol_manager_abi {
 
         let call_params: CallParameters = CallParameters::default()
             .with_amount(amount)
-            .with_asset_id(usdf_asset_id);
+            .with_asset_id(usdm_asset_id);
 
         let mut with_contracts: Vec<&dyn ContractDependency> = Vec::new();
 
@@ -164,7 +164,7 @@ pub mod protocol_manager_abi {
         with_contracts.push(&coll_surplus_pool.contract);
         with_contracts.push(&default_pool.contract);
         with_contracts.push(&active_pool.contract);
-        with_contracts.push(&usdf.contract);
+        with_contracts.push(&usdm.contract);
         with_contracts.push(&sorted_troves.contract);
 
         let mut with_contract_ids: Vec<Bech32ContractId> = Vec::new();
@@ -178,8 +178,8 @@ pub mod protocol_manager_abi {
         with_contract_ids.push(default_pool.implementation_id.into());
         with_contract_ids.push(active_pool.contract.contract_id().into());
         with_contract_ids.push(active_pool.implementation_id.into());
-        with_contract_ids.push(usdf.contract.contract_id().into());
-        with_contract_ids.push(usdf.implementation_id.into());
+        with_contract_ids.push(usdm.contract.contract_id().into());
+        with_contract_ids.push(usdm.implementation_id.into());
         with_contract_ids.push(sorted_troves.contract.contract_id().into());
         with_contract_ids.push(sorted_troves.implementation_id.into());
         with_contract_ids.push(protocol_manager.contract.contract_id().into());

@@ -1,7 +1,7 @@
 contract;
-// The Active Pool holds the collateral assets and USDF debt (but not USDF tokens) for all active troves.
+// The Active Pool holds the collateral assets and USDM debt (but not USDM tokens) for all active troves.
 //
-// When a trove is liquidated, its collateral assets and USDF debt are transferred from the Active Pool
+// When a trove is liquidated, its collateral assets and USDM debt are transferred from the Active Pool
 // to either the Stability Pool, the Default Pool, or both, depending on the liquidation conditions.
 //
 // This contract supports multiple collateral assets, each managed separately.
@@ -30,7 +30,7 @@ storage {
     default_pool_contract: ContractId = ContractId::zero(),
     protocol_manager_contract: Identity = Identity::Address(Address::zero()),
     asset_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {}, // Asset amount in the active pool
-    usdf_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {}, // USDF debt in the active pool
+    usdm_debt_amount: StorageMap<AssetId, u64> = StorageMap::<AssetId, u64> {}, // USDM debt in the active pool
     valid_asset_ids: StorageMap<AssetId, bool> = StorageMap::<AssetId, bool> {}, // Valid asset ids
     valid_trove_managers: StorageMap<Identity, bool> = StorageMap::<Identity, bool> {}, // Valid trove managers, one for each asset managed
     is_initialized: bool = false,
@@ -71,8 +71,8 @@ impl ActivePool for Contract {
         return storage.asset_amount.get(asset_id).try_read().unwrap_or(0);
     }
     #[storage(read)]
-    fn get_usdf_debt(asset_id: AssetId) -> u64 {
-        return storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0);
+    fn get_usdm_debt(asset_id: AssetId) -> u64 {
+        return storage.usdm_debt_amount.get(asset_id).try_read().unwrap_or(0);
     }
 
     // --- Pool functionality ---
@@ -85,19 +85,19 @@ impl ActivePool for Contract {
             transfer(address, asset_id, amount);
         }
     }
-    // Increase the USDF debt for a given asset
+    // Increase the USDM debt for a given asset
     #[storage(read, write)]
-    fn increase_usdf_debt(amount: u64, asset_id: AssetId) {
+    fn increase_usdm_debt(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm();
-        let new_debt = storage.usdf_debt_amount.get(asset_id).try_read().unwrap_or(0) + amount;
-        storage.usdf_debt_amount.insert(asset_id, new_debt);
+        let new_debt = storage.usdm_debt_amount.get(asset_id).try_read().unwrap_or(0) + amount;
+        storage.usdm_debt_amount.insert(asset_id, new_debt);
     }
-    // Decrease the USDF debt for a given asset
+    // Decrease the USDM debt for a given asset
     #[storage(read, write)]
-    fn decrease_usdf_debt(amount: u64, asset_id: AssetId) {
+    fn decrease_usdm_debt(amount: u64, asset_id: AssetId) {
         require_caller_is_bo_or_tm_or_sp_or_pm();
-        let new_debt = storage.usdf_debt_amount.get(asset_id).read() - amount;
-        storage.usdf_debt_amount.insert(asset_id, new_debt);
+        let new_debt = storage.usdm_debt_amount.get(asset_id).read() - amount;
+        storage.usdm_debt_amount.insert(asset_id, new_debt);
     }
     // Send the collateral asset to the Default Pool to manually simulate asset recieve fallback
     #[storage(read, write)]
@@ -129,7 +129,7 @@ impl ActivePool for Contract {
         storage.valid_asset_ids.insert(asset, true);
         storage.valid_trove_managers.insert(trove_manager, true);
         storage.asset_amount.insert(asset, 0);
-        storage.usdf_debt_amount.insert(asset, 0);
+        storage.usdm_debt_amount.insert(asset, 0);
     }
 }
 // --- Helper functions ---

@@ -14,7 +14,7 @@ pub struct TrovePartialLiquidationEvent {
 
 pub struct RedemptionEvent {
     pub borrower: Identity,
-    pub usdf_amount: u64,
+    pub usdm_amount: u64,
     pub collateral_amount: u64,
     pub collateral_price: u64,
 }

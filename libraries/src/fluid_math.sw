@@ -17,10 +17,10 @@ pub const REDEMPTION_FEE_FLOOR: u64 = 10_000_000;
 pub const BORROWING_FEE_FLOOR: u64 = 5_000_000;
 
 pub const MCR: u64 = 1_350_000_000;
-// 10 USDF 
-pub const USDF_GAS_COMPENSATION: u64 = 10_000_000;
+// 10 USDM 
+pub const USDM_GAS_COMPENSATION: u64 = 10_000_000;
 
-// min debt is 500 USDF for staging 
+// min debt is 500 USDM for staging 
 pub const MIN_NET_DEBT: u64 = 500_000_000_000; /*  */ pub const PERCENT_DIVERSOR = 200;
 
 pub const POST_COLLATERAL_RATIO: u64 = 1_500_000_000;

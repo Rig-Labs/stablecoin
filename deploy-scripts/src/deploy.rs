@@ -118,9 +118,9 @@ pub mod deployment {
         let json = json!({
             "borrow_operations": contracts.borrow_operations.contract.contract_id().to_string(),
             "borrow_operations_implementation_id": format!("0x{}", contracts.borrow_operations.implementation_id.to_string()),
-            "usdf": contracts.usdf.contract.contract_id().to_string(),
-            "usdf_implementation_id": format!("0x{}", contracts.usdf.implementation_id.to_string()),
-            "usdf_asset_id": format!("0x{}", contracts.usdf_asset_id.to_string()),
+            "usdm": contracts.usdm.contract.contract_id().to_string(),
+            "usdm_implementation_id": format!("0x{}", contracts.usdm.implementation_id.to_string()),
+            "usdm_asset_id": format!("0x{}", contracts.usdm_asset_id.to_string()),
             "stability_pool": contracts.stability_pool.contract.contract_id().to_string(),
             "stability_pool_implementation_id": format!("0x{}", contracts.stability_pool.implementation_id.to_string()),
             "protocol_manager": contracts.protocol_manager.contract.contract_id().to_string(),

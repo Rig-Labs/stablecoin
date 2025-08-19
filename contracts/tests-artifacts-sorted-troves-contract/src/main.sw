@@ -13,7 +13,7 @@ abi TroveManager {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus_pool: ContractId,
-        usdf_contract: ContractId,
+        usdm_contract: ContractId,
     );
     #[storage(read, write)]
     fn set_nominal_icr_and_insert(
@@ -65,7 +65,7 @@ impl TroveManager for Contract {
         default_pool: ContractId,
         active_pool: ContractId,
         coll_surplus: ContractId,
-        usdf_contract: ContractId,
+        usdm_contract: ContractId,
     ) {
         storage.sorted_troves_contract.write(sorted_troves);
         storage.borrow_operations_contract.write(borrow_operations);

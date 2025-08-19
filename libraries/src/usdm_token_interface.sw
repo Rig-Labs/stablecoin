@@ -2,7 +2,7 @@ library;
 
 use std::string::String;
 
-abi USDFToken {
+abi USDMToken {
     // Initialize contract
     #[storage(read, write)]
     fn initialize(
