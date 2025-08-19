@@ -1,8 +1,8 @@
-use fuels::prelude::*;
-
 use test_utils::{
     data_structures::PRECISION, interfaces::fpt_token::fpt_token_abi, setup::common::setup_protocol,
 };
+
+const TOTAL_SUPPLY: u64 = 100;
 
 #[tokio::test]
 async fn proper_intialize() {
@@ -52,7 +52,7 @@ async fn proper_intialize() {
 
     assert_eq!(
         admin_balance,
-        1 * PRECISION,
+        TOTAL_SUPPLY * PRECISION,
         "invalid admin balance after initialized"
     );
 
@@ -60,5 +60,6 @@ async fn proper_intialize() {
         .await
         .value;
 
-    assert_eq!(total_supply, Some(1 * PRECISION));
+    assert_eq!(total_supply, Some(TOTAL_SUPPLY * PRECISION));
 }
+    
