@@ -94,7 +94,7 @@ impl FPTToken for Contract {
 impl SRC20 for Contract {
     #[storage(read)]
     fn total_assets() -> u64 {
-        return TOTAL_SUPPLY;
+        return 1;
     }
 
     #[storage(read)]
