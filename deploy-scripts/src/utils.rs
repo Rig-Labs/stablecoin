@@ -16,6 +16,7 @@ pub mod utils {
     use test_utils::interfaces::oracle::oracle_abi;
     use test_utils::interfaces::pyth_oracle::pyth_oracle_abi;
     use test_utils::interfaces::redstone_oracle::redstone_oracle_abi;
+    use test_utils::interfaces::stork_oracle::{stork_oracle_abi, StorkCore, I128};
     use test_utils::interfaces::vesting::{VestingSchedule, TOTAL_AMOUNT_VESTED};
     use test_utils::setup::common::get_absolute_path_from_relative;
     use test_utils::{
@@ -34,7 +35,6 @@ pub mod utils {
             redstone_oracle::RedstoneCore,
             sorted_troves::SortedTroves,
             stability_pool::StabilityPool,
-            stork_oracle::StorkCore,
             token::Token,
             trove_manager::TroveManagerContract,
             vesting::VestingContract,
@@ -290,14 +290,14 @@ pub mod utils {
                     .unwrap();
                 let stork_contract_id: Bech32ContractId = asset_contract["stork_contract"]
                     .as_str()
-                    .unwrap()
+                    .unwrap_or("0")
                     .parse()
-                    .unwrap();
+                    .unwrap_or(Bech32ContractId::default());
                 let pyth_contract_id: Bech32ContractId = asset_contract["pyth_contract"]
                     .as_str()
-                    .unwrap()
+                    .unwrap_or("0")
                     .parse()
-                    .unwrap();
+                    .unwrap_or(Bech32ContractId::default());
                 let redstone_contract_id: Bech32ContractId = asset_contract["redstone_contract"]
                     .as_str()
                     .unwrap_or("0")
@@ -326,13 +326,13 @@ pub mod utils {
                     mock_pyth_oracle: PythCore::new(pyth_contract_id, wallet.clone()),
                     mock_redstone_oracle: RedstoneCore::new(redstone_contract_id, wallet.clone()),
                     stork_feed_id: Bits256::from_hex_str(
-                        asset_contract["stork_feed_id"].as_str().unwrap(),
+                        asset_contract["stork_feed_id"].as_str().unwrap_or(""),
                     )
-                    .unwrap(),
+                    .unwrap_or(Bits256::zeroed()),
                     pyth_price_id: Bits256::from_hex_str(
-                        asset_contract["pyth_price_id"].as_str().unwrap(),
+                        asset_contract["pyth_price_id"].as_str().unwrap_or(""),
                     )
-                    .unwrap(),
+                    .unwrap_or(Bits256::zeroed()),
                     redstone_precision: asset_contract["redstone_precision"].as_u64().unwrap_or(9)
                         as u32,
                     redstone_price_id: U256::from_str(
@@ -399,10 +399,22 @@ pub mod utils {
                 "trove_manager_implementation_id": format!("0x{}", asset_contract.trove_manager.implementation_id.to_string()),
                 "asset_contract": asset_contract.asset.contract_id().to_string(),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
-                "pyth_price_id": to_hex_str(&asset_contract.pyth_price_id.unwrap()),
-                "pyth_contract": asset_contract.mock_pyth_oracle.unwrap().contract_id().to_string(),
-                "stork_feed_id": to_hex_str(&asset_contract.stork_feed_id.unwrap()),
-                "stork_contract": asset_contract.mock_stork_oracle.unwrap().contract_id().to_string(),
+                "pyth_price_id": match &asset_contract.pyth_price_id {
+                    Some(pyth_price_id) => json!(to_hex_str(pyth_price_id)),
+                    None => json!(null),
+                },
+                "pyth_contract": match &asset_contract.mock_pyth_oracle {
+                    Some(pyth_contract) => json!(pyth_contract.contract_id().to_string()),
+                    None => json!(null),
+                },
+                "stork_feed_id": match &asset_contract.stork_feed_id {
+                    Some(stork_feed_id) => json!(to_hex_str(stork_feed_id)),
+                    None => json!(null),
+                },
+                "stork_contract": match &asset_contract.mock_stork_oracle {
+                    Some(stork_contract) => json!(stork_contract.contract_id().to_string()),
+                    None => json!(null),
+                },
                 "redstone": match &asset_contract.redstone_config {
                     Some(redstone_config) => {
                         json!({
@@ -434,84 +446,84 @@ pub mod utils {
         asset_contracts: &AssetContractsOptionalOracles<Wallet>,
         wallet: Wallet,
     ) {
-        let current_pyth_price = pyth_oracle_abi::price_unsafe(
-            &asset_contracts.mock_pyth_oracle.as_ref().unwrap(),
-            &asset_contracts.pyth_price_id.unwrap(),
-        )
-        .await
-        .value;
+        // PYTH
+        let (pyth_contract, pyth_config) = match &asset_contracts.mock_pyth_oracle {
+            Some(oracle) => {
+                let pyth_config = PythConfig {
+                    contract_id: oracle.contract_id().into(),
+                    feed_id: asset_contracts.pyth_price_id.unwrap(),
+                    precision: 8, // Pyth uses 8 decimals by default
+                };
 
-        let pyth_precision = current_pyth_price.exponent as usize;
-        println!(
-            "Current pyth price: {:.precision$}",
-            current_pyth_price.price as f64 / 10f64.powi(pyth_precision.try_into().unwrap()),
-            precision = pyth_precision
-        );
-        let mut redstone_contract: Option<RedstoneCore<Wallet>> = None;
-        let mut redstone_config = None;
-        match &asset_contracts.redstone_config {
+                let current_pyth_price =
+                    pyth_oracle_abi::price_unsafe(&oracle, &asset_contracts.pyth_price_id.unwrap())
+                        .await
+                        .value;
+
+                let pyth_precision = current_pyth_price.exponent as usize;
+
+                println!(
+                    "Current pyth price: {:.precision$}",
+                    current_pyth_price.price as f64
+                        / 10f64.powi(pyth_precision.try_into().unwrap()),
+                    precision = pyth_precision
+                );
+
+                (Some(oracle), Some(pyth_config))
+            }
+            None => {
+                println!("No pyth config found");
+                (None, None)
+            }
+        };
+
+        // STORK
+        let (stork_contract, stork_config) = match &asset_contracts.mock_stork_oracle {
+            Some(oracle) => {
+                let stork_config = StorkConfig {
+                    contract_id: oracle.contract_id().into(),
+                    feed_id: asset_contracts.stork_feed_id.unwrap(),
+                };
+
+                let stork_value = stork_oracle_abi::get_temporal_value(
+                    &oracle,
+                    asset_contracts.stork_feed_id.unwrap(),
+                )
+                .await
+                .quantized_value;
+
+                // Convert stork oracle value to fuel u64 representation
+                let stork_price = stork_i128_to_u64(&stork_value)
+                    .expect("Failed to convert stork oracle value to fuel u64");
+
+                println!("Stork oracle price: {}", stork_price);
+
+                (Some(oracle), Some(stork_config))
+            }
+            None => {
+                println!("No stork config found");
+                (None, None)
+            }
+        };
+
+        // REDSTONE
+        let (redstone_contract, redstone_config) = match &asset_contracts.redstone_config {
             Some(config) => {
-                redstone_contract = Some(RedstoneCore::new(config.contract, wallet.clone()));
-                redstone_config = Some(RedstoneConfig {
+                let oracle = RedstoneCore::new(config.contract, wallet.clone());
+                let config = RedstoneConfig {
                     contract_id: config.contract,
                     feed_id: config.price_id,
                     precision: config.precision,
-                });
-            }
-            None => {}
-        }
+                };
 
-        // Initialize oracle with all available price feeds
-        let _ = oracle_abi::initialize(
-            &asset_contracts.oracle,
-            Some(StorkConfig {
-                contract_id: ContractId::from(
-                    asset_contracts
-                        .mock_stork_oracle
-                        .as_ref()
-                        .unwrap()
-                        .contract_id(),
-                ),
-                feed_id: asset_contracts.stork_feed_id.unwrap(),
-            }),
-            Some(PythConfig {
-                contract_id: ContractId::from(
-                    asset_contracts
-                        .mock_pyth_oracle
-                        .as_ref()
-                        .unwrap()
-                        .contract_id(),
-                ),
-                feed_id: asset_contracts.pyth_price_id.unwrap(),
-                precision: 8, // Pyth uses 8 decimals by default
-            }),
-            redstone_config,
-        )
-        .await;
+                // Get current price
+                let current_redstone_price =
+                    redstone_oracle_abi::read_prices(&oracle, vec![config.feed_id])
+                        .await
+                        .value[0]
+                        .as_u64();
 
-        let current_price = oracle_abi::get_price(
-            &asset_contracts.oracle,
-            asset_contracts.mock_stork_oracle.as_ref(),
-            asset_contracts.mock_pyth_oracle.as_ref(),
-            redstone_contract.as_ref(),
-        )
-        .await
-        .value;
-
-        println!(
-            "Current oracle proxy price: {:.9}",
-            current_price as f64 / 1_000_000_000.0
-        );
-        match &asset_contracts.redstone_config {
-            Some(redstone_config) => {
-                let redstone_precision = redstone_config.precision as usize;
-                let current_redstone_price = redstone_oracle_abi::read_prices(
-                    &redstone_contract.unwrap(),
-                    vec![redstone_config.price_id],
-                )
-                .await
-                .value[0]
-                    .as_u64();
+                let redstone_precision = config.precision as usize;
 
                 println!(
                     "Current redstone price: {:.precision$}",
@@ -519,12 +531,104 @@ pub mod utils {
                         / 10f64.powi(redstone_precision.try_into().unwrap()),
                     precision = redstone_precision
                 );
+
+                (Some(oracle), Some(config))
             }
-            None => {}
+            None => {
+                println!("No redstone config found");
+                (None, None)
+            }
+        };
+
+        // Initialize oracle with all available price feeds
+        if let (Some(stork_contract), Some(stork_config)) = (stork_contract, stork_config) {
+            oracle_abi::set_stork_config(&asset_contracts.oracle, stork_contract, stork_config)
+                .await;
         }
+        if let (Some(pyth_contract), Some(pyth_config)) = (pyth_contract, pyth_config) {
+            oracle_abi::set_pyth_config(&asset_contracts.oracle, pyth_contract, pyth_config).await;
+        }
+        if let (Some(redstone_contract), Some(redstone_config)) =
+            (redstone_contract.clone(), redstone_config)
+        {
+            oracle_abi::set_redstone_config(
+                &asset_contracts.oracle,
+                &redstone_contract,
+                redstone_config,
+            )
+            .await
+            .unwrap();
+        }
+
+        let current_price = oracle_abi::get_price(&asset_contracts.oracle).await;
+
+        println!(
+            "Current oracle proxy price: {:.9}",
+            current_price as f64 / 1_000_000_000.0
+        );
     }
+
     pub fn to_hex_str(bits: &Bits256) -> String {
         format!("0x{}", hex::encode(bits.0))
+    }
+
+    /// Converts a stork oracle underlying value to fuel u64 representation
+    /// This implements the same logic as the oracle contract's _stork_underlying_to_fuel_u64 function
+    /// but optimized for Rust and with better error handling
+    pub fn stork_underlying_to_fuel_u64(
+        underlying: u128,
+        fuel_decimal_representation: u32,
+    ) -> Result<u64> {
+        const BIAS: u128 = 1u128 << 127; // 2^127
+        const U64_MAX: u128 = u64::MAX as u128;
+        const DECIMALS_18: u32 = 18;
+
+        // If the underlying is below the bias, the logical signed value is negative
+        if underlying < BIAS {
+            return Err(fuels::types::errors::Error::Other(
+                "Negative value not allowed".to_string(),
+            ));
+        }
+
+        let magnitude = underlying - BIAS;
+
+        // Apply decimal conversion from 18 to fuel_decimal_representation with rounding up on downscale
+        let adjusted_value = if fuel_decimal_representation < DECIMALS_18 {
+            let precision = DECIMALS_18 - fuel_decimal_representation;
+            let divisor = 10u128.pow(precision);
+
+            // Round up on downscale: (magnitude + divisor - 1) / divisor
+            (magnitude + divisor - 1) / divisor
+        } else if fuel_decimal_representation > DECIMALS_18 {
+            let decimal_diff = fuel_decimal_representation - DECIMALS_18;
+            let multiplier = 10u128.pow(decimal_diff);
+
+            // Check if multiplication would exceed u64 maximum
+            if magnitude > U64_MAX / multiplier {
+                return Err(fuels::types::errors::Error::Other(
+                    "Multiplication would exceed u64 maximum".to_string(),
+                ));
+            }
+
+            magnitude * multiplier
+        } else {
+            magnitude
+        };
+
+        // Bound to u64
+        if adjusted_value > U64_MAX {
+            return Err(fuels::types::errors::Error::Other(
+                "Price value exceeds u64 maximum".to_string(),
+            ));
+        }
+
+        Ok(adjusted_value as u64)
+    }
+
+    /// Helper function to convert stork oracle I128 to fuel u64 with default fuel decimals (9)
+    pub fn stork_i128_to_u64(i128_value: &I128) -> Result<u64> {
+        let fuel_decimals: u32 = 9;
+        stork_underlying_to_fuel_u64(i128_value.underlying, fuel_decimals)
     }
 
     pub fn load_vesting_schedules_from_csv(

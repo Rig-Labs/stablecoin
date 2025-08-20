@@ -248,6 +248,9 @@ pub mod stability_pool_abi {
                 stability_pool.contract.contract_id().into(),
                 stability_pool.implementation_id.into(),
             ])
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }

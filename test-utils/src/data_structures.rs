@@ -3,8 +3,9 @@ use super::interfaces::{
     coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
     default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken, oracle::Oracle,
     protocol_manager::ProtocolManager, pyth_oracle::PythCore, redstone_oracle::RedstoneCore,
-    stork_oracle::StorkCore, sorted_troves::SortedTroves, stability_pool::StabilityPool, token::Token,
-    trove_manager::TroveManagerContract, usdm_token::USDMToken, vesting::VestingContract,
+    sorted_troves::SortedTroves, stability_pool::StabilityPool, stork_oracle::StorkCore,
+    token::Token, trove_manager::TroveManagerContract, usdm_token::USDMToken,
+    vesting::VestingContract,
 };
 use fuels::{
     accounts::Account,

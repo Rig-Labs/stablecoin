@@ -118,20 +118,23 @@ pub mod borrow_operations_abi {
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
             .with_tx_policies(tx_params)
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await;
     }
 
     pub async fn add_coll<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &ContractInstance<Oracle<T>>,
-        pyth: &PythCore<T>,
-        redstone: &RedstoneCore<T>,
+        _oracle: &ContractInstance<Oracle<T>>,
+        _pyth: &PythCore<T>,
+        _redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
-        usdm_token: &ContractInstance<USDMToken<T>>,
-        sorted_troves: &ContractInstance<SortedTroves<T>>,
-        trove_manager: &ContractInstance<TroveManagerContract<T>>,
-        active_pool: &ContractInstance<ActivePool<T>>,
+        _usdm_token: &ContractInstance<USDMToken<T>>,
+        _sorted_troves: &ContractInstance<SortedTroves<T>>,
+        _trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        _active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -155,33 +158,9 @@ pub mod borrow_operations_abi {
             .add_coll(lower_hint, upper_hint)
             .call_params(call_params)
             .unwrap()
-            .with_contracts(&[
-                &oracle.contract,
-                pyth,
-                redstone,
-                mock_token,
-                &sorted_troves.contract,
-                &trove_manager.contract,
-                &active_pool.contract,
-                &usdm_token.contract,
-            ])
-            .with_contract_ids(&[
-                borrow_operations.contract.contract_id().into(),
-                borrow_operations.implementation_id.into(),
-                sorted_troves.implementation_id.into(),
-                sorted_troves.contract.contract_id().into(),
-                trove_manager.contract.contract_id().into(),
-                trove_manager.implementation_id.into(),
-                oracle.contract.contract_id().into(),
-                oracle.implementation_id.into(),
-                pyth.contract_id().into(),
-                redstone.contract_id().into(),
-                mock_token.contract_id().into(),
-                usdm_token.contract.contract_id().into(),
-                usdm_token.implementation_id.into(),
-                active_pool.contract.contract_id().into(),
-                active_pool.implementation_id.into(),
-            ])
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call()
@@ -190,13 +169,13 @@ pub mod borrow_operations_abi {
 
     pub async fn withdraw_coll<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &ContractInstance<Oracle<T>>,
-        pyth: &PythCore<T>,
-        redstone: &RedstoneCore<T>,
+        _oracle: &ContractInstance<Oracle<T>>,
+        _pyth: &PythCore<T>,
+        _redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
-        sorted_troves: &ContractInstance<SortedTroves<T>>,
-        trove_manager: &ContractInstance<TroveManagerContract<T>>,
-        active_pool: &ContractInstance<ActivePool<T>>,
+        _sorted_troves: &ContractInstance<SortedTroves<T>>,
+        _trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        _active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -214,47 +193,26 @@ pub mod borrow_operations_abi {
             .contract
             .methods()
             .withdraw_coll(amount, lower_hint, upper_hint, mock_asset_id.into())
-            .with_contracts(&[
-                &oracle.contract,
-                pyth,
-                redstone,
-                mock_token,
-                &sorted_troves.contract,
-                &trove_manager.contract,
-                &active_pool.contract,
-            ])
-            .with_contract_ids(&[
-                borrow_operations.contract.contract_id().into(),
-                borrow_operations.implementation_id.into(),
-                sorted_troves.implementation_id.into(),
-                sorted_troves.contract.contract_id().into(),
-                trove_manager.contract.contract_id().into(),
-                trove_manager.implementation_id.into(),
-                oracle.contract.contract_id().into(),
-                oracle.implementation_id.into(),
-                pyth.contract_id().into(),
-                redstone.contract_id().into(),
-                mock_token.contract_id().into(),
-                active_pool.contract.contract_id().into(),
-                active_pool.implementation_id.into(),
-            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }
 
     pub async fn withdraw_usdm<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &ContractInstance<Oracle<T>>,
-        pyth: &PythCore<T>,
-        redstone: &RedstoneCore<T>,
+        _oracle: &ContractInstance<Oracle<T>>,
+        _pyth: &PythCore<T>,
+        _redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
-        usdm_token: &ContractInstance<USDMToken<T>>,
-        fpt_staking: &ContractInstance<FPTStaking<T>>,
-        sorted_troves: &ContractInstance<SortedTroves<T>>,
-        trove_manager: &ContractInstance<TroveManagerContract<T>>,
-        active_pool: &ContractInstance<ActivePool<T>>,
+        _usdm_token: &ContractInstance<USDMToken<T>>,
+        _fpt_staking: &ContractInstance<FPTStaking<T>>,
+        _sorted_troves: &ContractInstance<SortedTroves<T>>,
+        _trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        _active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -272,53 +230,26 @@ pub mod borrow_operations_abi {
             .contract
             .methods()
             .withdraw_usdm(amount, lower_hint, upper_hint, mock_asset_id.into())
-            .with_contracts(&[
-                &oracle.contract,
-                pyth,
-                redstone,
-                mock_token,
-                &sorted_troves.contract,
-                &trove_manager.contract,
-                &active_pool.contract,
-                &usdm_token.contract,
-                &fpt_staking.contract,
-            ])
-            .with_contract_ids(&[
-                borrow_operations.contract.contract_id().into(),
-                borrow_operations.implementation_id.into(),
-                sorted_troves.implementation_id.into(),
-                sorted_troves.contract.contract_id().into(),
-                trove_manager.contract.contract_id().into(),
-                trove_manager.implementation_id.into(),
-                oracle.contract.contract_id().into(),
-                oracle.implementation_id.into(),
-                pyth.contract_id().into(),
-                redstone.contract_id().into(),
-                mock_token.contract_id().into(),
-                usdm_token.contract.contract_id().into(),
-                usdm_token.implementation_id.into(),
-                active_pool.contract.contract_id().into(),
-                active_pool.implementation_id.into(),
-                fpt_staking.contract.contract_id().into(),
-                fpt_staking.implementation_id.into(),
-            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }
 
     pub async fn repay_usdm<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        oracle: &ContractInstance<Oracle<T>>,
-        pyth: &PythCore<T>,
-        redstone: &RedstoneCore<T>,
+        _oracle: &ContractInstance<Oracle<T>>,
+        _pyth: &PythCore<T>,
+        _redstone: &RedstoneCore<T>,
         mock_token: &Token<T>,
         usdm_token: &ContractInstance<USDMToken<T>>,
-        sorted_troves: &ContractInstance<SortedTroves<T>>,
-        trove_manager: &ContractInstance<TroveManagerContract<T>>,
-        active_pool: &ContractInstance<ActivePool<T>>,
-        default_pool: &ContractInstance<DefaultPool<T>>,
+        _sorted_troves: &ContractInstance<SortedTroves<T>>,
+        _trove_manager: &ContractInstance<TroveManagerContract<T>>,
+        _active_pool: &ContractInstance<ActivePool<T>>,
+        _default_pool: &ContractInstance<DefaultPool<T>>,
         amount: u64,
         lower_hint: Identity,
         upper_hint: Identity,
@@ -345,39 +276,12 @@ pub mod borrow_operations_abi {
             .contract
             .methods()
             .repay_usdm(lower_hint, upper_hint, mock_asset_id.into())
-            .with_contracts(&[
-                &oracle.contract,
-                pyth,
-                redstone,
-                mock_token,
-                &sorted_troves.contract,
-                &trove_manager.contract,
-                &active_pool.contract,
-                &usdm_token.contract,
-                &default_pool.contract,
-            ])
-            .with_contract_ids(&[
-                borrow_operations.contract.contract_id().into(),
-                borrow_operations.implementation_id.into(),
-                sorted_troves.implementation_id.into(),
-                sorted_troves.contract.contract_id().into(),
-                trove_manager.contract.contract_id().into(),
-                trove_manager.implementation_id.into(),
-                oracle.contract.contract_id().into(),
-                oracle.implementation_id.into(),
-                pyth.contract_id().into(),
-                redstone.contract_id().into(),
-                mock_token.contract_id().into(),
-                usdm_token.contract.contract_id().into(),
-                usdm_token.implementation_id.into(),
-                active_pool.contract.contract_id().into(),
-                active_pool.implementation_id.into(),
-                default_pool.contract.contract_id().into(),
-                default_pool.implementation_id.into(),
-            ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(1))
             .with_tx_policies(tx_params)
             .call_params(call_params)
+            .unwrap()
+            .determine_missing_contracts()
+            .await
             .unwrap()
             .call()
             .await

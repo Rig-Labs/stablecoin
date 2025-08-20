@@ -209,6 +209,9 @@ pub mod protocol_manager_abi {
             .with_contracts(&with_contracts)
             .with_contract_ids(&with_contract_ids.to_vec())
             .with_variable_output_policy(VariableOutputPolicy::Exactly(10))
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
             .unwrap()

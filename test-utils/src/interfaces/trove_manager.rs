@@ -102,6 +102,9 @@ pub mod trove_manager_abi {
                 trove_manager.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }
@@ -164,6 +167,9 @@ pub mod trove_manager_abi {
                 trove_manager.implementation_id.into(),
             ])
             .with_variable_output_policy(VariableOutputPolicy::Exactly(3))
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }

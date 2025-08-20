@@ -2,28 +2,20 @@ use std::{fs::File, io::Write};
 
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::{Bits256, Identity};
+use fuels::types::Bits256;
 use serde_json::json;
-use std::str::FromStr;
 use test_utils::data_structures::ProtocolContracts;
 use test_utils::interfaces::hint_helper::HintHelper;
 use test_utils::interfaces::multi_trove_getter::MultiTroveGetter;
-use test_utils::interfaces::vesting;
 
 use crate::constants::{MAINNET_CONTRACTS_FILE, TESTNET_CONTRACTS_FILE};
-use crate::utils::utils::{is_testnet, load_vesting_schedules_from_csv, setup_wallet};
+use crate::utils::utils::{is_testnet, setup_wallet};
 
 use test_utils::setup::common::{
     deploy_core_contracts, deploy_hint_helper, deploy_multi_trove_getter, initialize_core_contracts,
 };
 
-const VESTING_SCHEDULE_PATH: &str = "deploy-scripts/vesting/vesting.csv";
-const CLIFF_PERCENTAGE: f64 = 0.0; // 0% cliff
-const SECONDS_TO_CLIFF: u64 = 7 * 24 * 60 * 60; // 7 days
-const SECONDS_VESTING_DURATION: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
-
 pub mod deployment {
-    use crate::constants::{MAINNET_TREASURY_IDENTITY, TESTNET_TREASURY_IDENTITY};
 
     use super::*;
     pub async fn deploy() {
@@ -38,13 +30,6 @@ pub mod deployment {
         println!("🔑 Wallet address: 0x{}", address);
         println!("🔑 Is testnet: {}", is_testnet);
         println!("🔑 Network name: {}", network_name);
-        println!(
-            "🔑 Treasury identity: {}",
-            match is_testnet {
-                true => TESTNET_TREASURY_IDENTITY,
-                false => MAINNET_TREASURY_IDENTITY,
-            }
-        );
         //--------------- Deploy ---------------
         let core_contracts =
             deploy_and_initialize_all_core_contracts(wallet.clone(), is_testnet).await;
@@ -57,34 +42,10 @@ pub mod deployment {
 
     pub async fn deploy_and_initialize_all_core_contracts(
         wallet: Wallet,
-        is_testnet: bool,
+        _is_testnet: bool,
     ) -> ProtocolContracts<Wallet> {
-        let treasury_identity = Identity::Address(
-            Address::from_str(match is_testnet {
-                true => TESTNET_TREASURY_IDENTITY,
-                false => MAINNET_TREASURY_IDENTITY,
-            })
-            .unwrap(),
-        );
-
-        let vesting_schedules = load_vesting_schedules_from_csv(
-            VESTING_SCHEDULE_PATH,
-            CLIFF_PERCENTAGE,
-            SECONDS_TO_CLIFF,
-            SECONDS_VESTING_DURATION,
-            treasury_identity,
-        );
         let mut core_contracts = deploy_core_contracts(&wallet, false, true).await;
         initialize_core_contracts(&mut core_contracts, &wallet, false, false, true).await;
-
-        vesting::vesting_abi::instantiate_vesting_contract(
-            &core_contracts.vesting_contract,
-            &core_contracts.fpt_asset_id,
-            vesting_schedules,
-            false,
-        )
-        .await
-        .unwrap();
 
         return core_contracts;
     }

@@ -64,12 +64,20 @@ pub mod stork_oracle_abi {
         contract: &StorkCore<Wallet>,
         feed_id: Bits256,
     ) -> TemporalNumericValue {
-        contract
+        match contract
             .methods()
             .get_temporal_numeric_value_unchecked_v1(feed_id)
-            .call()
+            .determine_missing_contracts()
             .await
             .unwrap()
-            .value
+            .simulate(Execution::state_read_only())
+            .await
+        {
+            Ok(response) => response.value,
+            Err(e) => {
+                println!("Error getting temporal value: {:?}", e);
+                panic!("Error getting temporal value");
+            }
+        }
     }
 }

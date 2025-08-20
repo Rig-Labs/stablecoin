@@ -37,7 +37,7 @@ pub mod common {
             default_pool::default_pool_abi,
             fpt_staking::fpt_staking_abi,
             fpt_token::fpt_token_abi,
-            oracle::oracle_abi,
+            oracle::{oracle_abi, StorkConfig},
             protocol_manager::protocol_manager_abi,
             proxy::Proxy,
             pyth_oracle::{pyth_oracle_abi, pyth_price_feed},
@@ -1002,7 +1002,10 @@ pub mod common {
 
         let _ = oracle_abi::initialize(
             &oracle,
-            None,
+            Some(StorkConfig {
+                contract_id: stork.contract_id().into(),
+                feed_id: DEFAULT_STORK_FEED_ID,
+            }),
             Some(PythConfig {
                 contract_id: pyth.contract_id().into(),
                 feed_id: DEFAULT_PYTH_PRICE_ID,
@@ -1045,6 +1048,13 @@ pub mod common {
         .unwrap();
 
         pyth_oracle_abi::update_price_feeds(&pyth, pyth_price_feed(1)).await;
+        stork_oracle_abi::set_temporal_value(
+            &stork,
+            DEFAULT_STORK_FEED_ID,
+            1 * PRECISION,
+            PYTH_TIMESTAMP,
+        )
+        .await;
 
         protocol_manager_abi::register_asset(
             &contracts.protocol_manager,

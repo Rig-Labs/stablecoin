@@ -4,7 +4,7 @@ use dotenv::dotenv;
 use fuels::prelude::*;
 use fuels::types::Bits256;
 use std::str::FromStr;
-use test_utils::data_structures::{AssetConfig, ExistingAssetContracts, PythConfig};
+use test_utils::data_structures::{AssetConfig, ExistingAssetContracts, PythConfig, StorkConfig};
 use test_utils::setup::common::*;
 
 pub async fn add_asset(symbol: &str) {
@@ -25,6 +25,7 @@ pub async fn add_asset(symbol: &str) {
         // Testnet
         ("FUEL", true) => &constants::TESTNET_FUEL_CONSTANTS,
         ("ETH", true) => &constants::TESTNET_ETH_CONSTANTS,
+        ("STFUEL", true) => &constants::TESTNET_STFUEL_CONSTANTS,
         // Mainnet
         ("FUEL", false) => &constants::MAINNET_FUEL_CONSTANTS,
         ("ETH", false) => &constants::MAINNET_ETH_CONSTANTS,
@@ -45,27 +46,45 @@ pub async fn add_asset(symbol: &str) {
         symbol: symbol.to_string(),
         asset: match is_testnet {
             true => None,
-            false => Some(AssetConfig {
+            _ => Some(AssetConfig {
                 asset: ContractId::from_str(asset_constants.asset_contract_id.unwrap()).unwrap(),
                 asset_id: AssetId::from_str(asset_constants.asset_id.unwrap()).unwrap(),
                 fuel_vm_decimals: asset_constants.decimals,
             }),
         },
-        stork_oracle: None,
-        pyth_oracle: Some(PythConfig {
-            contract: ContractId::from_str(asset_constants.pyth_contract_id).unwrap(),
-            price_id: Bits256::from_hex_str(asset_constants.pyth_price_id).unwrap(),
-        }),
+        stork_oracle: if let (Some(stork_contract_id), Some(stork_price_id)) = (
+            asset_constants.stork_contract_id,
+            asset_constants.stork_price_id,
+        ) {
+            Some(StorkConfig {
+                contract: ContractId::from_str(stork_contract_id).unwrap(),
+                feed_id: Bits256::from_hex_str(stork_price_id).unwrap(),
+            })
+        } else {
+            None
+        },
+        pyth_oracle: if let (Some(pyth_contract_id), Some(pyth_price_id)) = (
+            asset_constants.pyth_contract_id,
+            asset_constants.pyth_price_id,
+        ) {
+            Some(PythConfig {
+                contract: ContractId::from_str(pyth_contract_id).unwrap(),
+                price_id: Bits256::from_hex_str(pyth_price_id).unwrap(),
+            })
+        } else {
+            None
+        },
         redstone_oracle: None, // TODO: Add redstone oracle when it's ready
     };
 
     // Redstone oracle is not required for initialization
     if existing_asset_to_initialize.asset.is_none()
-        || existing_asset_to_initialize.pyth_oracle.is_none()
+        || (existing_asset_to_initialize.pyth_oracle.is_none()
+            && existing_asset_to_initialize.stork_oracle.is_none())
     {
         // If testnet then cause a failure so it's obvious
         if !is_testnet {
-            panic!("Mainnet assets must have an asset and pyth oracle");
+            panic!("Mainnet assets must have an asset and pyth or stork oracle");
         }
 
         println!("Initializing new asset");
