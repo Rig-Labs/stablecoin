@@ -46,7 +46,7 @@ pub async fn add_asset(symbol: &str) {
         symbol: symbol.to_string(),
         asset: match is_testnet {
             true => None,
-            _ => Some(AssetConfig {
+            false => Some(AssetConfig {
                 asset: ContractId::from_str(asset_constants.asset_contract_id.unwrap()).unwrap(),
                 asset_id: AssetId::from_str(asset_constants.asset_id.unwrap()).unwrap(),
                 fuel_vm_decimals: asset_constants.decimals,
