@@ -25,7 +25,7 @@ pub mod vesting_abi {
     use crate::data_structures::ContractInstance;
 
     use super::*;
-    pub async fn instantiate_vesting_contract<T: Account>(
+    pub async fn instantiate_vesting_contract<T: Account + Clone>(
         contract: &ContractInstance<VestingContract<T>>,
         asset_contract: &AssetId,
         schedules: Vec<VestingSchedule>,
@@ -40,7 +40,7 @@ pub mod vesting_abi {
             .await
     }
 
-    pub async fn set_timestamp<T: Account>(
+    pub async fn set_timestamp<T: Account + Clone>(
         contract: &ContractInstance<VestingContract<T>>,
         timestamp: u64,
     ) -> Result<CallResponse<()>, Error> {
@@ -52,7 +52,7 @@ pub mod vesting_abi {
             .call()
             .await
     }
-    pub async fn get_vesting_schedule_call<T: Account>(
+    pub async fn get_vesting_schedule_call<T: Account + Clone>(
         contract: &ContractInstance<VestingContract<T>>,
         recipient: Identity,
     ) -> Result<CallResponse<VestingSchedule>, Error> {
@@ -65,7 +65,7 @@ pub mod vesting_abi {
             .await
     }
 
-    pub async fn get_redeemable_amount<T: Account>(
+    pub async fn get_redeemable_amount<T: Account + Clone>(
         contract: &ContractInstance<VestingContract<T>>,
         timestamp: u64,
         recipient: Identity,
@@ -79,7 +79,7 @@ pub mod vesting_abi {
             .await
     }
 
-    pub async fn claim_vested_tokens<T: Account>(
+    pub async fn claim_vested_tokens<T: Account + Clone>(
         contract: &ContractInstance<VestingContract<T>>,
     ) -> Result<CallResponse<()>, Error> {
         contract

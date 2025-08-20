@@ -26,7 +26,7 @@ async fn proper_creating_trove() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
 
@@ -291,7 +291,7 @@ async fn proper_decrease_collateral() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let deposit_amount = 1200 * PRECISION;
     let borrow_amount = 600 * PRECISION;
@@ -438,7 +438,7 @@ async fn proper_increase_debt() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let usdm_asset_id: AssetId = contracts.usdm_asset_id;
 
@@ -591,7 +591,7 @@ async fn proper_decrease_debt() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let usdm_asset_id = contracts.usdm_asset_id;
 
@@ -988,7 +988,7 @@ async fn proper_close_trove() {
     .await;
     // print_response(&res);
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let wallet2_balance = provider
         .get_asset_balance(&wallet2.address(), contracts.asset_contracts[0].asset_id)
@@ -1080,7 +1080,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let deposit_amount1 = 1200 * PRECISION;
     let borrow_amount1 = 600 * PRECISION;
@@ -1245,7 +1245,7 @@ async fn proper_creating_trove_with_2nd_asset() {
     .await
     .unwrap();
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     borrow_operations_abi::open_trove(
         &contracts.borrow_operations,

@@ -6,11 +6,7 @@ use test_utils::{
     setup::common::deploy_usdm_token,
 };
 
-async fn get_contract_instance() -> (
-    ContractInstance<USDMToken<WalletUnlocked>>,
-    WalletUnlocked,
-    Vec<WalletUnlocked>,
-) {
+async fn get_contract_instance() -> (ContractInstance<USDMToken<Wallet>>, Wallet, Vec<Wallet>) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

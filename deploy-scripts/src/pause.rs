@@ -1,6 +1,7 @@
 use crate::utils::utils::{is_testnet, load_core_contracts, setup_wallet};
 use dotenv::dotenv;
 
+use fuels::accounts::ViewOnlyAccount;
 use test_utils::interfaces::borrow_operations::borrow_operations_abi;
 
 pub async fn pause_protocol() {

@@ -13,7 +13,7 @@ pub mod fpt_token_abi {
     use fuels::{prelude::*, types::ContractId};
 
     use super::*;
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         instance: &ContractInstance<FPTToken<T>>,
         vesting_contract: &VestingContract<T>,
         community_issuance_contract: &ContractInstance<CommunityIssuance<T>>,
@@ -43,7 +43,7 @@ pub mod fpt_token_abi {
         return res.unwrap();
     }
 
-    pub async fn total_supply<T: Account>(
+    pub async fn total_supply<T: Account + Clone>(
         instance: &ContractInstance<FPTToken<T>>,
     ) -> CallResponse<Option<u64>> {
         let fpt_token_asset_id = instance
@@ -65,7 +65,7 @@ pub mod fpt_token_abi {
             .unwrap()
     }
 
-    pub async fn get_vesting_contract<T: Account>(
+    pub async fn get_vesting_contract<T: Account + Clone>(
         instance: &ContractInstance<FPTToken<T>>,
     ) -> CallResponse<ContractId> {
         instance

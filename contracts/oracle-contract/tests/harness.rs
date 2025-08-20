@@ -26,10 +26,10 @@ async fn setup(
     initialize_pyth: bool,
     initialize_redstone: bool,
 ) -> (
-    ContractInstance<Oracle<WalletUnlocked>>,
-    Option<StorkCore<WalletUnlocked>>,
-    Option<PythCore<WalletUnlocked>>,
-    Option<RedstoneCore<WalletUnlocked>>,
+    ContractInstance<Oracle<Wallet>>,
+    Option<StorkCore<Wallet>>,
+    Option<PythCore<Wallet>>,
+    Option<RedstoneCore<Wallet>>,
 ) {
     let block_time = 1u32; // seconds
     let config = NodeConfig {
@@ -66,9 +66,9 @@ async fn setup(
     )
     .await;
 
-    let mut stork: Option<StorkCore<WalletUnlocked>> = None;
-    let mut pyth: Option<PythCore<WalletUnlocked>> = None;
-    let mut redstone: Option<RedstoneCore<WalletUnlocked>> = None;
+    let mut stork: Option<StorkCore<Wallet>> = None;
+    let mut pyth: Option<PythCore<Wallet>> = None;
+    let mut redstone: Option<RedstoneCore<Wallet>> = None;
 
     // If we want to use stork we should deploy a mock and add it to the oracle.
     if initialize_stork {

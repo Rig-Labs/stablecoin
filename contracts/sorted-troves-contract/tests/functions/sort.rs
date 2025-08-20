@@ -338,7 +338,7 @@ async fn proper_hint_gas_usage() {
     )
     .await;
 
-    let gas_with_hint = res.gas_used;
+    let gas_with_hint = res.tx_status.total_gas;
     assert!(gas_with_hint < avg_gas);
 
     let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
@@ -359,7 +359,7 @@ async fn proper_hint_gas_usage() {
         asset,
     )
     .await;
-    let gas_prev_hint = res2.gas_used;
+    let gas_prev_hint = res2.tx_status.total_gas;
     assert!(gas_prev_hint < avg_gas);
 
     let _ = assert_in_order_from_head(&sorted_troves, &trove_manager, asset).await;
@@ -380,7 +380,7 @@ async fn proper_hint_gas_usage() {
         asset,
     )
     .await;
-    let gas_next_hint = res3.gas_used;
+    let gas_next_hint = res3.tx_status.total_gas;
     assert!(
         gas_next_hint < avg_gas,
         "average gas: {}, gas used: {}",

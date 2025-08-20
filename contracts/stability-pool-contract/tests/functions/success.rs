@@ -413,7 +413,7 @@ async fn proper_one_sp_depositor_position() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
@@ -1057,7 +1057,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
@@ -1072,7 +1072,7 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         "Mock balance is not correct",
     );
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let st_mock_asset_id: AssetId = contracts.asset_contracts[1].asset_id;
 
@@ -1315,7 +1315,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let mock_asset_id: AssetId = contracts.asset_contracts[0].asset_id;
 
@@ -1330,7 +1330,7 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         "Mock balance is not correct",
     );
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let st_mock_asset_id: AssetId = new_asset_contracts.asset_id;
 

@@ -27,7 +27,7 @@ pub mod trove_manager_abi {
 
     use super::*;
 
-    pub async fn get_nominal_icr<T: Account>(
+    pub async fn get_nominal_icr<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -44,7 +44,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn batch_liquidate_troves<T: Account>(
+    pub async fn batch_liquidate_troves<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         community_issuance: &ContractInstance<CommunityIssuance<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
@@ -106,7 +106,7 @@ pub mod trove_manager_abi {
             .await
     }
 
-    pub async fn liquidate<T: Account>(
+    pub async fn liquidate<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         community_issuance: &ContractInstance<CommunityIssuance<T>>,
         stability_pool: &ContractInstance<StabilityPool<T>>,
@@ -168,7 +168,7 @@ pub mod trove_manager_abi {
             .await
     }
 
-    pub async fn increase_trove_coll<T: Account>(
+    pub async fn increase_trove_coll<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         amount: u64,
@@ -189,7 +189,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn increase_trove_debt<T: Account>(
+    pub async fn increase_trove_debt<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         amount: u64,
@@ -210,7 +210,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn set_trove_status<T: Account>(
+    pub async fn set_trove_status<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         status: Status,
@@ -231,7 +231,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         borrow_operations: ContractId,
         sorted_troves_id: ContractId,
@@ -272,7 +272,7 @@ pub mod trove_manager_abi {
         return res;
     }
 
-    pub async fn get_trove_coll<T: Account>(
+    pub async fn get_trove_coll<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -292,7 +292,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_entire_debt_and_coll<T: Account>(
+    pub async fn get_entire_debt_and_coll<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<(u64, u64, u64, u64)> {
@@ -312,7 +312,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_trove_debt<T: Account>(
+    pub async fn get_trove_debt<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -329,7 +329,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_trove_status<T: Account>(
+    pub async fn get_trove_status<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> Result<CallResponse<Status>, Error> {
@@ -345,7 +345,7 @@ pub mod trove_manager_abi {
             .await
     }
 
-    pub async fn get_pending_asset_reward<T: Account>(
+    pub async fn get_pending_asset_reward<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -362,7 +362,7 @@ pub mod trove_manager_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdm_reward<T: Account>(
+    pub async fn get_pending_usdm_reward<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -397,7 +397,7 @@ pub mod trove_manager_utils {
 
     use super::*;
 
-    pub async fn set_coll_and_debt_insert<T: Account>(
+    pub async fn set_coll_and_debt_insert<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
@@ -413,7 +413,7 @@ pub mod trove_manager_utils {
         sorted_troves_abi::insert(sorted_troves, id, coll, prev_id, next_id, asset).await;
     }
 
-    pub async fn assert_trove_coll<T: Account>(
+    pub async fn assert_trove_coll<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_coll: u64,
@@ -425,7 +425,7 @@ pub mod trove_manager_utils {
         assert_eq!(real_coll, expected_coll);
     }
 
-    pub async fn assert_trove_debt<T: Account>(
+    pub async fn assert_trove_debt<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_debt: u64,
@@ -437,7 +437,7 @@ pub mod trove_manager_utils {
         assert_eq!(real_debt, expected_debt, "Incorrect trove debt");
     }
 
-    pub async fn assert_trove_status<T: Account>(
+    pub async fn assert_trove_status<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_status: Status,
@@ -450,7 +450,7 @@ pub mod trove_manager_utils {
         assert_eq!(real_status, expected_status, "Incorrect trove status");
     }
 
-    pub async fn assert_pending_asset_rewards<T: Account>(
+    pub async fn assert_pending_asset_rewards<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_rewards: u64,
@@ -469,7 +469,7 @@ pub mod trove_manager_utils {
         );
     }
 
-    pub async fn assert_pending_usdm_rewards<T: Account>(
+    pub async fn assert_pending_usdm_rewards<T: Account + Clone>(
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         id: Identity,
         expected_rewards: u64,

@@ -1,6 +1,6 @@
 use crate::utils::utils::{is_testnet, load_core_contracts, setup_wallet};
 use dotenv::dotenv;
-use fuels::types::Identity;
+use fuels::{accounts::ViewOnlyAccount, types::Identity};
 use test_utils::interfaces::{
     borrow_operations::borrow_operations_abi, protocol_manager::protocol_manager_abi,
 };

@@ -8,19 +8,19 @@ use super::interfaces::{
     fpt_token::{FPTToken, FPTTokenConfigurables},
     hint_helper::HintHelper,
     multi_trove_getter::{MultiTroveGetter, MultiTroveGetterConfigurables},
-    oracle::{Oracle, OracleConfigurables, PythConfig, RedstoneConfig},
+    oracle::{Oracle, OracleConfigurables, PythConfig},
     protocol_manager::{ProtocolManager, ProtocolManagerConfigurables},
     pyth_oracle::{Price, PythCore, DEFAULT_PYTH_PRICE_ID, PYTH_TIMESTAMP},
-    stork_oracle::{StorkCore, DEFAULT_STORK_FEED_ID},
     redstone_oracle::{RedstoneCore, DEFAULT_REDSTONE_PRICE_ID},
     sorted_troves::{SortedTroves, SortedTrovesConfigurables},
     stability_pool::{StabilityPool, StabilityPoolConfigurables},
+    stork_oracle::{StorkCore, DEFAULT_STORK_FEED_ID},
     token::Token,
     trove_manager::{TroveManagerContract, TroveManagerContractConfigurables},
     usdm_token::{USDMToken, USDMTokenConfigurables},
     vesting::{VestingContract, VestingContractConfigurables},
 };
-use fuels::prelude::{Contract, TxPolicies, WalletUnlocked};
+use fuels::prelude::{Contract, TxPolicies};
 
 pub mod common {
     use super::*;
@@ -67,11 +67,7 @@ pub mod common {
         num_wallets: u64,
         deploy_2nd_asset: bool,
         use_test_fpt: bool,
-    ) -> (
-        ProtocolContracts<WalletUnlocked>,
-        WalletUnlocked,
-        Vec<WalletUnlocked>,
-    ) {
+    ) -> (ProtocolContracts<Wallet>, Wallet, Vec<Wallet>) {
         // Launch a local network and deploy the contract
         let mut wallets = launch_custom_provider_and_get_wallets(
             WalletsConfig::new(
@@ -86,18 +82,8 @@ pub mod common {
         .unwrap();
         let wallet = wallets.pop().unwrap();
 
-        let mut contracts = deploy_core_contracts(
-            &wallet,
-            use_test_fpt,
-            false,
-        ).await;
-        initialize_core_contracts(
-            &mut contracts,
-            &wallet,
-            use_test_fpt,
-            true,
-            false,
-        ).await;
+        let mut contracts = deploy_core_contracts(&wallet, use_test_fpt, false).await;
+        initialize_core_contracts(&mut contracts, &wallet, use_test_fpt, true, false).await;
 
         // Add the first asset (Fuel)
         let mock_asset_contracts = add_asset(
@@ -125,10 +111,10 @@ pub mod common {
     }
 
     pub async fn deploy_core_contracts(
-        wallet: &WalletUnlocked,
+        wallet: &Wallet,
         use_test_fpt: bool,
         verbose: bool,
-    ) -> ProtocolContracts<WalletUnlocked> {
+    ) -> ProtocolContracts<Wallet> {
         println!("Deploying core contracts...");
         let mut pb = ProgressBar::new(13);
 
@@ -215,8 +201,8 @@ pub mod common {
     }
 
     pub async fn initialize_core_contracts(
-        contracts: &mut ProtocolContracts<WalletUnlocked>,
-        wallet: &WalletUnlocked,
+        contracts: &mut ProtocolContracts<Wallet>,
+        wallet: &Wallet,
         use_test_fpt: bool,
         debug: bool,
         verbose: bool,
@@ -366,9 +352,7 @@ pub mod common {
         }
     }
 
-    async fn deploy_test_fpt_token(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
+    async fn deploy_test_fpt_token(wallet: &Wallet) -> ContractInstance<FPTToken<Wallet>> {
         let mock_fpt_token = deploy_token(wallet).await;
 
         token_abi::initialize(
@@ -387,12 +371,12 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_token(wallet: &WalletUnlocked) -> Token<WalletUnlocked> {
+    pub async fn deploy_token(wallet: &Wallet) -> Token<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
-        let id = Contract::load_from(
+        let res = Contract::load_from(
             &get_absolute_path_from_relative(TOKEN_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
@@ -400,8 +384,8 @@ pub mod common {
         .deploy(&wallet.clone(), tx_policies)
         .await;
 
-        match id {
-            Ok(id) => return Token::new(id.clone(), wallet.clone()),
+        match res {
+            Ok(res) => return Token::new(res.contract_id, wallet.clone()),
             Err(_) => {
                 wait();
                 let id = Contract::load_from(
@@ -411,16 +395,15 @@ pub mod common {
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
                 .await
-                .unwrap();
+                .unwrap()
+                .contract_id;
 
-                return Token::new(id.clone(), wallet.clone());
+                return Token::new(id, wallet.clone());
             }
         }
     }
 
-    pub async fn deploy_fpt_token(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<FPTToken<WalletUnlocked>> {
+    pub async fn deploy_fpt_token(wallet: &Wallet) -> ContractInstance<FPTToken<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -439,7 +422,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -454,9 +438,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_sorted_troves(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<SortedTroves<WalletUnlocked>> {
+    pub async fn deploy_sorted_troves(wallet: &Wallet) -> ContractInstance<SortedTroves<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -475,7 +457,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -491,8 +474,8 @@ pub mod common {
     }
 
     pub async fn deploy_trove_manager_contract(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<TroveManagerContract<WalletUnlocked>> {
+        wallet: &Wallet,
+    ) -> ContractInstance<TroveManagerContract<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -511,7 +494,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -527,9 +511,9 @@ pub mod common {
     }
 
     pub async fn deploy_vesting_contract(
-        wallet: &WalletUnlocked,
+        wallet: &Wallet,
         total_amount: u64,
-    ) -> ContractInstance<VestingContract<WalletUnlocked>> {
+    ) -> ContractInstance<VestingContract<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -550,7 +534,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -565,12 +550,12 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_mock_stork_oracle(wallet: &WalletUnlocked) -> StorkCore<WalletUnlocked> {
+    pub async fn deploy_mock_stork_oracle(wallet: &Wallet) -> StorkCore<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
-        
-        let id = Contract::load_from(
+
+        let res = Contract::load_from(
             &get_absolute_path_from_relative(STORK_ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
@@ -578,9 +563,9 @@ pub mod common {
         .deploy(&wallet.clone(), tx_policies)
         .await;
 
-        match id {
-            Ok(id) => {
-                return StorkCore::new(id, wallet.clone());
+        match res {
+            Ok(res) => {
+                return StorkCore::new(res.contract_id, wallet.clone());
             }
             Err(_) => {
                 let id = Contract::load_from(
@@ -590,19 +575,20 @@ pub mod common {
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
                 .await
-                .unwrap();
+                .unwrap()
+                .contract_id;
 
                 return StorkCore::new(id, wallet.clone());
             }
         }
     }
 
-    pub async fn deploy_mock_pyth_oracle(wallet: &WalletUnlocked) -> PythCore<WalletUnlocked> {
+    pub async fn deploy_mock_pyth_oracle(wallet: &Wallet) -> PythCore<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
-        let id = Contract::load_from(
+        let res = Contract::load_from(
             &get_absolute_path_from_relative(PYTH_ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
@@ -610,9 +596,9 @@ pub mod common {
         .deploy(&wallet.clone(), tx_policies)
         .await;
 
-        match id {
-            Ok(id) => {
-                return PythCore::new(id, wallet.clone());
+        match res {
+            Ok(res) => {
+                return PythCore::new(res.contract_id, wallet.clone());
             }
             Err(_) => {
                 let id = Contract::load_from(
@@ -622,21 +608,20 @@ pub mod common {
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
                 .await
-                .unwrap();
+                .unwrap()
+                .contract_id;
 
                 return PythCore::new(id, wallet.clone());
             }
         }
     }
 
-    pub async fn deploy_mock_redstone_oracle(
-        wallet: &WalletUnlocked,
-    ) -> RedstoneCore<WalletUnlocked> {
+    pub async fn deploy_mock_redstone_oracle(wallet: &Wallet) -> RedstoneCore<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
 
-        let id = Contract::load_from(
+        let res = Contract::load_from(
             &get_absolute_path_from_relative(REDSTONE_ORACLE_CONTRACT_BINARY_PATH),
             LoadConfiguration::default().with_salt(salt),
         )
@@ -644,9 +629,9 @@ pub mod common {
         .deploy(&wallet.clone(), tx_policies)
         .await;
 
-        match id {
-            Ok(id) => {
-                return RedstoneCore::new(id, wallet.clone());
+        match res {
+            Ok(res) => {
+                return RedstoneCore::new(res.contract_id, wallet.clone());
             }
             Err(_) => {
                 let id = Contract::load_from(
@@ -656,7 +641,8 @@ pub mod common {
                 .unwrap()
                 .deploy(&wallet.clone(), tx_policies)
                 .await
-                .unwrap();
+                .unwrap()
+                .contract_id;
 
                 return RedstoneCore::new(id, wallet.clone());
             }
@@ -664,11 +650,11 @@ pub mod common {
     }
 
     pub async fn deploy_oracle(
-        wallet: &WalletUnlocked,
+        wallet: &Wallet,
         fuel_vm_decimals: u32,
         debug: bool,
         initializer: Identity,
-    ) -> ContractInstance<Oracle<WalletUnlocked>> {
+    ) -> ContractInstance<Oracle<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -690,7 +676,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -703,8 +690,8 @@ pub mod common {
     }
 
     pub async fn deploy_protocol_manager(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<ProtocolManager<WalletUnlocked>> {
+        wallet: &Wallet,
+    ) -> ContractInstance<ProtocolManager<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -723,7 +710,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -739,8 +727,8 @@ pub mod common {
     }
 
     pub async fn deploy_borrow_operations(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<BorrowOperations<WalletUnlocked>> {
+        wallet: &Wallet,
+    ) -> ContractInstance<BorrowOperations<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -759,7 +747,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -791,23 +780,19 @@ pub mod common {
     }
 
     pub async fn deploy_asset_contracts(
-        wallet: &WalletUnlocked,
+        wallet: &Wallet,
         existing_contracts: &ExistingAssetContracts,
         debug: bool,
         deploy_stork: bool,
         deploy_pyth: bool,
         deploy_redstone: bool,
-    ) -> AssetContractsOptionalOracles<WalletUnlocked> {
+    ) -> AssetContractsOptionalOracles<Wallet> {
         println!("Deploying asset contracts...");
         let mut pb = ProgressBar::new(6);
 
         pb.inc();
 
-        let (
-            asset,
-            asset_id,
-            fuel_vm_decimals,
-        ) = match &existing_contracts.asset {
+        let (asset, asset_id, fuel_vm_decimals) = match &existing_contracts.asset {
             Some(asset_contract) => {
                 pb.inc();
                 (
@@ -846,10 +831,7 @@ pub mod common {
             }
         };
         // Deploy or use existing Stork oracle
-        let (
-            mock_stork_oracle,
-            stork_feed_id,
-        ) = match &existing_contracts.stork_oracle {
+        let (mock_stork_oracle, stork_feed_id) = match &existing_contracts.stork_oracle {
             Some(stork_config) => {
                 pb.inc();
                 (
@@ -862,7 +844,13 @@ pub mod common {
                     let stork = deploy_mock_stork_oracle(&wallet).await;
                     let stork_feed_id = Bits256::from(asset_id);
                     pb.inc();
-                    stork_oracle_abi::set_temporal_value(&stork, stork_feed_id, 1 * PRECISION, PYTH_TIMESTAMP).await;
+                    stork_oracle_abi::set_temporal_value(
+                        &stork,
+                        stork_feed_id,
+                        1 * PRECISION,
+                        PYTH_TIMESTAMP,
+                    )
+                    .await;
                     (Some(stork), Some(stork_feed_id))
                 } else {
                     (None, None)
@@ -871,10 +859,7 @@ pub mod common {
         };
 
         // Deploy or use existing Pyth oracle
-        let (
-            mock_pyth_oracle,
-            pyth_price_id,
-        ) = match &existing_contracts.pyth_oracle {
+        let (mock_pyth_oracle, pyth_price_id) = match &existing_contracts.pyth_oracle {
             Some(pyth_config) => {
                 pb.inc();
                 (
@@ -943,13 +928,7 @@ pub mod common {
         .await;
         pb.inc();
 
-        let _ = oracle_abi::initialize(
-            &oracle,
-            None,
-            None,
-            None,
-        )
-        .await;
+        let _ = oracle_abi::initialize(&oracle, None, None, None).await;
 
         let trove_manager = deploy_trove_manager_contract(&wallet).await;
         pb.inc();
@@ -1008,24 +987,18 @@ pub mod common {
     }
 
     pub async fn add_asset(
-        contracts: &mut ProtocolContracts<WalletUnlocked>,
-        wallet: &WalletUnlocked,
+        contracts: &mut ProtocolContracts<Wallet>,
+        wallet: &Wallet,
         name: String,
         symbol: String,
-    ) -> AssetContracts<WalletUnlocked> {
-
+    ) -> AssetContracts<Wallet> {
         // Deploy oracle contracts
         let stork = deploy_mock_stork_oracle(wallet).await;
         let pyth = deploy_mock_pyth_oracle(wallet).await;
         let redstone = deploy_mock_redstone_oracle(wallet).await;
 
-        let oracle = deploy_oracle(
-            wallet,
-            9,
-            true,
-            Identity::Address(wallet.address().into()),
-        )
-        .await;
+        let oracle =
+            deploy_oracle(wallet, 9, true, Identity::Address(wallet.address().into())).await;
 
         let _ = oracle_abi::initialize(
             &oracle,
@@ -1114,7 +1087,7 @@ pub mod common {
         }
     }
 
-    pub async fn initialize_asset<T: Account>(
+    pub async fn initialize_asset<T: Account + Clone>(
         core_protocol_contracts: &ProtocolContracts<T>,
         asset_contracts: &AssetContractsOptionalOracles<T>,
     ) -> Result<CallResponse<()>> {
@@ -1183,9 +1156,7 @@ pub mod common {
         .await
     }
 
-    pub async fn deploy_active_pool(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<ActivePool<WalletUnlocked>> {
+    pub async fn deploy_active_pool(wallet: &Wallet) -> ContractInstance<ActivePool<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1204,7 +1175,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1219,9 +1191,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_stability_pool(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<StabilityPool<WalletUnlocked>> {
+    pub async fn deploy_stability_pool(wallet: &Wallet) -> ContractInstance<StabilityPool<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1240,7 +1210,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1255,9 +1226,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_default_pool(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<DefaultPool<WalletUnlocked>> {
+    pub async fn deploy_default_pool(wallet: &Wallet) -> ContractInstance<DefaultPool<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1276,7 +1245,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1292,8 +1262,8 @@ pub mod common {
     }
 
     pub async fn deploy_coll_surplus_pool(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<CollSurplusPool<WalletUnlocked>> {
+        wallet: &Wallet,
+    ) -> ContractInstance<CollSurplusPool<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1312,7 +1282,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1328,8 +1299,8 @@ pub mod common {
     }
 
     pub async fn deploy_community_issuance(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<CommunityIssuance<WalletUnlocked>> {
+        wallet: &Wallet,
+    ) -> ContractInstance<CommunityIssuance<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1348,7 +1319,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1363,9 +1335,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_fpt_staking(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<FPTStaking<WalletUnlocked>> {
+    pub async fn deploy_fpt_staking(wallet: &Wallet) -> ContractInstance<FPTStaking<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1384,7 +1354,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1399,9 +1370,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_usdm_token(
-        wallet: &WalletUnlocked,
-    ) -> ContractInstance<USDMToken<WalletUnlocked>> {
+    pub async fn deploy_usdm_token(wallet: &Wallet) -> ContractInstance<USDMToken<Wallet>> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
         let tx_policies = TxPolicies::default().with_tip(1);
@@ -1420,7 +1389,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), tx_policies)
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         let proxy = deploy_proxy(
             id.clone().into(),
@@ -1435,7 +1405,7 @@ pub mod common {
         )
     }
 
-    pub async fn deploy_hint_helper(wallet: &WalletUnlocked) -> HintHelper<WalletUnlocked> {
+    pub async fn deploy_hint_helper(wallet: &Wallet) -> HintHelper<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
 
@@ -1446,15 +1416,16 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), TxPolicies::default().with_tip(1))
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         HintHelper::new(id, wallet.clone())
     }
 
     pub async fn deploy_multi_trove_getter(
-        wallet: &WalletUnlocked,
+        wallet: &Wallet,
         sorted_troves_contract_id: &ContractId,
-    ) -> MultiTroveGetter<WalletUnlocked> {
+    ) -> MultiTroveGetter<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
 
@@ -1471,7 +1442,8 @@ pub mod common {
         .unwrap()
         .deploy(&wallet.clone(), TxPolicies::default().with_tip(1))
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         MultiTroveGetter::new(id, wallet.clone())
     }
@@ -1480,10 +1452,14 @@ pub mod common {
     where
         T: std::fmt::Debug,
     {
-        response.receipts.iter().for_each(|r| match r.ra() {
-            Some(r) => println!("{:?}", r),
-            _ => (),
-        });
+        response
+            .tx_status
+            .receipts
+            .iter()
+            .for_each(|r| match r.ra() {
+                Some(r) => println!("{:?}", r),
+                _ => (),
+            });
     }
 
     pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {
@@ -1501,9 +1477,9 @@ pub mod common {
 
     pub async fn deploy_proxy(
         target: ContractId,
-        owner: WalletUnlocked,
+        owner: Wallet,
         additional_storage_path: Option<&str>,
-    ) -> Proxy<WalletUnlocked> {
+    ) -> Proxy<Wallet> {
         let mut rng = rand::thread_rng();
         let salt = rng.gen::<[u8; 32]>();
 
@@ -1584,7 +1560,8 @@ pub mod common {
         .with_salt(salt)
         .deploy(&owner, TxPolicies::default())
         .await
-        .unwrap();
+        .unwrap()
+        .contract_id;
 
         Proxy::new(contract_id, owner)
     }

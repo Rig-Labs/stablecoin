@@ -1,6 +1,8 @@
 pub mod utils {
     use csv::ReaderBuilder;
-    use fuels::accounts::{provider::Provider, wallet::WalletUnlocked};
+    use fuels::accounts::signers::private_key::PrivateKeySigner;
+    use fuels::accounts::{provider::Provider, wallet::Wallet};
+    use fuels::crypto::SecretKey;
     use fuels::prelude::*;
     use fuels::types::bech32::Bech32ContractId;
     use fuels::types::{Bits256, Identity, U256};
@@ -19,20 +21,30 @@ pub mod utils {
     use test_utils::{
         data_structures::ProtocolContracts,
         interfaces::{
-            active_pool::ActivePool, borrow_operations::BorrowOperations,
-            coll_surplus_pool::CollSurplusPool, community_issuance::CommunityIssuance,
-            default_pool::DefaultPool, fpt_staking::FPTStaking, fpt_token::FPTToken,
-            protocol_manager::ProtocolManager, pyth_oracle::PythCore, stork_oracle::StorkCore,
-            redstone_oracle::RedstoneCore, sorted_troves::SortedTroves,
-            stability_pool::StabilityPool, token::Token, trove_manager::TroveManagerContract,
-            vesting::VestingContract, oracle::{StorkConfig, PythConfig, RedstoneConfig},
+            active_pool::ActivePool,
+            borrow_operations::BorrowOperations,
+            coll_surplus_pool::CollSurplusPool,
+            community_issuance::CommunityIssuance,
+            default_pool::DefaultPool,
+            fpt_staking::FPTStaking,
+            fpt_token::FPTToken,
+            oracle::{PythConfig, RedstoneConfig, StorkConfig},
+            protocol_manager::ProtocolManager,
+            pyth_oracle::PythCore,
+            redstone_oracle::RedstoneCore,
+            sorted_troves::SortedTroves,
+            stability_pool::StabilityPool,
+            stork_oracle::StorkCore,
+            token::Token,
+            trove_manager::TroveManagerContract,
+            vesting::VestingContract,
         },
     };
 
     use crate::constants::{
         MAINNET_CONTRACTS_FILE, MAINNET_RPC, TESTNET_CONTRACTS_FILE, TESTNET_RPC,
     };
-    pub async fn setup_wallet() -> WalletUnlocked {
+    pub async fn setup_wallet() -> Wallet {
         let network =
             std::env::var("NETWORK").expect("NETWORK must be set to 'mainnet' or 'testnet'");
 
@@ -52,18 +64,14 @@ pub mod utils {
             Err(error) => panic!("❌ Cannot find .env file: {:#?}", error),
         };
 
-        WalletUnlocked::new_from_mnemonic_phrase_with_path(
-            &secret,
-            Some(provider),
-            "m/44'/1179993420'/0'/0/0",
-        )
-        .unwrap()
+        let secret_key =
+            SecretKey::new_from_mnemonic_phrase_with_path(&secret, "m/44'/1179993420'/0'/0/0")
+                .unwrap();
+
+        Wallet::new(PrivateKeySigner::new(secret_key), provider)
     }
 
-    pub fn load_core_contracts(
-        wallet: WalletUnlocked,
-        is_testnet: bool,
-    ) -> ProtocolContracts<WalletUnlocked> {
+    pub fn load_core_contracts(wallet: Wallet, is_testnet: bool) -> ProtocolContracts<Wallet> {
         let json = std::fs::read_to_string(match is_testnet {
             true => TESTNET_CONTRACTS_FILE,
             false => MAINNET_CONTRACTS_FILE,
@@ -356,13 +364,13 @@ pub mod utils {
         protocol_contracts
     }
 
-    pub async fn is_testnet(wallet: WalletUnlocked) -> bool {
-        let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
+    pub async fn is_testnet(wallet: Wallet) -> bool {
+        let network_name = wallet.provider().chain_info().await.unwrap().name;
         network_name.to_lowercase().contains("testnet")
     }
 
     pub fn write_asset_contracts_to_file(
-        asset_contracts: Vec<AssetContractsOptionalOracles<WalletUnlocked>>,
+        asset_contracts: Vec<AssetContractsOptionalOracles<Wallet>>,
         is_testnet: bool,
     ) {
         // Read existing contracts.json
@@ -423,8 +431,8 @@ pub mod utils {
     }
 
     pub async fn query_oracles(
-        asset_contracts: &AssetContractsOptionalOracles<WalletUnlocked>,
-        wallet: WalletUnlocked,
+        asset_contracts: &AssetContractsOptionalOracles<Wallet>,
+        wallet: Wallet,
     ) {
         let current_pyth_price = pyth_oracle_abi::price_unsafe(
             &asset_contracts.mock_pyth_oracle.as_ref().unwrap(),
@@ -439,7 +447,7 @@ pub mod utils {
             current_pyth_price.price as f64 / 10f64.powi(pyth_precision.try_into().unwrap()),
             precision = pyth_precision
         );
-        let mut redstone_contract: Option<RedstoneCore<WalletUnlocked>> = None;
+        let mut redstone_contract: Option<RedstoneCore<Wallet>> = None;
         let mut redstone_config = None;
         match &asset_contracts.redstone_config {
             Some(config) => {
@@ -457,11 +465,23 @@ pub mod utils {
         let _ = oracle_abi::initialize(
             &asset_contracts.oracle,
             Some(StorkConfig {
-                contract_id: ContractId::from(asset_contracts.mock_stork_oracle.as_ref().unwrap().contract_id()),
+                contract_id: ContractId::from(
+                    asset_contracts
+                        .mock_stork_oracle
+                        .as_ref()
+                        .unwrap()
+                        .contract_id(),
+                ),
                 feed_id: asset_contracts.stork_feed_id.unwrap(),
             }),
             Some(PythConfig {
-                contract_id: ContractId::from(asset_contracts.mock_pyth_oracle.as_ref().unwrap().contract_id()),
+                contract_id: ContractId::from(
+                    asset_contracts
+                        .mock_pyth_oracle
+                        .as_ref()
+                        .unwrap()
+                        .contract_id(),
+                ),
                 feed_id: asset_contracts.pyth_price_id.unwrap(),
                 precision: 8, // Pyth uses 8 decimals by default
             }),

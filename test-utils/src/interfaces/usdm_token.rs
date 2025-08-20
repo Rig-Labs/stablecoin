@@ -18,7 +18,7 @@ pub mod usdm_token_abi {
         types::{transaction_builders::VariableOutputPolicy, Bits256, ContractId},
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         instance: &ContractInstance<USDMToken<T>>,
         protocol_manager: ContractId,
         stability_pool: Identity,
@@ -43,7 +43,7 @@ pub mod usdm_token_abi {
             .await
     }
 
-    pub async fn mint<T: Account>(
+    pub async fn mint<T: Account + Clone>(
         instance: &ContractInstance<USDMToken<T>>,
         amount: u64,
         address: Identity,
@@ -61,7 +61,7 @@ pub mod usdm_token_abi {
             .await
     }
 
-    pub async fn burn<T: Account>(
+    pub async fn burn<T: Account + Clone>(
         instance: &ContractInstance<USDMToken<T>>,
         amount: u64,
     ) -> Result<CallResponse<()>, Error> {
@@ -96,7 +96,7 @@ pub mod usdm_token_abi {
             .await
     }
 
-    pub async fn total_supply<T: Account>(
+    pub async fn total_supply<T: Account + Clone>(
         instance: &ContractInstance<USDMToken<T>>,
     ) -> CallResponse<Option<u64>> {
         let usdm_asset_id = instance
@@ -118,7 +118,7 @@ pub mod usdm_token_abi {
             .unwrap()
     }
 
-    pub async fn add_trove_manager<T: Account>(
+    pub async fn add_trove_manager<T: Account + Clone>(
         instance: &ContractInstance<USDMToken<T>>,
         trove_manager: ContractId,
     ) -> Result<CallResponse<()>, Error> {

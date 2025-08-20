@@ -25,7 +25,7 @@ pub mod borrow_operations_abi {
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::{AssetId, Identity};
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         usdm_contract: ContractId,
         fpt_staking_contract: ContractId,
@@ -56,7 +56,7 @@ pub mod borrow_operations_abi {
             .unwrap()
     }
 
-    pub async fn open_trove<T: Account>(
+    pub async fn open_trove<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         mock_pyth: &PythCore<T>,
@@ -122,7 +122,7 @@ pub mod borrow_operations_abi {
             .await;
     }
 
-    pub async fn add_coll<T: Account>(
+    pub async fn add_coll<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
@@ -188,7 +188,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn withdraw_coll<T: Account>(
+    pub async fn withdraw_coll<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
@@ -244,7 +244,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn withdraw_usdm<T: Account>(
+    pub async fn withdraw_usdm<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
@@ -308,7 +308,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn repay_usdm<T: Account>(
+    pub async fn repay_usdm<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
@@ -383,7 +383,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn close_trove<T: Account>(
+    pub async fn close_trove<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
@@ -458,7 +458,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         oracle: ContractId,
         trove_manager: ContractId,
@@ -477,7 +477,7 @@ pub mod borrow_operations_abi {
             .await;
     }
 
-    pub async fn set_pause_status<T: Account>(
+    pub async fn set_pause_status<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         is_paused: bool,
     ) -> Result<CallResponse<()>, Error> {
@@ -495,7 +495,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn get_pauser<T: Account>(
+    pub async fn get_pauser<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<Identity>, Error> {
         let tx_params = TxPolicies::default()
@@ -512,7 +512,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn get_is_paused<T: Account>(
+    pub async fn get_is_paused<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<bool>, Error> {
         let tx_params = TxPolicies::default()
@@ -529,7 +529,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn claim_coll<T: Account>(
+    pub async fn claim_coll<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         active_pool: &ContractInstance<ActivePool<T>>,
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
@@ -555,7 +555,7 @@ pub mod borrow_operations_abi {
     }
 
     // Add these new functions to the module
-    pub async fn set_pauser<T: Account>(
+    pub async fn set_pauser<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         pauser: Identity,
     ) -> Result<CallResponse<()>, Error> {
@@ -573,7 +573,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn transfer_owner<T: Account>(
+    pub async fn transfer_owner<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
         new_owner: Identity,
     ) -> Result<CallResponse<()>, Error> {
@@ -591,7 +591,7 @@ pub mod borrow_operations_abi {
             .await
     }
 
-    pub async fn renounce_owner<T: Account>(
+    pub async fn renounce_owner<T: Account + Clone>(
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -610,7 +610,8 @@ pub mod borrow_operations_abi {
 }
 
 pub mod borrow_operations_utils {
-    use fuels::prelude::{Account, WalletUnlocked};
+    use fuels::accounts::ViewOnlyAccount;
+    use fuels::prelude::{Account, Wallet};
     use fuels::types::{Address, Identity};
 
     use super::*;
@@ -621,14 +622,14 @@ pub mod borrow_operations_utils {
     use crate::interfaces::usdm_token::USDMToken;
     use crate::{data_structures::AssetContracts, interfaces::token::token_abi};
 
-    pub async fn mint_token_and_open_trove<T: Account>(
-        wallet: WalletUnlocked,
-        asset_contracts: &AssetContracts<WalletUnlocked>,
+    pub async fn mint_token_and_open_trove<T: Account + Clone>(
+        wallet: Wallet,
+        asset_contracts: &AssetContracts<Wallet>,
         borrow_operations: &ContractInstance<BorrowOperations<T>>,
-        usdm: &ContractInstance<USDMToken<WalletUnlocked>>,
-        fpt_staking: &ContractInstance<FPTStaking<WalletUnlocked>>,
-        active_pool: &ContractInstance<ActivePool<WalletUnlocked>>,
-        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
+        usdm: &ContractInstance<USDMToken<Wallet>>,
+        fpt_staking: &ContractInstance<FPTStaking<Wallet>>,
+        active_pool: &ContractInstance<ActivePool<Wallet>>,
+        sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
         amount: u64,
         usdm_amount: u64,
     ) {

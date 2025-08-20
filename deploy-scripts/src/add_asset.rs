@@ -11,7 +11,7 @@ pub async fn add_asset(symbol: &str) {
     dotenv().ok();
 
     let wallet = setup_wallet().await;
-    let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
+    let network_name = wallet.provider().chain_info().await.unwrap().name;
     let is_testnet = is_testnet(wallet.clone()).await;
     let address: Address = wallet.address().into();
     println!("🔑 Wallet address: {}", address);
@@ -74,15 +74,15 @@ pub async fn add_asset(symbol: &str) {
     }
 
     // Deploy the asset contracts
-    let asset_contracts =
-        deploy_asset_contracts(
-            &wallet,
-             &existing_asset_to_initialize,
-              false,
-               false,
-               false,
-               false,
-        ).await;
+    let asset_contracts = deploy_asset_contracts(
+        &wallet,
+        &existing_asset_to_initialize,
+        false,
+        false,
+        false,
+        false,
+    )
+    .await;
 
     query_oracles(&asset_contracts, wallet.clone()).await;
 

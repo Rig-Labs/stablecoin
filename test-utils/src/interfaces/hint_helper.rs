@@ -17,7 +17,7 @@ pub mod hint_helper_abi {
         types::{AssetId, Identity},
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         hint_helper: &HintHelper<T>,
 
         sorted_troves: ContractId,
@@ -34,7 +34,7 @@ pub mod hint_helper_abi {
         return res;
     }
 
-    pub async fn get_approx_hint<T: Account>(
+    pub async fn get_approx_hint<T: Account + Clone>(
         hint_helper: &HintHelper<T>,
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,

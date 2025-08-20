@@ -74,7 +74,7 @@ pub mod pyth_oracle_abi {
     use super::*;
     use fuels::prelude::{Account, TxPolicies};
 
-    pub async fn price<T: Account>(
+    pub async fn price<T: Account + Clone>(
         oracle: &PythCore<T>,
         price_feed_id: &Bits256,
     ) -> CallResponse<Price> {
@@ -88,7 +88,7 @@ pub mod pyth_oracle_abi {
             .unwrap()
     }
 
-    pub async fn price_unsafe<T: Account>(
+    pub async fn price_unsafe<T: Account + Clone>(
         oracle: &PythCore<T>,
         price_feed_id: &Bits256,
     ) -> CallResponse<Price> {
@@ -102,7 +102,7 @@ pub mod pyth_oracle_abi {
             .unwrap()
     }
 
-    pub async fn update_price_feeds<T: Account>(
+    pub async fn update_price_feeds<T: Account + Clone>(
         oracle: &PythCore<T>,
         feeds: Vec<(Bits256, Price)>,
     ) {

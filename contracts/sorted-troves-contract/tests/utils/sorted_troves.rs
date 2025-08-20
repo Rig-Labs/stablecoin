@@ -6,7 +6,7 @@ use test_utils::interfaces::sorted_troves::SortedTroves;
 
 pub mod sorted_troves_utils {
     use fuels::{
-        prelude::WalletUnlocked,
+        prelude::Wallet,
         types::{Address, AssetId},
     };
     use rand::{self, Rng};
@@ -17,7 +17,7 @@ pub mod sorted_troves_utils {
     use super::*;
 
     pub async fn assert_neighbors(
-        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
+        sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
         current: Identity,
         prev_id: Identity,
         next_id: Identity,
@@ -31,8 +31,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_head(
-        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
-        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
+        trove_manager: &MockTroveManagerContract<Wallet>,
         asset: AssetId,
     ) {
         let mut count = 0;
@@ -73,8 +73,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn assert_in_order_from_tail(
-        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
-        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+        sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
+        trove_manager: &MockTroveManagerContract<Wallet>,
         asset: AssetId,
     ) {
         let mut count = 0;
@@ -109,8 +109,8 @@ pub mod sorted_troves_utils {
     }
 
     pub async fn generate_random_nodes(
-        trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-        sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
+        trove_manager: &MockTroveManagerContract<Wallet>,
+        sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
         max_size: u64,
         asset: AssetId,
     ) -> (Vec<(Identity, u64)>, u64) {
@@ -139,7 +139,8 @@ pub mod sorted_troves_utils {
                 asset,
             )
             .await
-            .gas_used;
+            .tx_status
+            .total_gas;
             avg_gas += gas_used;
 
             count += 1;

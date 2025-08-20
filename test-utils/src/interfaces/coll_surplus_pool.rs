@@ -14,11 +14,11 @@ pub mod coll_surplus_pool_abi {
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::types::AssetId;
     use fuels::{
-        prelude::{Account, ContractId, TxPolicies, WalletUnlocked},
+        prelude::{Account, ContractId, TxPolicies, Wallet},
         types::Identity,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         borrow_operations: ContractId,
         protocol_manager: Identity,
@@ -40,7 +40,7 @@ pub mod coll_surplus_pool_abi {
         return res;
     }
 
-    pub async fn get_asset<T: Account>(
+    pub async fn get_asset<T: Account + Clone>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         asset: AssetId,
     ) -> Result<CallResponse<u64>, Error> {
@@ -56,7 +56,7 @@ pub mod coll_surplus_pool_abi {
             .await
     }
 
-    pub async fn claim_coll<T: Account>(
+    pub async fn claim_coll<T: Account + Clone>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         acount: Identity,
         active_pool: &ContractInstance<ActivePool<T>>,
@@ -79,7 +79,7 @@ pub mod coll_surplus_pool_abi {
     }
 
     pub async fn get_collateral(
-        coll_surplus_pool: &ContractInstance<CollSurplusPool<WalletUnlocked>>,
+        coll_surplus_pool: &ContractInstance<CollSurplusPool<Wallet>>,
         acount: Identity,
         asset: AssetId,
     ) -> Result<CallResponse<u64>, Error> {
@@ -95,7 +95,7 @@ pub mod coll_surplus_pool_abi {
             .await
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         asset: AssetId,
         trove_manager: Identity,
@@ -112,7 +112,7 @@ pub mod coll_surplus_pool_abi {
             .await
     }
 
-    pub async fn account_surplus<T: Account>(
+    pub async fn account_surplus<T: Account + Clone>(
         coll_surplus_pool: &ContractInstance<CollSurplusPool<T>>,
         account: Identity,
         amount: u64,

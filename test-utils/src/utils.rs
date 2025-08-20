@@ -76,10 +76,14 @@ pub fn print_response<T>(response: &CallResponse<T>)
 where
     T: std::fmt::Debug,
 {
-    response.receipts.iter().for_each(|r| match r.ra() {
-        Some(r) => println!("{:?}", r),
-        _ => (),
-    });
+    response
+        .tx_status
+        .receipts
+        .iter()
+        .for_each(|r| match r.ra() {
+            Some(r) => println!("{:?}", r),
+            _ => (),
+        });
 }
 
 pub fn assert_within_threshold(a: u64, b: u64, comment: &str) {

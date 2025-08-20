@@ -6,7 +6,7 @@ use test_utils::{
 
 const DEFAULT_TARGET_CONTRACT_ID: [u8; 32] = [1u8; 32];
 
-async fn get_contract_instance() -> (Proxy<WalletUnlocked>, WalletUnlocked, WalletUnlocked) {
+async fn get_contract_instance() -> (Proxy<Wallet>, Wallet, Wallet) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(

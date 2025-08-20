@@ -31,7 +31,7 @@ pub mod deployment {
         dotenv().ok();
 
         let wallet = setup_wallet().await;
-        let network_name = wallet.provider().unwrap().chain_info().await.unwrap().name;
+        let network_name = wallet.provider().chain_info().await.unwrap().name;
         let address: Address = wallet.address().into();
         let is_testnet = is_testnet(wallet.clone()).await;
         //--------------- WALLET ---------------
@@ -56,9 +56,9 @@ pub mod deployment {
     }
 
     pub async fn deploy_and_initialize_all_core_contracts(
-        wallet: WalletUnlocked,
+        wallet: Wallet,
         is_testnet: bool,
-    ) -> ProtocolContracts<WalletUnlocked> {
+    ) -> ProtocolContracts<Wallet> {
         let treasury_identity = Identity::Address(
             Address::from_str(match is_testnet {
                 true => TESTNET_TREASURY_IDENTITY,
@@ -90,9 +90,9 @@ pub mod deployment {
     }
 
     pub async fn deploy_frontend_helper_contracts(
-        wallet: WalletUnlocked,
-        core_contracts: &ProtocolContracts<WalletUnlocked>,
-    ) -> (HintHelper<WalletUnlocked>, MultiTroveGetter<WalletUnlocked>) {
+        wallet: Wallet,
+        core_contracts: &ProtocolContracts<Wallet>,
+    ) -> (HintHelper<Wallet>, MultiTroveGetter<Wallet>) {
         let hint_helper = deploy_hint_helper(&wallet).await;
         let multi_trove_getter = deploy_multi_trove_getter(
             &wallet,
@@ -104,9 +104,9 @@ pub mod deployment {
     }
 
     fn write_contracts_to_file(
-        contracts: ProtocolContracts<WalletUnlocked>,
-        hint_helper: HintHelper<WalletUnlocked>,
-        multi_trove_getter: MultiTroveGetter<WalletUnlocked>,
+        contracts: ProtocolContracts<Wallet>,
+        hint_helper: HintHelper<Wallet>,
+        multi_trove_getter: MultiTroveGetter<Wallet>,
         is_testnet: bool,
     ) {
         let mut file = File::create(match is_testnet {

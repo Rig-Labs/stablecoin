@@ -9,10 +9,10 @@ use test_utils::{
 };
 
 async fn setup() -> (
-    ContractInstance<Oracle<WalletUnlocked>>,
-    PythCore<WalletUnlocked>,
-    WalletUnlocked,
-    WalletUnlocked,
+    ContractInstance<Oracle<Wallet>>,
+    PythCore<Wallet>,
+    Wallet,
+    Wallet,
 ) {
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(Some(3), Some(1), Some(1_000_000_000)),

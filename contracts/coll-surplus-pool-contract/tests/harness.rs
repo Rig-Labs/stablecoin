@@ -147,7 +147,7 @@ async fn test_collateral_surplus_workflow_after_liquidation() {
     )
     .await;
 
-    let provdier = liquidated_wallet.provider().unwrap();
+    let provdier = liquidated_wallet.provider();
 
     let asset_id = contracts.asset_contracts[0]
         .asset

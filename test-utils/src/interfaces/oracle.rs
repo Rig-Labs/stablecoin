@@ -1,7 +1,5 @@
 use crate::interfaces::{
-    pyth_oracle::PythCore,
-    redstone_oracle::RedstoneCore,
-    stork_oracle::StorkCore,
+    pyth_oracle::PythCore, redstone_oracle::RedstoneCore, stork_oracle::StorkCore,
 };
 use fuels::prelude::abigen;
 use fuels::programs::responses::CallResponse;
@@ -25,7 +23,7 @@ pub mod oracle_abi {
         types::{bech32::Bech32ContractId, errors::Error},
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         stork: Option<StorkConfig>,
         pyth: Option<PythConfig>,
@@ -46,7 +44,7 @@ pub mod oracle_abi {
             .await
     }
 
-    pub async fn get_last_good_price<T: Account>(
+    pub async fn get_last_good_price<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
     ) -> Result<CallResponse<Price>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -64,7 +62,7 @@ pub mod oracle_abi {
             .await
     }
 
-    pub async fn get_price<T: Account>(
+    pub async fn get_price<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         stork: Option<&StorkCore<T>>,
         pyth: Option<&PythCore<T>>,
@@ -118,7 +116,7 @@ pub mod oracle_abi {
             .unwrap()
     }
 
-    pub async fn set_debug_timestamp<T: Account>(
+    pub async fn set_debug_timestamp<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         timestamp: u64,
     ) {
@@ -138,7 +136,7 @@ pub mod oracle_abi {
             .unwrap();
     }
 
-    pub async fn set_stork_config<T: Account>(
+    pub async fn set_stork_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         stork: &StorkCore<T>,
         config: StorkConfig,
@@ -159,7 +157,7 @@ pub mod oracle_abi {
             .await
     }
 
-    pub async fn set_pyth_config<T: Account>(
+    pub async fn set_pyth_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         config: PythConfig,
@@ -180,7 +178,7 @@ pub mod oracle_abi {
             .await
     }
 
-    pub async fn set_redstone_config<T: Account>(
+    pub async fn set_redstone_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         redstone: &RedstoneCore<T>,
         config: RedstoneConfig,

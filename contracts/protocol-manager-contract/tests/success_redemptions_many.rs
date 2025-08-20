@@ -1,3 +1,4 @@
+use fuels::accounts::ViewOnlyAccount;
 use fuels::types::Identity;
 use test_utils::data_structures::{ContractInstance, PRECISION};
 use test_utils::interfaces::borrow_operations::borrow_operations_utils;
@@ -174,7 +175,7 @@ async fn proper_multi_collateral_redemption_from_partially_closed() {
             + with_min_borrow_fee(5_000 * PRECISION)
     );
 
-    let provider = healthy_wallet1.provider().unwrap();
+    let provider = healthy_wallet1.provider();
 
     let mock_asset_id = contracts.asset_contracts[0].asset_id;
     let st_mock_asset_id = contracts.asset_contracts[1].asset_id;

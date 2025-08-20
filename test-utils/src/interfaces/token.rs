@@ -12,7 +12,7 @@ pub mod token_abi {
         types::transaction_builders::VariableOutputPolicy,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         instance: &Token<T>,
         amount: u64,
         admin: &Identity,
@@ -40,7 +40,7 @@ pub mod token_abi {
         return res;
     }
 
-    pub async fn mint_to_id<T: Account>(
+    pub async fn mint_to_id<T: Account + Clone>(
         instance: &Token<T>,
         amount: u64,
         admin: Identity,

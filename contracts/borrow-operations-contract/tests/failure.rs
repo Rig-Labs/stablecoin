@@ -27,7 +27,7 @@ async fn fails_open_two_troves_of_same_coll_type() {
     )
     .await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let col_amount = 1_200 * PRECISION;
     let debt_amount = 600 * PRECISION;

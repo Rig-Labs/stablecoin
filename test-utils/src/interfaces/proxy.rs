@@ -10,7 +10,7 @@ pub mod proxy_abi {
     use super::*;
     use fuels::prelude::{Account, ContractId, Error, TxPolicies};
 
-    pub async fn set_proxy_target<T: Account>(
+    pub async fn set_proxy_target<T: Account + Clone>(
         proxy: &Proxy<T>,
         new_target: ContractId,
     ) -> Result<CallResponse<()>, Error> {
@@ -24,13 +24,13 @@ pub mod proxy_abi {
             .await
     }
 
-    pub async fn get_proxy_target<T: Account>(
+    pub async fn get_proxy_target<T: Account + Clone>(
         proxy: &Proxy<T>,
     ) -> Result<CallResponse<Option<ContractId>>, Error> {
         proxy.methods().proxy_target().call().await
     }
 
-    pub async fn set_proxy_owner<T: Account>(
+    pub async fn set_proxy_owner<T: Account + Clone>(
         proxy: &Proxy<T>,
         new_proxy_owner: State,
     ) -> Result<CallResponse<()>, Error> {
@@ -44,7 +44,7 @@ pub mod proxy_abi {
             .await
     }
 
-    pub async fn get_proxy_owner<T: Account>(
+    pub async fn get_proxy_owner<T: Account + Clone>(
         proxy: &Proxy<T>,
     ) -> Result<CallResponse<State>, Error> {
         proxy.methods().proxy_owner().call().await

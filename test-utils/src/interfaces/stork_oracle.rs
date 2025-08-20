@@ -22,7 +22,7 @@ pub mod stork_oracle_abi {
     use super::*;
 
     pub async fn set_temporal_value(
-        contract: &StorkCore<WalletUnlocked>,
+        contract: &StorkCore<Wallet>,
         feed_id: Bits256,
         value: u64,
         timestamp_ns: u64,
@@ -34,7 +34,7 @@ pub mod stork_oracle_abi {
 
         let temporal_value = TemporalNumericValue {
             timestamp_ns,
-            quantized_value: I128 { 
+            quantized_value: I128 {
                 underlying: value_with_indent,
             },
         };
@@ -61,7 +61,7 @@ pub mod stork_oracle_abi {
     }
 
     pub async fn get_temporal_value(
-        contract: &StorkCore<WalletUnlocked>,
+        contract: &StorkCore<Wallet>,
         feed_id: Bits256,
     ) -> TemporalNumericValue {
         contract

@@ -28,7 +28,7 @@ pub mod protocol_manager_abi {
         types::Identity,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
         borrow_operations: ContractId,
         stability_pool: ContractId,
@@ -68,7 +68,7 @@ pub mod protocol_manager_abi {
         return res;
     }
 
-    pub async fn register_asset<T: Account>(
+    pub async fn register_asset<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
         asset: AssetId,
         trove_manager: ContractId,
@@ -122,7 +122,7 @@ pub mod protocol_manager_abi {
             .await
     }
 
-    pub async fn redeem_collateral<T: Account>(
+    pub async fn redeem_collateral<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
         amount: u64,
         max_iterations: u64,
@@ -214,7 +214,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn owner<T: Account>(
+    pub async fn owner<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
     ) -> CallResponse<State> {
         let tx_params = TxPolicies::default()
@@ -236,7 +236,7 @@ pub mod protocol_manager_abi {
             .unwrap()
     }
 
-    pub async fn renounce_admin<T: Account>(
+    pub async fn renounce_admin<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
     ) -> Result<CallResponse<()>, Error> {
         let tx_params = TxPolicies::default()
@@ -257,7 +257,7 @@ pub mod protocol_manager_abi {
             .await
     }
 
-    pub async fn transfer_owner<T: Account>(
+    pub async fn transfer_owner<T: Account + Clone>(
         protocol_manager: &ContractInstance<ProtocolManager<T>>,
         new_owner: Identity,
     ) -> Result<CallResponse<()>, Error> {

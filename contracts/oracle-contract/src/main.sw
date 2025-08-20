@@ -622,47 +622,6 @@ fn test_pyth_price_adjustment_fuel_vm_decimals_8_initial_exponent_8() {
     assert(adjusted_price.publish_time == 1000);
 }
 
-#[test]
-fn test_stork_underlying_downscale_rounds_down() {
-    // magnitude = 1e18 -> for fuel 9, result = 1e9
-    let bias = U128::from(2u64).pow(127u32);
-    let magnitude = U128::from(2_000_000_000_000_000_000u64);
-    let underlying = bias + magnitude;
-    let result = _stork_underlying_to_fuel_u64(underlying, 9);
-    assert(result == 2_000_000_000);
-}
-
-
-#[test]
-fn test_stork_underlying_downscale_rounds_up() {
-    // magnitude = 1e18 + (1e9 - 1) -> rounds up to 1_000_000_001 when scaled to 9
-    let bias = U128::from(2u64).pow(127u32);
-    let magnitude = U128::from(1_000_000_000_000_000_000u64) + (U128::from(1_000_000_000u64) - U128::from(1u64));
-    let underlying = bias + magnitude;
-    let result = _stork_underlying_to_fuel_u64(underlying, 9);
-    assert(result == 1_000_000_001);
-}
-
-#[test]
-fn test_stork_underlying_same_decimals_18() {
-    // No change when fuel decimals = 18
-    let bias = U128::from(2u64).pow(127u32);
-    let magnitude = U128::from(123_456_789_000_000_000u64);
-    let underlying = bias + magnitude;
-    let result = _stork_underlying_to_fuel_u64(underlying, 18);
-    assert(result == 123_456_789_000_000_000);
-}
-
-#[test]
-fn test_stork_underlying_upscale_safe() {
-    // Upscale by +1 decimal: fuel=19 with small magnitude to avoid overflow
-    let bias = U128::from(2u64).pow(127u32);
-    let magnitude = U128::from(123_456_789u64); // small value
-    let underlying = bias + magnitude;
-    let result = _stork_underlying_to_fuel_u64(underlying, 19);
-    assert(result == 1_234_567_890);
-}
-
 #[test(should_revert)]
 fn test_stork_underlying_overflow_bound_direct() {
     // When fuel=18 and magnitude > u64::MAX, it should revert

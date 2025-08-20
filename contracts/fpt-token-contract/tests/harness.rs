@@ -1,3 +1,4 @@
+use fuels::accounts::ViewOnlyAccount;
 use test_utils::{
     data_structures::PRECISION, interfaces::fpt_token::fpt_token_abi, setup::common::setup_protocol,
 };
@@ -7,7 +8,7 @@ const TOTAL_SUPPLY: u64 = 100;
 #[tokio::test]
 async fn proper_intialize() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
     let fpt_asset_id = contracts.fpt_asset_id;
 
     let vesting_contract = fpt_token_abi::get_vesting_contract(&contracts.fpt_token)
@@ -62,4 +63,3 @@ async fn proper_intialize() {
 
     assert_eq!(total_supply, Some(TOTAL_SUPPLY * PRECISION));
 }
-    

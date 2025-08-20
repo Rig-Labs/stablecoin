@@ -34,7 +34,7 @@ pub mod redstone_oracle_abi {
         types::U256,
     };
 
-    pub async fn read_prices<T: Account>(
+    pub async fn read_prices<T: Account + Clone>(
         oracle: &RedstoneCore<T>,
         price_feed_ids: Vec<U256>,
     ) -> CallResponse<Vec<U256>> {
@@ -49,7 +49,7 @@ pub mod redstone_oracle_abi {
             .unwrap()
     }
 
-    pub async fn write_prices<T: Account>(
+    pub async fn write_prices<T: Account + Clone>(
         oracle: &RedstoneCore<T>,
         feed: Vec<(U256, U256)>,
     ) -> CallResponse<()> {
@@ -64,7 +64,7 @@ pub mod redstone_oracle_abi {
             .unwrap()
     }
 
-    pub async fn read_timestamp<T: Account>(oracle: &RedstoneCore<T>) -> CallResponse<u64> {
+    pub async fn read_timestamp<T: Account + Clone>(oracle: &RedstoneCore<T>) -> CallResponse<u64> {
         let tx_params = TxPolicies::default().with_tip(1);
 
         oracle
@@ -76,7 +76,7 @@ pub mod redstone_oracle_abi {
             .unwrap()
     }
 
-    pub async fn set_timestamp<T: Account>(
+    pub async fn set_timestamp<T: Account + Clone>(
         oracle: &RedstoneCore<T>,
         timestamp: u64,
     ) -> CallResponse<()> {
