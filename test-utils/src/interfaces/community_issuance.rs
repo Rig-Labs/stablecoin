@@ -14,7 +14,7 @@ pub mod community_issuance_abi {
     use crate::data_structures::ContractInstance;
 
     use super::*;
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         instance: &ContractInstance<CommunityIssuance<T>>,
         stability_pool_contract: ContractId,
         fpt_token_asset_id: AssetId,
@@ -43,7 +43,7 @@ pub mod community_issuance_abi {
         return res;
     }
 
-    pub async fn set_current_time<T: Account>(
+    pub async fn set_current_time<T: Account + Clone>(
         instance: &ContractInstance<CommunityIssuance<T>>,
         time: u64,
     ) -> CallResponse<()> {
@@ -64,7 +64,7 @@ pub mod community_issuance_abi {
         return res.unwrap();
     }
 
-    pub async fn public_start_rewards_increase_transition_after_deadline<T: Account>(
+    pub async fn public_start_rewards_increase_transition_after_deadline<T: Account + Clone>(
         instance: &ContractInstance<CommunityIssuance<T>>,
     ) -> CallResponse<()> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -84,7 +84,7 @@ pub mod community_issuance_abi {
         return res.unwrap();
     }
 
-    pub async fn start_rewards_increase_transition<T: Account>(
+    pub async fn start_rewards_increase_transition<T: Account + Clone>(
         instance: &ContractInstance<CommunityIssuance<T>>,
         transition_time: u64,
     ) -> Result<CallResponse<()>, Error> {

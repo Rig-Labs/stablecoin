@@ -7,10 +7,10 @@ use test_utils::{interfaces::token::Token, setup::common::deploy_token};
 pub async fn setup(
     total_amount: u64,
 ) -> (
-    ContractInstance<VestingContract<WalletUnlocked>>,
-    WalletUnlocked,
-    WalletUnlocked,
-    Token<WalletUnlocked>,
+    ContractInstance<VestingContract<Wallet>>,
+    Wallet,
+    Wallet,
+    Token<Wallet>,
 ) {
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -43,10 +43,10 @@ pub mod test_helpers {
     use super::*;
 
     pub async fn init_and_mint_to_vesting(
-        contract: &Token<WalletUnlocked>,
-        vesting_contract: &VestingContract<WalletUnlocked>,
+        contract: &Token<Wallet>,
+        vesting_contract: &VestingContract<Wallet>,
         amount: u64,
-        admin: &WalletUnlocked,
+        admin: &Wallet,
     ) {
         let instance = Token::new(contract.contract_id().clone(), admin.clone());
         let asset_id = instance

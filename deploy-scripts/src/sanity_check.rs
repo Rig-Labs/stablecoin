@@ -22,7 +22,7 @@ pub async fn sanity_check() {
     let is_testnet = is_testnet(wallet.clone()).await;
     let core_contracts = load_core_contracts(wallet.clone(), is_testnet);
 
-    let provider = wallet.provider().unwrap();
+    let provider = wallet.provider();
 
     let community_issuance_balance = provider
         .get_contract_asset_balance(

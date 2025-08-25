@@ -1,4 +1,7 @@
-use fuels::types::{Address, Identity};
+use fuels::{
+    accounts::ViewOnlyAccount,
+    types::{Address, Identity},
+};
 use test_utils::{
     data_structures::{ContractInstance, PRECISION},
     interfaces::{

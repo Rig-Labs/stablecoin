@@ -8,11 +8,7 @@ use test_utils::{
     setup::common::{deploy_active_pool, deploy_default_pool, deploy_token},
 };
 
-async fn get_contract_instance() -> (
-    ContractInstance<ActivePool<WalletUnlocked>>,
-    Token<WalletUnlocked>,
-    WalletUnlocked,
-) {
+async fn get_contract_instance() -> (ContractInstance<ActivePool<Wallet>>, Token<Wallet>, Wallet) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(
         WalletsConfig::new(
@@ -163,7 +159,7 @@ async fn proper_adjust_asset_col() {
     .value;
     assert_eq!(asset_amount, 1_000_000);
 
-    let provdier = admin.provider().unwrap();
+    let provdier = admin.provider();
 
     let asset_id = mock_fuel
         .contract_id()

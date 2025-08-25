@@ -45,7 +45,7 @@ async fn proper_intialize() {
 async fn proper_staking_deposit() {
     let (contracts, admin, mut _wallets) = setup_protocol(4, false, true).await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let fpt_asset_id = contracts.fpt_asset_id;
 
@@ -78,7 +78,7 @@ async fn proper_staking_deposit() {
 async fn proper_staking_multiple_positions() {
     let (contracts, admin, mut wallets) = setup_protocol(4, false, true).await;
 
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
 
     let fpt_asset_id = contracts.fpt_asset_id;
 

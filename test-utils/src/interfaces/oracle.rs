@@ -1,7 +1,5 @@
 use crate::interfaces::{
-    pyth_oracle::PythCore,
-    redstone_oracle::RedstoneCore,
-    stork_oracle::StorkCore,
+    pyth_oracle::PythCore, redstone_oracle::RedstoneCore, stork_oracle::StorkCore,
 };
 use fuels::prelude::abigen;
 use fuels::programs::responses::CallResponse;
@@ -21,16 +19,16 @@ pub mod oracle_abi {
     use super::*;
     use fuels::{
         prelude::{Account, TxPolicies},
-        programs::calls::ContractDependency,
-        types::{bech32::Bech32ContractId, errors::Error},
+        programs::calls::Execution,
+        types::errors::Error,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         stork: Option<StorkConfig>,
         pyth: Option<PythConfig>,
         redstone: Option<RedstoneConfig>,
-    ) -> Result<CallResponse<()>, Error> {
+    ) {
         let tx_params = TxPolicies::default().with_tip(1);
 
         oracle
@@ -44,9 +42,10 @@ pub mod oracle_abi {
             .with_tx_policies(tx_params)
             .call()
             .await
+            .unwrap();
     }
 
-    pub async fn get_last_good_price<T: Account>(
+    pub async fn get_last_good_price<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
     ) -> Result<CallResponse<Price>, Error> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -64,61 +63,43 @@ pub mod oracle_abi {
             .await
     }
 
-    pub async fn get_price<T: Account>(
-        oracle: &ContractInstance<Oracle<T>>,
-        stork: Option<&StorkCore<T>>,
-        pyth: Option<&PythCore<T>>,
-        redstone: Option<&RedstoneCore<T>>,
-    ) -> CallResponse<u64> {
+    pub async fn get_price<T: Account + Clone>(oracle: &ContractInstance<Oracle<T>>) -> u64 {
         let tx_params = TxPolicies::default().with_tip(1);
-
-        // Deploy with contract dependencies, if they are provided.
-        let mut with_contracts: Vec<&dyn ContractDependency> = Vec::new();
-
-        // Stork -> Pyth -> Redstone
-        if let Some(stork) = stork {
-            with_contracts.push(stork);
-        }
-
-        if let Some(pyth) = pyth {
-            with_contracts.push(pyth);
-        }
-
-        if let Some(redstone) = redstone {
-            with_contracts.push(redstone);
-        }
-
-        let mut with_contract_ids: Vec<Bech32ContractId> = Vec::new();
-
-        // Stork -> Pyth -> Redstone
-        if let Some(stork) = stork {
-            with_contract_ids.push(stork.contract_id().into());
-        }
-
-        if let Some(pyth) = pyth {
-            with_contract_ids.push(pyth.contract_id().into());
-        }
-
-        if let Some(redstone) = redstone {
-            with_contract_ids.push(redstone.contract_id().into());
-        }
-
-        with_contract_ids.push(oracle.implementation_id.into());
-        with_contract_ids.push(oracle.contract.contract_id().into());
 
         oracle
             .contract
             .methods()
             .get_price()
-            .with_contracts(&with_contracts)
-            .with_contract_ids(&with_contract_ids)
             .with_tx_policies(tx_params)
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
             .unwrap()
+            .value
     }
 
-    pub async fn set_debug_timestamp<T: Account>(
+    pub async fn get_stork_price<T: Account + Clone>(
+        oracle: &ContractInstance<Oracle<T>>,
+    ) -> Option<(u64, u64)> {
+        let tx_params = TxPolicies::default().with_tip(1);
+
+        oracle
+            .contract
+            .methods()
+            .get_stork_price()
+            .determine_missing_contracts()
+            .await
+            .unwrap()
+            .with_tx_policies(tx_params)
+            .simulate(Execution::state_read_only())
+            .await
+            .unwrap()
+            .value
+    }
+
+    pub async fn set_debug_timestamp<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         timestamp: u64,
     ) {
@@ -138,11 +119,11 @@ pub mod oracle_abi {
             .unwrap();
     }
 
-    pub async fn set_stork_config<T: Account>(
+    pub async fn set_stork_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         stork: &StorkCore<T>,
         config: StorkConfig,
-    ) -> Result<CallResponse<()>, Error> {
+    ) {
         let tx_params = TxPolicies::default().with_tip(1);
 
         oracle
@@ -157,13 +138,14 @@ pub mod oracle_abi {
             .with_tx_policies(tx_params)
             .call()
             .await
+            .unwrap();
     }
 
-    pub async fn set_pyth_config<T: Account>(
+    pub async fn set_pyth_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         pyth: &PythCore<T>,
         config: PythConfig,
-    ) -> Result<CallResponse<()>, Error> {
+    ) {
         let tx_params = TxPolicies::default().with_tip(1);
 
         oracle
@@ -178,9 +160,10 @@ pub mod oracle_abi {
             .with_tx_policies(tx_params)
             .call()
             .await
+            .unwrap();
     }
 
-    pub async fn set_redstone_config<T: Account>(
+    pub async fn set_redstone_config<T: Account + Clone>(
         oracle: &ContractInstance<Oracle<T>>,
         redstone: &RedstoneCore<T>,
         config: RedstoneConfig,

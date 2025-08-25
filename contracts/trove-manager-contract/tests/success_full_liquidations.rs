@@ -817,7 +817,7 @@ async fn proper_full_liquidation_empty_sp() {
     assert_eq!(default_pool_debt, expected_default_pool_debt);
 
     // Check that the admin got the gas compensation
-    let provider = admin.provider().unwrap();
+    let provider = admin.provider();
     let asset_id = contracts.asset_contracts[0].asset_id;
 
     let asset_balance = provider

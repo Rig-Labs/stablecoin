@@ -12,10 +12,10 @@ use test_utils::{
 };
 
 async fn get_contract_instance() -> (
-    ContractInstance<DefaultPool<WalletUnlocked>>,
-    Token<WalletUnlocked>,
-    WalletUnlocked,
-    ContractInstance<ActivePool<WalletUnlocked>>,
+    ContractInstance<DefaultPool<Wallet>>,
+    Token<Wallet>,
+    Wallet,
+    ContractInstance<ActivePool<Wallet>>,
 ) {
     // Launch a local network and deploy the contract
     let mut wallets = launch_custom_provider_and_get_wallets(

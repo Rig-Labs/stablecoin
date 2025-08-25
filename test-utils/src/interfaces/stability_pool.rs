@@ -25,7 +25,7 @@ pub mod stability_pool_abi {
         types::{transaction_builders::VariableOutputPolicy, AssetId, ContractId, Identity},
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         usdm_address: ContractId,
         community_issuance_address: ContractId,
@@ -54,7 +54,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         trove_manager: ContractId,
         asset_address: AssetId,
@@ -75,7 +75,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn provide_to_stability_pool<T: Account>(
+    pub async fn provide_to_stability_pool<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         community_issuance: &ContractInstance<CommunityIssuance<T>>,
         usdm_token: &ContractInstance<USDMToken<T>>,
@@ -119,7 +119,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_asset<T: Account>(
+    pub async fn get_asset<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         asset_address: AssetId,
     ) -> Result<CallResponse<u64>, Error> {
@@ -135,7 +135,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_total_usdm_deposits<T: Account>(
+    pub async fn get_total_usdm_deposits<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
     ) -> Result<CallResponse<u64>, Error> {
         stability_pool
@@ -150,7 +150,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_depositor_asset_gain<T: Account>(
+    pub async fn get_depositor_asset_gain<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         asset_id: AssetId,
@@ -167,7 +167,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_compounded_usdm_deposit<T: Account>(
+    pub async fn get_compounded_usdm_deposit<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
     ) -> Result<CallResponse<u64>, Error> {
@@ -183,7 +183,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn get_depositor_fpt_gain<T: Account>(
+    pub async fn get_depositor_fpt_gain<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
     ) -> Result<CallResponse<u64>, Error> {
@@ -199,7 +199,7 @@ pub mod stability_pool_abi {
             .await
     }
 
-    pub async fn withdraw_from_stability_pool<T: Account>(
+    pub async fn withdraw_from_stability_pool<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         community_issuance: &ContractInstance<CommunityIssuance<T>>,
         usdm_token: &ContractInstance<USDMToken<T>>,
@@ -248,6 +248,9 @@ pub mod stability_pool_abi {
                 stability_pool.contract.contract_id().into(),
                 stability_pool.implementation_id.into(),
             ])
+            .determine_missing_contracts()
+            .await
+            .unwrap()
             .call()
             .await
     }
@@ -263,7 +266,7 @@ pub mod stability_pool_utils {
 
     use super::*;
 
-    pub async fn assert_pool_asset<T: Account>(
+    pub async fn assert_pool_asset<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         expected_asset_amount: u64,
         asset_address: AssetId,
@@ -276,7 +279,7 @@ pub mod stability_pool_utils {
         assert_eq!(pool_asset, expected_asset_amount);
     }
 
-    pub async fn assert_total_usdm_deposits<T: Account>(
+    pub async fn assert_total_usdm_deposits<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         expected_usdm_amount: u64,
     ) {
@@ -289,7 +292,7 @@ pub mod stability_pool_utils {
         assert_eq!(total_usdm_deposits, expected_usdm_amount);
     }
 
-    pub async fn assert_depositor_asset_gain<T: Account>(
+    pub async fn assert_depositor_asset_gain<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         expected_asset_gain: u64,
@@ -314,7 +317,7 @@ pub mod stability_pool_utils {
         );
     }
 
-    pub async fn assert_compounded_usdm_deposit<T: Account>(
+    pub async fn assert_compounded_usdm_deposit<T: Account + Clone>(
         stability_pool: &ContractInstance<StabilityPool<T>>,
         depositor: Identity,
         expected_compounded_usdm_deposit: u64,

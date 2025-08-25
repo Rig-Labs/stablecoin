@@ -101,7 +101,7 @@ mod success {
             .asset_id(&AssetId::zeroed().into())
             .into();
 
-        let provider = admin.provider().unwrap();
+        let provider = admin.provider();
 
         let vest_balance = provider
             .get_contract_asset_balance(&vest.contract.id(), asset_id)
@@ -176,7 +176,7 @@ mod success {
             .asset_id(&AssetId::zeroed().into())
             .into();
 
-        let provider = admin.provider().unwrap();
+        let provider = admin.provider();
 
         let starting_balance = provider
             .get_asset_balance(&recipient.address(), asset_id)

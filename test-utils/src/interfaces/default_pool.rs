@@ -18,7 +18,7 @@ pub mod default_pool_abi {
         types::Identity,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         protocol_manager: Identity,
         active_pool: ContractId,
@@ -40,7 +40,7 @@ pub mod default_pool_abi {
         return res;
     }
 
-    pub async fn get_usdm_debt<T: Account>(
+    pub async fn get_usdm_debt<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         asset_id: AssetId,
     ) -> CallResponse<u64> {
@@ -57,7 +57,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn get_asset<T: Account>(
+    pub async fn get_asset<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         asset_id: AssetId,
     ) -> CallResponse<u64> {
@@ -74,7 +74,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn increase_usdm_debt<T: Account>(
+    pub async fn increase_usdm_debt<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         amount: u64,
         asset_id: AssetId,
@@ -92,7 +92,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         asset_id: AssetId,
         trove_manager: Identity,
@@ -113,7 +113,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn decrease_usdm_debt<T: Account>(
+    pub async fn decrease_usdm_debt<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         amount: u64,
         asset_id: AssetId,
@@ -131,7 +131,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn recieve<T: Account>(
+    pub async fn recieve<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         token: &Token<T>,
         amount: u64,
@@ -162,7 +162,7 @@ pub mod default_pool_abi {
             .unwrap()
     }
 
-    pub async fn send_asset_to_active_pool<T: Account>(
+    pub async fn send_asset_to_active_pool<T: Account + Clone>(
         default_pool: &ContractInstance<DefaultPool<T>>,
         active_pool: &ContractInstance<ActivePool<T>>,
         amount: u64,

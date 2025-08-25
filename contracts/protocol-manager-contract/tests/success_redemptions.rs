@@ -226,7 +226,7 @@ async fn proper_redemption_from_partially_closed() {
 
     assert_eq!(active_pool_asset, 24_000 * PRECISION);
 
-    let provider = healthy_wallet1.provider().unwrap();
+    let provider = healthy_wallet1.provider();
 
     let mock_asset_id = contracts.asset_contracts[0].asset_id;
 
@@ -449,7 +449,7 @@ async fn proper_redemption_with_a_trove_closed_fully() {
     let total_debt = with_min_borrow_fee(debt1 + debt2 + debt3);
     assert_eq!(active_pool_debt, total_debt - redemption_amount);
 
-    let provider = healthy_wallet1.provider().unwrap();
+    let provider = healthy_wallet1.provider();
 
     let mock_asset_id = contracts.asset_contracts[0].asset_id;
 

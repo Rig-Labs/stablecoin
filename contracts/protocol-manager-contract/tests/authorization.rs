@@ -1,3 +1,4 @@
+use fuels::accounts::ViewOnlyAccount;
 use test_utils::{
     data_structures::{ContractInstance, ExistingAssetContracts},
     interfaces::protocol_manager::{protocol_manager_abi, ProtocolManager},

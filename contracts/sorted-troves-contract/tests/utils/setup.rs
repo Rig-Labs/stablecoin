@@ -15,8 +15,8 @@ const MOCK_TROVE_MANAGER_BINARY_PATH: &str =
     "contracts/tests-artifacts-sorted-troves-contract/out/debug/mock-trove-manager-contract.bin";
 
 pub async fn deploy_mock_trove_manager_contract(
-    wallet: &WalletUnlocked,
-) -> MockTroveManagerContract<WalletUnlocked> {
+    wallet: &Wallet,
+) -> MockTroveManagerContract<Wallet> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
     let tx_parms = TxPolicies::default().with_tip(1);
@@ -28,14 +28,15 @@ pub async fn deploy_mock_trove_manager_contract(
     .unwrap()
     .deploy(&wallet.clone(), tx_parms)
     .await
-    .unwrap();
+    .unwrap()
+    .contract_id;
 
     MockTroveManagerContract::new(id, wallet.clone())
 }
 
 pub async fn set_nominal_icr_and_insert(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
+    sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
     new_id: Identity,
     new_icr: u64,
     prev_id: Identity,
@@ -59,7 +60,7 @@ pub async fn set_nominal_icr_and_insert(
 }
 
 pub async fn get_nominal_icr(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
     id: Identity,
 ) -> CallResponse<u64> {
     trove_manager
@@ -71,8 +72,8 @@ pub async fn get_nominal_icr(
 }
 
 pub async fn remove(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
+    sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
     id: Identity,
     asset: AssetId,
 ) -> CallResponse<()> {
@@ -95,11 +96,11 @@ pub async fn remove(
 pub async fn setup(
     num_wallets: Option<u64>,
 ) -> (
-    ContractInstance<SortedTroves<WalletUnlocked>>,
-    MockTroveManagerContract<WalletUnlocked>,
-    WalletUnlocked,
-    WalletUnlocked,
-    Vec<WalletUnlocked>,
+    ContractInstance<SortedTroves<Wallet>>,
+    MockTroveManagerContract<Wallet>,
+    Wallet,
+    Wallet,
+    Vec<Wallet>,
 ) {
     // Launch a local network and deploy the contract
     // let config = Config {
@@ -131,8 +132,8 @@ pub async fn setup(
 }
 
 pub async fn initialize_st_and_tm(
-    sorted_troves: &ContractInstance<SortedTroves<WalletUnlocked>>,
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    sorted_troves: &ContractInstance<SortedTroves<Wallet>>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
     max_size: u64,
     asset: AssetId,
 ) {

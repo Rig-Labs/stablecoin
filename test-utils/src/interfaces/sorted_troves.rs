@@ -19,7 +19,7 @@ pub mod sorted_troves_abi {
         types::AssetId,
     };
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         max_size: u64,
         protocol_manager: ContractId,
@@ -39,7 +39,7 @@ pub mod sorted_troves_abi {
         return res;
     }
 
-    pub async fn insert<T: Account>(
+    pub async fn insert<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         icr: u64,
@@ -57,7 +57,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset: AssetId,
         trove_manager: ContractId,
@@ -72,7 +72,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_first<T: Account>(
+    pub async fn get_first<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset: AssetId,
     ) -> CallResponse<Identity> {
@@ -86,7 +86,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_last<T: Account>(
+    pub async fn get_last<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset: AssetId,
     ) -> CallResponse<Identity> {
@@ -100,7 +100,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_size<T: Account>(
+    pub async fn get_size<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         asset: AssetId,
     ) -> CallResponse<u64> {
@@ -114,7 +114,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_next<T: Account>(
+    pub async fn get_next<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         asset: AssetId,
@@ -129,7 +129,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_prev<T: Account>(
+    pub async fn get_prev<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         asset: AssetId,
@@ -144,7 +144,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn get_max_size<T: Account>(
+    pub async fn get_max_size<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
     ) -> CallResponse<u64> {
         sorted_troves
@@ -157,7 +157,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn contains<T: Account>(
+    pub async fn contains<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         id: Identity,
         asset: AssetId,
@@ -175,7 +175,7 @@ pub mod sorted_troves_abi {
             .unwrap()
     }
 
-    pub async fn find_insert_position<T: Account>(
+    pub async fn find_insert_position<T: Account + Clone>(
         sorted_troves: &ContractInstance<SortedTroves<T>>,
         trove_manager: &TroveManagerContract<T>,
         icr: u64,

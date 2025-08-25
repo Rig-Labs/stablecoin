@@ -16,7 +16,7 @@ pub mod fpt_staking_abi {
     use fuels::types::transaction_builders::VariableOutputPolicy;
     use fuels::{prelude::ContractId, types::Identity};
 
-    pub async fn initialize<T: Account>(
+    pub async fn initialize<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         protocol_manager_address: ContractId,
         borrower_operations_address: ContractId,
@@ -44,7 +44,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn get_storage<T: Account>(
+    pub async fn get_storage<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
     ) -> CallResponse<fpt_staking_abi::ReadStorage> {
         let tx_params = TxPolicies::default().with_tip(1);
@@ -63,7 +63,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn stake<T: Account>(
+    pub async fn stake<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         fpt_asset_id: AssetId,
         fpt_deposit_amount: u64,
@@ -91,7 +91,7 @@ pub mod fpt_staking_abi {
             .await
     }
 
-    pub async fn unstake<T: Account>(
+    pub async fn unstake<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         usdm_token: &ContractInstance<USDMToken<T>>,
         mock_token: &Token<T>,
@@ -122,7 +122,7 @@ pub mod fpt_staking_abi {
             .await
     }
 
-    pub async fn add_asset<T: Account>(
+    pub async fn add_asset<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         asset_address: AssetId,
     ) -> CallResponse<()> {
@@ -141,7 +141,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_asset_gain<T: Account>(
+    pub async fn get_pending_asset_gain<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         id: Identity,
         asset_address: AssetId,
@@ -161,7 +161,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn get_pending_usdm_gain<T: Account>(
+    pub async fn get_pending_usdm_gain<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         id: Identity,
     ) -> CallResponse<u64> {
@@ -180,7 +180,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn increase_f_usdm<T: Account>(
+    pub async fn increase_f_usdm<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         usdm_fee_amount: u64,
     ) -> CallResponse<()> {
@@ -199,7 +199,7 @@ pub mod fpt_staking_abi {
             .unwrap()
     }
 
-    pub async fn increase_f_asset<T: Account>(
+    pub async fn increase_f_asset<T: Account + Clone>(
         fpt_staking: &ContractInstance<FPTStaking<T>>,
         asset_fee_amount: u64,
         asset_address: AssetId,

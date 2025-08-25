@@ -26,8 +26,8 @@ pub fn get_relative_path(path: String) -> String {
 }
 
 pub async fn deploy_mock_trove_manager_contract(
-    wallet: &WalletUnlocked,
-) -> MockTroveManagerContract<WalletUnlocked> {
+    wallet: &Wallet,
+) -> MockTroveManagerContract<Wallet> {
     let mut rng = rand::thread_rng();
     let salt = rng.gen::<[u8; 32]>();
     let tx_parms = TxPolicies::default().with_tip(1);
@@ -39,14 +39,15 @@ pub async fn deploy_mock_trove_manager_contract(
     .unwrap()
     .deploy(&wallet.clone(), tx_parms)
     .await
-    .unwrap();
+    .unwrap()
+    .contract_id;
 
     MockTroveManagerContract::new(id, wallet.clone())
 }
 
 pub async fn set_nominal_icr_and_insert(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &SortedTroves<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
+    sorted_troves: &SortedTroves<Wallet>,
     new_id: Identity,
     new_icr: u64,
     prev_id: Identity,
@@ -66,7 +67,7 @@ pub async fn set_nominal_icr_and_insert(
 }
 
 pub async fn get_nominal_icr(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
     id: Identity,
 ) -> CallResponse<u64> {
     trove_manager
@@ -78,10 +79,10 @@ pub async fn get_nominal_icr(
 }
 
 pub async fn offset(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    stability_pool: &StabilityPool<WalletUnlocked>,
-    mock_token: &Token<WalletUnlocked>,
-    usdm_token: &Token<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
+    stability_pool: &StabilityPool<Wallet>,
+    mock_token: &Token<Wallet>,
+    usdm_token: &Token<Wallet>,
     coll_to_offset: u64,
     debt_to_offset: u64,
 ) -> CallResponse<()> {
@@ -98,7 +99,7 @@ pub async fn offset(
 }
 
 pub async fn initialize(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
     borrow_operations: ContractId,
     sorted_troves: ContractId,
     stability_pool: ContractId,
@@ -114,8 +115,8 @@ pub async fn initialize(
 }
 
 pub async fn remove(
-    trove_manager: &MockTroveManagerContract<WalletUnlocked>,
-    sorted_troves: &SortedTroves<WalletUnlocked>,
+    trove_manager: &MockTroveManagerContract<Wallet>,
+    sorted_troves: &SortedTroves<Wallet>,
     id: Identity,
     asset: AssetId,
 ) -> CallResponse<()> {
@@ -134,12 +135,12 @@ pub async fn remove(
 pub async fn setup(
     num_wallets: Option<u64>,
 ) -> (
-    ContractInstance<StabilityPool<WalletUnlocked>>,
-    MockTroveManagerContract<WalletUnlocked>,
-    Token<WalletUnlocked>,
-    WalletUnlocked,
-    WalletUnlocked,
-    Vec<WalletUnlocked>,
+    ContractInstance<StabilityPool<Wallet>>,
+    MockTroveManagerContract<Wallet>,
+    Token<Wallet>,
+    Wallet,
+    Wallet,
+    Vec<Wallet>,
 ) {
     // Launch a local network and deploy the contract
     // let config = Config {

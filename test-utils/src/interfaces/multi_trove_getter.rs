@@ -13,7 +13,7 @@ pub mod multi_trove_getter_abi {
     use fuels::prelude::Account;
     use fuels::types::AssetId;
 
-    pub async fn get_multiple_sorted_troves<T: Account>(
+    pub async fn get_multiple_sorted_troves<T: Account + Clone>(
         multi_trove_getter: &MultiTroveGetter<T>,
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
@@ -50,7 +50,7 @@ pub mod multi_trove_getter_utils {
     use fuels::prelude::Account;
     use fuels::types::AssetId;
 
-    pub async fn print_troves_cr<T: Account>(
+    pub async fn print_troves_cr<T: Account + Clone>(
         multi_trove_getter: &MultiTroveGetter<T>,
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,
@@ -79,7 +79,7 @@ pub mod multi_trove_getter_utils {
         }
     }
 
-    pub async fn assert_sorted_troves_by_cr<T: Account>(
+    pub async fn assert_sorted_troves_by_cr<T: Account + Clone>(
         multi_trove_getter: &MultiTroveGetter<T>,
         trove_manager: &ContractInstance<TroveManagerContract<T>>,
         sorted_troves: &ContractInstance<SortedTroves<T>>,

@@ -1,4 +1,7 @@
-use fuels::types::{AssetId, Identity};
+use fuels::{
+    accounts::ViewOnlyAccount,
+    types::{AssetId, Identity},
+};
 use test_utils::{
     data_structures::PRECISION,
     interfaces::{
