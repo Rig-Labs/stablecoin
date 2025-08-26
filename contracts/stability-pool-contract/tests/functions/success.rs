@@ -1,4 +1,4 @@
-use crate::utils::setup::setup;
+use crate::utils::{assert_no_fpt_issued, setup::setup};
 use fuels::{prelude::*, types::Identity};
 use test_utils::{
     data_structures::{ContractInstance, PRECISION},
@@ -34,6 +34,10 @@ async fn proper_initialization() {
 #[tokio::test]
 async fn proper_stability_deposit() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -77,6 +81,8 @@ async fn proper_stability_deposit() {
     )
     .await
     .unwrap();
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 
     let logs = res.decode_logs();
     let provide_event = logs
@@ -131,6 +137,10 @@ async fn proper_stability_deposit() {
 #[tokio::test]
 async fn proper_stability_widthdrawl() {
     let (contracts, admin, _wallets) = setup_protocol(4, false, false).await;
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     token_abi::mint_to_id(
         &contracts.asset_contracts[0].asset,
@@ -190,6 +200,8 @@ async fn proper_stability_widthdrawl() {
     .await
     .unwrap();
 
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
+
     let logs = res.decode_logs();
     let withdraw_event = logs
         .results
@@ -241,6 +253,10 @@ async fn proper_stability_widthdrawl() {
 #[tokio::test]
 async fn proper_one_sp_depositor_position() {
     let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -321,6 +337,8 @@ async fn proper_one_sp_depositor_position() {
     )
     .await
     .unwrap();
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
@@ -422,6 +440,8 @@ async fn proper_one_sp_depositor_position() {
         .await
         .unwrap();
 
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
+
     assert_within_threshold(
         mock_balance,
         asset_with_fee_adjustment + gas_coll_fee,
@@ -519,6 +539,12 @@ async fn proper_many_depositors_distribution() {
     )
     .await
     .unwrap();
+
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 
     let usdm_asset_id: AssetId = contracts.usdm_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
@@ -656,11 +682,18 @@ async fn proper_many_depositors_distribution() {
         500 * PRECISION - debt_paid_off / 6,
     )
     .await;
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 }
 
 #[tokio::test]
 async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     let (contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
+
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -748,6 +781,8 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
     .await
     .unwrap();
 
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
+
     let usdm_asset_id: AssetId = contracts.usdm_asset_id;
     let tx_params = TxPolicies::default().with_tip(1);
 
@@ -819,11 +854,17 @@ async fn proper_no_reward_when_depositing_and_rewards_already_distributed() {
         500 * PRECISION,
     )
     .await;
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 }
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position_multiple_assets() {
     let (contracts, admin, mut wallets) = setup_protocol(4, true, false).await;
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -903,6 +944,8 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
     )
     .await
     .unwrap();
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[1].oracle, PYTH_TIMESTAMP + 1).await;
@@ -1086,11 +1129,17 @@ async fn proper_one_sp_depositor_position_multiple_assets() {
         asset_with_fee_adjustment + coll_gas_compensation,
         "st_mock_balance not correct",
     );
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 }
 
 #[tokio::test]
 async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     let (mut contracts, admin, mut wallets) = setup_protocol(4, false, false).await;
+    let initial_fpt_balance = admin
+        .get_asset_balance(&contracts.fpt_asset_id)
+        .await
+        .unwrap();
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP).await;
     pyth_oracle_abi::update_price_feeds(
@@ -1137,6 +1186,8 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
     )
     .await
     .unwrap();
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 
     oracle_abi::set_debug_timestamp(&contracts.asset_contracts[0].oracle, PYTH_TIMESTAMP + 1).await;
     pyth_oracle_abi::update_price_feeds(
@@ -1344,4 +1395,6 @@ async fn proper_one_sp_depositor_position_new_asset_onboarded_midway() {
         asset_with_fee_adjustment + gas_coll_compensation,
         "st_mock_balance not currect",
     );
+
+    assert_no_fpt_issued(&contracts, &admin, initial_fpt_balance).await;
 }
