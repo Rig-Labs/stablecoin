@@ -2,7 +2,7 @@ use std::{fs::File, io::Write};
 
 use dotenv::dotenv;
 use fuels::prelude::*;
-use fuels::types::Bits256;
+use fuels::types::{Address, Bits256};
 use serde_json::json;
 use test_utils::data_structures::ProtocolContracts;
 use test_utils::interfaces::hint_helper::HintHelper;
@@ -16,6 +16,8 @@ use test_utils::setup::common::{
 };
 
 pub mod deployment {
+
+    use std::str::FromStr;
 
     use super::*;
     pub async fn deploy() {
@@ -77,41 +79,41 @@ pub mod deployment {
         .unwrap();
 
         let json = json!({
-            "borrow_operations": contracts.borrow_operations.contract.contract_id().to_string(),
+            "borrow_operations": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.borrow_operations.contract.contract_id().to_string()).unwrap())),
             "borrow_operations_implementation_id": format!("0x{}", contracts.borrow_operations.implementation_id.to_string()),
-            "usdm": contracts.usdm.contract.contract_id().to_string(),
+            "usdm": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.usdm.contract.contract_id().to_string()).unwrap())),
             "usdm_implementation_id": format!("0x{}", contracts.usdm.implementation_id.to_string()),
             "usdm_asset_id": format!("0x{}", contracts.usdm_asset_id.to_string()),
-            "stability_pool": contracts.stability_pool.contract.contract_id().to_string(),
+            "stability_pool": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.stability_pool.contract.contract_id().to_string()).unwrap())),
             "stability_pool_implementation_id": format!("0x{}", contracts.stability_pool.implementation_id.to_string()),
-            "protocol_manager": contracts.protocol_manager.contract.contract_id().to_string(),
+            "protocol_manager": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.protocol_manager.contract.contract_id().to_string()).unwrap())),
             "protocol_manager_implementation_id": format!("0x{}", contracts.protocol_manager.implementation_id.to_string()),
-            "fpt_staking": contracts.fpt_staking.contract.contract_id().to_string(),
+            "fpt_staking": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.fpt_staking.contract.contract_id().to_string()).unwrap())),
             "fpt_staking_implementation_id": format!("0x{}", contracts.fpt_staking.implementation_id.to_string()),
-            "fpt_token": contracts.fpt_token.contract.contract_id().to_string(),
+            "fpt_token": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.fpt_token.contract.contract_id().to_string()).unwrap())),
             "fpt_token_implementation_id": format!("0x{}", contracts.fpt_token.implementation_id.to_string()),
             "fpt_asset_id": format!("0x{}", contracts.fpt_asset_id.to_string()),
-            "community_issuance": contracts.community_issuance.contract.contract_id().to_string(),
+            "community_issuance": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.community_issuance.contract.contract_id().to_string()).unwrap())),
             "community_issuance_implementation_id": format!("0x{}", contracts.community_issuance.implementation_id.to_string()),
-            "coll_surplus_pool": contracts.coll_surplus_pool.contract.contract_id().to_string(),
+            "coll_surplus_pool": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.coll_surplus_pool.contract.contract_id().to_string()).unwrap())),
             "coll_surplus_pool_implementation_id": format!("0x{}", contracts.coll_surplus_pool.implementation_id.to_string()),
-            "default_pool": contracts.default_pool.contract.contract_id().to_string(),
+            "default_pool": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.default_pool.contract.contract_id().to_string()).unwrap())),
             "default_pool_implementation_id": format!("0x{}", contracts.default_pool.implementation_id.to_string()),
-            "active_pool": contracts.active_pool.contract.contract_id().to_string(),
+            "active_pool": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.active_pool.contract.contract_id().to_string()).unwrap())),
             "active_pool_implementation_id": format!("0x{}", contracts.active_pool.implementation_id.to_string()),
-            "sorted_troves": contracts.sorted_troves.contract.contract_id().to_string(),
+            "sorted_troves": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.sorted_troves.contract.contract_id().to_string()).unwrap())),
             "sorted_troves_implementation_id": format!("0x{}", contracts.sorted_troves.implementation_id.to_string()),
-            "vesting_contract": contracts.vesting_contract.contract.contract_id().to_string(),
+            "vesting_contract": format!("{:#}", Address::from(Bech32Address::from_str(&contracts.vesting_contract.contract.contract_id().to_string()).unwrap())),
             "vesting_contract_implementation_id": format!("0x{}", contracts.vesting_contract.implementation_id.to_string()),
-            "hint_helper": hint_helper.contract_id().to_string(),
-            "multi_trove_getter": multi_trove_getter.contract_id().to_string(),
+            "hint_helper": format!("{:#}", Address::from(Bech32Address::from_str(&hint_helper.contract_id().to_string()).unwrap())),
+            "multi_trove_getter": format!("{:#}", Address::from(Bech32Address::from_str(&multi_trove_getter.contract_id().to_string()).unwrap())),
             "asset_contracts": contracts.asset_contracts.iter().map(|asset_contracts| {
                 json!({
-                    "oracle": asset_contracts.oracle.contract.contract_id().to_string(),
+                    "oracle": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contracts.oracle.contract.contract_id().to_string()).unwrap())),
                     "oracle_implementation_id": format!("0x{}", asset_contracts.oracle.implementation_id.to_string()),
-                    "trove_manager": asset_contracts.trove_manager.contract.contract_id().to_string(),
+                    "trove_manager": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contracts.trove_manager.contract.contract_id().to_string()).unwrap())),
                     "trove_manager_implementation_id": format!("0x{}", asset_contracts.trove_manager.implementation_id.to_string()),
-                    "asset_contract": asset_contracts.asset.contract_id().to_string(),
+                    "asset_contract": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contracts.asset.contract_id().to_string()).unwrap())),
                     "asset_id": format!("0x{}", asset_contracts.asset_id.to_string()),
                 })
             }).collect::<Vec<serde_json::Value>>()
