@@ -4,7 +4,6 @@ pub mod utils {
     use fuels::accounts::{provider::Provider, wallet::Wallet};
     use fuels::crypto::SecretKey;
     use fuels::prelude::*;
-    use fuels::types::bech32::Bech32ContractId;
     use fuels::types::{Bits256, Identity, U256};
     use serde_json::json;
     use std::fs::File;
@@ -79,7 +78,7 @@ pub mod utils {
         .unwrap();
         let contracts: serde_json::Value = serde_json::from_str(&json).unwrap();
 
-        let borrow_operations_contract_id: Bech32ContractId = contracts["borrow_operations"]
+        let borrow_operations_contract_id: ContractId = contracts["borrow_operations"]
             .as_str()
             .unwrap()
             .parse()
@@ -94,8 +93,7 @@ pub mod utils {
             BorrowOperations::new(borrow_operations_contract_id.clone(), wallet.clone()),
             borrow_operations_implementation_id.into(),
         );
-        let usdm_contract_id: Bech32ContractId =
-            contracts["usdm"].as_str().unwrap().parse().unwrap();
+        let usdm_contract_id: ContractId = contracts["usdm"].as_str().unwrap().parse().unwrap();
         let usdm_implementation_id: ContractId = contracts["usdm_implementation_id"]
             .as_str()
             .unwrap()
@@ -106,7 +104,7 @@ pub mod utils {
             usdm_implementation_id.into(),
         );
 
-        let stability_pool_contract_id: Bech32ContractId = contracts["stability_pool"]
+        let stability_pool_contract_id: ContractId = contracts["stability_pool"]
             .as_str()
             .unwrap()
             .parse()
@@ -122,7 +120,7 @@ pub mod utils {
             stability_pool_implementation_id.into(),
         );
 
-        let protocol_manager_contract_id: Bech32ContractId = contracts["protocol_manager"]
+        let protocol_manager_contract_id: ContractId = contracts["protocol_manager"]
             .as_str()
             .unwrap()
             .parse()
@@ -138,7 +136,7 @@ pub mod utils {
             protocol_manager_implementation_id.into(),
         );
 
-        let fpt_staking_contract_id: Bech32ContractId =
+        let fpt_staking_contract_id: ContractId =
             contracts["fpt_staking"].as_str().unwrap().parse().unwrap();
         let fpt_staking_implementation_id: ContractId = contracts["fpt_staking_implementation_id"]
             .as_str()
@@ -150,7 +148,7 @@ pub mod utils {
             fpt_staking_implementation_id.into(),
         );
 
-        let fpt_token_contract_id: Bech32ContractId =
+        let fpt_token_contract_id: ContractId =
             contracts["fpt_token"].as_str().unwrap().parse().unwrap();
         let fpt_token_implementation_id: ContractId = contracts["fpt_token_implementation_id"]
             .as_str()
@@ -162,7 +160,7 @@ pub mod utils {
             fpt_token_implementation_id.into(),
         );
 
-        let community_issuance_contract_id: Bech32ContractId = contracts["community_issuance"]
+        let community_issuance_contract_id: ContractId = contracts["community_issuance"]
             .as_str()
             .unwrap()
             .parse()
@@ -178,7 +176,7 @@ pub mod utils {
             community_issuance_implementation_id.into(),
         );
 
-        let coll_surplus_pool_contract_id: Bech32ContractId = contracts["coll_surplus_pool"]
+        let coll_surplus_pool_contract_id: ContractId = contracts["coll_surplus_pool"]
             .as_str()
             .unwrap()
             .parse()
@@ -194,7 +192,7 @@ pub mod utils {
             coll_surplus_pool_implementation_id.into(),
         );
 
-        let default_pool_contract_id: Bech32ContractId =
+        let default_pool_contract_id: ContractId =
             contracts["default_pool"].as_str().unwrap().parse().unwrap();
         let default_pool_implementation_id: ContractId = contracts
             ["default_pool_implementation_id"]
@@ -207,7 +205,7 @@ pub mod utils {
             default_pool_implementation_id.into(),
         );
 
-        let active_pool_contract_id: Bech32ContractId =
+        let active_pool_contract_id: ContractId =
             contracts["active_pool"].as_str().unwrap().parse().unwrap();
         let active_pool_implementation_id: ContractId = contracts["active_pool_implementation_id"]
             .as_str()
@@ -219,7 +217,7 @@ pub mod utils {
             active_pool_implementation_id.into(),
         );
 
-        let sorted_troves_contract_id: Bech32ContractId = contracts["sorted_troves"]
+        let sorted_troves_contract_id: ContractId = contracts["sorted_troves"]
             .as_str()
             .unwrap()
             .parse()
@@ -235,7 +233,7 @@ pub mod utils {
             sorted_troves_implementation_id.into(),
         );
 
-        let vesting_contract_id: Bech32ContractId = contracts["vesting_contract"]
+        let vesting_contract_id: ContractId = contracts["vesting_contract"]
             .as_str()
             .unwrap()
             .parse()
@@ -262,14 +260,14 @@ pub mod utils {
             .unwrap()
             .iter()
             .map(|asset_contract| {
-                let asset_contract_id: Bech32ContractId = asset_contract["asset_contract"]
+                let asset_contract_id: ContractId = asset_contract["asset_contract"]
                     .as_str()
                     .unwrap()
                     .parse()
                     .unwrap();
                 let asset_id =
                     AssetId::from_str(asset_contract["asset_id"].as_str().unwrap()).unwrap();
-                let oracle_contract_id: Bech32ContractId =
+                let oracle_contract_id: ContractId =
                     asset_contract["oracle"].as_str().unwrap().parse().unwrap();
                 let oracle_implementation_id: ContractId = asset_contract
                     ["oracle_implementation_id"]
@@ -277,7 +275,7 @@ pub mod utils {
                     .unwrap()
                     .parse()
                     .unwrap();
-                let trove_manager_contract_id: Bech32ContractId = asset_contract["trove_manager"]
+                let trove_manager_contract_id: ContractId = asset_contract["trove_manager"]
                     .as_str()
                     .unwrap()
                     .parse()
@@ -288,21 +286,21 @@ pub mod utils {
                     .unwrap()
                     .parse()
                     .unwrap();
-                let stork_contract_id: Bech32ContractId = asset_contract["stork_contract"]
+                let stork_contract_id: ContractId = asset_contract["stork_contract"]
                     .as_str()
                     .unwrap_or("0")
                     .parse()
-                    .unwrap_or(Bech32ContractId::default());
-                let pyth_contract_id: Bech32ContractId = asset_contract["pyth_contract"]
+                    .unwrap_or(ContractId::default());
+                let pyth_contract_id: ContractId = asset_contract["pyth_contract"]
                     .as_str()
                     .unwrap_or("0")
                     .parse()
-                    .unwrap_or(Bech32ContractId::default());
-                let redstone_contract_id: Bech32ContractId = asset_contract["redstone_contract"]
+                    .unwrap_or(ContractId::default());
+                let redstone_contract_id: ContractId = asset_contract["redstone_contract"]
                     .as_str()
                     .unwrap_or("0")
                     .parse()
-                    .unwrap_or(Bech32ContractId::default());
+                    .unwrap_or(ContractId::default());
 
                 AssetContracts {
                     asset: Token::new(asset_contract_id, wallet.clone()),
@@ -393,18 +391,18 @@ pub mod utils {
         for asset_contract in asset_contracts {
             existing_asset_contracts.push(json!({
                 "symbol": asset_contract.symbol,
-                "oracle": asset_contract.oracle.contract.contract_id().to_string(),
+                "oracle": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contract.oracle.contract.contract_id().to_string()).unwrap())),
                 "oracle_implementation_id": format!("0x{}", asset_contract.oracle.implementation_id.to_string()),
-                "trove_manager": asset_contract.trove_manager.contract.contract_id().to_string(),
+                "trove_manager": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contract.trove_manager.contract.contract_id().to_string()).unwrap())),
                 "trove_manager_implementation_id": format!("0x{}", asset_contract.trove_manager.implementation_id.to_string()),
-                "asset_contract": asset_contract.asset.contract_id().to_string(),
+                "asset_contract": format!("{:#}", Address::from(Bech32Address::from_str(&asset_contract.asset.contract_id().to_string()).unwrap())),
                 "asset_id": format!("0x{}", asset_contract.asset_id.to_string()),
                 "pyth_price_id": match &asset_contract.pyth_price_id {
                     Some(pyth_price_id) => json!(to_hex_str(pyth_price_id)),
                     None => json!(null),
                 },
                 "pyth_contract": match &asset_contract.mock_pyth_oracle {
-                    Some(pyth_contract) => json!(pyth_contract.contract_id().to_string()),
+                    Some(pyth_contract) => json!(format!("{:#}", Address::from(Bech32Address::from_str(&pyth_contract.contract_id().to_string()).unwrap()))),
                     None => json!(null),
                 },
                 "stork_feed_id": match &asset_contract.stork_feed_id {
@@ -412,13 +410,13 @@ pub mod utils {
                     None => json!(null),
                 },
                 "stork_contract": match &asset_contract.mock_stork_oracle {
-                    Some(stork_contract) => json!(stork_contract.contract_id().to_string()),
+                    Some(stork_contract) => json!(format!("{:#}", Address::from(Bech32Address::from_str(&stork_contract.contract_id().to_string()).unwrap()))),
                     None => json!(null),
                 },
                 "redstone": match &asset_contract.redstone_config {
                     Some(redstone_config) => {
                         json!({
-                            "redstone_contract": redstone_config.contract.to_string(),
+                            "redstone_contract": format!("{:#}", Address::from(Bech32Address::from_str(&redstone_config.contract.to_string()).unwrap())),
                             "redstone_price_id": redstone_config.price_id.to_string(),
                             "redstone_precision": redstone_config.precision,
                         })
